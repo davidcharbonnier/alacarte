@@ -36,17 +36,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Detect if this is a version bump commit
+      - name: Detect if version files changed in this push
         id: detect_changes
         run: |
-          # Check if the last commit message is a version bump
-          LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
-          if [[ "$LAST_COMMIT_MSG" == *"chore: version packages"* ]]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Version bump commit detected"
+          # Check if any package.json files were modified in the last commit
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
+          
+          if echo "$CHANGED_FILES" | grep -q "apps/.*/package.json"; then
+            # Check if the commit is a version bump (from changesets)
+            LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+            if [[ "$LAST_COMMIT_MSG" == *"chore: version packages"* ]]; then
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+              echo "✅ Version bump commit detected with package.json changes"
+            else
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ Package.json changed but not a version bump commit"
+            fi
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "Not a version bump commit"
+            echo "ℹ️ No package.json changes detected"
           fi
 
       - name: Get current versions
