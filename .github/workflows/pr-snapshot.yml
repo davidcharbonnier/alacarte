@@ -145,7 +145,7 @@ jobs:
           push: true
           target: prod
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.generate-version.outputs.snapshot_version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:pr-${{ github.event.pull_request.number }}-latest

@@ -99,7 +99,7 @@ jobs:
           file: ./apps/${{ matrix.app }}/Dockerfile
           push: true
           target: ${{ matrix.app == 'admin' && 'prod' || '' }}
-          build-args: ${{ matrix.app == 'admin' && format('NEXT_PUBLIC_API_URL={0}', vars.NEXT_PUBLIC_API_URL) || '' }}
+          build-args: ${{ matrix.app == 'admin' && format('NEXT_PUBLIC_API_URL={0}', vars.ADMIN_NEXT_PUBLIC_API_URL) || '' }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-${{ matrix.app }}:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-${{ matrix.app }}:latest
@@ -110,6 +110,7 @@ jobs:
     needs: version-and-release
     if: needs.version-and-release.outputs.has_version_change == 'true'
     runs-on: ubuntu-latest
+    environment: prod
     steps:
       - uses: actions/checkout@v4
 
@@ -141,6 +142,24 @@ jobs:
           distribution: "zulu"
           java-version: "17"
           cache: "gradle"
+
+      - name: Setup Android Keystore
+        working-directory: ./apps/client
+        run: |
+          echo "Setting up Android keystore for release signing..."
+
+          # Decode keystore from base64
+          echo "${{ secrets.CLIENT_KEYSTORE_BASE64 }}" | base64 -d > android/app/release-keystore.jks
+
+          # Create key.properties file
+          cat << EOF > android/key.properties
+          storePassword=${{ secrets.CLIENT_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.CLIENT_KEY_PASSWORD }}
+          keyAlias=${{ secrets.CLIENT_KEY_ALIAS }}
+          storeFile=release-keystore.jks
+          EOF
+
+          echo "✅ Keystore configured for release signing"
 
       - name: Install dependencies
         working-directory: ./apps/client
