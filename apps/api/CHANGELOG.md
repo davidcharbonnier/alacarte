@@ -1,5 +1,11 @@
 # @alacarte/api
 
+## 0.2.1
+
+### Patch Changes
+
+- [`7b8b305`](https://github.com/davidcharbonnier/alacarte/commit/7b8b3056c8a890a2be3b07e2ef3b83e522a26500) - Fix release workflow
+
 ## 0.2.0
 
 ### Minor Changes
