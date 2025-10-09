@@ -9,7 +9,7 @@ jobs:
   version-and-release:
     runs-on: ubuntu-latest
     outputs:
-      has_release: ${{ steps.changesets.outputs.hasChangesets == 'false' && steps.check_version_commit.outputs.is_version_commit == 'true' }}
+      has_release: ${{ steps.detect_release.outputs.should_release }}
       api_version: ${{ steps.get_versions.outputs.api }}
       client_version: ${{ steps.get_versions.outputs.client }}
       admin_version: ${{ steps.get_versions.outputs.admin }}
@@ -36,20 +36,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Check if this is a version commit
-        id: check_version_commit
+      - name: Detect if this should trigger a release
+        id: detect_release
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          if [[ "$COMMIT_MSG" == "chore: version packages"* ]]; then
-            echo "is_version_commit=true" >> $GITHUB_OUTPUT
-            echo "✅ This is a version packages commit"
+          # A release should trigger when:
+          # 1. No changesets remain (they were just consumed)
+          # 2. AND the commit history contains a recent "chore: version packages" commit
+          
+          HAS_CHANGESETS="${{ steps.changesets.outputs.hasChangesets }}"
+          
+          if [ "$HAS_CHANGESETS" = "false" ]; then
+            # Check if last 2 commits include a version packages commit
+            # (could be HEAD or HEAD~1 if it's a merge commit)
+            RECENT_COMMITS=$(git log -2 --pretty=%B)
+            
+            if echo "$RECENT_COMMITS" | grep -q "chore: version packages"; then
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "✅ Release triggered: changesets consumed and version packages commit found"
+            else
+              echo "should_release=false" >> $GITHUB_OUTPUT
+              echo "ℹ️ No release: no version packages commit in recent history"
+            fi
           else
-            echo "is_version_commit=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ Not a version packages commit"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No release: changesets still present (Version Packages PR being created/updated)"
           fi
 
       - name: Get current versions
-        if: steps.changesets.outputs.hasChangesets == 'false' && steps.check_version_commit.outputs.is_version_commit == 'true'
+        if: steps.detect_release.outputs.should_release == 'true'
         id: get_versions
         run: |
           API_VERSION=$(node -p "require('./apps/api/package.json').version")
