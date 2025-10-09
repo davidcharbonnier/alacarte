@@ -1,5 +1,11 @@
 # @alacarte/client
 
+## 0.2.2
+
+### Patch Changes
+
+- [`68a01bf`](https://github.com/davidcharbonnier/alacarte/commit/68a01bf99f3aafedfef53bd8e34d5ecee449301e) - Fixed release workflow detection logic
+
 ## 0.2.1
 
 ### Patch Changes
