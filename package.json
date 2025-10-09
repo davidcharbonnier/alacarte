@@ -4,15 +4,13 @@
   "private": true,
   "description": "A la carte - Multi-platform rating and sharing system for consumables",
   "scripts": {
-    "build": "turbo build",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "changeset publish"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
-    "@changesets/cli": "^2.27.1",
-    "turbo": "^1.11.2"
+    "@changesets/cli": "^2.27.1"
   },
   "workspaces": [
     "apps/*"

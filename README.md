@@ -101,14 +101,12 @@ Docker images are published automatically:
 ## 🔧 Monorepo Tools
 
 - **Changesets:** Version management and changelogs
-- **Turborepo:** Build optimization and change detection
 - **Docker Compose:** Local development orchestration
+- **GitHub Actions:** CI/CD with change detection
 
 ## 📋 Available Scripts
 
 ```bash
-npm run build          # Build all apps
-npm run test           # Test all apps
 npm run changeset      # Create a changeset
 npm run version        # Bump versions (automated)
 npm run release        # Publish releases (automated)
