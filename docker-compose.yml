@@ -1,0 +1,7 @@
+include:
+  - path: ./apps/api/docker-compose.yaml
+  - path: ./apps/admin/docker-compose.yaml
+
+networks:
+  alacarte-network:
+    name: alacarte-network

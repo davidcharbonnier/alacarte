@@ -1,0 +1,147 @@
+# =============================================================================
+# Production Docker Compose for A la carte REST API
+# =============================================================================
+# Demonstrates usage patterns for migrations, seeding, and production deployment
+# =============================================================================
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.4.5
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-alacarte}
+      MYSQL_USER: ${MYSQL_USERNAME:-alacarte}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-alacarte}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    networks:
+      - alacarte-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Database Migration (runs once)
+  migrate:
+    build: .
+    entrypoint: ["/migrate"]
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-alacarte}
+      - MYSQL_USERNAME=${MYSQL_USERNAME:-alacarte}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-alacarte}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - alacarte-network
+    profiles:
+      - migrate
+
+  # Database Seeding (runs once, after migrations)
+  seed:
+    build: .
+    entrypoint: ["/seed"]
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-alacarte}
+      - MYSQL_USERNAME=${MYSQL_USERNAME:-alacarte}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-alacarte}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - alacarte-network
+    profiles:
+      - seed
+
+  # External Health Checker (lightweight alpine container with curl)
+  healthchecker:
+    image: alpine:3.20
+    command: |
+      sh -c '
+        apk add --no-cache curl
+        while true; do
+          curl -f http://api:8080/health >/dev/null 2>&1
+          if [ $? -eq 0 ]; then
+            echo "API health check passed at $(date)"
+          else
+            echo "API health check failed at $(date)"
+          fi
+          sleep 30
+        done
+      '
+    depends_on:
+      - api
+    networks:
+      - alacarte-network
+    profiles:
+      - monitoring
+
+  # Main API Service
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-alacarte}
+      - MYSQL_USERNAME=${MYSQL_USERNAME:-alacarte}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-alacarte}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - GIN_MODE=release
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - MOCK_OAUTH=${MOCK_OAUTH:-false}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - alacarte-network
+    # External health monitoring - no built-in Docker health check
+
+volumes:
+  mysql_data:
+
+networks:
+  alacarte-network:
+    driver: bridge
+
+# =============================================================================
+# Usage Examples:
+# =============================================================================
+# 
+# 1. Build the image:
+#    docker-compose -f docker-compose.prod.yml build
+# 
+# 2. Start database and run migrations:
+#    docker-compose -f docker-compose.prod.yml --profile migrate up mysql migrate
+# 
+# 3. Seed the database:
+#    docker-compose -f docker-compose.prod.yml --profile seed up seed
+# 
+# 4. Start the API service:
+#    docker-compose -f docker-compose.prod.yml up api
+# 
+# 5. Full deployment (database + API, migrations must be run separately):
+#    docker-compose -f docker-compose.prod.yml up -d mysql api
+# 
+# 6. Complete setup with health monitoring:
+#    docker-compose -f docker-compose.prod.yml --profile migrate up -d mysql migrate
+#    docker-compose -f docker-compose.prod.yml --profile seed up seed  
+#    docker-compose -f docker-compose.prod.yml up -d api
+#    docker-compose -f docker-compose.prod.yml --profile monitoring up -d healthchecker
+#
+# 7. Tear down:
+#    docker-compose -f docker-compose.prod.yml down -v
+# 
+# =============================================================================

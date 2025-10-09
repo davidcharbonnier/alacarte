@@ -1,0 +1,10 @@
+{
+  "name": "@alacarte/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "go build -o bin/api",
+    "dev": "air",
+    "seed": "go run scripts/seed.go"
+  }
+}

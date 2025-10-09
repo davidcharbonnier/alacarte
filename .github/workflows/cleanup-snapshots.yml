@@ -1,0 +1,204 @@
+name: Cleanup Snapshot Artifacts
+
+on:
+  pull_request:
+    types: [closed]
+  
+  schedule:
+    - cron: '0 2 * * *'  # 2 AM UTC daily
+  
+  workflow_dispatch:
+
+jobs:
+  determine-prs:
+    runs-on: ubuntu-latest
+    outputs:
+      open_prs: ${{ steps.get-prs.outputs.open_prs }}
+      last_merged_pr: ${{ steps.get-prs.outputs.last_merged_pr }}
+    steps:
+      - name: Get open PRs and last merged
+        id: get-prs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get all open PRs
+            const { data: openPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+            
+            const openPrNumbers = openPRs.map(pr => pr.number).join(',');
+            
+            // Get last merged PR
+            const { data: closedPRs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              sort: 'updated',
+              direction: 'desc',
+              per_page: 50
+            });
+            
+            const lastMergedPR = closedPRs.find(pr => pr.merged_at);
+            const lastMergedNumber = lastMergedPR ? lastMergedPR.number : '';
+            
+            core.setOutput('open_prs', openPrNumbers);
+            core.setOutput('last_merged_pr', lastMergedNumber);
+            
+            console.log(`Open PRs: ${openPrNumbers}`);
+            console.log(`Last merged PR: ${lastMergedNumber}`);
+
+  cleanup-docker-tags:
+    needs: determine-prs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [api, admin]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install regctl
+        run: |
+          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 \
+            -o regctl
+          chmod +x regctl
+          sudo mv regctl /usr/local/bin/
+      
+      - name: Cleanup Docker tags
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          OPEN_PRS: ${{ needs.determine-prs.outputs.open_prs }}
+          LAST_MERGED_PR: ${{ needs.determine-prs.outputs.last_merged_pr }}
+        run: |
+          echo "$DOCKER_TOKEN" | regctl registry login docker.io -u "$DOCKER_USER" --pass-stdin
+          
+          REPO="$DOCKER_USER/alacarte-${{ matrix.app }}"
+          ALL_TAGS=$(regctl tag ls "$REPO")
+          
+          for tag in $ALL_TAGS; do
+            if [[ $tag =~ -pr-([0-9]+)\. ]]; then
+              PR_NUM="${BASH_REMATCH[1]}"
+              if [[ ",$OPEN_PRS,$LAST_MERGED_PR," == *",$PR_NUM,"* ]]; then
+                echo "Keeping: $REPO:$tag (PR #$PR_NUM)"
+              else
+                echo "Deleting: $REPO:$tag (PR #$PR_NUM)"
+                regctl tag rm "$REPO:$tag"
+              fi
+            fi
+          done
+
+  cleanup-github:
+    needs: determine-prs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Cleanup releases, tags, and artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const openPRs = '${{ needs.determine-prs.outputs.open_prs }}'.split(',').filter(Boolean);
+            const lastMerged = '${{ needs.determine-prs.outputs.last_merged_pr }}';
+            const keepPRs = new Set([...openPRs, lastMerged].filter(Boolean));
+            
+            console.log(`Keeping PRs: ${Array.from(keepPRs).join(', ')}`);
+            
+            const extractPR = (str) => {
+              const match = str.match(/-pr-(\d+)/);
+              return match ? match[1] : null;
+            };
+            
+            // 1. Cleanup releases (must be first)
+            console.log('\n=== Cleaning up releases ===');
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            for (const release of releases.filter(r => r.prerelease)) {
+              const prNum = extractPR(release.tag_name);
+              if (prNum && !keepPRs.has(prNum)) {
+                console.log(`Deleting release: ${release.tag_name} (PR #${prNum})`);
+                try {
+                  await github.rest.repos.deleteRelease({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    release_id: release.id
+                  });
+                } catch (error) {
+                  core.setFailed(`Failed to delete release ${release.tag_name}: ${error.message}`);
+                }
+              } else if (prNum) {
+                console.log(`Keeping release: ${release.tag_name} (PR #${prNum})`);
+              }
+            }
+            
+            // 2. Cleanup git tags (after releases)
+            console.log('\n=== Cleaning up git tags ===');
+            const tags = await github.paginate(github.rest.repos.listTags, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            for (const tag of tags) {
+              const prNum = extractPR(tag.name);
+              if (prNum && !keepPRs.has(prNum)) {
+                console.log(`Deleting tag: ${tag.name} (PR #${prNum})`);
+                try {
+                  await github.rest.git.deleteRef({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: `tags/${tag.name}`
+                  });
+                } catch (error) {
+                  core.setFailed(`Failed to delete tag ${tag.name}: ${error.message}`);
+                }
+              } else if (prNum) {
+                console.log(`Keeping tag: ${tag.name} (PR #${prNum})`);
+              }
+            }
+            
+            // 3. Cleanup artifacts (safety net)
+            console.log('\n=== Cleaning up artifacts ===');
+            const artifacts = await github.paginate(github.rest.actions.listArtifactsForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            for (const artifact of artifacts) {
+              const prNum = extractPR(artifact.name);
+              if (prNum && !keepPRs.has(prNum)) {
+                console.log(`Deleting artifact: ${artifact.name} (PR #${prNum})`);
+                try {
+                  await github.rest.actions.deleteArtifact({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    artifact_id: artifact.id
+                  });
+                } catch (error) {
+                  console.log(`Could not delete artifact ${artifact.name}: ${error.message}`);
+                }
+              } else if (prNum) {
+                console.log(`Keeping artifact: ${artifact.name} (PR #${prNum})`);
+              }
+            }
+            
+            console.log('\n=== Cleanup complete ===');
+
+  verify-cleanup:
+    needs: [cleanup-docker-tags, cleanup-github]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all cleanups succeeded
+        run: |
+          echo "✅ All cleanup operations completed successfully"
+          echo ""
+          echo "Cleanup executed:"
+          echo "1. ✅ Docker Hub tags (parallel)"
+          echo "2. ✅ GitHub Releases, Tags, and Artifacts (sequential)"

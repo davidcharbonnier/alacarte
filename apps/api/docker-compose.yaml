@@ -1,0 +1,33 @@
+services:
+  api:
+    image: cosmtrek/air
+    restart: unless-stopped
+    working_dir: /project
+    ports:
+      - 8080:8080
+    volumes:
+      - ./:/project/
+    depends_on:
+      - mysql
+    networks:
+      - alacarte-network
+      - default
+
+  mysql:
+    image: mysql:8.4.5
+    restart: unless-stopped
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rest_api
+      MYSQL_USER: rest_api
+      MYSQL_PASSWORD: rest_api
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - alacarte-network
+
+volumes:
+  mysql_data:
+    name: alacarte-mysql-data

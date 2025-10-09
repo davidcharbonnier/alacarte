@@ -1,0 +1,37 @@
+tmp/
+.vscode/
+
+# Node.js files (for semantic-release)
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime and build files
+.env.local
+.env.development
+.env.test
+.env.production
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Seed data files (hosted in separate alacarte-seed repository)
+# Note: We don't store any seed JSON files in this repo
+seed/

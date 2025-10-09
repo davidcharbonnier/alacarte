@@ -1,0 +1,2285 @@
+{
+  "@@locale": "en",
+  "appTitle": "A la carte",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  
+  "welcomeTitle": "Welcome to A la carte",
+  "@welcomeTitle": {
+    "description": "Main welcome message on home screen"
+  },
+  
+  "welcomeSubtitle": "Your personal rating and preference hub",
+  "@welcomeSubtitle": {
+    "description": "Subtitle describing the app's purpose"
+  },
+  
+  "yourPreferenceLists": "Your Preference Lists",
+  "@yourPreferenceLists": {
+    "description": "Header for the item type cards section"
+  },
+  
+  "moreCategoriesTitle": "More Categories",
+  "@moreCategoriesTitle": {
+    "description": "Title for upcoming categories card"
+  },
+  
+  "moreCategoriesSubtitle": "Additional categories coming soon",
+  "@moreCategoriesSubtitle": {
+    "description": "Subtitle for upcoming categories"
+  },
+  
+  "itemsAvailable": "{count} items available",
+  "@itemsAvailable": {
+    "description": "Shows number of items available in a category",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "42"
+      }
+    }
+  },
+  
+  "inYourList": "{count} in your list",
+  "@inYourList": {
+    "description": "Shows number of items in user's personal list",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  
+  "cheese": "Cheese",
+  "@cheese": {
+    "description": "Cheese category name"
+  },
+  
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings menu item"
+  },
+  
+  "profileSettings": "Profile Settings",
+  "@profileSettings": {
+    "description": "Profile settings page title"
+  },
+  
+  "toggleTheme": "Toggle theme",
+  "@toggleTheme": {
+    "description": "Tooltip for theme toggle button"
+  },
+  
+  "online": "Online",
+  "@online": {
+    "description": "Online connectivity status"
+  },
+  
+  "offline": "Offline",
+  "@offline": {
+    "description": "Offline connectivity status"
+  },
+  
+  "checkingConnection": "Checking connection",
+  "@checkingConnection": {
+    "description": "Checking connectivity status"
+  },
+  
+  "offlineMessage": "Offline - Your reference lists may not be up to date",
+  "@offlineMessage": {
+    "description": "Message shown when offline"
+  },
+  
+  "connectedToAlacarte": "Connected to A la carte",
+  "@connectedToAlacarte": {
+    "description": "Toast notification when connection is restored"
+  },
+  
+  "noInternetConnection": "Connection lost - Working offline",
+  "@noInternetConnection": {
+    "description": "Toast notification when connection is lost"
+  },
+  
+  "userSelection": "User Selection",
+  "@userSelection": {
+    "description": "User selection screen title"
+  },
+  
+  "createUser": "Create User",
+  "@createUser": {
+    "description": "Create user button/screen"
+  },
+  
+  "editUser": "Edit User",
+  "@editUser": {
+    "description": "Edit user button/screen"
+  },
+  
+  "userName": "User Name",
+  "@userName": {
+    "description": "User name field label"
+  },
+  
+  "name": "Name",
+  "@name": {
+    "description": "Generic name field"
+  },
+  
+  "type": "Type",
+  "@type": {
+    "description": "Type field label"
+  },
+  
+  "origin": "Origin",
+  "@origin": {
+    "description": "Origin field label"
+  },
+  
+  "producer": "Producer",
+  "@producer": {
+    "description": "Producer field label"
+  },
+  
+  "description": "Description",
+  "@description": {
+    "description": "Description field label"
+  },
+  
+  "save": "Save",
+  "@save": {
+    "description": "Save button"
+  },
+  
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+  
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button"
+  },
+  
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button"
+  },
+  
+  "create": "Create",
+  "@create": {
+    "description": "Create button"
+  },
+  
+  "search": "Search",
+  "@search": {
+    "description": "Search field placeholder"
+  },
+  
+  "filter": "Filter",
+  "@filter": {
+    "description": "Filter button/action"
+  },
+  
+  "clearFilters": "Clear Filters",
+  "@clearFilters": {
+    "description": "Clear all filters button"
+  },
+  
+  "allItems": "All Items",
+  "@allItems": {
+    "description": "Tab for browsing all available items"
+  },
+  
+  "myList": "My List",
+  "@myList": {
+    "description": "Tab for user's personal rated items"
+  },
+  
+  "rating": "Rating",
+  "@rating": {
+    "description": "Rating field/section"
+  },
+  
+  "myRating": "My Rating",
+  "@myRating": {
+    "description": "User's personal rating section"
+  },
+  
+  "sharedRatings": "Shared Ratings",
+  "@sharedRatings": {
+    "description": "Ratings shared by others section"
+  },
+  
+  "rateItem": "Rate Item",
+  "@rateItem": {
+    "description": "Button to rate an item"
+  },
+  
+  "addRating": "Add Rating",
+  "@addRating": {
+    "description": "Add rating button/action"
+  },
+  
+  "editRating": "Edit Rating",
+  "@editRating": {
+    "description": "Edit rating button/action"
+  },
+  
+  "notes": "Notes",
+  "@notes": {
+    "description": "Personal notes field"
+  },
+  
+  "score": "Score",
+  "@score": {
+    "description": "Rating score field"
+  },
+  
+  "back": "Back",
+  "@back": {
+    "description": "Back navigation button"
+  },
+  
+  "home": "Home",
+  "@home": {
+    "description": "Home navigation"
+  },
+  
+  "error": "Error",
+  "@error": {
+    "description": "Generic error label"
+  },
+  
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading indicator text"
+  },
+  
+  "noDataAvailable": "No data available",
+  "@noDataAvailable": {
+    "description": "Message when no data is found"
+  },
+  
+  "tryAgain": "Try Again",
+  "@tryAgain": {
+    "description": "Retry button"
+  },
+  
+  "refresh": "Refresh",
+  "@refresh": {
+    "description": "Refresh button/action"
+  },
+  
+  "chooseProfileSubtitle": "Choose your profile to access your ratings and preferences",
+  "@chooseProfileSubtitle": {
+    "description": "Subtitle on user selection screen"
+  },
+  
+  "searchProfiles": "Search profiles...",
+  "@searchProfiles": {
+    "description": "Search field placeholder for profiles"
+  },
+  
+  "createNewProfile": "Create New Profile",
+  "@createNewProfile": {
+    "description": "Create new profile button"
+  },
+  
+  "deleteProfile": "Delete Profile",
+  "@deleteProfile": {
+    "description": "Delete profile dialog title"
+  },
+  
+  "deleteProfileConfirmation": "Are you sure you want to delete the profile \"{profileName}\"?",
+  "@deleteProfileConfirmation": {
+    "description": "Delete profile confirmation message",
+    "placeholders": {
+      "profileName": {
+        "type": "String",
+        "example": "David"
+      }
+    }
+  },
+  
+  "noProfilesFound": "No profiles found",
+  "@noProfilesFound": {
+    "description": "Message when search returns no results"
+  },
+  
+  "tryDifferentSearch": "Try searching with a different name",
+  "@tryDifferentSearch": {
+    "description": "Help text for empty search results"
+  },
+  
+  "currentlyUsing": "Currently using: {userName}. Tap a different profile to switch or tap the selected one to continue.",
+  "@currentlyUsing": {
+    "description": "Instruction message when user is already selected",
+    "placeholders": {
+      "userName": {
+        "type": "String",
+        "example": "David"
+      }
+    }
+  },
+  
+  "offlineProfileChanges": "Offline - Profile changes may not be saved until reconnected",
+  "@offlineProfileChanges": {
+    "description": "Offline message for profile screens"
+  },
+  
+  "createYourProfile": "Create Your Profile",
+  "@createYourProfile": {
+    "description": "Create profile form title"
+  },
+  
+  "editYourProfile": "Edit Your Profile",
+  "@editYourProfile": {
+    "description": "Edit profile form title"
+  },
+  
+  "nameHint": "Enter your name",
+  "@nameHint": {
+    "description": "Placeholder text for name field"
+  },
+  
+  "profileHelpCreate": "Your profile helps you track your cheese ratings and preferences.",
+  "@profileHelpCreate": {
+    "description": "Helper text for create profile"
+  },
+  
+  "profileHelpEdit": "Update your profile information.",
+  "@profileHelpEdit": {
+    "description": "Helper text for edit profile"
+  },
+  
+  "currentProfile": "Current Profile",
+  "@currentProfile": {
+    "description": "Current profile section title"
+  },
+  
+  "profileManagement": "Profile Management",
+  "@profileManagement": {
+    "description": "Profile management section title"
+  },
+  
+  "editProfile": "Edit Profile",
+  "@editProfile": {
+    "description": "Edit profile action"
+  },
+  
+  "editProfileSubtitle": "Update your profile information",
+  "@editProfileSubtitle": {
+    "description": "Edit profile subtitle"
+  },
+  
+  "switchProfile": "Switch Profile",
+  "@switchProfile": {
+    "description": "Switch profile action"
+  },
+  
+  "switchProfileSubtitle": "Change to a different profile",
+  "@switchProfileSubtitle": {
+    "description": "Switch profile subtitle"
+  },
+  
+  "deleteProfileSubtitle": "Permanently delete this profile",
+  "@deleteProfileSubtitle": {
+    "description": "Delete profile subtitle"
+  },
+  
+  "deleteWarning": "This action cannot be undone. All data associated with this profile will be permanently deleted.",
+  "@deleteWarning": {
+    "description": "Warning message for profile deletion"
+  },
+  
+  "noProfileSelected": "No profile selected. Please select a profile first.",
+  "@noProfileSelected": {
+    "description": "Message when no profile is selected"
+  },
+  
+  "backToApp": "Back to App",
+  "@backToApp": {
+    "description": "Back to app button"
+  },
+  
+  "noProfilesYet": "No Profiles Yet",
+  "@noProfilesYet": {
+    "description": "Empty state title"
+  },
+  
+  "noProfilesMessage": "No profiles found. Create your first profile to get started!",
+  "@noProfilesMessage": {
+    "description": "Empty state message"
+  },
+  
+  "nameRequired": "Name is required",
+  "@nameRequired": {
+    "description": "Validation message for required name"
+  },
+  
+  "nameMinLength": "Name must be at least 2 characters",
+  "@nameMinLength": {
+    "description": "Validation message for name minimum length"
+  },
+  
+  "nameMaxLength": "Name must be less than 50 characters",
+  "@nameMaxLength": {
+    "description": "Validation message for name maximum length"
+  },
+  
+  "nameInvalidCharacters": "Name can only contain letters, spaces, hyphens, and apostrophes",
+  "@nameInvalidCharacters": {
+    "description": "Validation message for invalid name characters"
+  },
+  
+  "backToHub": "Back to Hub",
+  "@backToHub": {
+    "description": "Tooltip for back to hub button"
+  },
+  
+  "allItems": "All {itemType}s",
+  "@allItems": {
+    "description": "Tab title for all items of a type",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "myItemList": "My {itemType} List",
+  "@myItemList": {
+    "description": "Tab title for user's personal list",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "addItem": "Add {itemType}",
+  "@addItem": {
+    "description": "Add item floating action button",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "moreCategoriesComingSoon": "More Categories Coming Soon",
+  "@moreCategoriesComingSoon": {
+    "description": "Coming soon menu item"
+  },
+  
+  "myRating": "My Rating",
+  "@myRating": {
+    "description": "My rating section label"
+  },
+  
+  "shared": "Shared ({count})",
+  "@shared": {
+    "description": "Shared ratings indicator",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  
+  "moreRatings": "+{count} more",
+  "@moreRatings": {
+    "description": "Additional ratings indicator",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  
+  "rateThisItem": "Rate this {itemType}",
+  "@rateThisItem": {
+    "description": "Rate this item button",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "cheese"
+      }
+    }
+  },
+  
+  "comingSoon": "{itemType} Coming Soon",
+  "@comingSoon": {
+    "description": "Coming soon message for item types",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "noItemsAvailable": "No {itemType}s Available",
+  "@noItemsAvailable": {
+    "description": "Empty state when no items exist",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "addFirstItem": "Add the first {itemType} to start building your reference list",
+  "@addFirstItem": {
+    "description": "Instructions for empty state",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "cheese"
+      }
+    }
+  },
+  
+  "addFirstItemButton": "Add First {itemType}",
+  "@addFirstItemButton": {
+    "description": "Add first item button",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "yourReferenceList": "Your {itemType} Reference List",
+  "@yourReferenceList": {
+    "description": "Reference list header",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "itemsWithRatings": "{count} items with your ratings and recommendations",
+  "@itemsWithRatings": {
+    "description": "Reference list subtitle",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  
+  "yourListEmpty": "Your {itemType} List is Empty",
+  "@yourListEmpty": {
+    "description": "Empty personal list title",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "rateItemsToBuild": "Rate {itemType}s to build your reference list",
+  "@rateItemsToBuild": {
+    "description": "Empty list instructions",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "cheese"
+      }
+    }
+  },
+  
+  "exploreItems": "Explore {itemType}s",
+  "@exploreItems": {
+    "description": "Explore items button",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "itemNotFound": "Item Not Found",
+  "@itemNotFound": {
+    "description": "Item not found error title"
+  },
+  
+  "goBack": "Go Back",
+  "@goBack": {
+    "description": "Go back button"
+  },
+  
+  "offlineRatingData": "Offline - Rating data may not be up to date",
+  "@offlineRatingData": {
+    "description": "Offline message for rating screens"
+  },
+  
+  "rateItemName": "Rate {itemName}",
+  "@rateItemName": {
+    "description": "Rate specific item floating button",
+    "placeholders": {
+      "itemName": {
+        "type": "String",
+        "example": "Cheddar"
+      }
+    }
+  },
+  
+  "offlineLoadingMessage": "Loading... Connection required for full functionality",
+  "@offlineLoadingMessage": {
+    "description": "Offline message for loading screens"
+  },
+  
+  "connectionError": "Connection error - Please check your network",
+  "@connectionError": {
+    "description": "Connection error message"
+  },
+  
+  "offlineCachedData": "Offline mode - Showing cached data",
+  "@offlineCachedData": {
+    "description": "Default offline message"
+  },
+  
+  "myNotes": "My Notes:",
+  "@myNotes": {
+    "description": "Label for personal notes section"
+  },
+  
+  "editRating": "Edit Rating",
+  "@editRating": {
+    "description": "Edit rating button"
+  },
+  
+  "haventRatedYet": "You haven't rated {itemName} yet",
+  "@haventRatedYet": {
+    "description": "Message when user hasn't rated an item",
+    "placeholders": {
+      "itemName": {
+        "type": "String",
+        "example": "Cheddar"
+      }
+    }
+  },
+  
+  "addRatingToBuild": "Add your rating to build your personal reference list",
+  "@addRatingToBuild": {
+    "description": "Instruction to add rating"
+  },
+  
+  "noRatingsYet": "No Ratings Yet",
+  "@noRatingsYet": {
+    "description": "Title when no ratings exist"
+  },
+  
+  "beFirstToRate": "Be the first to rate {itemName}",
+  "@beFirstToRate": {
+    "description": "Encouragement to rate first",
+    "placeholders": {
+      "itemName": {
+        "type": "String",
+        "example": "Cheddar"
+      }
+    }
+  },
+  
+  "communityRatings": "Community Ratings",
+  "@communityRatings": {
+    "description": "Community ratings section title"
+  },
+  
+  "ratingsCount": "{count} {count, plural, =1{rating} other{ratings}}",
+  "@ratingsCount": {
+    "description": "Count of ratings with proper pluralization",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  
+  "averageRating": "Average: {rating} / 5.0",
+  "@averageRating": {
+    "description": "Average rating display",
+    "placeholders": {
+      "rating": {
+        "type": "String",
+        "example": "4.2"
+      }
+    }
+  },
+  
+  "mostCommonRating": "Most common: {stars} stars ({count} {count, plural, =1{rating} other{ratings}})",
+  "@mostCommonRating": {
+    "description": "Most common rating statistic",
+    "placeholders": {
+      "stars": {
+        "type": "int",
+        "example": "4"
+      },
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  
+  "sharedRatings": "Shared Ratings",
+  "@sharedRatings": {
+    "description": "Shared ratings section title"
+  },
+  
+  "noSharedRatings": "No Recommendations",
+  "@noSharedRatings": {
+    "description": "Title when no shared ratings exist"
+  },
+  
+  "noSharedRatingsMessage": "No one has shared their recommendations for {itemName} with you yet",
+  "@noSharedRatingsMessage": {
+    "description": "Message when no shared ratings exist",
+    "placeholders": {
+      "itemName": {
+        "type": "String",
+        "example": "Cheddar"
+      }
+    }
+  },
+  
+  "profileIdLabel": "Profile ID: {id}",
+  "@profileIdLabel": {
+    "description": "Profile ID display",
+    "placeholders": {
+      "id": {
+        "type": "String",
+        "example": "123"
+      }
+    }
+  },
+  
+  "editProfileTooltip": "Edit Profile",
+  "@editProfileTooltip": {
+    "description": "Tooltip for edit profile button"
+  },
+  
+  "deleteProfileTooltip": "Delete Profile",
+  "@deleteProfileTooltip": {
+    "description": "Tooltip for delete profile button"
+  },
+  
+  "newProfile": "New",
+  "@newProfile": {
+    "description": "Label for new profile (no ID yet)"
+  },
+  
+  "originLabel": "Origin",
+  "@originLabel": {
+    "description": "Origin field label"
+  },
+  
+  "producerLabel": "Producer",
+  "@producerLabel": {
+    "description": "Producer field label"
+  },
+  
+  "descriptionLabel": "Description",
+  "@descriptionLabel": {
+    "description": "Description field label"
+  },
+  
+  "initializingApp": "Initializing A la carte...",
+  "@initializingApp": {
+    "description": "Loading message during app initialization"
+  },
+  
+  "initializationTakingLonger": "This is taking longer than expected...",
+  "@initializationTakingLonger": {
+    "description": "Extended loading message when initialization is slow"
+  },
+  
+  "profileDataCorrupted": "Profile data corrupted. Please select your profile again.",
+  "@profileDataCorrupted": {
+    "description": "Error message when saved profile data is invalid"
+  },
+  
+  "profileNotFoundOnServer": "Your profile was not found. Please select a valid profile.",
+  "@profileNotFoundOnServer": {
+    "description": "Error message when saved profile doesn't exist on server"
+  },
+  
+  "rateItem": "Rate Item",
+  "@rateItem": {
+    "description": "Rate item button/screen title"
+  },
+  
+  "rateItemName": "Rate {itemName}",
+  "@rateItemName": {
+    "description": "Rate specific item title",
+    "placeholders": {
+      "itemName": {
+        "type": "String",
+        "example": "Cheddar"
+      }
+    }
+  },
+  
+  "yourRating": "Your Rating",
+  "@yourRating": {
+    "description": "Your rating section label"
+  },
+  
+  "selectRating": "Tap to select rating",
+  "@selectRating": {
+    "description": "Helper text for rating selection"
+  },
+  
+  "ratingRequired": "Please select a rating",
+  "@ratingRequired": {
+    "description": "Validation message for required rating"
+  },
+  
+  "addNotes": "Add your notes",
+  "@addNotes": {
+    "description": "Notes section label"
+  },
+  
+  "notesHelper": "Add your personal notes (optional)",
+  "@notesHelper": {
+    "description": "Helper text for notes field"
+  },
+  
+  "saveRating": "Save Rating",
+  "@saveRating": {
+    "description": "Save rating button text"
+  },
+  
+  "ratingCreated": "Rating saved successfully!",
+  "@ratingCreated": {
+    "description": "Success message after creating rating"
+  },
+  
+  "couldNotSaveRating": "Could not save rating. Please try again.",
+  "@couldNotSaveRating": {
+    "description": "Error message when rating creation fails"
+  },
+  
+  "offlineRatingCreation": "Offline - Changes may not be saved until reconnected",
+  "@offlineRatingCreation": {
+    "description": "Offline message for rating creation"
+  },
+  
+  "noUserSelected": "No user selected",
+  "@noUserSelected": {
+    "description": "Error when no user is selected"
+  },
+  
+  "dismiss": "Dismiss",
+  "@dismiss": {
+    "description": "Dismiss action for snackbars"
+  },
+  
+  "offlineUserSwitch": "Offline - Rating data not available for this user",
+  "@offlineUserSwitch": {
+    "description": "Message when switching users while offline"
+  },
+  
+  "editRating": "Edit Rating",
+  "@editRating": {
+    "description": "Edit rating screen title"
+  },
+  
+  "editRatingForItem": "Edit Rating for {itemName}",
+  "@editRatingForItem": {
+    "description": "Edit rating for specific item title",
+    "placeholders": {
+      "itemName": {
+        "type": "String",
+        "example": "Cheddar"
+      }
+    }
+  },
+  
+  "saveChanges": "Save Changes",
+  "@saveChanges": {
+    "description": "Save changes button text"
+  },
+  
+  "ratingUpdated": "Rating updated successfully!",
+  "@ratingUpdated": {
+    "description": "Success message after updating rating"
+  },
+  
+  "couldNotUpdateRating": "Could not update rating. Please try again.",
+  "@couldNotUpdateRating": {
+    "description": "Error message when rating update fails"
+  },
+  
+  "offlineRatingEdit": "Offline - Changes may not be saved until reconnected",
+  "@offlineRatingEdit": {
+    "description": "Offline message for rating edit"
+  },
+  
+  "ratingNotFound": "Rating not found",
+  "@ratingNotFound": {
+    "description": "Error when rating to edit is not found"
+  },
+  
+  "editingRatingFor": "Editing rating for",
+  "@editingRatingFor": {
+    "description": "Label showing what item is being rated"
+  },
+  
+  "originalRating": "Original rating: {rating} stars",
+  "@originalRating": {
+    "description": "Shows the original rating value",
+    "placeholders": {
+      "rating": {
+        "type": "int",
+        "example": "4"
+      }
+    }
+  },
+  
+  "unsavedChanges": "You have unsaved changes",
+  "@unsavedChanges": {
+    "description": "Indicator that there are unsaved changes"
+  },
+  
+  "shareRating": "Share Rating",
+  "@shareRating": {
+    "description": "Share rating button text"
+  },
+  
+  "shareWith": "Share with...",
+  "@shareWith": {
+    "description": "Share with users action"
+  },
+  
+  "shareRatingWith": "Share Rating With",
+  "@shareRatingWith": {
+    "description": "Share rating dialog title"
+  },
+  
+  "selectUsersToShare": "Select users to share this rating with",
+  "@selectUsersToShare": {
+    "description": "Instructions for sharing dialog"
+  },
+  
+  "shareRatingSuccess": "Rating shared successfully!",
+  "@shareRatingSuccess": {
+    "description": "Success message when sharing rating"
+  },
+  
+  "shareRatingError": "Could not share rating. Please try again.",
+  "@shareRatingError": {
+    "description": "Error message when sharing fails"
+  },
+  
+  "sharedWith": "Shared with {count} {count, plural, =1{person} other{people}}",
+  "@sharedWith": {
+    "description": "Shows number of people rating is shared with",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  
+  "shareButtonText": "Share",
+  "@shareButtonText": {
+    "description": "Share button in dialog"
+  },
+  
+  "noUsersAvailable": "No users available to share with",
+  "@noUsersAvailable": {
+    "description": "Message when no other users exist"
+  },
+  
+  "loadingUsers": "Loading users...",
+  "@loadingUsers": {
+    "description": "Loading message for user list"
+  },
+  
+  "recommendations": "Recommendations",
+  "@recommendations": {
+    "description": "Recommendations section title"
+  },
+  
+  "recommendationsFromFriends": "{count} recommendations from friends",
+  "@recommendationsFromFriends": {
+    "description": "Shows count of recommendations from friends",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  
+  "itemTypeNotSupported": "Item type not supported yet",
+  "@itemTypeNotSupported": {
+    "description": "Error when item type is not implemented"
+  },
+  
+  "ratingNotFoundOrNoPermission": "Rating not found or you do not have permission to edit it",
+  "@ratingNotFoundOrNoPermission": {
+    "description": "Error when rating cannot be edited due to missing or permissions"
+  },
+  
+  "noPermissionToEdit": "You do not have permission to edit this rating",
+  "@noPermissionToEdit": {
+    "description": "Error when user lacks permission to edit a rating"
+  },
+  
+  "noNotesAdded": "No notes added",
+  "@noNotesAdded": {
+    "description": "Placeholder when rating has no notes"
+  },
+  
+  "userFallback": "User {userId}",
+  "@userFallback": {
+    "description": "Fallback text when username is not available",
+    "placeholders": {
+      "userId": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  
+  "deleteRating": "Delete Rating",
+  "@deleteRating": {
+    "description": "Delete rating button text"
+  },
+  
+  "deleteRatingConfirmation": "Delete this rating?",
+  "@deleteRatingConfirmation": {
+    "description": "Delete rating dialog title"
+  },
+  
+  "deleteRatingWarning": "This action cannot be undone.",
+  "@deleteRatingWarning": {
+    "description": "Warning about permanent deletion"
+  },
+  
+  "deleteRatingWithSharing": "This will also remove it from {count} {count, plural, =1{person} other{people}} who have access to your recommendation.",
+  "@deleteRatingWithSharing": {
+    "description": "Warning about sharing impact when deleting",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  
+  "deleteRatingGenericSharing": "If this rating has been shared, it will also be removed from other users' recommendations.",
+  "@deleteRatingGenericSharing": {
+    "description": "Generic warning about potential sharing impact"
+  },
+  
+  "ratingDeleted": "Rating deleted successfully",
+  "@ratingDeleted": {
+    "description": "Success message after deleting rating"
+  },
+  
+  "couldNotDeleteRating": "Could not delete rating. Please try again.",
+  "@couldNotDeleteRating": {
+    "description": "Error message when rating deletion fails"
+  },
+  
+  "makePrivate": "Make Private",
+  "@makePrivate": {
+    "description": "Button to make rating private (unshare from all)"
+  },
+  
+  "noChanges": "No Changes",
+  "@noChanges": {
+    "description": "Button text when there are no changes to save"
+  },
+  
+  "addNewItem": "Add New {itemType}",
+  "@addNewItem": {
+    "description": "Add new item button/screen title",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "editItem": "Edit {itemName}",
+  "@editItem": {
+    "description": "Edit item screen title",
+    "placeholders": {
+      "itemName": {
+        "type": "String",
+        "example": "Cheddar"
+      }
+    }
+  },
+  
+  "createItem": "Create {itemType}",
+  "@createItem": {
+    "description": "Create item screen title",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "itemCreated": "{itemType} created successfully!",
+  "@itemCreated": {
+    "description": "Success message after creating item",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "itemUpdated": "{itemType} updated successfully!",
+  "@itemUpdated": {
+    "description": "Success message after updating item",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "couldNotCreateItem": "Could not create {itemType}. Please try again.",
+  "@couldNotCreateItem": {
+    "description": "Error message when item creation fails",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "cheese"
+      }
+    }
+  },
+  
+  "couldNotUpdateItem": "Could not update {itemType}. Please try again.",
+  "@couldNotUpdateItem": {
+    "description": "Error message when item update fails",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "cheese"
+      }
+    }
+  },
+  
+  "itemNameRequired": "{itemType} name is required",
+  "@itemNameRequired": {
+    "description": "Validation message for required item name",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "itemNameTooShort": "{itemType} name must be at least 2 characters",
+  "@itemNameTooShort": {
+    "description": "Validation message for item name minimum length",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "itemNameTooLong": "{itemType} name must be less than 100 characters",
+  "@itemNameTooLong": {
+    "description": "Validation message for item name maximum length",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "typeRequired": "Type is required",
+  "@typeRequired": {
+    "description": "Validation message for required type field"
+  },
+  
+  "originRequired": "Origin is required",
+  "@originRequired": {
+    "description": "Validation message for required origin field"
+  },
+  
+  "producerRequired": "Producer is required",
+  "@producerRequired": {
+    "description": "Validation message for required producer field"
+  },
+  
+  "selectType": "Select type...",
+  "@selectType": {
+    "description": "Dropdown placeholder for type selection"
+  },
+  
+  "enterOrigin": "Enter origin",
+  "@enterOrigin": {
+    "description": "Placeholder for origin field"
+  },
+  
+  "enterProducer": "Enter producer",
+  "@enterProducer": {
+    "description": "Placeholder for producer field"
+  },
+  
+  "enterDescription": "Enter description (optional)",
+  "@enterDescription": {
+    "description": "Placeholder for description field"
+  },
+  
+  "descriptionTooLong": "Description must be less than 500 characters",
+  "@descriptionTooLong": {
+    "description": "Validation message for description maximum length"
+  },
+  
+  "offlineItemCreation": "Offline - Item may not be saved until reconnected",
+  "@offlineItemCreation": {
+    "description": "Offline message for item creation"
+  },
+  
+  "offlineItemEdit": "Offline - Changes may not be saved until reconnected",
+  "@offlineItemEdit": {
+    "description": "Offline message for item editing"
+  },
+  
+  "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to go back?",
+  "@unsavedChangesMessage": {
+    "description": "Warning message for unsaved changes dialog"
+  },
+  
+  "discard": "Discard",
+  "@discard": {
+    "description": "Discard unsaved changes button"
+  },
+  
+  "updateInfoBelow": "Update the information below",
+  "@updateInfoBelow": {
+    "description": "Subtitle for edit forms"
+  },
+  
+  "fillDetailsToAdd": "Fill in the details to add to your collection",
+  "@fillDetailsToAdd": {
+    "description": "Subtitle for create forms"
+  },
+  
+  "saving": "Saving...",
+  "@saving": {
+    "description": "Loading message when saving"
+  },
+  
+  "cheeseTypeHint": "e.g. Soft, Hard, Semi-soft, Blue",
+  "@cheeseTypeHint": {
+    "description": "Hint text for cheese type field"
+  },
+  
+  "enterItemName": "Enter {itemType} name",
+  "@enterItemName": {
+    "description": "Hint text for item name field",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "cheese"
+      }
+    }
+  },
+  
+  "optionalFieldHelper": "Optional - up to {maxLength} characters",
+  "@optionalFieldHelper": {
+    "description": "Helper text for optional fields with character limit",
+    "placeholders": {
+      "maxLength": {
+        "type": "int",
+        "example": "500"
+      }
+    }
+  },
+  
+  "editItemType": "Edit {itemType}",
+  "@editItemType": {
+    "description": "Title for editing item type",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "addNewItemType": "Add New {itemType}",
+  "@addNewItemType": {
+    "description": "Title for adding new item type",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "Cheese"
+      }
+    }
+  },
+  
+  "optional": "Optional",
+  "@optional": {
+    "description": "Label for optional fields"
+  },
+  
+  "searchCheeseHint": "Search cheeses by name, type, origin...",
+  "@searchCheeseHint": {
+    "description": "Hint text for cheese search field"
+  },
+  
+  "noResultsFound": "No Results Found",
+  "@noResultsFound": {
+    "description": "Title when search/filter returns no results"
+  },
+  
+  "adjustSearchFilters": "Try adjusting your search or filters",
+  "@adjustSearchFilters": {
+    "description": "Help text for empty search results"
+  },
+  
+  "clearAllFilters": "Clear All Filters",
+  "@clearAllFilters": {
+    "description": "Button to remove all active filters"
+  },
+  
+  "filterBy": "Filter by {category}",
+  "@filterBy": {
+    "description": "Filter dialog title",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "Type"
+      }
+    }
+  },
+  
+  "showingResults": "Showing {filtered} of {total} items",
+  "@showingResults": {
+    "description": "Search results summary",
+    "placeholders": {
+      "filtered": {
+        "type": "int",
+        "example": "5"
+      },
+      "total": {
+        "type": "int",
+        "example": "20"
+      }
+    }
+  },
+  
+  "searchItemsByName": "Search {itemType}s by name...",
+  "@searchItemsByName": {
+    "description": "Parameterized search hint for any item type",
+    "placeholders": {
+      "itemType": {
+        "type": "String",
+        "example": "cheese"
+      }
+    }
+  },
+  
+  "searchByName": "Search by name...",
+  "@searchByName": {
+    "description": "Generic search hint for any item type"
+  },
+  
+  "searchCheeseByNameHint": "Search cheeses by name...",
+  "@searchCheeseByNameHint": {
+    "description": "Hint text for name-only cheese search field"
+  },
+  
+  "myRatingsFilter": "My Ratings",
+  "@myRatingsFilter": {
+    "description": "Filter chip for user's personal ratings"
+  },
+  
+  "recommendationsFilter": "Recommendations",
+  "@recommendationsFilter": {
+    "description": "Filter chip for items recommended by others"
+  },
+  
+  "ratedFilter": "Rated",
+  "@ratedFilter": {
+    "description": "Filter chip for items that have been rated"
+  },
+  
+  "unratedFilter": "Unrated",
+  "@unratedFilter": {
+    "description": "Filter chip for items that haven't been rated"
+  },
+  
+  "allFilterOption": "All",
+  "@allFilterOption": {
+    "description": "Option to show all items in filter dialogs"
+  },
+  
+  "showFilters": "Show Filters",
+  "@showFilters": {
+    "description": "Tooltip to expand filter interface"
+  },
+  
+  "hideFilters": "Hide Filters",
+  "@hideFilters": {
+    "description": "Tooltip to collapse filter interface"
+  },
+  
+  "userProfile": "User Profile",
+  "@userProfile": {
+    "description": "User profile tooltip"
+  },
+  
+  "signOut": "Sign Out",
+  "@signOut": {
+    "description": "Sign out button text"
+  },
+  
+  "signOutConfirmation": "Are you sure you want to sign out? You will need to sign in again to access your ratings.",
+  "@signOutConfirmation": {
+    "description": "Sign out confirmation message"
+  },
+  
+  "appPreferences": "App Preferences",
+  "@appPreferences": {
+    "description": "App preferences section title"
+  },
+  
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Dark mode setting title"
+  },
+  
+  "darkModeDescription": "Use dark theme throughout the app",
+  "@darkModeDescription": {
+    "description": "Dark mode setting description"
+  },
+  
+  "displayLanguage": "Display Language",
+  "@displayLanguage": {
+    "description": "Language setting title"
+  },
+  
+  "displayLanguageDescription": "Choose your preferred language",
+  "@displayLanguageDescription": {
+    "description": "Language setting description"
+  },
+  
+  "profileAndAccount": "Profile & Account",
+  "@profileAndAccount": {
+    "description": "Profile and account section title"
+  },
+  
+  "displayName": "Display Name",
+  "@displayName": {
+    "description": "Display name field title"
+  },
+  
+  "tapToSetDisplayName": "Tap to set display name",
+  "@tapToSetDisplayName": {
+    "description": "Placeholder for empty display name"
+  },
+  
+  "editDisplayName": "Edit Display Name",
+  "@editDisplayName": {
+    "description": "Edit display name dialog title"
+  },
+  
+  "displayNameHelper": "This is how other users will see you",
+  "@displayNameHelper": {
+    "description": "Display name field helper text"
+  },
+  
+  "displayNameUpdated": "Display name updated successfully",
+  "@displayNameUpdated": {
+    "description": "Success message for display name update"
+  },
+  
+  "errorUpdatingDisplayName": "Error updating display name",
+  "@errorUpdatingDisplayName": {
+    "description": "Error message for display name update"
+  },
+  
+  "discoverableForSharing": "Discoverable for Sharing",
+  "@discoverableForSharing": {
+    "description": "Discoverable setting title"
+  },
+  
+  "discoverableDescription": "Allow other users to find you when sharing ratings",
+  "@discoverableDescription": {
+    "description": "Discoverable setting description"
+  },
+  
+  "discoverabilityEnabled": "You are now discoverable for sharing",
+  "@discoverabilityEnabled": {
+    "description": "Message when discoverability is enabled"
+  },
+  
+  "discoverabilityDisabled": "You are no longer discoverable for sharing",
+  "@discoverabilityDisabled": {
+    "description": "Message when discoverability is disabled"
+  },
+  
+  "errorUpdatingSettings": "Error updating settings",
+  "@errorUpdatingSettings": {
+    "description": "Generic error message for settings update"
+  },
+  
+  "about": "About",
+  "@about": {
+    "description": "About section title"
+  },
+  
+  "appVersion": "App Version",
+  "@appVersion": {
+    "description": "App version setting title"
+  },
+  
+  "privacyPolicy": "Privacy Policy",
+  "@privacyPolicy": {
+    "description": "Privacy policy setting title"
+  },
+  
+  "learnAboutPrivacy": "Learn about your data and privacy",
+  "@learnAboutPrivacy": {
+    "description": "Privacy policy setting description"
+  },
+  
+  "privacyPolicyContent": "A la carte is designed with privacy first. All your ratings are private by default. You choose exactly which ratings to share and with whom. Your email and full name are never shown to other users.",
+  "@privacyPolicyContent": {
+    "description": "Privacy policy content"
+  },
+  
+  "close": "Close",
+  "@close": {
+    "description": "Close button text"
+  },
+  
+  "dangerZone": "Danger Zone",
+  "@dangerZone": {
+    "description": "Danger zone section title"
+  },
+  
+  "deleteAccount": "Delete Account",
+  "@deleteAccount": {
+    "description": "Delete account setting title"
+  },
+  
+  "deleteAccountDescription": "Permanently delete your account and all data",
+  "@deleteAccountDescription": {
+    "description": "Delete account setting description"
+  },
+  
+  "deleteAccountWarning": "This will permanently delete your account and all your data. This action cannot be undone.",
+  "@deleteAccountWarning": {
+    "description": "Delete account warning message"
+  },
+  
+  "deleteAccountConsequences": "All your ratings, shared content, and profile information will be permanently removed from A la carte.",
+  "@deleteAccountConsequences": {
+    "description": "Delete account consequences description"
+  },
+  
+  "accountDeleted": "Account deleted successfully",
+  "@accountDeleted": {
+    "description": "Account deletion success message"
+  },
+  
+  "errorDeletingAccount": "Error deleting account",
+  "@errorDeletingAccount": {
+    "description": "Error message for account deletion"
+  },
+  
+  "anonymousUser": "Anonymous User",
+  "@anonymousUser": {
+    "description": "Privacy-safe fallback for unknown users"
+  },
+  
+  "privacySettings": "Privacy Settings",
+  "@privacySettings": {
+    "description": "Privacy settings screen title"
+  },
+  
+  "userNotAuthenticated": "User not authenticated",
+  "@userNotAuthenticated": {
+    "description": "Error when user is not logged in"
+  },
+  
+  "privacyOverview": "Privacy Overview",
+  "@privacyOverview": {
+    "description": "Privacy overview section title"
+  },
+  
+  "yourSharingActivity": "Your Sharing Activity",
+  "@yourSharingActivity": {
+    "description": "Sharing activity summary title"
+  },
+  
+  "sharedRatingsCount": "{count} shared {count, plural, =1{rating} other{ratings}}",
+  "@sharedRatingsCount": {
+    "description": "Count of shared ratings",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  
+  "recipientsCount": "{count} {count, plural, =1{recipient} other{recipients}}",
+  "@recipientsCount": {
+    "description": "Count of unique recipients",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  
+  "discoverySettings": "Discovery Settings",
+  "@discoverySettings": {
+    "description": "Discovery settings section title"
+  },
+  
+  "discoverabilityExplanation": "Controls who can find you when sharing new ratings",
+  "@discoverabilityExplanation": {
+    "description": "Explanation of discoverability setting"
+  },
+  
+  "discoverabilityDisabledWithExplanation": "You are no longer discoverable. Existing shared ratings remain accessible.",
+  "@discoverabilityDisabledWithExplanation": {
+    "description": "Message when discoverability is disabled with context"
+  },
+  
+  "bulkPrivacyActions": "Bulk Privacy Actions",
+  "@bulkPrivacyActions": {
+    "description": "Bulk actions section title"
+  },
+  
+  "makeAllRatingsPrivate": "Make All Ratings Private",
+  "@makeAllRatingsPrivate": {
+    "description": "Bulk action to make all ratings private"
+  },
+  
+  "makeAllRatingsPrivateDescription": "Remove sharing from all your ratings at once",
+  "@makeAllRatingsPrivateDescription": {
+    "description": "Description of make all private action"
+  },
+  
+  "removePersonFromAllShares": "Remove Person from All Shares",
+  "@removePersonFromAllShares": {
+    "description": "Bulk action to remove specific person from all shares"
+  },
+  
+  "removePersonFromAllSharesDescription": "Remove a specific person from all your shared ratings",
+  "@removePersonFromAllSharesDescription": {
+    "description": "Description of remove person action"
+  },
+  
+  "comingSoonLabel": "(Coming Soon)",
+  "@comingSoonLabel": {
+    "description": "Label for features not yet implemented"
+  },
+  
+  "manageIndividualShares": "Manage Individual Shares",
+  "@manageIndividualShares": {
+    "description": "Individual rating management section title"
+  },
+  
+  "noSharedRatingsYet": "No Shared Ratings Yet",
+  "@noSharedRatingsYet": {
+    "description": "Empty state for no shared ratings"
+  },
+  
+  "noSharedRatingsExplanation": "All your ratings are currently private. Share ratings to help others discover great items!",
+  "@noSharedRatingsExplanation": {
+    "description": "Explanation when user has no shared ratings"
+  },
+  
+  "sharedWithCount": "Shared with {count} {count, plural, =1{person} other{people}}",
+  "@sharedWithCount": {
+    "description": "Count of people rating is shared with",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  
+  "manageSharingForRating": "Manage sharing for this rating",
+  "@manageSharingForRating": {
+    "description": "Tooltip for manage sharing button"
+  },
+  
+  "viewAllSharedRatings": "View All {count} Shared Ratings",
+  "@viewAllSharedRatings": {
+    "description": "Button to view all shared ratings",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "15"
+      }
+    }
+  },
+  
+  "makeAllPrivateWarning": "This will remove sharing from all {count} of your shared ratings. Recipients will no longer see your recommendations.",
+  "@makeAllPrivateWarning": {
+    "description": "Warning for bulk make private action",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
+  
+  "makeAllPrivateConsequences": "This action cannot be undone. You will need to re-share each rating individually if you change your mind.",
+  "@makeAllPrivateConsequences": {
+    "description": "Consequences of bulk make private action"
+  },
+  
+  "makingRatingsPrivate": "Making ratings private...",
+  "@makingRatingsPrivate": {
+    "description": "Loading message for bulk privacy action"
+  },
+  
+  "allRatingsMadePrivate": "All ratings are now private",
+  "@allRatingsMadePrivate": {
+    "description": "Success message for bulk privacy action"
+  },
+  
+  "errorMakingRatingsPrivate": "Error making ratings private",
+  "@errorMakingRatingsPrivate": {
+    "description": "Error message for bulk privacy action"
+  },
+  
+  "featureComingSoon": "Feature coming soon",
+  "@featureComingSoon": {
+    "description": "Generic coming soon message"
+  },
+  
+  "useExistingShareDialog": "Use the share button on the rating to manage sharing",
+  "@useExistingShareDialog": {
+    "description": "Instruction to use existing share functionality"
+  },
+  
+  "manageDataSharing": "Manage your data sharing and privacy controls",
+  "@manageDataSharing": {
+    "description": "Description for privacy settings navigation"
+  },
+  
+  "noRecipientsToRemove": "No recipients to remove",
+  "@noRecipientsToRemove": {
+    "description": "Message when no recipients exist for removal"
+  },
+  
+  "selectPersonToRemove": "Select a person to remove from all your shared ratings:",
+  "@selectPersonToRemove": {
+    "description": "Instruction for person removal dialog"
+  },
+  
+  "sharedRatingsWithUser": "{count} shared {count, plural, =1{rating} other{ratings}}",
+  "@sharedRatingsWithUser": {
+    "description": "Count of ratings shared with specific user",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  
+  "removeUserFromShares": "Remove User from Shares",
+  "@removeUserFromShares": {
+    "description": "Remove user from shares dialog title"
+  },
+  
+  "removeUserWarning": "This will remove {userName} from all your shared ratings. They will no longer see your recommendations.",
+  "@removeUserWarning": {
+    "description": "Warning for removing user from all shares",
+    "placeholders": {
+      "userName": {
+        "type": "String",
+        "example": "Alice"
+      }
+    }
+  },
+  
+  "removeUser": "Remove User",
+  "@removeUser": {
+    "description": "Remove user button text"
+  },
+  
+  "removingUserFromShares": "Removing {userName} from shares...",
+  "@removingUserFromShares": {
+    "description": "Loading message for user removal",
+    "placeholders": {
+      "userName": {
+        "type": "String",
+        "example": "Alice"
+      }
+    }
+  },
+  
+  "userRemovedFromShares": "{userName} removed from {count} {count, plural, =1{rating} other{ratings}}",
+  "@userRemovedFromShares": {
+    "description": "Success message for user removal",
+    "placeholders": {
+      "userName": {
+        "type": "String",
+        "example": "Alice"
+      },
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  
+  "errorRemovingUserFromShares": "Error removing user from shares",
+  "@errorRemovingUserFromShares": {
+    "description": "Error message for user removal"
+  },
+  
+  "sharingPreferencesUpdated": "Sharing preferences updated successfully",
+  "@sharingPreferencesUpdated": {
+    "description": "Success message when sharing preferences are updated"
+  },
+  
+  "ratingUnsharedFromUsers": "Rating unshared from {count} {count, plural, =1{user} other{users}}",
+  "@ratingUnsharedFromUsers": {
+    "description": "Success message when rating is unshared from users",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  
+  "managePrivacyAndDiscovery": "Manage your privacy and discovery controls",
+  "@managePrivacyAndDiscovery": {
+    "description": "Description for comprehensive privacy settings navigation"
+  },
+  
+  "loadingItemDetails": "Loading item details...",
+  "@loadingItemDetails": {
+    "description": "Message shown when loading missing item data"
+  },
+  
+  "bulkPrivacyActionsComingSoon": "Bulk privacy actions coming soon",
+  "@bulkPrivacyActionsComingSoon": {
+    "description": "Message for bulk privacy features not yet implemented"
+  },
+  
+  "removePersonFeatureComingSoon": "Remove person feature coming soon",
+  "@removePersonFeatureComingSoon": {
+    "description": "Message for remove person feature not yet implemented"
+  },
+  
+  "cannotManageSharing": "Cannot manage sharing for this rating",
+  "@cannotManageSharing": {
+    "description": "Error message when rating sharing cannot be managed"
+  },
+  
+  "errorUpdatingSharing": "Error updating sharing",
+  "@errorUpdatingSharing": {
+    "description": "Generic error message for sharing update failures"
+  },
+  
+  "featureNotImplementedOnServer": "Feature not yet implemented on server",
+  "@featureNotImplementedOnServer": {
+    "description": "Error message when server feature is not available"
+  },
+  
+  "invalidDisplayName": "Invalid display name",
+  "@invalidDisplayName": {
+    "description": "Error message for invalid display name input"
+  },
+  
+  "typeDisplayNameToConfirm": "To confirm deletion, type your display name \"{displayName}\" below:",
+  "@typeDisplayNameToConfirm": {
+    "description": "Instruction for typing display name confirmation",
+    "placeholders": {
+      "displayName": {
+        "type": "String",
+        "example": "Alice Johnson"
+      }
+    }
+  },
+  
+  "deletingAccount": "Deleting account...",
+  "@deletingAccount": {
+    "description": "Loading message during account deletion"
+  },
+  
+  "deletionMayTakeTime": "This may take a moment",
+  "@deletionMayTakeTime": {
+    "description": "Subtitle for deletion loading dialog"
+  },
+  
+  "thisActionCannotBeUndone": "This action cannot be undone.",
+  "@thisActionCannotBeUndone": {
+    "description": "Warning about irreversible deletion"
+  },
+  
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button text"
+  },
+  
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button text"
+  },
+  
+  "connectionRequired": "Connection Required",
+  "@connectionRequired": {
+    "description": "Title for operations that require internet"
+  },
+  
+  "offlineOperationBlocked": "This operation requires an internet connection",
+  "@offlineOperationBlocked": {
+    "description": "Generic message for blocked offline operations"
+  },
+  
+  "connectAndRetry": "Please connect to the internet and try again",
+  
+  "noInternetConnectionTitle": "No Internet Connection",
+  "@noInternetConnectionTitle": {
+    "description": "Title for no internet connection screen"
+  },
+  
+  "serverUnavailableTitle": "Server Unavailable",
+  "@serverUnavailableTitle": {
+    "description": "Title for server unavailable screen"
+  },
+  
+  "connectedTitle": "Connected",
+  "@connectedTitle": {
+    "description": "Title for connection restored screen"
+  },
+  
+  "noInternetConnectionDescription": "A la carte needs an internet connection to sync your ratings and preferences. Please check your network settings and try again.",
+  "@noInternetConnectionDescription": {
+    "description": "Description for no internet connection screen"
+  },
+  
+  "serverUnavailableDescription": "A la carte server is temporarily unavailable. This might be due to maintenance or a temporary issue. We'll keep trying to reconnect.",
+  "@serverUnavailableDescription": {
+    "description": "Description for server unavailable screen"
+  },
+  
+  "connectionRestoredDescription": "Connection restored! You can now use all features of A la carte.",
+  "@connectionRestoredDescription": {
+    "description": "Description for connection restored screen"
+  },
+  
+  "signInRequiresConnection": "Sign in requires an internet connection",
+  "@signInRequiresConnection": {
+    "description": "Error message when trying to sign in while offline"
+  },
+  
+  "serverTemporarilyUnavailable": "Server temporarily unavailable. Please try again.",
+  "@serverTemporarilyUnavailable": {
+    "description": "Error message for server 500 errors"
+  },
+  
+  "connectionFailedCheckNetwork": "Connection failed. Please check your network and try again.",
+  "@connectionFailedCheckNetwork": {
+    "description": "Generic connection failure message"
+  },
+  
+  "settingUpPreferenceHub": "Setting up your preference hub...",
+  "@settingUpPreferenceHub": {
+    "description": "Loading message for preference hub setup"
+  },
+  
+  "verifyingAccount": "Verifying account...",
+  "@verifyingAccount": {
+    "description": "Loading message during account verification"
+  },
+  
+  "workingOffline": "Working offline...",
+  "@workingOffline": {
+    "description": "Loading message when working offline"
+  },
+  
+  "profileSetupRequired": "Profile setup required...",
+  "@profileSetupRequired": {
+    "description": "Loading message when profile setup is needed"
+  },
+  
+  "readyWelcomeBack": "Ready! Welcome back.",
+  "@readyWelcomeBack": {
+    "description": "Loading message when initialization is complete"
+  },
+  
+  "signInRequired": "Sign in required...",
+  "@signInRequired": {
+    "description": "Loading message when sign in is needed"
+  },
+  
+  "preparingPreferences": "Preparing your preferences...",
+  "@preparingPreferences": {
+    "description": "Loading message when preparing user data"
+  },
+  
+  "completeYourProfile": "Complete Your Profile",
+  "@completeYourProfile": {
+    "description": "Title for profile completion screen"
+  },
+  
+  "welcomeToAlacarte": "Welcome to A la carte!",
+  "@welcomeToAlacarte": {
+    "description": "Welcome message on profile setup screen"
+  },
+  
+  "hiUserSetupProfile": "Hi {firstName}! Let's set up your profile.",
+  "@hiUserSetupProfile": {
+    "description": "Personalized setup greeting",
+    "placeholders": {
+      "firstName": {
+        "type": "String",
+        "example": "David"
+      }
+    }
+  },
+  
+  "displayNameFieldHelper": "This is how other users will see you when you share ratings",
+  "@displayNameFieldHelper": {
+    "description": "Helper text for display name field"
+  },
+  
+  "displayNameRequired": "Display name is required",
+  "@displayNameRequired": {
+    "description": "Validation error for empty display name"
+  },
+  
+  "displayNameTooShort": "Display name must be at least 2 characters",
+  "@displayNameTooShort": {
+    "description": "Validation error for short display name"
+  },
+  
+  "displayNameTooLong": "Display name must be less than 50 characters",
+  "@displayNameTooLong": {
+    "description": "Validation error for long display name"
+  },
+  
+  "displayNameAvailable": "✓ Display name is available",
+  "@displayNameAvailable": {
+    "description": "Success message when display name is available"
+  },
+  
+  "displayNameTaken": "✗ Display name is already taken",
+  "@displayNameTaken": {
+    "description": "Error message when display name is unavailable"
+  },
+  
+  "couldNotCheckAvailability": "⚠ Could not check availability",
+  "@couldNotCheckAvailability": {
+    "description": "Error message when availability check fails"
+  },
+  
+  "privacySettingsTitle": "Privacy Settings",
+  "@privacySettingsTitle": {
+    "description": "Title for privacy settings section"
+  },
+  
+  "discoverableByOthers": "Discoverable by Others",
+  "@discoverableByOthers": {
+    "description": "Label for discoverability toggle"
+  },
+  
+  "discoverabilityHelper": "Allow other users to find you when sharing ratings. You can change this later in settings.",
+  "@discoverabilityHelper": {
+    "description": "Helper text for discoverability setting"
+  },
+  
+  "settingUpProfile": "Setting up profile...",
+  "@settingUpProfile": {
+    "description": "Loading message during profile completion"
+  },
+  
+  "completeProfile": "Complete Profile",
+  "@completeProfile": {
+    "description": "Button text to complete profile setup"
+  },
+  
+  "yourPrivacyMatters": "Your Privacy Matters",
+  "@yourPrivacyMatters": {
+    "description": "Title for privacy information section"
+  },
+  
+  "privacyExplanation": "All your ratings are private by default. You choose exactly which ratings to share and with whom. Your email and full name are never shown to other users - only your display name.",
+  "@privacyExplanation": {
+    "description": "Explanation of privacy model on setup screen"
+  },
+  
+  "automaticLanguage": "Auto ({detectedLanguage})",
+  "@automaticLanguage": {
+    "description": "Automatic language option showing detected language",
+    "placeholders": {
+      "detectedLanguage": {
+        "type": "String",
+        "example": "French"
+      }
+    }
+  },
+  
+  "french": "French",
+  "@french": {
+    "description": "French language option"
+  },
+  
+  "english": "English",
+  "@english": {
+    "description": "English language option"
+  },
+  
+  "followsDeviceLanguage": "Follows device language",
+  "@followsDeviceLanguage": {
+    "description": "Description for automatic language setting"
+  },
+  
+  "gin": "Gin",
+  "@gin": {
+    "description": "Gin category name"
+  },
+  
+  "gins": "Gins",
+  "@gins": {
+    "description": "Plural gin category name"
+  },
+  
+  "profileLabel": "Profile",
+  "@profileLabel": {
+    "description": "Flavor profile field label for gin"
+  },
+  
+  "enterGinName": "Enter gin name",
+  "@enterGinName": {
+    "description": "Placeholder for gin name field"
+  },
+  
+  "enterProfile": "Enter flavor profile",
+  "@enterProfile": {
+    "description": "Placeholder for profile field"
+  },
+  
+  "profileHint": "e.g., Forestier / boréal, Floral, Épicé",
+  "@profileHint": {
+    "description": "Hint text for profile field"
+  },
+  
+  "profileHelperText": "Optional - flavor category",
+  "@profileHelperText": {
+    "description": "Helper text for profile field"
+  },
+  
+  "ginCreated": "Gin created successfully!",
+  "@ginCreated": {
+    "description": "Success message after creating gin"
+  },
+  
+  "ginUpdated": "Gin updated successfully!",
+  "@ginUpdated": {
+    "description": "Success message after updating gin"
+  },
+  
+  "ginDeleted": "Gin deleted successfully!",
+  "@ginDeleted": {
+    "description": "Success message after deleting gin"
+  },
+  
+  "createGin": "Create Gin",
+  "@createGin": {
+    "description": "Create gin screen title"
+  },
+  
+  "editGin": "Edit Gin",
+  "@editGin": {
+    "description": "Edit gin screen title"
+  },
+  
+  "addGin": "Add Gin",
+  "@addGin": {
+    "description": "Add gin button text"
+  },
+  
+  "allGins": "All Gins",
+  "@allGins": {
+    "description": "All gins tab title"
+  },
+  
+  "myGinList": "My Gin List",
+  "@myGinList": {
+    "description": "My gin list tab title"
+  },
+  
+  "filterByProducer": "Filter by producer",
+  "@filterByProducer": {
+    "description": "Filter by producer option"
+  },
+  
+  "filterByOrigin": "Filter by origin",
+  "@filterByOrigin": {
+    "description": "Filter by origin option"
+  },
+  
+  "filterByProfile": "Filter by flavor profile",
+  "@filterByProfile": {
+    "description": "Filter by flavor profile option for gin"
+  },
+  
+  "noGinsFound": "No gins found",
+  "@noGinsFound": {
+    "description": "Message when no gins match search/filter"
+  },
+  
+  "loadingGins": "Loading gins...",
+  "@loadingGins": {
+    "description": "Loading message for gins"
+  },
+  
+  "profileRequired": "Profile is required",
+  "@profileRequired": {
+    "description": "Validation message for required profile field"
+  },
+  
+  "editItemTooltip": "Edit item",
+  "@editItemTooltip": {
+    "description": "Tooltip for edit item button"
+  }
+}

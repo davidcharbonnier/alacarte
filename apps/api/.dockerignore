@@ -1,0 +1,65 @@
+# =============================================================================
+# Docker ignore file for A la carte REST API
+# =============================================================================
+# Minimize build context for security and performance
+# =============================================================================
+
+# Development files
+.env*
+.air.toml
+*.http
+
+# Local seed data (use remote sources in production)
+seed/cheeses.json
+seed/*.json
+
+# Documentation and non-essential files
+README.md
+docs/
+*.md
+*.uxf
+
+# Git and version control
+.git
+.gitignore
+.github/
+
+# Build artifacts and temporary files
+tmp/
+*.log
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+*_test.go
+test/
+tests/
+
+# Docker files (no need to copy into container)
+docker-compose*.yaml
+docker-compose*.yml
+Dockerfile*
+
+# Runtime directories that will be created in container
+bin/
+dist/
+build/
+
+# Development cleanup scripts
+cleanup/

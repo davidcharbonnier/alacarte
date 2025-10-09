@@ -1,0 +1,141 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Kotlin build artifacts
+android/.kotlin/
+
+# Android build outputs (more comprehensive)
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/.cxx/
+android/gradlew
+android/gradlew.bat
+
+# Generated plugin registrant
+android/app/src/main/java/**/GeneratedPluginRegistrant.java
+
+# iOS build outputs
+ios/build/
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+
+# Web build outputs
+web/flutter_service_worker.js
+web/flutter_service_worker.js.map
+web/version.json
+
+# Local development configuration (contains sensitive data)
+.env
+.env.local
+.env.*.local
+
+# Release keystore (keep secure!)
+android/app/release-keystore.jks
+android/key.properties
+**/*.keystore
+**/*.jks
+
+# Build artifacts that shouldn't be committed
+build/app/outputs/flutter-apk/*.apk
+build/app/outputs/bundle/
+*.aab
+*.ap_
+*.dex
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Test results
+test/reports/
+*.test.log
+
+# macOS build outputs
+macos/build/
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/ephemeral/
+macos/Flutter/Flutter-Debug.xcconfig
+macos/Flutter/Flutter-Release.xcconfig
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Linux build outputs  
+linux/build/
+linux/flutter/ephemeral/
+
+# Windows build outputs
+windows/build/
+windows/flutter/ephemeral/
+
+# Firebase (if you add it later)
+# google-services.json
+# GoogleService-Info.plist
+# firebase_options.dart
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.gr.dart
+*.config.dart
+# Exception: Keep localization generated files
+!lib/flutter_gen/**/*.dart
+!lib/l10n/**/*.dart
+
+# Temporary editor files
+*~
+*.swp
+*.swo
+*#
+.#*

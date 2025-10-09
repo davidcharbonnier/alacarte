@@ -1,0 +1,276 @@
+name: Production Release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  version-and-release:
+    runs-on: ubuntu-latest
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: npm run version
+          publish: npm run release
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-docker-images:
+    needs: version-and-release
+    if: needs.version-and-release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    environment: prod
+    strategy:
+      matrix:
+        app: [api, admin]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./apps/${{ matrix.app }}/package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/${{ matrix.app }}
+          file: ./apps/${{ matrix.app }}/Dockerfile
+          push: true
+          target: ${{ matrix.app == 'admin' && 'prod' || '' }}
+          build-args: ${{ matrix.app == 'admin' && format('NEXT_PUBLIC_API_URL={0}', vars.NEXT_PUBLIC_API_URL) || '' }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-${{ matrix.app }}:${{ steps.version.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-${{ matrix.app }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-client:
+    needs: version-and-release
+    if: needs.version-and-release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./apps/client/package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.4'
+          channel: 'stable'
+      
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+      
+      - name: Install dependencies
+        working-directory: ./apps/client
+        run: flutter pub get
+      
+      - name: Generate localizations
+        working-directory: ./apps/client
+        run: flutter gen-l10n
+      
+      - name: Build APK
+        working-directory: ./apps/client
+        run: flutter build apk --release
+      
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-apk-${{ steps.version.outputs.version }}
+          path: apps/client/build/app/outputs/flutter-apk/app-release.apk
+
+  create-releases:
+    needs: [version-and-release, build-docker-images, build-client]
+    if: needs.version-and-release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get versions and determine release strategy
+        id: strategy
+        run: |
+          API_VERSION=$(node -p "require('./apps/api/package.json').version")
+          CLIENT_VERSION=$(node -p "require('./apps/client/package.json').version")
+          ADMIN_VERSION=$(node -p "require('./apps/admin/package.json').version")
+          
+          echo "api=${API_VERSION}" >> $GITHUB_OUTPUT
+          echo "client=${CLIENT_VERSION}" >> $GITHUB_OUTPUT
+          echo "admin=${ADMIN_VERSION}" >> $GITHUB_OUTPUT
+          
+          # Check if all versions are the same (synchronized release)
+          if [ "$API_VERSION" = "$CLIENT_VERSION" ] && [ "$API_VERSION" = "$ADMIN_VERSION" ]; then
+            echo "synchronized=true" >> $GITHUB_OUTPUT
+            echo "Synchronized release detected: v${API_VERSION}"
+          else
+            echo "synchronized=false" >> $GITHUB_OUTPUT
+            echo "Independent patch releases detected"
+            
+            # Detect which packages were published by Changesets
+            PUBLISHED='${{ needs.version-and-release.outputs.publishedPackages }}'
+            echo "Published packages: ${PUBLISHED}"
+            
+            # Check if each app was published
+            if echo "${PUBLISHED}" | grep -q "@alacarte/api"; then
+              echo "api_changed=true" >> $GITHUB_OUTPUT
+              echo "API was published"
+            else
+              echo "api_changed=false" >> $GITHUB_OUTPUT
+            fi
+            
+            if echo "${PUBLISHED}" | grep -q "@alacarte/client"; then
+              echo "client_changed=true" >> $GITHUB_OUTPUT
+              echo "Client was published"
+            else
+              echo "client_changed=false" >> $GITHUB_OUTPUT
+            fi
+            
+            if echo "${PUBLISHED}" | grep -q "@alacarte/admin"; then
+              echo "admin_changed=true" >> $GITHUB_OUTPUT
+              echo "Admin was published"
+            else
+              echo "admin_changed=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+      
+      - name: Download Client APK
+        if: steps.strategy.outputs.synchronized == 'true' || steps.strategy.outputs.client_changed == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: client-apk-${{ steps.strategy.outputs.client }}
+          path: ./artifacts
+      
+      # Synchronized release (all apps same version)
+      - name: Create combined release
+        if: steps.strategy.outputs.synchronized == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.strategy.outputs.api }}
+          name: Release v${{ steps.strategy.outputs.api }}
+          body: |
+            ## 📦 Component Versions
+            - **API:** v${{ steps.strategy.outputs.api }}
+            - **Client:** v${{ steps.strategy.outputs.client }}
+            - **Admin:** v${{ steps.strategy.outputs.admin }}
+
+            ## 🐳 Docker Images
+            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ steps.strategy.outputs.api }}`
+            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ steps.strategy.outputs.admin }}`
+
+            ## 📱 Client APK
+            - Flutter APK attached to this release
+
+            ## 📝 Changelog
+            See individual CHANGELOG.md files in each app directory for detailed changes:
+            - [API Changelog](./apps/api/CHANGELOG.md)
+            - [Client Changelog](./apps/client/CHANGELOG.md)
+            - [Admin Changelog](./apps/admin/CHANGELOG.md)
+          files: ./artifacts/app-release.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Independent patch releases (only for changed apps)
+      - name: Create API release
+        if: steps.strategy.outputs.synchronized == 'false' && steps.strategy.outputs.api_changed == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: api-v${{ steps.strategy.outputs.api }}
+          name: API v${{ steps.strategy.outputs.api }}
+          body: |
+            ## 🔧 Patch Release: API
+
+            **Version:** v${{ steps.strategy.outputs.api }}
+
+            ## 🐳 Docker Image
+            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ steps.strategy.outputs.api }}`
+
+            ## 📝 Changelog
+            See [API Changelog](./apps/api/CHANGELOG.md) for detailed changes.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Client release
+        if: steps.strategy.outputs.synchronized == 'false' && steps.strategy.outputs.client_changed == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: client-v${{ steps.strategy.outputs.client }}
+          name: Client v${{ steps.strategy.outputs.client }}
+          body: |
+            ## 🔧 Patch Release: Client
+
+            **Version:** v${{ steps.strategy.outputs.client }}
+
+            ## 📱 APK
+            - Flutter APK attached to this release
+
+            ## 📝 Changelog
+            See [Client Changelog](./apps/client/CHANGELOG.md) for detailed changes.
+          files: ./artifacts/app-release.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Admin release
+        if: steps.strategy.outputs.synchronized == 'false' && steps.strategy.outputs.admin_changed == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: admin-v${{ steps.strategy.outputs.admin }}
+          name: Admin v${{ steps.strategy.outputs.admin }}
+          body: |
+            ## 🔧 Patch Release: Admin
+
+            **Version:** v${{ steps.strategy.outputs.admin }}
+
+            ## 🐳 Docker Image
+            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ steps.strategy.outputs.admin }}`
+
+            ## 📝 Changelog
+            See [Admin Changelog](./apps/admin/CHANGELOG.md) for detailed changes.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
