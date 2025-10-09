@@ -9,7 +9,7 @@ jobs:
   version-and-release:
     runs-on: ubuntu-latest
     outputs:
-      has_version_change: ${{ steps.detect_changes.outputs.has_changes }}
+      has_release: ${{ steps.changesets.outputs.hasChangesets == 'false' && steps.check_version_commit.outputs.is_version_commit == 'true' }}
       api_version: ${{ steps.get_versions.outputs.api }}
       client_version: ${{ steps.get_versions.outputs.client }}
       admin_version: ${{ steps.get_versions.outputs.admin }}
@@ -35,30 +35,21 @@ jobs:
           title: "chore: version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Detect if version files changed in this push
-        id: detect_changes
+      
+      - name: Check if this is a version commit
+        id: check_version_commit
         run: |
-          # Check if any package.json files were modified in the last commit
-          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
-          
-          if echo "$CHANGED_FILES" | grep -q "apps/.*/package.json"; then
-            # Check if the commit is a version bump (from changesets)
-            LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
-            if [[ "$LAST_COMMIT_MSG" == *"chore: version packages"* ]]; then
-              echo "has_changes=true" >> $GITHUB_OUTPUT
-              echo "✅ Version bump commit detected with package.json changes"
-            else
-              echo "has_changes=false" >> $GITHUB_OUTPUT
-              echo "ℹ️ Package.json changed but not a version bump commit"
-            fi
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if [[ "$COMMIT_MSG" == "chore: version packages"* ]]; then
+            echo "is_version_commit=true" >> $GITHUB_OUTPUT
+            echo "✅ This is a version packages commit"
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No package.json changes detected"
+            echo "is_version_commit=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Not a version packages commit"
           fi
 
       - name: Get current versions
-        if: steps.detect_changes.outputs.has_changes == 'true'
+        if: steps.changesets.outputs.hasChangesets == 'false' && steps.check_version_commit.outputs.is_version_commit == 'true'
         id: get_versions
         run: |
           API_VERSION=$(node -p "require('./apps/api/package.json').version")
@@ -69,14 +60,14 @@ jobs:
           echo "client=${CLIENT_VERSION}" >> $GITHUB_OUTPUT
           echo "admin=${ADMIN_VERSION}" >> $GITHUB_OUTPUT
 
-          echo "Detected versions:"
+          echo "🚀 Release versions:"
           echo "  API: ${API_VERSION}"
           echo "  Client: ${CLIENT_VERSION}"
           echo "  Admin: ${ADMIN_VERSION}"
 
   build-docker-images:
     needs: version-and-release
-    if: needs.version-and-release.outputs.has_version_change == 'true'
+    if: needs.version-and-release.outputs.has_release == 'true'
     runs-on: ubuntu-latest
     environment: prod
     strategy:
@@ -116,7 +107,7 @@ jobs:
 
   build-client:
     needs: version-and-release
-    if: needs.version-and-release.outputs.has_version_change == 'true'
+    if: needs.version-and-release.outputs.has_release == 'true'
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -189,7 +180,7 @@ jobs:
 
   create-releases:
     needs: [version-and-release, build-docker-images, build-client]
-    if: needs.version-and-release.outputs.has_version_change == 'true'
+    if: needs.version-and-release.outputs.has_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
