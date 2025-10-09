@@ -1,5 +1,11 @@
 # @alacarte/api
 
+## 0.2.3
+
+### Patch Changes
+
+- [`89621b4`](https://github.com/davidcharbonnier/alacarte/commit/89621b42d651d8139954004cf27065d482e93039) - Fixed release workflow detection to trigger on Version PR merge
+
 ## 0.2.2
 
 ### Patch Changes
