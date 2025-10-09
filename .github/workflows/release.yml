@@ -9,8 +9,10 @@ jobs:
   version-and-release:
     runs-on: ubuntu-latest
     outputs:
-      published: ${{ steps.changesets.outputs.published }}
-      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+      has_version_change: ${{ steps.detect_changes.outputs.has_changes }}
+      api_version: ${{ steps.get_versions.outputs.api }}
+      client_version: ${{ steps.get_versions.outputs.client }}
+      admin_version: ${{ steps.get_versions.outputs.admin }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,20 +26,49 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Create Release Pull Request or Publish
+      - name: Create Release Pull Request or Version Packages
         id: changesets
         uses: changesets/action@v1
         with:
           version: npm run version
-          publish: npm run release
           commit: 'chore: version packages'
           title: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Detect if this is a version bump commit
+        id: detect_changes
+        run: |
+          # Check if the last commit message is a version bump
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+          if [[ "$LAST_COMMIT_MSG" == *"chore: version packages"* ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Version bump commit detected"
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "Not a version bump commit"
+          fi
+      
+      - name: Get current versions
+        if: steps.detect_changes.outputs.has_changes == 'true'
+        id: get_versions
+        run: |
+          API_VERSION=$(node -p "require('./apps/api/package.json').version")
+          CLIENT_VERSION=$(node -p "require('./apps/client/package.json').version")
+          ADMIN_VERSION=$(node -p "require('./apps/admin/package.json').version")
+          
+          echo "api=${API_VERSION}" >> $GITHUB_OUTPUT
+          echo "client=${CLIENT_VERSION}" >> $GITHUB_OUTPUT
+          echo "admin=${ADMIN_VERSION}" >> $GITHUB_OUTPUT
+          
+          echo "Detected versions:"
+          echo "  API: ${API_VERSION}"
+          echo "  Client: ${CLIENT_VERSION}"
+          echo "  Admin: ${ADMIN_VERSION}"
 
   build-docker-images:
     needs: version-and-release
-    if: needs.version-and-release.outputs.published == 'true'
+    if: needs.version-and-release.outputs.has_version_change == 'true'
     runs-on: ubuntu-latest
     environment: prod
     strategy:
@@ -77,7 +108,7 @@ jobs:
 
   build-client:
     needs: version-and-release
-    if: needs.version-and-release.outputs.published == 'true'
+    if: needs.version-and-release.outputs.has_version_change == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -121,17 +152,17 @@ jobs:
 
   create-releases:
     needs: [version-and-release, build-docker-images, build-client]
-    if: needs.version-and-release.outputs.published == 'true'
+    if: needs.version-and-release.outputs.has_version_change == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       
-      - name: Get versions and determine release strategy
+      - name: Determine release strategy
         id: strategy
         run: |
-          API_VERSION=$(node -p "require('./apps/api/package.json').version")
-          CLIENT_VERSION=$(node -p "require('./apps/client/package.json').version")
-          ADMIN_VERSION=$(node -p "require('./apps/admin/package.json').version")
+          API_VERSION="${{ needs.version-and-release.outputs.api_version }}"
+          CLIENT_VERSION="${{ needs.version-and-release.outputs.client_version }}"
+          ADMIN_VERSION="${{ needs.version-and-release.outputs.admin_version }}"
           
           echo "api=${API_VERSION}" >> $GITHUB_OUTPUT
           echo "client=${CLIENT_VERSION}" >> $GITHUB_OUTPUT
@@ -145,35 +176,13 @@ jobs:
             echo "synchronized=false" >> $GITHUB_OUTPUT
             echo "Independent patch releases detected"
             
-            # Detect which packages were published by Changesets
-            PUBLISHED='${{ needs.version-and-release.outputs.publishedPackages }}'
-            echo "Published packages: ${PUBLISHED}"
-            
-            # Check if each app was published
-            if echo "${PUBLISHED}" | grep -q "@alacarte/api"; then
-              echo "api_changed=true" >> $GITHUB_OUTPUT
-              echo "API was published"
-            else
-              echo "api_changed=false" >> $GITHUB_OUTPUT
-            fi
-            
-            if echo "${PUBLISHED}" | grep -q "@alacarte/client"; then
-              echo "client_changed=true" >> $GITHUB_OUTPUT
-              echo "Client was published"
-            else
-              echo "client_changed=false" >> $GITHUB_OUTPUT
-            fi
-            
-            if echo "${PUBLISHED}" | grep -q "@alacarte/admin"; then
-              echo "admin_changed=true" >> $GITHUB_OUTPUT
-              echo "Admin was published"
-            else
-              echo "admin_changed=false" >> $GITHUB_OUTPUT
-            fi
+            # For independent releases, mark all as changed (simpler approach)
+            echo "api_changed=true" >> $GITHUB_OUTPUT
+            echo "client_changed=true" >> $GITHUB_OUTPUT
+            echo "admin_changed=true" >> $GITHUB_OUTPUT
           fi
       
       - name: Download Client APK
-        if: steps.strategy.outputs.synchronized == 'true' || steps.strategy.outputs.client_changed == 'true'
         uses: actions/download-artifact@v4
         with:
           name: client-apk-${{ steps.strategy.outputs.client }}
