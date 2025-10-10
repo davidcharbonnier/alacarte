@@ -111,13 +111,13 @@ jobs:
 
       - name: Build APK
         working-directory: ./apps/client
-        run: flutter build apk --release
+        run: flutter build apk --debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: alacarte-client-${{ needs.generate-version.outputs.snapshot_version }}
-          path: apps/client/build/app/outputs/flutter-apk/app-release.apk
+          path: apps/client/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
 
   build-admin:
