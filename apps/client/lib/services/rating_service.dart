@@ -5,6 +5,28 @@ import 'api_service.dart';
 
 /// Rating service for managing cheese ratings
 class RatingService extends ApiService {
+  // Singleton pattern to preserve cache
+  static final RatingService _instance = RatingService._internal();
+  
+  factory RatingService() => _instance;
+  
+  RatingService._internal();
+  
+  // Cache for ratings by viewer (5-minute expiry)
+  final Map<int, List<Rating>> _ratingsByViewerCache = {};
+  final Map<int, DateTime> _ratingsByViewerCacheTime = {};
+  static const Duration _ratingsCacheExpiry = Duration(minutes: 5);
+  
+  /// Clear ratings cache (useful after rating changes)
+  void clearCache({int? viewerId}) {
+    if (viewerId != null) {
+      _ratingsByViewerCache.remove(viewerId);
+      _ratingsByViewerCacheTime.remove(viewerId);
+    } else {
+      _ratingsByViewerCache.clear();
+      _ratingsByViewerCacheTime.clear();
+    }
+  }
   /// Create a new rating
   Future<ApiResponse<Rating>> createRating(Rating rating) async {
     return handleResponse<Rating>(
@@ -93,10 +115,27 @@ class RatingService extends ApiService {
   
   /// Get ratings by viewer (user who can see the ratings)
   Future<ApiResponse<List<Rating>>> getRatingsByViewer(int viewerId) async {
-    return handleListResponse<Rating>(
+    // Check cache first
+    if (_ratingsByViewerCache.containsKey(viewerId) && _ratingsByViewerCacheTime.containsKey(viewerId)) {
+      final age = DateTime.now().difference(_ratingsByViewerCacheTime[viewerId]!);
+      if (age < _ratingsCacheExpiry) {
+        return ApiResponseHelper.success(_ratingsByViewerCache[viewerId]!);
+      }
+    }
+    
+    // Fetch from API
+    final response = await handleListResponse<Rating>(
       get(ApiConfig.ratingByViewer(viewerId)),
       (json) => Rating.fromJson(json),
     );
+    
+    // Cache successful responses
+    if (response is ApiSuccess<List<Rating>>) {
+      _ratingsByViewerCache[viewerId] = response.data;
+      _ratingsByViewerCacheTime[viewerId] = DateTime.now();
+    }
+    
+    return response;
   }
   
   /// Get ratings by item (e.g., all ratings for a specific cheese)

@@ -479,6 +479,13 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
     return RefreshIndicator(
       onRefresh: () async {
+        // Clear all caches for fresh data
+        final apiService = ref.read(apiServiceProvider);
+        apiService.clearCommunityStatsCache(); // Clear all stats cache
+        
+        final ratingService = ref.read(ratingServiceProvider);
+        ratingService.clearCache(); // Clear all ratings cache
+        
         await ItemProviderHelper.refreshItems(ref, widget.itemType);
         ref.read(ratingProvider.notifier).refreshRatings();
         // Invalidate batch stats to force refresh

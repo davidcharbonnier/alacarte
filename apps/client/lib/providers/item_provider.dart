@@ -24,8 +24,13 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
 
   /// Load all items from the backend
   Future<void> loadItems() async {
-    // Prevent duplicate loading if already loading or already loaded
-    if (state.isLoading || state.hasLoadedOnce) {
+    // Prevent duplicate loading if already loading
+    if (state.isLoading) {
+      return;
+    }
+    
+    // If already loaded and items exist, skip loading (use cache)
+    if (state.hasLoadedOnce && state.items.isNotEmpty) {
       return;
     }
     

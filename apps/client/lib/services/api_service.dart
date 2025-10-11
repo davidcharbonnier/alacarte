@@ -413,11 +413,47 @@ abstract class ApiService {
     );
   }
   
+  // Community stats cache (5-minute expiry like items)
+  final Map<String, Map<String, dynamic>> _communityStatsCache = {};
+  final Map<String, DateTime> _communityStatsCacheTime = {};
+  static const Duration _statsCacheExpiry = Duration(minutes: 5);
+  
   Future<ApiResponse<Map<String, dynamic>>> getCommunityStats(String itemType, int itemId) async {
-    return handleResponse<Map<String, dynamic>>(
+    final cacheKey = '$itemType-$itemId';
+    
+    // Check cache first
+    if (_communityStatsCache.containsKey(cacheKey) && _communityStatsCacheTime.containsKey(cacheKey)) {
+      final age = DateTime.now().difference(_communityStatsCacheTime[cacheKey]!);
+      if (age < _statsCacheExpiry) {
+        return ApiResponseHelper.success(_communityStatsCache[cacheKey]!);
+      }
+    }
+    
+    // Fetch from API
+    final response = await handleResponse<Map<String, dynamic>>(
       get(ApiConfig.communityStats(itemType, itemId)),
       (data) => data as Map<String, dynamic>,
     );
+    
+    // Cache successful responses
+    if (response is ApiSuccess<Map<String, dynamic>>) {
+      _communityStatsCache[cacheKey] = response.data;
+      _communityStatsCacheTime[cacheKey] = DateTime.now();
+    }
+    
+    return response;
+  }
+  
+  /// Clear community stats cache (useful after rating changes)
+  void clearCommunityStatsCache({String? itemType, int? itemId}) {
+    if (itemType != null && itemId != null) {
+      final cacheKey = '$itemType-$itemId';
+      _communityStatsCache.remove(cacheKey);
+      _communityStatsCacheTime.remove(cacheKey);
+    } else {
+      _communityStatsCache.clear();
+      _communityStatsCacheTime.clear();
+    }
   }
   
   Future<ApiResponse<User>> updateDisplayName(String displayName) async {
@@ -465,8 +501,17 @@ abstract class ApiService {
   }
 }
 
-/// Concrete implementation of ApiService
-class GeneralApiService extends ApiService {}
+/// Concrete implementation of ApiService (Singleton to preserve caches)
+class GeneralApiService extends ApiService {
+  // Singleton pattern
+  static final GeneralApiService _instance = GeneralApiService._internal();
+  
+  factory GeneralApiService() => _instance;
+  
+  GeneralApiService._internal();
+}
 
-/// Provider for the API service
-final apiServiceProvider = Provider<GeneralApiService>((ref) => GeneralApiService());
+/// Provider for the API service (returns singleton)
+final apiServiceProvider = Provider<GeneralApiService>(
+  (ref) => GeneralApiService._instance,
+);

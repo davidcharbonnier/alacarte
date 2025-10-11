@@ -5,8 +5,10 @@ import '../services/rating_service.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 
-/// Provider for the RatingService
-final ratingServiceProvider = Provider<RatingService>((ref) => RatingService());
+/// Provider for the RatingService (singleton to preserve cache)
+final ratingServiceProvider = Provider<RatingService>(
+  (ref) => RatingService(),
+);
 
 /// Provider for managing rating data and operations
 final ratingProvider = StateNotifierProvider<RatingNotifier, RatingState>(
@@ -249,6 +251,11 @@ class RatingNotifier extends StateNotifier<RatingState> {
 
     return response.when(
       success: (createdRating, _) {
+        // Clear caches since ratings changed
+        final apiService = _ref.read(apiServiceProvider);
+        apiService.clearCommunityStatsCache(itemType: itemType, itemId: itemId);
+        _ratingService.clearCache(viewerId: authState.user!.id); // Clear ratings cache
+        
         // Add to rating list
         final updatedRatings = [...state.ratings, createdRating];
         state = state.copyWith(
@@ -313,6 +320,15 @@ class RatingNotifier extends StateNotifier<RatingState> {
 
     return response.when(
       success: (rating, _) {
+        // Clear caches since ratings changed
+        final apiService = _ref.read(apiServiceProvider);
+        apiService.clearCommunityStatsCache(itemType: existingRating.itemType, itemId: existingRating.itemId);
+        
+        final authState = _ref.read(authProvider);
+        if (authState.user?.id != null) {
+          _ratingService.clearCache(viewerId: authState.user!.id); // Clear ratings cache
+        }
+        
         // Update in rating list
         final updatedRatings = state.ratings
             .map((r) => r.id == rating.id ? rating : r)
@@ -338,12 +354,29 @@ class RatingNotifier extends StateNotifier<RatingState> {
 
   /// Delete a rating
   Future<bool> deleteRating(int ratingId) async {
+    // Find the rating before deleting to get itemType and itemId for cache invalidation
+    final existingRating = state.ratings.where((r) => r.id == ratingId).firstOrNull;
+    
     state = state.copyWith(isLoading: true, error: null);
 
     final response = await _ratingService.deleteRating(ratingId);
 
     return response.when(
       success: (_, __) {
+        // Clear caches since ratings changed
+        if (existingRating != null) {
+          final apiService = _ref.read(apiServiceProvider);
+          apiService.clearCommunityStatsCache(
+            itemType: existingRating.itemType,
+            itemId: existingRating.itemId,
+          );
+          
+          final authState = _ref.read(authProvider);
+          if (authState.user?.id != null) {
+            _ratingService.clearCache(viewerId: authState.user!.id); // Clear ratings cache
+          }
+        }
+        
         // Remove from rating list
         final updatedRatings = state.ratings
             .where((r) => r.id != ratingId)
