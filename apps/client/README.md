@@ -73,8 +73,9 @@ Complete client documentation available at [/docs/client/](/docs/client/)
 - **State Management:** Riverpod
 - **Routing:** GoRouter with async initialization
 - **Localization:** Flutter built-in i18n with .arb files
-- **HTTP:** Dio with interceptors
+- **HTTP:** Dio with HTTP/2 support
 - **Storage:** SharedPreferences for local data
+- **Performance:** HTTP/2 multiplexing via Cloud Run
 
 ## Project Structure
 

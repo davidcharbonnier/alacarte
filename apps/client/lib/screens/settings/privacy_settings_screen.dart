@@ -552,16 +552,21 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
   Future<void> _loadItemsByType(
     Map<String, Set<int>> missingItemsByType,
   ) async {
-    for (final entry in missingItemsByType.entries) {
+    // Fire all item type loads in parallel (HTTP/2 multiplexing!)
+    final futures = missingItemsByType.entries.map((entry) {
       final itemType = entry.key;
       final itemIds = entry.value.toList();
 
       // Use ItemProviderHelper - works for any item type!
-      await ItemProviderHelper.loadSpecificItems(ref, itemType, itemIds);
-      
-      // Track loaded items
-      _loadedItemIds.putIfAbsent(itemType, () => <int>{}).addAll(itemIds);
-    }
+      return ItemProviderHelper.loadSpecificItems(ref, itemType, itemIds)
+          .then((_) {
+            // Track loaded items after successful load
+            _loadedItemIds.putIfAbsent(itemType, () => <int>{}).addAll(itemIds);
+          });
+    });
+    
+    // Wait for all types to load in parallel
+    await Future.wait(futures);
   }
 
   bool _isItemDataMissing(Rating rating) {

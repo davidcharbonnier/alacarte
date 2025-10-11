@@ -444,11 +444,22 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       );
     }
 
+    // Load community stats in batch for all visible items (HTTP/2 multiplexing!)
+    final itemIds = itemsToShow.map((item) => item.id!).toList();
+    final batchStatsAsync = ref.watch(
+      communityStatsProvider(
+        CommunityStatsParams(
+          itemType: widget.itemType,
+          itemIds: itemIds,
+        ),
+      ),
+    );
+
     return RefreshIndicator(
       onRefresh: () async {
         await ItemProviderHelper.refreshItems(ref, widget.itemType);
         ref.read(ratingProvider.notifier).refreshRatings();
-        // Invalidate all community stats to force refresh
+        // Invalidate batch stats to force refresh
         ref.invalidate(communityStatsProvider);
       },
       child: isLoading
@@ -457,7 +468,21 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
               ? _buildEmptyItemsState()
               : itemsToShow.isEmpty && activeFilters.isNotEmpty
                   ? _buildNoFilterResultsState()
-                  : _buildItemsList(itemsToShow, ratingState.ratings, showAll: true),
+                  : batchStatsAsync.when(
+                      data: (statsMap) => _buildItemsList(
+                        itemsToShow,
+                        ratingState.ratings,
+                        statsMap: statsMap,
+                        showAll: true,
+                      ),
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (e, s) => _buildItemsList(
+                        itemsToShow,
+                        ratingState.ratings,
+                        statsMap: {}, // Empty map on error - placeholders will show
+                        showAll: true,
+                      ),
+                    ),
     );
   }
 
@@ -741,6 +766,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   Widget _buildItemsList(
     List<RateableItem> items,
     List<Rating> allRatings, {
+    Map<int, Map<String, dynamic>>? statsMap,
     required bool showAll,
   }) {
     return ListView.builder(
@@ -762,7 +788,13 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             )
             .toList();
 
-        return _buildItemCard(item, myRating, sharedRatings, showAll);
+        return _buildItemCard(
+          item,
+          myRating,
+          sharedRatings,
+          showAll,
+          statsMap: statsMap,
+        );
       },
     );
   }
@@ -771,8 +803,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     RateableItem item,
     Rating? myRating,
     List<Rating> sharedRatings,
-    bool showCommunityData,
-  ) {
+    bool showCommunityData, {
+    Map<int, Map<String, dynamic>>? statsMap,
+  }) {
     return Card(
       margin: const EdgeInsets.only(bottom: AppConstants.spacingM),
       child: InkWell(
@@ -799,7 +832,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                   const SizedBox(width: AppConstants.spacingS),
                   // Inline rating badges
                   if (showCommunityData)
-                    _buildCommunityRatingsSummary(item.id!)
+                    _buildCommunityRatingsSummary(item.id!, statsMap: statsMap)
                   else
                     ..._buildCompactRatingBadges(
                       myRating,
@@ -825,161 +858,88 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     );
   }
 
-  Widget _buildCommunityRatingsSummary(int itemId) {
-    // Watch the community stats provider for this specific item
-    final statsAsync = ref.watch(
-      communityStatsProvider(
-        CommunityStatsParams(
-          itemType: widget.itemType,
-          itemId: itemId,
+  Widget _buildCommunityRatingsSummary(int itemId, {Map<int, Map<String, dynamic>>? statsMap}) {
+    // If we have preloaded stats from batch request, use them directly
+    if (statsMap != null) {
+      final stats = statsMap[itemId];
+      
+      if (stats == null) {
+        // Stats not available for this item - show placeholder
+        return _buildStatsBadge(
+          icon: Icons.people_outline,
+          text: '0',
+          color: Colors.grey,
+          isError: false,
+        );
+      }
+      
+      final totalRatings = (stats['total_ratings'] as int?) ?? 0;
+      final averageRating = ((stats['average_rating'] as num?) ?? 0).toDouble();
+      
+      if (totalRatings == 0) {
+        return _buildStatsBadge(
+          icon: Icons.people_outline,
+          text: '0',
+          color: Colors.grey,
+          isError: false,
+        );
+      }
+      
+      return _buildStatsBadge(
+        icon: Icons.people,
+        text: '${averageRating.toStringAsFixed(1)} ($totalRatings)',
+        color: AppConstants.communityRatingColor,
+        isError: false,
+      );
+    }
+    
+    // Fallback: No batch stats provided - this shouldn't happen in "All Items" tab
+    // but keeping for safety
+    return _buildStatsBadge(
+      icon: Icons.people_outline,
+      text: '--',
+      color: Colors.grey,
+      isError: false,
+    );
+  }
+  
+  Widget _buildStatsBadge({
+    required IconData icon,
+    required String text,
+    required Color color,
+    required bool isError,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.spacingS,
+        vertical: AppConstants.spacingXS,
+      ),
+      decoration: BoxDecoration(
+        color: isError ? Colors.grey.withValues(alpha: 0.1) : color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppConstants.radiusS),
+        border: isError ? null : Border.all(
+          color: color.withValues(alpha: 0.3),
         ),
       ),
-    );
-
-    return statsAsync.when(
-      data: (stats) {
-        final totalRatings = stats.totalRatings;
-        final averageRating = stats.averageRating;
-
-        if (totalRatings == 0) {
-          return Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.spacingS,
-              vertical: AppConstants.spacingXS,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppConstants.radiusS),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.people_outline,
-                  size: AppConstants.iconS,
-                  color: Colors.grey,
-                ),
-                const SizedBox(width: AppConstants.spacingXS),
-                Text(
-                  '0',
-                  style: TextStyle(
-                    fontSize: AppConstants.fontM,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingS,
-            vertical: AppConstants.spacingXS,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: AppConstants.iconS,
+            color: color,
           ),
-          decoration: BoxDecoration(
-            color: AppConstants.communityRatingColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppConstants.radiusS),
-            border: Border.all(
-              color: AppConstants.communityRatingColor.withValues(alpha: 0.3),
+          const SizedBox(width: AppConstants.spacingXS),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: AppConstants.fontS,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.people,
-                size: AppConstants.iconS,
-                color: AppConstants.communityRatingColor,
-              ),
-              const SizedBox(width: AppConstants.spacingXS),
-              Text(
-                averageRating.toStringAsFixed(1),
-                style: TextStyle(
-                  fontSize: AppConstants.fontS,
-                  fontWeight: FontWeight.bold,
-                  color: AppConstants.communityRatingColor,
-                ),
-              ),
-              const SizedBox(width: AppConstants.spacingXS),
-              Text(
-                '($totalRatings)',
-                style: TextStyle(
-                  fontSize: AppConstants.fontXS,
-                  color: AppConstants.communityRatingColor.withValues(
-                    alpha: 0.7,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      loading: () {
-        return Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingS,
-            vertical: AppConstants.spacingXS,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppConstants.radiusS),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: AppConstants.iconS,
-                height: AppConstants.iconS,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(width: AppConstants.spacingXS),
-              Text(
-                '...',
-                style: TextStyle(
-                  fontSize: AppConstants.fontM,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      error: (error, stackTrace) {
-        // Show placeholder on error
-        return Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppConstants.spacingS,
-            vertical: AppConstants.spacingXS,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.grey.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(AppConstants.radiusS),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: AppConstants.iconS,
-                color: Colors.grey,
-              ),
-              const SizedBox(width: AppConstants.spacingXS),
-              Text(
-                '--',
-                style: TextStyle(
-                  fontSize: AppConstants.fontM,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 
