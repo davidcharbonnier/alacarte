@@ -2,6 +2,17 @@
 
 Next.js admin panel for managing the A la carte platform.
 
+## Prerequisites
+
+**⚠️ Important:** Before accessing the admin panel, you must:
+
+1. **Complete your profile in the client app first** (set your display name)
+2. **Have admin privileges** - Either:
+   - Your email matches `INITIAL_ADMIN_EMAIL` in API `.env`
+   - Your account has `is_admin = true` in the database
+
+The admin panel requires a completed profile for authentication. If you try to login without completing your profile, you'll get a "Configuration Error" / 403 error.
+
 ## Quick Start
 
 ```bash

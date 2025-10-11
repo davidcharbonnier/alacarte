@@ -125,24 +125,23 @@ func GetCommunityStats(itemType string, itemID int) CommunityStats {
 GET /api/users/shareable
 // Returns only users with discoverable = true AND completed profile
 
-// Share rating with specific users
+// Share rating with specific users (batch support)
 PUT /api/rating/:id/share
-Body: { "viewer_ids": [2, 3, 4] }
+Body: { "user_ids": [2, 3, 4] }
+// Adds users to rating viewers
 
-// Remove specific user from rating viewers
-PUT /api/rating/:id/unshare
-Body: { "viewer_id": 3 }
-
-// Make rating completely private
-PUT /api/rating/:id/private
-// Removes all viewer permissions
+// Unshare rating from specific users (batch support)
+PUT /api/rating/:id/hide
+Body: { "user_ids": [2, 3] }  // Batch: remove multiple users
+Body: { "user_id": 2 }        // Legacy: remove single user
+// Removes users from rating viewers
 
 // Bulk privacy actions
-PUT /api/user/privacy/make-all-private
-// Makes all user's ratings private
+PUT /api/rating/bulk/private
+// Makes all user's ratings private (removes all viewers)
 
-PUT /api/user/privacy/remove-from-all-shares
-// Removes user from all shares by others
+PUT /api/rating/bulk/unshare/:userId
+// Removes specific user from all of author's shares
 ```
 
 **See:** [API Privacy Implementation](/docs/api/privacy-model.md) for backend details
@@ -175,22 +174,39 @@ PUT /api/user/privacy/remove-from-all-shares
 
 ### Sharing Dialog
 
+**Location**: `lib/widgets/rating/share_rating_dialog.dart`
+
 **Enhanced Features:**
-- Pre-checked boxes show current sharing state
-- Only shows users with completed profiles
-- Real user avatars
-- Change detection (button enabled only when changed)
-- "Make Private" button for quick unsharing
+- ✅ Pre-checked boxes show current sharing state
+- ✅ Only shows users with completed profiles
+- ✅ Real user avatars
+- ✅ Change detection (button enabled only when changed)
+- ✅ **"Make Private" button for quick unsharing of all users**
+- ✅ **Batch operations - single API call per action type**
+- ✅ Previous connections shown first, discoverable users second
 
 **State Management:**
 ```dart
-// Calculate sharing changes
-final shareWith = newlySelected - currentlyShared
-final unshareFrom = currentlyShared - newlySelected
+// Calculate sharing changes (batch operations)
+final shareWith = newlySelected - currentlyShared      // Users to add
+final unshareFrom = currentlyShared - newlySelected    // Users to remove
 
-// Apply changes
-await ratingService.shareRating(ratingId, shareWith);
-await ratingService.unshareFromUsers(ratingId, unshareFrom);
+// Apply changes with batch API calls
+if (shareWith.isNotEmpty) {
+  await ratingService.shareRating(ratingId, shareWith);
+}
+if (unshareFrom.isNotEmpty) {
+  await ratingService.unshareRatingFromUsers(ratingId, unshareFrom);
+}
+
+// Success notification based on actions taken
+if (shareWith.isEmpty && unshareFrom.isNotEmpty) {
+  showMessage(context.l10n.ratingUnsharedFromUsers(unshareFrom.length));
+} else if (shareWith.isNotEmpty && unshareFrom.isEmpty) {
+  showMessage(context.l10n.shareRatingSuccess);
+} else {
+  showMessage(context.l10n.sharingPreferencesUpdated);
+}
 ```
 
 ### Privacy Analytics
@@ -239,10 +255,12 @@ Admins have additional access for platform management:
 2. Check other users → Cannot see the rating ✅
 3. Community stats → Include the rating in aggregates ✅
 
-### Scenario 2: Rating Sharing
+### Scenario 2: Rating Sharing & Unsharing
 1. User shares rating with User B → B can now see it ✅
 2. User C (not shared with) → Cannot see the rating ✅
-3. Author makes rating private → B can no longer see it ✅
+3. Author unshares from User B → B can no longer see it ✅
+4. Author clicks "Make Private" → All viewers removed at once ✅
+5. Bulk unshare User B from all ratings → B loses access to all ✅
 
 ### Scenario 3: User Discovery
 1. User sets discoverable = false ✅
