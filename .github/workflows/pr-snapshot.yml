@@ -22,10 +22,13 @@ jobs:
           filters: |
             api:
               - 'apps/api/**'
+              - '!apps/api/**/*.md'
             client:
               - 'apps/client/**'
+              - '!apps/client/**/*.md'
             admin:
               - 'apps/admin/**'
+              - '!apps/admin/**/*.md'
 
   generate-version:
     runs-on: ubuntu-latest
