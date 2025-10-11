@@ -38,8 +38,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   @override
   void initState() {
     super.initState();
-    // Start with "My List" tab (index 1) instead of "All Items" (index 0)
-    _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
+    // Start with "All Items" tab (index 0) as default
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 0);
 
     // Listen to tab changes to update FAB visibility and clear tab-specific filters
     _tabController.addListener(() {
