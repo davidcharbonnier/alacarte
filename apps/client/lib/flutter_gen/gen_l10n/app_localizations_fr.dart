@@ -540,7 +540,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get editingRatingFor => 'Modification de l\'évaluation pour';
 
   @override
-  String originalRating(int rating) {
+  String originalRating(double rating) {
     return 'Évaluation originale : $rating étoiles';
   }
 

@@ -978,7 +978,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Original rating: {rating} stars'**
-  String originalRating(int rating);
+  String originalRating(double rating);
 
   /// Indicator that there are unsaved changes
   ///

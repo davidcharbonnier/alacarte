@@ -28,7 +28,7 @@ class RatingCreateScreen extends ConsumerStatefulWidget {
 
 class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
   final _noteController = TextEditingController();
-  int _selectedRating = 0;
+  double _selectedRating = 0.0;
   RateableItem? _item;
   bool _isLoadingItem = true;
   String? _loadError;
@@ -75,7 +75,7 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
     }
   }
 
-  void _onRatingChanged(int rating) {
+  void _onRatingChanged(double rating) {
     setState(() {
       _selectedRating = rating;
     });
@@ -99,7 +99,7 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
     final success = await ref
         .read(ratingProvider.notifier)
         .createRating(
-          grade: _selectedRating.toDouble(),
+          grade: _selectedRating,
           note: _noteController.text.trim(),
           itemType: widget.itemType,
           itemId: widget.itemId,

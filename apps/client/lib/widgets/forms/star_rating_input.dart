@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../utils/constants.dart';
 
-/// Reusable star rating input widget for selecting ratings from 0-5
+/// Reusable star rating input widget with draggable stars for selecting ratings from 0-5 (with half-star support)
 class StarRatingInput extends StatefulWidget {
-  final int initialRating;
-  final ValueChanged<int> onRatingChanged;
+  final double initialRating;
+  final ValueChanged<double> onRatingChanged;
   final String? label;
   final String? helperText;
   final bool enabled;
@@ -12,7 +12,7 @@ class StarRatingInput extends StatefulWidget {
 
   const StarRatingInput({
     super.key,
-    this.initialRating = 0,
+    this.initialRating = 0.0,
     required this.onRatingChanged,
     this.label,
     this.helperText,
@@ -25,7 +25,7 @@ class StarRatingInput extends StatefulWidget {
 }
 
 class _StarRatingInputState extends State<StarRatingInput> {
-  late int _currentRating;
+  late double _currentRating;
 
   @override
   void initState() {
@@ -41,16 +41,24 @@ class _StarRatingInputState extends State<StarRatingInput> {
     }
   }
 
-  void _onStarTapped(int starIndex) {
+  void _updateRatingFromPosition(Offset localPosition, BoxConstraints constraints) {
     if (!widget.enabled) return;
 
-    setState(() {
-      // If tapping the same star that's currently selected, set to 0
-      // Otherwise set to the tapped star (1-based)
-      _currentRating = (_currentRating == starIndex + 1) ? 0 : starIndex + 1;
-    });
+    // Calculate rating based on horizontal position
+    final width = constraints.maxWidth;
+    final position = localPosition.dx.clamp(0.0, width);
+    final ratio = position / width;
     
-    widget.onRatingChanged(_currentRating);
+    // Convert to rating (0-5 with 0.5 increments)
+    final rawRating = ratio * 5.0;
+    final rating = (rawRating * 2).round() / 2; // Round to nearest 0.5
+    
+    if (rating != _currentRating) {
+      setState(() {
+        _currentRating = rating.clamp(0.0, 5.0);
+      });
+      widget.onRatingChanged(_currentRating);
+    }
   }
 
   @override
@@ -69,39 +77,31 @@ class _StarRatingInputState extends State<StarRatingInput> {
           const SizedBox(height: AppConstants.spacingS),
         ],
 
-        // Star rating row
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(5, (index) {
-            final starNumber = index + 1;
-            final isSelected = starNumber <= _currentRating;
-            
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: GestureDetector(
-                onTap: () => _onStarTapped(index),
-                child: Container(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Icon(
-                    isSelected ? Icons.star : Icons.star_border,
-                    size: widget.starSize,
-                    color: widget.enabled
-                        ? (isSelected 
-                            ? AppConstants.primaryColor
-                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.4))
-                        : Theme.of(context).disabledColor,
-                  ),
-                ),
+        // Interactive draggable star rating
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return GestureDetector(
+              onTapDown: widget.enabled ? (details) {
+                _updateRatingFromPosition(details.localPosition, constraints);
+              } : null,
+              onPanUpdate: widget.enabled ? (details) {
+                _updateRatingFromPosition(details.localPosition, constraints);
+              } : null,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(5, (index) {
+                  return _buildStarDisplay(index);
+                }),
               ),
             );
-          }),
+          },
         ),
 
         // Rating text indicator
         if (_currentRating > 0) ...[
           const SizedBox(height: AppConstants.spacingS),
           Text(
-            '$_currentRating/5',
+            '${_currentRating.toStringAsFixed(1)}/5',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: AppConstants.primaryColor,
               fontWeight: FontWeight.w600,
@@ -120,6 +120,37 @@ class _StarRatingInputState extends State<StarRatingInput> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildStarDisplay(int index) {
+    final starNumber = index + 1;
+    final starValue = starNumber.toDouble();
+    final halfStarValue = starNumber - 0.5;
+    
+    // Determine which icon to show
+    IconData starIcon;
+    if (_currentRating >= starValue) {
+      starIcon = Icons.star; // Full star
+    } else if (_currentRating >= halfStarValue) {
+      starIcon = Icons.star_half; // Half star
+    } else {
+      starIcon = Icons.star_border; // Empty star
+    }
+    
+    final isActive = _currentRating >= halfStarValue;
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Icon(
+        starIcon,
+        size: widget.starSize,
+        color: widget.enabled
+            ? (isActive 
+                ? AppConstants.primaryColor
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.4))
+            : Theme.of(context).disabledColor,
+      ),
     );
   }
 }

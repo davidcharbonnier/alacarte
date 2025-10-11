@@ -23,7 +23,7 @@ class RatingEditScreen extends ConsumerStatefulWidget {
 
 class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
   final _noteController = TextEditingController();
-  int _selectedRating = 0;
+  double _selectedRating = 0.0;
   Rating? _existingRating;
   bool _isLoadingRating = true;
   String? _loadError;
@@ -76,7 +76,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
       }
 
       // Pre-populate form with existing data
-      _selectedRating = _existingRating!.starRating;
+      _selectedRating = _existingRating!.grade;
       _noteController.text = _existingRating!.note;
     } finally {
       if (mounted) {
@@ -87,7 +87,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
     }
   }
 
-  void _onRatingChanged(int rating) {
+  void _onRatingChanged(double rating) {
     setState(() {
       _selectedRating = rating;
     });
@@ -99,7 +99,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
 
   bool get _hasChanges {
     if (_existingRating == null) return false;
-    return _selectedRating != _existingRating!.starRating ||
+    return _selectedRating != _existingRating!.grade ||
         _noteController.text.trim() != _existingRating!.note;
   }
 
@@ -118,7 +118,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
         .read(ratingProvider.notifier)
         .updateRating(
           widget.ratingId,
-          grade: _selectedRating.toDouble(),
+          grade: _selectedRating,
           note: _noteController.text.trim(),
         );
 
@@ -323,7 +323,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
                   ),
                   const SizedBox(height: AppConstants.spacingXS),
                   Text(
-                    context.l10n.originalRating(_existingRating!.starRating),
+                    context.l10n.originalRating(_existingRating!.grade),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(
                         context,
