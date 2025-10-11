@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/constants.dart';
+import '../../utils/notification_helper.dart';
 import '../../utils/localization_utils.dart';
 
 // State providers for inline display name editing
@@ -185,9 +186,7 @@ class ProfileInfoWidget extends ConsumerWidget {
         ref.read(_isEditingDisplayNameProvider.notifier).state = false;
         ref.read(_displayNameControllerProvider.notifier).state.clear();
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.displayNameUpdated)),
-        );
+        NotificationHelper.showSuccess(context, context.l10n.displayNameUpdated);
       }
     } catch (e) {
       if (context.mounted) {
@@ -201,9 +200,7 @@ class ProfileInfoWidget extends ConsumerWidget {
           errorMessage = context.l10n.errorUpdatingDisplayName;
         }
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
+        NotificationHelper.showError(context, errorMessage);
       }
     }
   }

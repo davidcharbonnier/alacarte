@@ -9,6 +9,7 @@ import '../../routes/route_names.dart';
 import '../../utils/constants.dart';
 import '../../utils/appbar_helper.dart';
 import '../../utils/localization_utils.dart';
+import '../../utils/notification_helper.dart';
 import '../../utils/safe_navigation.dart';
 import '../../widgets/settings/settings_section_header.dart';
 import '../../widgets/settings/settings_row.dart';
@@ -353,25 +354,24 @@ class UserSettingsScreen extends ConsumerWidget {
         Navigator.of(context).pop();
         
         // Show success message - router will handle redirect to auth automatically
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.accountDeleted),
-            backgroundColor: AppConstants.successColor,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        NotificationHelper.showSuccess(context, context.l10n.accountDeleted);
       }
     } catch (e) {
       if (context.mounted) {
         // Close loading dialog
         Navigator.of(context).pop();
         
-        // Show error message
+        // Show error message with retry option
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${context.l10n.errorDeletingAccount}: $e'),
             backgroundColor: AppConstants.errorColor,
+            behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 5),
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             action: SnackBarAction(
               label: context.l10n.retry,
               textColor: Colors.white,

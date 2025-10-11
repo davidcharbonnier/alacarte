@@ -13,6 +13,7 @@ import '../../widgets/rating/share_rating_dialog.dart';
 import '../../widgets/settings/settings_section_header.dart';
 import '../../widgets/settings/loading_banner.dart';
 import '../../widgets/settings/bulk_action_button.dart';
+import '../../utils/notification_helper.dart';
 import '../../widgets/settings/rating_item_card.dart';
 
 /// Privacy settings screen with progressive item loading and full list display
@@ -619,49 +620,17 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       
       // Success feedback
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    value
-                        ? context.l10n.discoverabilityEnabled
-                        : context.l10n.discoverabilityDisabledWithExplanation,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 2000),
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
+        NotificationHelper.showSuccess(
+          context,
+          value
+              ? context.l10n.discoverabilityEnabled
+              : context.l10n.discoverabilityDisabledWithExplanation,
         );
       }
     } catch (e) {
       // Error feedback
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.errorUpdatingSettings),
-            backgroundColor: AppConstants.warningColor,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        NotificationHelper.showError(context, context.l10n.errorUpdatingSettings);
       }
     }
   }
@@ -887,9 +856,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         );
         if (!shareSuccess) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.l10n.shareRatingError)),
-            );
+            NotificationHelper.showError(context, context.l10n.shareRatingError);
           }
           return;
         }
@@ -909,9 +876,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             final errorMessage = unshareResponse is ApiError<Rating>
                 ? unshareResponse.message
                 : context.l10n.errorRemovingUserFromShares;
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(errorMessage)));
+            NotificationHelper.showError(context, errorMessage);
           }
           return;
         }
@@ -929,48 +894,16 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           );
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 2000),
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
+        NotificationHelper.showSuccess(context, message);
       }
 
       await ref.read(ratingProvider.notifier).refreshRatings();
       await _loadMissingItemData();
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${context.l10n.errorUpdatingSharing}: $e'),
-            backgroundColor: AppConstants.warningColor,
-            duration: const Duration(seconds: 3),
-          ),
+        NotificationHelper.showError(
+          context,
+          '${context.l10n.errorUpdatingSharing}: $e',
         );
       }
     }
@@ -985,14 +918,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     try {
       // Show loading state
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.makingRatingsPrivate),
-            duration: const Duration(
-              seconds: 30,
-            ), // Long duration for processing
-          ),
-        );
+        NotificationHelper.showLoading(context, context.l10n.makingRatingsPrivate);
       }
 
       final result = await ref
@@ -1004,13 +930,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         ScaffoldMessenger.of(context).clearSnackBars();
 
         final ratingsAffected = result['ratings_affected'] as int? ?? 0;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.allRatingsMadePrivate),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        NotificationHelper.showSuccess(context, context.l10n.allRatingsMadePrivate);
 
         // Trigger a refresh of the screen data
         await _loadMissingItemData();
@@ -1018,13 +938,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.errorMakingRatingsPrivate),
-            backgroundColor: AppConstants.warningColor,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        NotificationHelper.showError(context, context.l10n.errorMakingRatingsPrivate);
       }
     }
   }
@@ -1062,12 +976,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
 
     try {
       // Show loading state
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.removingUserFromShares(userName)),
-          duration: const Duration(seconds: 30), // Long duration for processing
-        ),
-      );
+      NotificationHelper.showLoading(context, context.l10n.removingUserFromShares(userName));
 
       final result = await ref
           .read(ratingProvider.notifier)
@@ -1078,14 +987,9 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         ScaffoldMessenger.of(context).clearSnackBars();
 
         final ratingsAffected = result['ratings_affected'] as int? ?? 0;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              context.l10n.userRemovedFromShares(userName, ratingsAffected),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
+        NotificationHelper.showSuccess(
+          context,
+          context.l10n.userRemovedFromShares(userName, ratingsAffected),
         );
 
         // Trigger a refresh of the screen data
@@ -1094,13 +998,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.errorRemovingUserFromShares),
-            backgroundColor: AppConstants.warningColor,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        NotificationHelper.showError(context, context.l10n.errorRemovingUserFromShares);
       }
     }
   }

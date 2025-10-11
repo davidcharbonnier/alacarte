@@ -6,7 +6,7 @@ import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 
 /// Reusable rating summary component showing community statistics
-class RatingSummaryCard extends ConsumerWidget {
+class RatingSummaryCard extends ConsumerStatefulWidget {
   final RateableItem item;
   final String itemType;
 
@@ -17,20 +17,35 @@ class RatingSummaryCard extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RatingSummaryCard> createState() => _RatingSummaryCardState();
+}
+
+class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
+  // Cache the item IDs list to prevent infinite provider refreshes
+  late final List<int> _itemIds;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Create the list once and cache it
+    _itemIds = [widget.item.id!];
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Watch the community stats provider (handles single item elegantly)
     final statsAsync = ref.watch(
       communityStatsProvider(
         CommunityStatsParams(
-          itemType: itemType,
-          itemIds: [item.id!],
+          itemType: widget.itemType,
+          itemIds: _itemIds, // Use cached list
         ),
       ),
     );
 
     return statsAsync.when(
       data: (statsMap) {
-        final stats = statsMap[item.id!];
+        final stats = statsMap[widget.item.id!];
         if (stats == null) {
           return _buildNoRatingsCard(context);
         }
@@ -61,7 +76,7 @@ class RatingSummaryCard extends ConsumerWidget {
             ),
             const SizedBox(height: AppConstants.spacingXS),
             Text(
-              context.l10n.beFirstToRate(item.name),
+              context.l10n.beFirstToRate(widget.item.name),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
@@ -97,7 +112,7 @@ class RatingSummaryCard extends ConsumerWidget {
               ),
               const SizedBox(height: AppConstants.spacingXS),
               Text(
-                context.l10n.beFirstToRate(item.name),
+                context.l10n.beFirstToRate(widget.item.name),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                 ),

@@ -11,6 +11,7 @@ import '../../services/rating_service.dart';
 import '../../services/api_service.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
+import '../../utils/notification_helper.dart';
 import '../../utils/safe_navigation.dart';
 import '../../routes/route_names.dart';
 import '../rating/share_rating_dialog.dart';
@@ -74,13 +75,13 @@ class MyRatingSection extends ConsumerWidget {
     final success = await ref.read(ratingProvider.notifier).deleteRating(ratingId);
     
     if (success) {
-      _showSuccessSnackBar(context, context.l10n.ratingDeleted);
+      NotificationHelper.showSuccess(context, context.l10n.ratingDeleted);
       // Navigate back to item detail after a brief delay
       await Future.delayed(const Duration(milliseconds: 500));
       SafeNavigation.goBackFromRatingDeletion(context, item.itemType, item.id!);
     } else {
       final error = ref.read(ratingProvider).error ?? context.l10n.couldNotDeleteRating;
-      _showErrorSnackBar(context, error);
+      NotificationHelper.showError(context, error);
     }
   }
 
@@ -126,17 +127,17 @@ class MyRatingSection extends ConsumerWidget {
       }
       
       if (context.mounted) {
-        _showSuccessSnackBar(context, message);
+        NotificationHelper.showSuccess(context, message);
       }
       
       // Trigger data refresh
       if (onRatingAdded != null) {
         onRatingAdded!();
-      }
-    } else if (lastError != null && context.mounted) {
-      _showErrorSnackBar(context, lastError);
-    }
-  }
+        }
+        } else if (lastError != null && context.mounted) {
+        NotificationHelper.showError(context, lastError);
+        }
+}
   
   Future<bool> _batchUnshareRating(WidgetRef ref, int ratingId, List<int> userIds) async {
     // Use the batch unshare API endpoint
@@ -165,56 +166,6 @@ class MyRatingSection extends ConsumerWidget {
     } catch (e) {
       return false;
     }
-  }
-
-  void _showSuccessSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.check_circle,
-              color: Colors.white,
-              size: 24,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(milliseconds: 2000),
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
-  }
-
-  void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: context.l10n.dismiss,
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
   }
 
   @override

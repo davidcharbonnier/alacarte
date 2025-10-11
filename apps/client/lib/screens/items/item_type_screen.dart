@@ -31,6 +31,9 @@ class ItemTypeScreen extends ConsumerStatefulWidget {
 class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  
+  // Cache the last loaded item IDs to prevent infinite provider refreshes
+  List<int>? _lastLoadedItemIds;
 
   @override
   void initState() {
@@ -446,11 +449,30 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
     // Load community stats in batch for all visible items (HTTP/2 multiplexing!)
     final itemIds = itemsToShow.map((item) => item.id!).toList();
+    
+    // Only update if the item IDs actually changed (prevent infinite loop)
+    final itemIdsChanged = _lastLoadedItemIds == null ||
+        itemIds.length != _lastLoadedItemIds!.length ||
+        !_listEquals(itemIds, _lastLoadedItemIds!);
+    
+    if (itemIdsChanged) {
+      // Update the cached list only when it actually changes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _lastLoadedItemIds = List.from(itemIds);
+          });
+        }
+      });
+    }
+    
+    // Use cached IDs for provider to prevent recreation on every build
+    final idsToLoad = _lastLoadedItemIds ?? itemIds;
     final batchStatsAsync = ref.watch(
       communityStatsProvider(
         CommunityStatsParams(
           itemType: widget.itemType,
-          itemIds: itemIds,
+          itemIds: idsToLoad,
         ),
       ),
     );
@@ -1164,5 +1186,14 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       filteredItems: _getTabSpecificFilteredCount(),
       isPersonalListTab: _tabController.index == 1, // Pass current tab context
     );
+  }
+  
+  // Helper to compare lists
+  bool _listEquals(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 }

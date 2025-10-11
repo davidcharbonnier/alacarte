@@ -5,6 +5,7 @@ import '../../providers/rating_provider.dart';
 import '../../models/rating.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
+import '../../utils/notification_helper.dart';
 import '../../utils/safe_navigation.dart';
 import '../../utils/item_provider_helper.dart';
 import '../../models/rateable_item.dart' as rateable;
@@ -109,7 +110,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
     final currentUserId = authState.user?.id;
 
     if (currentUserId == null) {
-      _showErrorSnackBar('No authenticated user');
+      NotificationHelper.showError(context, 'No authenticated user');
       return;
     }
 
@@ -122,7 +123,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
         );
 
     if (success) {
-      _showSuccessSnackBar(context.l10n.ratingUpdated);
+      NotificationHelper.showSuccess(context, context.l10n.ratingUpdated);
       // Navigate back to item detail screen
       if (mounted) {
         // Use a delay to ensure the snackbar is shown before navigation
@@ -138,55 +139,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
     } else {
       final error =
           ref.read(ratingProvider).error ?? context.l10n.couldNotUpdateRating;
-      _showErrorSnackBar(error);
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(milliseconds: 2000),
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-          action: SnackBarAction(
-            label: context.l10n.dismiss,
-            textColor: Colors.white,
-            onPressed: () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            },
-          ),
-        ),
-      );
+      NotificationHelper.showError(context, error);
     }
   }
 
