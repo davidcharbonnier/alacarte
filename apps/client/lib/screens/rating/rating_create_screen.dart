@@ -285,6 +285,7 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
             border: const OutlineInputBorder(),
             alignLabelWithHint: true,
           ),
+          textCapitalization: TextCapitalization.sentences,
           textInputAction: TextInputAction.newline,
         ),
       ],

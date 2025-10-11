@@ -163,6 +163,7 @@ class _DisplayNameSetupScreenState
                         )
                       : null,
                 ),
+                textCapitalization: TextCapitalization.words,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return context.l10n.displayNameRequired;

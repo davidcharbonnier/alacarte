@@ -358,6 +358,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
             border: const OutlineInputBorder(),
             alignLabelWithHint: true,
           ),
+          textCapitalization: TextCapitalization.sentences,
           textInputAction: TextInputAction.newline,
           onChanged: (_) =>
               setState(() {}), // Trigger rebuild to update _hasChanges
