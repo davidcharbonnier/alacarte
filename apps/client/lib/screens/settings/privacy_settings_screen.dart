@@ -392,6 +392,13 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         : sharedRatings
               .where((r) => r.itemType == _selectedItemTypeFilter)
               .toList();
+    
+    // Sort ratings alphabetically by item display title (A to Z, case-insensitive)
+    filteredRatings.sort((a, b) {
+      final titleA = _getLocalizedRatingDisplayTitle(context, a);
+      final titleB = _getLocalizedRatingDisplayTitle(context, b);
+      return titleA.toLowerCase().compareTo(titleB.toLowerCase());
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1115,7 +1122,16 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       }
     }
 
-    return recipients.values.toList();
+    final recipientsList = recipients.values.toList();
+    
+    // Sort alphabetically by name (A to Z, case-insensitive)
+    recipientsList.sort((a, b) {
+      final nameA = (a['name'] as String?) ?? '';
+      final nameB = (b['name'] as String?) ?? '';
+      return nameA.toLowerCase().compareTo(nameB.toLowerCase());
+    });
+    
+    return recipientsList;
   }
 
   int _countRatingsSharedWithUser(List<Rating> sharedRatings, int userId) {

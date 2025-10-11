@@ -366,6 +366,9 @@ class ItemState<T extends RateableItem> {
       ).toList();
     }
 
+    // Sort alphabetically by name (A to Z, case-insensitive)
+    filtered.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
     return filtered;
   }
 
