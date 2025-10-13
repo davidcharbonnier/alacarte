@@ -11,22 +11,42 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
-import { ArrowLeft, Upload, CheckCircle, AlertCircle, FileSearch } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Upload, CheckCircle, AlertCircle, FileSearch, Link as LinkIcon, FileUp } from 'lucide-react';
 
 interface GenericSeedFormProps {
   itemType: string;
 }
 
+type SeedSource = 'url' | 'file';
+
 export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
   const config = getItemTypeConfig(itemType);
   const router = useRouter();
   const queryClient = useQueryClient();
+  
+  // URL state
   const [url, setUrl] = useState('');
   const [urlError, setUrlError] = useState('');
+  
+  // File state
+  const [file, setFile] = useState<File | null>(null);
+  const [fileData, setFileData] = useState<any>(null);
+  const [fileError, setFileError] = useState('');
+  
+  // Common state
   const [isValidated, setIsValidated] = useState(false);
+  const [activeTab, setActiveTab] = useState<SeedSource>('file');
 
   const validateMutation = useMutation({
-    mutationFn: (url: string) => getItemApi(itemType).validate(url),
+    mutationFn: (payload: { url?: string; data?: any }) => {
+      if (payload.url) {
+        return getItemApi(itemType).validate(payload.url);
+      } else if (payload.data) {
+        return getItemApi(itemType).validateData(payload.data);
+      }
+      throw new Error('No data provided');
+    },
     onSuccess: (data) => {
       if (data.valid) {
         setIsValidated(true);
@@ -35,20 +55,29 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
   });
 
   const seedMutation = useMutation({
-    mutationFn: (url: string) => getItemApi(itemType).seed(url),
+    mutationFn: (payload: { url?: string; data?: any }) => {
+      if (payload.url) {
+        return getItemApi(itemType).seed(payload.url);
+      } else if (payload.data) {
+        return getItemApi(itemType).seedData(payload.data);
+      }
+      throw new Error('No data provided');
+    },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [itemType, 'list'] });
       setIsValidated(false);
       setUrl('');
+      setFile(null);
+      setFileData(null);
     },
   });
 
-  const handleValidate = async (e: React.FormEvent) => {
+  // URL handlers
+  const handleValidateUrl = async (e: React.FormEvent) => {
     e.preventDefault();
     setUrlError('');
     setIsValidated(false);
 
-    // Validate URL format
     try {
       new URL(url);
     } catch {
@@ -56,11 +85,7 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
       return;
     }
 
-    validateMutation.mutate(url);
-  };
-
-  const handleSeed = () => {
-    seedMutation.mutate(url);
+    validateMutation.mutate({ url });
   };
 
   const handleUrlChange = (newUrl: string) => {
@@ -69,6 +94,65 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
     setUrlError('');
     validateMutation.reset();
     seedMutation.reset();
+  };
+
+  // File handlers
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    setFileError('');
+    setIsValidated(false);
+    validateMutation.reset();
+    seedMutation.reset();
+
+    if (!selectedFile) {
+      setFile(null);
+      setFileData(null);
+      return;
+    }
+
+    if (!selectedFile.name.endsWith('.json')) {
+      setFileError('Please select a JSON file');
+      setFile(null);
+      setFileData(null);
+      return;
+    }
+
+    setFile(selectedFile);
+
+    // Read file content
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const jsonData = JSON.parse(event.target?.result as string);
+        setFileData(jsonData);
+        setFileError('');
+      } catch (error) {
+        setFileError('Invalid JSON file format');
+        setFileData(null);
+      }
+    };
+    reader.onerror = () => {
+      setFileError('Failed to read file');
+      setFileData(null);
+    };
+    reader.readAsText(selectedFile);
+  };
+
+  const handleValidateFile = () => {
+    if (!fileData) {
+      setFileError('Please select a valid JSON file');
+      return;
+    }
+
+    validateMutation.mutate({ data: fileData });
+  };
+
+  const handleSeed = () => {
+    if (activeTab === 'url') {
+      seedMutation.mutate({ url });
+    } else {
+      seedMutation.mutate({ data: fileData });
+    }
   };
 
   // Generate example JSON based on config
@@ -97,82 +181,163 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
       <div className="max-w-2xl">
         <Card>
           <CardHeader>
-            <CardTitle>Bulk Import from URL</CardTitle>
+            <CardTitle>Bulk Import</CardTitle>
             <CardDescription>
-              Import {config.labels.plural.toLowerCase()} data from a remote JSON file. The file should contain an array of {config.labels.singular.toLowerCase()} objects.
+              Import {config.labels.plural.toLowerCase()} data from a JSON file or remote URL.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleValidate} className="space-y-4">
-              <div>
-                <label htmlFor="url" className="block text-sm font-medium mb-2">
-                  JSON File URL
-                </label>
-                <Input
-                  id="url"
-                  type="url"
-                  placeholder={`https://example.com/${config.labels.plural.toLowerCase()}.json`}
-                  value={url}
-                  onChange={(e) => handleUrlChange(e.target.value)}
-                  disabled={validateMutation.isPending || seedMutation.isPending}
-                />
-                {urlError && (
-                  <p className="text-sm text-red-600 mt-1">{urlError}</p>
-                )}
-              </div>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as SeedSource)}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="file">
+                  <FileUp className="w-4 h-4 mr-2" />
+                  Upload File
+                </TabsTrigger>
+                <TabsTrigger value="url">
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  From URL
+                </TabsTrigger>
+              </TabsList>
 
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Expected JSON Format</AlertTitle>
-                <AlertDescription>
-                  <pre className="mt-2 text-xs bg-gray-50 p-2 rounded overflow-x-auto">
-                    {JSON.stringify(exampleJson, null, 2)}
-                  </pre>
-                </AlertDescription>
-              </Alert>
+              <TabsContent value="file" className="space-y-4">
+                <div>
+                  <label htmlFor="file" className="block text-sm font-medium mb-2">
+                    Select JSON File
+                  </label>
+                  <Input
+                    id="file"
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileChange}
+                    disabled={validateMutation.isPending || seedMutation.isPending}
+                  />
+                  {file && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                    </p>
+                  )}
+                  {fileError && (
+                    <p className="text-sm text-red-600 mt-1">{fileError}</p>
+                  )}
+                </div>
 
-              <div className="flex space-x-4">
-                {!isValidated ? (
-                  <Button
-                    type="submit"
-                    disabled={!url || validateMutation.isPending}
-                    className="flex-1"
-                    variant="outline"
-                  >
-                    {validateMutation.isPending ? (
-                      <>
-                        <LoadingSpinner size="sm" />
-                        <span className="ml-2">Validating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FileSearch className="w-4 h-4 mr-2" />
-                        Validate Data
-                      </>
+                <div className="flex space-x-4">
+                  {!isValidated ? (
+                    <Button
+                      type="button"
+                      onClick={handleValidateFile}
+                      disabled={!fileData || validateMutation.isPending}
+                      className="flex-1"
+                      variant="outline"
+                    >
+                      {validateMutation.isPending ? (
+                        <>
+                          <LoadingSpinner size="sm" />
+                          <span className="ml-2">Validating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileSearch className="w-4 h-4 mr-2" />
+                          Validate Data
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      onClick={handleSeed}
+                      disabled={seedMutation.isPending}
+                      className="flex-1"
+                    >
+                      {seedMutation.isPending ? (
+                        <>
+                          <LoadingSpinner size="sm" />
+                          <span className="ml-2">Importing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Import Data
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="url" className="space-y-4">
+                <form onSubmit={handleValidateUrl} className="space-y-4">
+                  <div>
+                    <label htmlFor="url" className="block text-sm font-medium mb-2">
+                      JSON File URL
+                    </label>
+                    <Input
+                      id="url"
+                      type="url"
+                      placeholder={`https://example.com/${config.labels.plural.toLowerCase()}.json`}
+                      value={url}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                      disabled={validateMutation.isPending || seedMutation.isPending}
+                    />
+                    {urlError && (
+                      <p className="text-sm text-red-600 mt-1">{urlError}</p>
                     )}
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={handleSeed}
-                    disabled={seedMutation.isPending}
-                    className="flex-1"
-                  >
-                    {seedMutation.isPending ? (
-                      <>
-                        <LoadingSpinner size="sm" />
-                        <span className="ml-2">Importing...</span>
-                      </>
+                  </div>
+
+                  <div className="flex space-x-4">
+                    {!isValidated ? (
+                      <Button
+                        type="submit"
+                        disabled={!url || validateMutation.isPending}
+                        className="flex-1"
+                        variant="outline"
+                      >
+                        {validateMutation.isPending ? (
+                          <>
+                            <LoadingSpinner size="sm" />
+                            <span className="ml-2">Validating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FileSearch className="w-4 h-4 mr-2" />
+                            Validate Data
+                          </>
+                        )}
+                      </Button>
                     ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Import Data
-                      </>
+                      <Button
+                        type="button"
+                        onClick={handleSeed}
+                        disabled={seedMutation.isPending}
+                        className="flex-1"
+                      >
+                        {seedMutation.isPending ? (
+                          <>
+                            <LoadingSpinner size="sm" />
+                            <span className="ml-2">Importing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Import Data
+                          </>
+                        )}
+                      </Button>
                     )}
-                  </Button>
-                )}
-              </div>
-            </form>
+                  </div>
+                </form>
+              </TabsContent>
+            </Tabs>
+
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Expected JSON Format</AlertTitle>
+              <AlertDescription>
+                <pre className="mt-2 text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                  {JSON.stringify(exampleJson, null, 2)}
+                </pre>
+              </AlertDescription>
+            </Alert>
 
             {validateMutation.isSuccess && validateMutation.data && !validateMutation.data.valid && (
               <Alert variant="destructive" className="mt-4">
@@ -229,7 +394,7 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Validation Failed</AlertTitle>
                 <AlertDescription>
-                  {(validateMutation.error as Error).message || 'Failed to validate data. Please check the URL and try again.'}
+                  {(validateMutation.error as Error).message || 'Failed to validate data. Please check your input and try again.'}
                 </AlertDescription>
               </Alert>
             )}
@@ -251,10 +416,11 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
             <CardTitle>Import Process</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-gray-600 space-y-2">
-            <p>• <strong>Step 1:</strong> Validate JSON structure and format</p>
-            <p>• <strong>Step 2:</strong> Review validation results</p>
-            <p>• <strong>Step 3:</strong> Import data if validation passes</p>
-            <p>• <strong>Natural Key Matching:</strong> Uses name + origin to identify duplicates</p>
+            <p>• <strong>Step 1:</strong> Choose file upload or URL</p>
+            <p>• <strong>Step 2:</strong> Validate JSON structure and format</p>
+            <p>• <strong>Step 3:</strong> Review validation results</p>
+            <p>• <strong>Step 4:</strong> Import data if validation passes</p>
+            <p>• <strong>Natural Key Matching:</strong> Detects and skips duplicates</p>
             <p>• <strong>User-Safe:</strong> Only adds new items, never overwrites existing data</p>
           </CardContent>
         </Card>

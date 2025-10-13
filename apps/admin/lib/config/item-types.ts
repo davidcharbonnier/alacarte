@@ -149,6 +149,119 @@ export const itemTypesConfig: ItemTypeRegistry = {
       validate: '/admin/gin/validate',
     },
   },
+  
+  wine: {
+    name: 'wine',
+    labels: {
+      singular: 'Wine',
+      plural: 'Wines',
+    },
+    icon: 'Wine',
+    
+    fields: [
+      {
+        key: 'name',
+        label: 'Name',
+        type: 'text',
+        required: true,
+        maxLength: 200,
+        placeholder: 'e.g., Mas Bruguière L\'Arbouse',
+      },
+      {
+        key: 'color',
+        label: 'Color',
+        type: 'text',
+        required: true,
+        maxLength: 50,
+        placeholder: 'e.g., Red, White, Pink, Orange, Sparkling',
+        helperText: 'Wine color/type',
+      },
+      {
+        key: 'country',
+        label: 'Country',
+        type: 'text',
+        required: true,
+        maxLength: 100,
+        placeholder: 'e.g., France, Spain, Italy',
+      },
+      {
+        key: 'producer',
+        label: 'Producer',
+        type: 'text',
+        required: false,
+        maxLength: 200,
+        placeholder: 'e.g., Mas Bruguière',
+      },
+      {
+        key: 'region',
+        label: 'Region',
+        type: 'text',
+        required: false,
+        maxLength: 100,
+        placeholder: 'e.g., Languedoc-Roussillon, Rioja',
+      },
+      {
+        key: 'grape',
+        label: 'Grape Varieties',
+        type: 'text',
+        required: false,
+        maxLength: 200,
+        placeholder: 'e.g., Syrah 50%, Grenache 25%',
+      },
+      {
+        key: 'designation',
+        label: 'Designation',
+        type: 'text',
+        required: false,
+        maxLength: 100,
+        placeholder: 'e.g., Pic Saint-Loup, AOC',
+      },
+      {
+        key: 'alcohol',
+        label: 'Alcohol %',
+        type: 'number',
+        required: false,
+        placeholder: 'e.g., 13.5',
+      },
+      {
+        key: 'sugar',
+        label: 'Sugar (g/L)',
+        type: 'number',
+        required: false,
+        placeholder: 'e.g., 2.0',
+      },
+      {
+        key: 'organic',
+        label: 'Organic',
+        type: 'checkbox',
+        required: false,
+      },
+      {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        required: false,
+        maxLength: 1000,
+        placeholder: 'Optional description...',
+      },
+    ],
+    
+    table: {
+      columns: ['name', 'color', 'country', 'producer', 'region'],
+      searchableFields: ['name', 'color', 'country', 'producer', 'region', 'grape', 'designation'],
+      defaultSort: 'name',
+      sortOrder: 'asc',
+    },
+    
+    apiEndpoints: {
+      list: '/api/wine/all',
+      detail: (id: number) => `/api/wine/${id}`,
+      deleteImpact: (id: number) => `/admin/wine/${id}/delete-impact`,
+      delete: (id: number) => `/admin/wine/${id}`,
+      seed: '/admin/wine/seed',
+      validate: '/admin/wine/validate',
+    },
+  },
 };
 
 /**

@@ -11,6 +11,7 @@ const navigationItems = [
   { name: 'Dashboard', href: '/', iconName: 'Home' },
   { name: 'Cheese', href: '/cheese', iconName: 'ChefHat' },
   { name: 'Gin', href: '/gin', iconName: 'Wine' },
+  { name: 'Wine', href: '/wine', iconName: 'Wine' },
   { name: 'Users', href: '/users', iconName: 'Users' },
 ];
 

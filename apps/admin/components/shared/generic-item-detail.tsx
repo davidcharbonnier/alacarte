@@ -5,7 +5,7 @@ import { getItemTypeConfig } from '@/lib/config/item-types';
 import type { BaseItem } from '@/lib/types/item-config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 interface GenericItemDetailProps<T extends BaseItem> {
   itemType: string;
@@ -21,6 +21,46 @@ export function GenericItemDetail<T extends BaseItem>({
   // Split fields into main fields and description
   const mainFields = config.fields.filter((f: any) => f.type !== 'textarea');
   const descriptionField = config.fields.find((f: any) => f.type === 'textarea');
+
+  // Format field value based on type
+  const formatFieldValue = (field: any, value: any) => {
+    if (value === null || value === undefined || value === '') {
+      // For checkbox/boolean, show "No" explicitly
+      if (field.type === 'checkbox') {
+        return (
+          <span className="flex items-center text-gray-400">
+            <XCircle className="w-5 h-5 mr-2" />
+            No
+          </span>
+        );
+      }
+      // For other fields, show muted "Not specified"
+      return <span className="text-gray-400 italic">Not specified</span>;
+    }
+
+    // Handle boolean/checkbox fields with icons
+    if (field.type === 'checkbox') {
+      return value ? (
+        <span className="flex items-center text-green-600">
+          <CheckCircle className="w-5 h-5 mr-2" />
+          Yes
+        </span>
+      ) : (
+        <span className="flex items-center text-gray-400">
+          <XCircle className="w-5 h-5 mr-2" />
+          No
+        </span>
+      );
+    }
+
+    // Handle number fields
+    if (field.type === 'number') {
+      return value.toString();
+    }
+
+    // Default: return as string
+    return value.toString();
+  };
 
   return (
     <div>
@@ -55,7 +95,7 @@ export function GenericItemDetail<T extends BaseItem>({
                   {field.label}
                 </label>
                 <p className="text-lg">
-                  {item[field.key] || '-'}
+                  {formatFieldValue(field, item[field.key])}
                 </p>
               </div>
             ))}
