@@ -13,6 +13,9 @@ jobs:
       api_version: ${{ steps.get_versions.outputs.api }}
       client_version: ${{ steps.get_versions.outputs.client }}
       admin_version: ${{ steps.get_versions.outputs.admin }}
+      api_changed: ${{ steps.detect_changes.outputs.api_changed }}
+      client_changed: ${{ steps.detect_changes.outputs.client_changed }}
+      admin_changed: ${{ steps.detect_changes.outputs.admin_changed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -79,22 +82,60 @@ jobs:
           echo "  Client: ${CLIENT_VERSION}"
           echo "  Admin: ${ADMIN_VERSION}"
 
-  build-docker-images:
+      - name: Detect which apps had version changes
+        if: steps.detect_release.outputs.should_release == 'true'
+        id: detect_changes
+        run: |
+          # Get the version packages commit
+          VERSION_COMMIT=$(git log -1 --grep="chore: version packages" --format=%H)
+          
+          if [ -z "$VERSION_COMMIT" ]; then
+            echo "⚠️ Warning: Could not find version packages commit, building all apps"
+            echo "api_changed=true" >> $GITHUB_OUTPUT
+            echo "client_changed=true" >> $GITHUB_OUTPUT
+            echo "admin_changed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Get files changed in the version commit
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r $VERSION_COMMIT)
+          
+          echo "Files changed in version commit:"
+          echo "$CHANGED_FILES"
+          echo ""
+          
+          # Check if each app's CHANGELOG was updated (indicates version bump)
+          if echo "$CHANGED_FILES" | grep -q "apps/api/CHANGELOG.md"; then
+            echo "api_changed=true" >> $GITHUB_OUTPUT
+            echo "✅ API version changed"
+          else
+            echo "api_changed=false" >> $GITHUB_OUTPUT
+            echo "❌ API version unchanged"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "apps/client/CHANGELOG.md"; then
+            echo "client_changed=true" >> $GITHUB_OUTPUT
+            echo "✅ Client version changed"
+          else
+            echo "client_changed=false" >> $GITHUB_OUTPUT
+            echo "❌ Client version unchanged"
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "apps/admin/CHANGELOG.md"; then
+            echo "admin_changed=true" >> $GITHUB_OUTPUT
+            echo "✅ Admin version changed"
+          else
+            echo "admin_changed=false" >> $GITHUB_OUTPUT
+            echo "❌ Admin version unchanged"
+          fi
+
+  build-api:
     needs: version-and-release
-    if: needs.version-and-release.outputs.has_release == 'true'
+    if: needs.version-and-release.outputs.has_release == 'true' && needs.version-and-release.outputs.api_changed == 'true'
     runs-on: ubuntu-latest
     environment: prod
-    strategy:
-      matrix:
-        app: [api, admin]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Get version
-        id: version
-        run: |
-          VERSION=$(node -p "require('./apps/${{ matrix.app }}/package.json').version")
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -105,33 +146,57 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push API
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/${{ matrix.app }}
-          file: ./apps/${{ matrix.app }}/Dockerfile
+          context: ./apps/api
+          file: ./apps/api/Dockerfile
           push: true
-          target: ${{ matrix.app == 'admin' && 'prod' || '' }}
-          build-args: ${{ matrix.app == 'admin' && format('NEXT_PUBLIC_API_URL={0}', vars.ADMIN_NEXT_PUBLIC_API_URL) || '' }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-${{ matrix.app }}:${{ steps.version.outputs.version }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-${{ matrix.app }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.version-and-release.outputs.api_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  build-client:
+  build-admin:
     needs: version-and-release
-    if: needs.version-and-release.outputs.has_release == 'true'
+    if: needs.version-and-release.outputs.has_release == 'true' && needs.version-and-release.outputs.admin_changed == 'true'
     runs-on: ubuntu-latest
     environment: prod
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get version
-        id: version
-        run: |
-          VERSION=$(node -p "require('./apps/client/package.json').version")
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Admin
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/admin
+          file: ./apps/admin/Dockerfile
+          push: true
+          target: prod
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.version-and-release.outputs.admin_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-client:
+    needs: version-and-release
+    if: needs.version-and-release.outputs.has_release == 'true' && needs.version-and-release.outputs.client_changed == 'true'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Create .env file
         working-directory: ./apps/client
@@ -139,7 +204,7 @@ jobs:
           cat << EOF > .env
           API_BASE_URL=${{ vars.CLIENT_API_BASE_URL }}
           GOOGLE_CLIENT_ID=${{ vars.CLIENT_GOOGLE_CLIENT_ID }}
-          APP_VERSION=${{ steps.version.outputs.version }}
+          APP_VERSION=${{ needs.version-and-release.outputs.client_version }}
           EOF
           echo "✅ Created .env file for production build"
 
@@ -189,12 +254,17 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: client-apk-${{ steps.version.outputs.version }}
+          name: client-apk-${{ needs.version-and-release.outputs.client_version }}
           path: apps/client/build/app/outputs/flutter-apk/app-release.apk
 
   create-releases:
-    needs: [version-and-release, build-docker-images, build-client]
-    if: needs.version-and-release.outputs.has_release == 'true'
+    needs: [version-and-release, build-api, build-admin, build-client]
+    if: |
+      always() &&
+      needs.version-and-release.outputs.has_release == 'true' &&
+      (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') &&
+      (needs.build-admin.result == 'success' || needs.build-admin.result == 'skipped') &&
+      (needs.build-client.result == 'success' || needs.build-client.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -205,32 +275,37 @@ jobs:
           API_VERSION="${{ needs.version-and-release.outputs.api_version }}"
           CLIENT_VERSION="${{ needs.version-and-release.outputs.client_version }}"
           ADMIN_VERSION="${{ needs.version-and-release.outputs.admin_version }}"
+          
+          API_CHANGED="${{ needs.version-and-release.outputs.api_changed }}"
+          CLIENT_CHANGED="${{ needs.version-and-release.outputs.client_changed }}"
+          ADMIN_CHANGED="${{ needs.version-and-release.outputs.admin_changed }}"
 
           echo "api=${API_VERSION}" >> $GITHUB_OUTPUT
           echo "client=${CLIENT_VERSION}" >> $GITHUB_OUTPUT
           echo "admin=${ADMIN_VERSION}" >> $GITHUB_OUTPUT
+          
+          echo "api_changed=${API_CHANGED}" >> $GITHUB_OUTPUT
+          echo "client_changed=${CLIENT_CHANGED}" >> $GITHUB_OUTPUT
+          echo "admin_changed=${ADMIN_CHANGED}" >> $GITHUB_OUTPUT
 
-          # Check if all versions are the same (synchronized release)
-          if [ "$API_VERSION" = "$CLIENT_VERSION" ] && [ "$API_VERSION" = "$ADMIN_VERSION" ]; then
+          # Check if all versions are the same AND all changed (synchronized release)
+          if [ "$API_VERSION" = "$CLIENT_VERSION" ] && [ "$API_VERSION" = "$ADMIN_VERSION" ] && \
+             [ "$API_CHANGED" = "true" ] && [ "$CLIENT_CHANGED" = "true" ] && [ "$ADMIN_CHANGED" = "true" ]; then
             echo "synchronized=true" >> $GITHUB_OUTPUT
-            echo "Synchronized release detected: v${API_VERSION}"
+            echo "✅ Synchronized release detected: v${API_VERSION}"
           else
             echo "synchronized=false" >> $GITHUB_OUTPUT
-            echo "Independent patch releases detected"
-            
-            # For independent releases, mark all as changed (simpler approach)
-            echo "api_changed=true" >> $GITHUB_OUTPUT
-            echo "client_changed=true" >> $GITHUB_OUTPUT
-            echo "admin_changed=true" >> $GITHUB_OUTPUT
+            echo "ℹ️ Independent patch releases detected"
           fi
 
       - name: Download Client APK
+        if: needs.version-and-release.outputs.client_changed == 'true'
         uses: actions/download-artifact@v4
         with:
           name: client-apk-${{ steps.strategy.outputs.client }}
           path: ./artifacts
 
-      # Synchronized release (all apps same version)
+      # Synchronized release (all apps same version and all changed)
       - name: Create combined release
         if: steps.strategy.outputs.synchronized == 'true'
         uses: softprops/action-gh-release@v1

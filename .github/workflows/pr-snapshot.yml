@@ -15,22 +15,54 @@ jobs:
       admin: ${{ steps.changes.outputs.admin }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: dorny/paths-filter@v3
-        id: changes
         with:
-          filters: |
-            api:
-              - 'apps/api/**'
-              - '!apps/api/**/*.md'
-            client:
-              - 'apps/client/**'
-              - '!apps/client/**/*.md'
-            admin:
-              - 'apps/admin/**'
-              - '!apps/admin/**/*.md'
+          fetch-depth: 0
+
+      - name: Detect changed apps
+        id: changes
+        run: |
+          # Get list of changed files
+          git fetch origin ${{ github.event.pull_request.base.ref }}
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          echo ""
+          
+          # Check if API changed (excluding markdown)
+          if echo "$CHANGED_FILES" | grep '^apps/api/' | grep -v '\.md$' > /dev/null; then
+            echo "api=true" >> $GITHUB_OUTPUT
+            echo "✅ API has changes"
+          else
+            echo "api=false" >> $GITHUB_OUTPUT
+            echo "❌ API has no changes"
+          fi
+          
+          # Check if Client changed (excluding markdown)
+          if echo "$CHANGED_FILES" | grep '^apps/client/' | grep -v '\.md$' > /dev/null; then
+            echo "client=true" >> $GITHUB_OUTPUT
+            echo "✅ Client has changes"
+          else
+            echo "client=false" >> $GITHUB_OUTPUT
+            echo "❌ Client has no changes"
+          fi
+          
+          # Check if Admin changed (excluding markdown)
+          if echo "$CHANGED_FILES" | grep '^apps/admin/' | grep -v '\.md$' > /dev/null; then
+            echo "admin=true" >> $GITHUB_OUTPUT
+            echo "✅ Admin has changes"
+          else
+            echo "admin=false" >> $GITHUB_OUTPUT
+            echo "❌ Admin has no changes"
+          fi
 
   generate-version:
+    needs: detect-changes
+    # Only run if at least one app changed
+    if: |
+      needs.detect-changes.outputs.api == 'true' ||
+      needs.detect-changes.outputs.client == 'true' ||
+      needs.detect-changes.outputs.admin == 'true'
     runs-on: ubuntu-latest
     outputs:
       snapshot_version: ${{ steps.version.outputs.snapshot }}
@@ -156,9 +188,14 @@ jobs:
           cache-to: type=gha,mode=max
 
   comment-pr:
-    needs: [generate-version, build-api, build-client, build-admin]
+    needs: [detect-changes, generate-version, build-api, build-client, build-admin]
     # Only comment if at least one build succeeded
-    if: always() && needs.generate-version.result == 'success' && (needs.build-api.result == 'success' || needs.build-client.result == 'success' || needs.build-admin.result == 'success')
+    if: |
+      always() &&
+      needs.generate-version.result == 'success' &&
+      (needs.build-api.result == 'success' ||
+       needs.build-client.result == 'success' ||
+       needs.build-admin.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Comment on PR
