@@ -11,7 +11,7 @@ Welcome to the centralized documentation for the A la carte platform.
 
 ### Architecture
 - [Overview](architecture/overview.md) - System architecture and design principles
-- [Monorepo Strategy](architecture/monorepo-strategy.md) - Changesets, Turborepo, and versioning
+- ⭐ [Monorepo Strategy](architecture/monorepo-strategy.md) - Changesets, versioning, and release management
 - [Tech Stack](architecture/tech-stack.md) - Technologies used across the platform
 - [Design Resources](architecture/design-resources.md) - Logo and branding assets
 
@@ -26,6 +26,7 @@ Welcome to the centralized documentation for the A la carte platform.
 
 ### Guides
 - ⭐ [Adding New Item Types](guides/adding-new-item-types.md) - Complete guide for all 3 apps
+- ⭐ [Contributing Guide](guides/contributing.md) - Development workflow and changeset management
 - [Backend Checklist](guides/backend-checklist.md) - Quick reference for API
 - [Client Checklist](guides/client-checklist.md) - Quick reference for Flutter
 - [Admin Checklist](guides/admin-checklist.md) - Quick reference for Next.js
@@ -82,7 +83,18 @@ This documentation is organized by **purpose** rather than by app:
 - DevOps engineer → Start with [Operations](operations/)
 - New team member → Start with [Getting Started](getting-started/)
 
-## 🤝 Contributing to Documentation
+## 🤝 Contributing
+
+**[Contributing Guide](guides/contributing.md)** - Required reading for contributors!
+
+Covers:
+- Development workflow
+- Changeset management (required for all code changes)
+- PR review checklist
+- Code style guidelines
+- Bug fix process
+
+### Contributing to Documentation
 
 When adding new documentation:
 1. Follow the existing structure (purpose over app)

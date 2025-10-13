@@ -114,12 +114,21 @@ npm run release        # Publish releases (automated)
 
 ## 🤝 Contributing
 
+**See [Contributing Guide](./docs/guides/contributing.md) for detailed guidelines!**
+
+Quick workflow:
 1. Create a feature branch
 2. Make changes
-3. Create a changeset: `npm run changeset`
+3. **Create a changeset:** `npm run changeset` (required!)
 4. Push and open PR
 5. Snapshot versions are automatically published
 6. After merge, changesets bot handles versioning
+
+Key points:
+- Every code change requires a changeset
+- Select correct apps in changeset (only those you changed)
+- Choose correct version bump (major/minor/patch)
+- See [Monorepo Strategy](./docs/architecture/monorepo-strategy.md) for versioning details
 
 ## 📄 License
 
