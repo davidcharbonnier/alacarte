@@ -167,14 +167,12 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         ],
       ),
       floatingActionButton: _tabController.index == 0
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
               onPressed: _navigateToAddItem,
-              icon: const Icon(Icons.add),
-              label: Text(
-                ItemTypeLocalizer.getAddItemText(context, widget.itemType),
-              ),
+              tooltip: ItemTypeLocalizer.getAddItemText(context, widget.itemType),
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
+              child: const Icon(Icons.add),
             )
           : null,
     );
@@ -799,7 +797,12 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     required bool showAll,
   }) {
     return ListView.builder(
-      padding: const EdgeInsets.all(AppConstants.spacingM),
+      padding: const EdgeInsets.fromLTRB(
+        AppConstants.spacingM,
+        AppConstants.spacingM,
+        AppConstants.spacingM,
+        96, // FAB height (56px) + FAB bottom margin (24px) + card spacing (16px)
+      ),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];

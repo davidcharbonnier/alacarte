@@ -220,7 +220,12 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           ref.invalidate(communityStatsProvider);
         },
         child: SingleChildScrollView(
-          padding: AppConstants.screenPadding,
+          padding: EdgeInsets.fromLTRB(
+            AppConstants.spacingM,
+            AppConstants.spacingM,
+            AppConstants.spacingM,
+            myRating == null ? 96 : AppConstants.spacingM, // Add padding if FAB is shown
+          ),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(
@@ -265,12 +270,12 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
         ),
       ),
       floatingActionButton: myRating == null
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
               onPressed: _navigateToRating,
-              icon: const Icon(Icons.star),
-              label: Text(context.l10n.rateItemName(_item!.name)),
+              tooltip: context.l10n.rateItemName(_item!.name),
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
+              child: const Icon(Icons.star),
             )
           : null,
     );
