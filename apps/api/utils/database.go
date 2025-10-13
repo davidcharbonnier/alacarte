@@ -66,6 +66,7 @@ func RunMigrations() {
 		&models.User{},
 		&models.Cheese{},
 		&models.Gin{},
+		&models.Wine{},
 		&models.Rating{},
 	)
 	if err != nil {

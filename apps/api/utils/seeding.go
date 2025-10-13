@@ -1,12 +1,15 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 // SeedResult contains the results of a seeding operation
@@ -22,6 +25,38 @@ type ValidationResult struct {
 	Errors     []string
 	ItemCount  int
 	Duplicates int
+}
+
+// SeedRequest represents the generic request structure for seeding
+// Supports both URL-based and direct data seeding
+type SeedRequest struct {
+	URL  string          `json:"url"`  // Optional: URL to fetch data from
+	Data json.RawMessage `json:"data"` // Optional: Direct JSON data
+}
+
+// GetSeedData is a generic helper that extracts data from either URL or direct upload
+// This allows all item type controllers to support both seeding methods
+func GetSeedData(c *gin.Context) ([]byte, error) {
+	var req SeedRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return nil, fmt.Errorf("invalid request format: %w", err)
+	}
+
+	// Validate that at least one source is provided
+	if req.URL == "" && len(req.Data) == 0 {
+		return nil, fmt.Errorf("either 'url' or 'data' must be provided")
+	}
+
+	// Prioritize direct data if both are provided
+	if len(req.Data) > 0 {
+		log.Printf("Using direct JSON data upload (%d bytes)", len(req.Data))
+		return req.Data, nil
+	}
+
+	// Fall back to URL fetching
+	log.Printf("Fetching data from URL: %s", req.URL)
+	return FetchURLData(req.URL)
 }
 
 // FetchURLData fetches data from a URL or local file path

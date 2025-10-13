@@ -10,93 +10,117 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CheeseCreate(c *gin.Context) {
+func WineCreate(c *gin.Context) {
 	var body struct {
 		Name        string
-		Type        string
-		Origin      string
 		Producer    string
+		Country     string
+		Region      string
+		Color       string
+		Grape       string
+		Alcohol     float64
 		Description string
+		Designation string
+		Sugar       float64
+		Organic     bool
 	}
 	c.Bind(&body)
 
-	cheese := models.Cheese{
+	wineItem := models.Wine{
 		Name:        body.Name,
-		Type:        body.Type,
-		Origin:      body.Origin,
 		Producer:    body.Producer,
+		Country:     body.Country,
+		Region:      body.Region,
+		Color:       body.Color,
+		Grape:       body.Grape,
+		Alcohol:     body.Alcohol,
 		Description: body.Description,
+		Designation: body.Designation,
+		Sugar:       body.Sugar,
+		Organic:     body.Organic,
 	}
 
-	if err := utils.DB.Create(&cheese).Error; err != nil {
+	if err := utils.DB.Create(&wineItem).Error; err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, cheese)
+	c.JSON(http.StatusOK, wineItem)
 }
 
-func CheeseIndex(c *gin.Context) {
-	var cheeses []models.Cheese
+func WineIndex(c *gin.Context) {
+	var wines []models.Wine
 
-	if err := utils.DB.Find(&cheeses).Error; err != nil {
+	if err := utils.DB.Find(&wines).Error; err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, cheeses)
+	c.JSON(http.StatusOK, wines)
 }
 
-func CheeseDetails(c *gin.Context) {
+func WineDetails(c *gin.Context) {
 	id := c.Param("id")
 
-	cheese := models.Cheese{}
+	wineItem := models.Wine{}
 
-	if err := utils.DB.First(&cheese, id).Error; err != nil {
+	if err := utils.DB.First(&wineItem, id).Error; err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, cheese)
+	c.JSON(http.StatusOK, wineItem)
 }
 
-func CheeseEdit(c *gin.Context) {
+func WineEdit(c *gin.Context) {
 	id := c.Param("id")
 
 	var body struct {
 		Name        string
-		Type        string
-		Origin      string
 		Producer    string
+		Country     string
+		Region      string
+		Color       string
+		Grape       string
+		Alcohol     float64
 		Description string
+		Designation string
+		Sugar       float64
+		Organic     bool
 	}
 	c.Bind(&body)
 
-	cheese := models.Cheese{}
+	wineItem := models.Wine{}
 
-	if err := utils.DB.First(&cheese, id).Error; err != nil {
+	if err := utils.DB.First(&wineItem, id).Error; err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if err := utils.DB.Model(&cheese).Updates(models.Cheese{
+	if err := utils.DB.Model(&wineItem).Updates(models.Wine{
 		Name:        body.Name,
-		Type:        body.Type,
-		Origin:      body.Origin,
 		Producer:    body.Producer,
+		Country:     body.Country,
+		Region:      body.Region,
+		Color:       body.Color,
+		Grape:       body.Grape,
+		Alcohol:     body.Alcohol,
 		Description: body.Description,
+		Designation: body.Designation,
+		Sugar:       body.Sugar,
+		Organic:     body.Organic,
 	}).Error; err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, cheese)
+	c.JSON(http.StatusOK, wineItem)
 }
 
-func CheeseRemove(c *gin.Context) {
+func WineRemove(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := utils.DB.Delete(&models.Cheese{}, id).Error; err != nil {
+	if err := utils.DB.Delete(&models.Wine{}, id).Error; err != nil {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
@@ -106,20 +130,20 @@ func CheeseRemove(c *gin.Context) {
 
 // ===== ADMIN ENDPOINTS =====
 
-// GetCheeseDeleteImpact shows what will be affected if cheese is deleted
-func GetCheeseDeleteImpact(c *gin.Context) {
-	cheeseID := c.Param("id")
+// GetWineDeleteImpact shows what will be affected if wine is deleted
+func GetWineDeleteImpact(c *gin.Context) {
+	wineID := c.Param("id")
 
-	// Check if cheese exists
-	var cheese models.Cheese
-	if err := utils.DB.First(&cheese, cheeseID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Cheese not found"})
+	// Check if wine exists
+	var wineItem models.Wine
+	if err := utils.DB.First(&wineItem, wineID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Wine not found"})
 		return
 	}
 
-	// Get all ratings for this cheese
+	// Get all ratings for this wine
 	var ratings []models.Rating
-	utils.DB.Preload("User").Where("item_type = ? AND item_id = ?", "cheese", cheeseID).Find(&ratings)
+	utils.DB.Preload("User").Where("item_type = ? AND item_id = ?", "wine", wineID).Find(&ratings)
 
 	// Count unique users affected
 	userMap := make(map[uint]bool)
@@ -180,23 +204,23 @@ func GetCheeseDeleteImpact(c *gin.Context) {
 	})
 }
 
-// DeleteCheese deletes a cheese and all associated ratings
-func DeleteCheese(c *gin.Context) {
-	cheeseID := c.Param("id")
+// DeleteWine deletes a wine and all associated ratings
+func DeleteWine(c *gin.Context) {
+	wineID := c.Param("id")
 
-	// Check if cheese exists
-	var cheese models.Cheese
-	if err := utils.DB.First(&cheese, cheeseID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Cheese not found"})
+	// Check if wine exists
+	var wineItem models.Wine
+	if err := utils.DB.First(&wineItem, wineID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Wine not found"})
 		return
 	}
 
 	// Start transaction
 	tx := utils.DB.Begin()
 
-	// Get all ratings for this cheese
+	// Get all ratings for this wine
 	var ratings []models.Rating
-	tx.Where("item_type = ? AND item_id = ?", "cheese", cheeseID).Find(&ratings)
+	tx.Where("item_type = ? AND item_id = ?", "wine", wineID).Find(&ratings)
 
 	// Delete rating viewers (sharing relationships)
 	for _, rating := range ratings {
@@ -204,23 +228,23 @@ func DeleteCheese(c *gin.Context) {
 	}
 
 	// Delete ratings
-	tx.Where("item_type = ? AND item_id = ?", "cheese", cheeseID).Delete(&models.Rating{})
+	tx.Where("item_type = ? AND item_id = ?", "wine", wineID).Delete(&models.Rating{})
 
-	// Delete the cheese
-	if err := tx.Delete(&cheese).Error; err != nil {
+	// Delete the wine
+	if err := tx.Delete(&wineItem).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete cheese"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete wine"})
 		return
 	}
 
 	// Commit transaction
 	tx.Commit()
 
-	c.JSON(http.StatusOK, gin.H{"message": "Cheese deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "Wine deleted successfully"})
 }
 
-// SeedCheeses bulk imports cheeses from remote URL or direct file upload
-func SeedCheeses(c *gin.Context) {
+// SeedWines bulk imports wines from remote URL or direct file upload
+func SeedWines(c *gin.Context) {
 	// Use generic helper to get data from either URL or direct upload
 	data, err := utils.GetSeedData(c)
 	if err != nil {
@@ -228,22 +252,22 @@ func SeedCheeses(c *gin.Context) {
 		return
 	}
 
-	// Parse cheese-specific JSON structure
+	// Parse wine-specific JSON structure
 	var jsonData struct {
-		Cheeses []models.Cheese `json:"cheeses"`
+		Wines []models.Wine `json:"wines"`
 	}
 	if err := json.Unmarshal(data, &jsonData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid JSON format: %v", err)})
 		return
 	}
 
-	// Import cheeses with cheese-specific natural key logic
+	// Import wines with wine-specific natural key logic
 	result := utils.SeedResult{Errors: []string{}}
 
-	for _, cheese := range jsonData.Cheeses {
-		// Check if cheese already exists (natural key: name + origin)
-		var existing models.Cheese
-		err := utils.DB.Where("name = ? AND origin = ?", cheese.Name, cheese.Origin).First(&existing).Error
+	for _, wineItem := range jsonData.Wines {
+		// Check if wine already exists (natural key: name + color)
+		var existing models.Wine
+		err := utils.DB.Where("name = ? AND color = ?", wineItem.Name, wineItem.Color).First(&existing).Error
 
 		if err == nil {
 			// Already exists - skip
@@ -251,9 +275,9 @@ func SeedCheeses(c *gin.Context) {
 			continue
 		}
 
-		// Create new cheese
-		if err := utils.DB.Create(&cheese).Error; err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("Failed to create %s: %v", cheese.Name, err))
+		// Create new wine
+		if err := utils.DB.Create(&wineItem).Error; err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("Failed to create %s: %v", wineItem.Name, err))
 			continue
 		}
 		result.Added++
@@ -266,8 +290,8 @@ func SeedCheeses(c *gin.Context) {
 	})
 }
 
-// ValidateCheeses validates JSON structure without importing
-func ValidateCheeses(c *gin.Context) {
+// ValidateWines validates JSON structure without importing
+func ValidateWines(c *gin.Context) {
 	// Use generic helper to get data from either URL or direct upload
 	data, err := utils.GetSeedData(c)
 	if err != nil {
@@ -275,9 +299,9 @@ func ValidateCheeses(c *gin.Context) {
 		return
 	}
 
-	// Parse cheese-specific JSON structure
+	// Parse wine-specific JSON structure
 	var jsonData struct {
-		Cheeses []models.Cheese `json:"cheeses"`
+		Wines []models.Wine `json:"wines"`
 	}
 	if err := json.Unmarshal(data, &jsonData); err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -289,28 +313,32 @@ func ValidateCheeses(c *gin.Context) {
 		return
 	}
 
-	// Validate cheese-specific requirements
+	// Validate wine-specific requirements
 	result := utils.ValidationResult{
 		Valid:     true,
 		Errors:    []string{},
-		ItemCount: len(jsonData.Cheeses),
+		ItemCount: len(jsonData.Wines),
 	}
 
 	seen := make(map[string]bool)
 
-	for i, cheese := range jsonData.Cheeses {
-		// Check required fields for cheese
-		if cheese.Name == "" {
+	for i, wineItem := range jsonData.Wines {
+		// Check required fields for wine
+		if wineItem.Name == "" {
 			result.Valid = false
 			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing name", i+1))
 		}
-		if cheese.Origin == "" {
+		if wineItem.Color == "" {
 			result.Valid = false
-			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing origin", i+1))
+			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing color", i+1))
+		}
+		if wineItem.Country == "" {
+			result.Valid = false
+			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing country", i+1))
 		}
 
-		// Check for duplicates within file (cheese natural key: name + origin)
-		key := cheese.Name + "|" + cheese.Origin
+		// Check for duplicates within file (wine natural key: name + color)
+		key := wineItem.Name + "|" + wineItem.Color
 		if seen[key] {
 			result.Duplicates++
 		}
