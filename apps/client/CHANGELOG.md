@@ -1,5 +1,11 @@
 # @alacarte/client
 
+## 0.2.4
+
+### Patch Changes
+
+- [#8](https://github.com/davidcharbonnier/alacarte/pull/8) [`4149e6e`](https://github.com/davidcharbonnier/alacarte/commit/4149e6e9abbf174c7182e3b725c122fed4518a10) Thanks [@davidcharbonnier](https://github.com/davidcharbonnier)! - Improve performances and streamline notifications
+
 ## 0.2.3
 
 ### Patch Changes
