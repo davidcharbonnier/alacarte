@@ -948,8 +948,8 @@
     "description": "Shows the original rating value",
     "placeholders": {
       "rating": {
-        "type": "int",
-        "example": "4"
+        "type": "double",
+        "example": "4.5"
       }
     }
   },

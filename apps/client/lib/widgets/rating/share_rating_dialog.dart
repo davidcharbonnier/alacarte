@@ -70,6 +70,13 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
           
           // Combine both lists
           _allUsers = [...previousConnections, ...discoverableUsers];
+          
+          // Sort alphabetically by display name (A to Z, case-insensitive)
+          _allUsers.sort((a, b) {
+            final nameA = a.displayName.isNotEmpty ? a.displayName : a.fullName;
+            final nameB = b.displayName.isNotEmpty ? b.displayName : b.fullName;
+            return nameA.toLowerCase().compareTo(nameB.toLowerCase());
+          });
         },
         error: (message, statusCode, errorCode, details) {
           _loadError = message;

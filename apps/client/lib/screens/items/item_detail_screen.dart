@@ -264,15 +264,6 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           ),
         ),
       ),
-      floatingActionButton: myRating == null
-          ? FloatingActionButton.extended(
-              onPressed: _navigateToRating,
-              icon: const Icon(Icons.star),
-              label: Text(context.l10n.rateItemName(_item!.name)),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-            )
-          : null,
     );
   }
 

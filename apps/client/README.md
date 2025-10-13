@@ -19,6 +19,7 @@ flutter run -d linux  # or -d chrome, -d android
 - **Internationalization** - Complete French/English support
 - **Strategy Pattern Forms** - Extensible form system
 - **Community Statistics** - Aggregate rating data
+- **Smart Caching** - 5-minute service-level cache for instant navigation
 
 ## Common Tasks
 
@@ -73,8 +74,10 @@ Complete client documentation available at [/docs/client/](/docs/client/)
 - **State Management:** Riverpod
 - **Routing:** GoRouter with async initialization
 - **Localization:** Flutter built-in i18n with .arb files
-- **HTTP:** Dio with interceptors
+- **HTTP:** Dio with HTTP/2 support
 - **Storage:** SharedPreferences for local data
+- **Caching:** Service-level singleton caching (5-minute expiry)
+- **Performance:** HTTP/2 multiplexing via Cloud Run
 
 ## Project Structure
 

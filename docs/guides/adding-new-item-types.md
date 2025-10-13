@@ -224,28 +224,77 @@ class WineItem implements RateableItem {
 
 ```dart
 class WineItemService extends ItemService<WineItem> {
-  static const _cacheExpiry = Duration(minutes: 5);
+  // Singleton pattern to preserve cache
+  static final WineItemService _instance = WineItemService._internal();
+  
+  factory WineItemService() => _instance;
+  
+  WineItemService._internal();
+  
+  // Cache for 5-minute expiry
   ApiResponse<List<WineItem>>? _cachedResponse;
   DateTime? _cacheTime;
+  static const Duration _cacheExpiry = Duration(minutes: 5);
 
   @override
+  String get itemTypeEndpoint => '/api/wine';
+
+  @override
+  WineItem Function(dynamic) get fromJson =>
+      (dynamic json) => WineItem.fromJson(json as Map<String, dynamic>);
+
+  @override
+  List<String> Function(WineItem) get validateItem => _validateWineItem;
+  
+  @override
   Future<ApiResponse<List<WineItem>>> getAllItems() async {
-    // Return cache if valid
-    if (_isValidCache()) return _cachedResponse!;
+    // Check cache
+    if (_cachedResponse != null && _cacheTime != null) {
+      final age = DateTime.now().difference(_cacheTime!);
+      if (age < _cacheExpiry) {
+        return _cachedResponse!;
+      }
+    }
     
     // Fetch and cache
-    final response = await handleListResponse(...);
-    _cacheResponse(response);
+    final response = await handleListResponse<WineItem>(
+      get('$itemTypeEndpoint/all'),
+      fromJson,
+    );
+    
+    if (response is ApiSuccess<List<WineItem>>) {
+      _cachedResponse = response;
+      _cacheTime = DateTime.now();
+    }
+    
     return response;
   }
+  
+  void clearCache() {
+    _cachedResponse = null;
+    _cacheTime = null;
+  }
 
-  // Additional methods: getItemById, createItem, updateItem, deleteItem
+  static List<String> _validateWineItem(WineItem wine) {
+    final errors = <String>[];
+    if (wine.name.trim().isEmpty) errors.add('Name is required');
+    if (wine.varietal.trim().isEmpty) errors.add('Varietal is required');
+    if (wine.producer.trim().isEmpty) errors.add('Producer is required');
+    if (wine.origin.trim().isEmpty) errors.add('Origin is required');
+    return errors;
+  }
 }
 
-final wineItemServiceProvider = Provider<WineItemService>((ref) {
-  return WineItemService(ref.read(apiServiceProvider));
-});
+final wineItemServiceProvider = Provider<WineItemService>(
+  (ref) => WineItemService(), // Factory returns singleton
+);
 ```
+
+**Key points:**
+- Singleton pattern ensures cache persists across navigation
+- Factory constructor returns the same instance
+- 5-minute cache with automatic expiry
+- `clearCache()` method for cache invalidation
 
 #### Step 3: Register Provider (~5 min)
 
@@ -519,7 +568,8 @@ Thanks to the generic architecture and October 2025 refactorings:
 4. **Natural keys:** Always use name + origin for seeding
 5. **Localization:** Run `flutter gen-l10n` after adding .arb strings
 6. **Strategy pattern:** All form logic in one place (wine_form_strategy.dart)
-7. **Cache clearing:** Remember to clear wine cache in createItem()
+7. **Cache clearing:** Clear wine cache in `createItem()`, `updateItem()`, and `deleteItem()` using `clearCache()`
+8. **Singleton services:** Use factory constructors that return singleton instances for caching
 
 ---
 

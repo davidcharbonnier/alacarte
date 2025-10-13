@@ -59,6 +59,13 @@ abstract class ItemService<T extends RateableItem> extends ApiService {
 
 /// Concrete implementation for Cheese items
 class CheeseItemService extends ItemService<CheeseItem> {
+  // Singleton pattern to preserve cache across provider recreations
+  static final CheeseItemService _instance = CheeseItemService._internal();
+  
+  factory CheeseItemService() => _instance;
+  
+  CheeseItemService._internal();
+  
   // Cache for avoiding duplicate API calls
   ApiResponse<List<CheeseItem>>? _cachedResponse;
   DateTime? _cacheTime;
@@ -214,13 +221,23 @@ class CheeseItemService extends ItemService<CheeseItem> {
   }
 }
 
-/// Provider for CheeseItemService
+/// Provider for CheeseItemService (cached to preserve service-level cache)
 final cheeseItemServiceProvider = Provider<CheeseItemService>(
-  (ref) => CheeseItemService(),
+  (ref) {
+    // Return singleton instance to preserve cache across provider reads
+    return CheeseItemService._instance;
+  },
 );
 
 /// Concrete implementation for Gin items
 class GinItemService extends ItemService<GinItem> {
+  // Singleton pattern to preserve cache across provider recreations
+  static final GinItemService _instance = GinItemService._internal();
+  
+  factory GinItemService() => _instance;
+  
+  GinItemService._internal();
+  
   // Cache for avoiding duplicate API calls
   ApiResponse<List<GinItem>>? _cachedResponse;
   DateTime? _cacheTime;
@@ -345,7 +362,10 @@ class GinItemService extends ItemService<GinItem> {
   }
 }
 
-/// Provider for GinItemService
+/// Provider for GinItemService (cached to preserve service-level cache)
 final ginItemServiceProvider = Provider<GinItemService>(
-  (ref) => GinItemService(),
+  (ref) {
+    // Return singleton instance to preserve cache across provider reads
+    return GinItemService._instance;
+  },
 );

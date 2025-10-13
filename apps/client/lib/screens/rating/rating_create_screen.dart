@@ -5,6 +5,7 @@ import '../../providers/rating_provider.dart';
 import '../../models/rateable_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
+import '../../utils/notification_helper.dart';
 import '../../utils/safe_navigation.dart';
 import '../../utils/item_provider_helper.dart';
 import '../../models/rateable_item.dart' as rateable;
@@ -27,7 +28,7 @@ class RatingCreateScreen extends ConsumerStatefulWidget {
 
 class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
   final _noteController = TextEditingController();
-  int _selectedRating = 0;
+  double _selectedRating = 0.0;
   RateableItem? _item;
   bool _isLoadingItem = true;
   String? _loadError;
@@ -74,7 +75,7 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
     }
   }
 
-  void _onRatingChanged(int rating) {
+  void _onRatingChanged(double rating) {
     setState(() {
       _selectedRating = rating;
     });
@@ -91,21 +92,21 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
     final currentUserId = authState.user?.id;
 
     if (currentUserId == null) {
-      _showErrorSnackBar('No authenticated user');
+      NotificationHelper.showError(context, 'No authenticated user');
       return;
     }
 
     final success = await ref
         .read(ratingProvider.notifier)
         .createRating(
-          grade: _selectedRating.toDouble(),
+          grade: _selectedRating,
           note: _noteController.text.trim(),
           itemType: widget.itemType,
           itemId: widget.itemId,
         );
 
     if (success) {
-      _showSuccessSnackBar(context.l10n.ratingCreated);
+      NotificationHelper.showSuccess(context, context.l10n.ratingCreated);
       // Navigate back to item detail screen
       if (mounted) {
         // Use a delay to ensure the snackbar is shown before navigation
@@ -121,55 +122,7 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
     } else {
       final error =
           ref.read(ratingProvider).error ?? context.l10n.couldNotSaveRating;
-      _showErrorSnackBar(error);
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(milliseconds: 2000),
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-          action: SnackBarAction(
-            label: context.l10n.dismiss,
-            textColor: Colors.white,
-            onPressed: () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            },
-          ),
-        ),
-      );
+      NotificationHelper.showError(context, error);
     }
   }
 
@@ -332,6 +285,7 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
             border: const OutlineInputBorder(),
             alignLabelWithHint: true,
           ),
+          textCapitalization: TextCapitalization.sentences,
           textInputAction: TextInputAction.newline,
         ),
       ],

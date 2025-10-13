@@ -96,6 +96,7 @@ class ItemPropertyField extends StatelessWidget {
       maxLines: maxLines,
       maxLength: maxLength,
       keyboardType: keyboardType,
+      textCapitalization: TextCapitalization.sentences,
       validator: required ? (value) {
         if (value == null || value.trim().isEmpty) {
           return errorText ?? '$labelText is required';
@@ -133,6 +134,7 @@ class ItemNameField extends StatelessWidget {
         enabled: enabled,
         prefixIcon: const Icon(Icons.label),
       ),
+      textCapitalization: TextCapitalization.sentences,
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return context.l10n.itemNameRequired(itemType);
@@ -179,6 +181,7 @@ class ItemDescriptionField extends StatelessWidget {
       maxLines: 3,
       maxLength: maxLength,
       keyboardType: TextInputType.multiline,
+      textCapitalization: TextCapitalization.sentences,
       validator: (value) {
         if (value != null && value.length > maxLength) {
           return context.l10n.descriptionTooLong;

@@ -5,6 +5,7 @@ import '../../providers/rating_provider.dart';
 import '../../models/rating.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
+import '../../utils/notification_helper.dart';
 import '../../utils/safe_navigation.dart';
 import '../../utils/item_provider_helper.dart';
 import '../../models/rateable_item.dart' as rateable;
@@ -22,7 +23,7 @@ class RatingEditScreen extends ConsumerStatefulWidget {
 
 class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
   final _noteController = TextEditingController();
-  int _selectedRating = 0;
+  double _selectedRating = 0.0;
   Rating? _existingRating;
   bool _isLoadingRating = true;
   String? _loadError;
@@ -75,7 +76,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
       }
 
       // Pre-populate form with existing data
-      _selectedRating = _existingRating!.starRating;
+      _selectedRating = _existingRating!.grade;
       _noteController.text = _existingRating!.note;
     } finally {
       if (mounted) {
@@ -86,7 +87,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
     }
   }
 
-  void _onRatingChanged(int rating) {
+  void _onRatingChanged(double rating) {
     setState(() {
       _selectedRating = rating;
     });
@@ -98,7 +99,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
 
   bool get _hasChanges {
     if (_existingRating == null) return false;
-    return _selectedRating != _existingRating!.starRating ||
+    return _selectedRating != _existingRating!.grade ||
         _noteController.text.trim() != _existingRating!.note;
   }
 
@@ -109,7 +110,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
     final currentUserId = authState.user?.id;
 
     if (currentUserId == null) {
-      _showErrorSnackBar('No authenticated user');
+      NotificationHelper.showError(context, 'No authenticated user');
       return;
     }
 
@@ -117,12 +118,12 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
         .read(ratingProvider.notifier)
         .updateRating(
           widget.ratingId,
-          grade: _selectedRating.toDouble(),
+          grade: _selectedRating,
           note: _noteController.text.trim(),
         );
 
     if (success) {
-      _showSuccessSnackBar(context.l10n.ratingUpdated);
+      NotificationHelper.showSuccess(context, context.l10n.ratingUpdated);
       // Navigate back to item detail screen
       if (mounted) {
         // Use a delay to ensure the snackbar is shown before navigation
@@ -138,55 +139,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
     } else {
       final error =
           ref.read(ratingProvider).error ?? context.l10n.couldNotUpdateRating;
-      _showErrorSnackBar(error);
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white, size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(milliseconds: 2000),
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-          action: SnackBarAction(
-            label: context.l10n.dismiss,
-            textColor: Colors.white,
-            onPressed: () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            },
-          ),
-        ),
-      );
+      NotificationHelper.showError(context, error);
     }
   }
 
@@ -370,7 +323,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
                   ),
                   const SizedBox(height: AppConstants.spacingXS),
                   Text(
-                    context.l10n.originalRating(_existingRating!.starRating),
+                    context.l10n.originalRating(_existingRating!.grade),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(
                         context,
@@ -405,6 +358,7 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
             border: const OutlineInputBorder(),
             alignLabelWithHint: true,
           ),
+          textCapitalization: TextCapitalization.sentences,
           textInputAction: TextInputAction.newline,
           onChanged: (_) =>
               setState(() {}), // Trigger rebuild to update _hasChanges
