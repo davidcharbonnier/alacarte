@@ -311,6 +311,22 @@ class MyRatingSection extends ConsumerWidget {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    const SizedBox(height: AppConstants.spacingL),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        GoRouter.of(context).go('${RouteNames.ratingCreate}/${item.itemType}/${item.id}');
+                      },
+                      icon: const Icon(Icons.star),
+                      label: Text(
+                        context.l10n.rateThisItem(
+                          ItemTypeLocalizer.getLocalizedItemType(context, item.itemType).toLowerCase(),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
                   ],
                 ),
               ),
