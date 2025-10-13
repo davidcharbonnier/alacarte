@@ -18,6 +18,9 @@ import '../../routes/route_names.dart';
 import '../../widgets/common/item_search_filter.dart';
 import '../../utils/item_filter_helper.dart';
 
+/// Provider to remember the last active tab for each item type
+final itemTypeTabProvider = StateProvider.family<int, String>((ref, itemType) => 0);
+
 /// Dedicated screen for a specific item type (cheese, gin, wine, etc.)
 class ItemTypeScreen extends ConsumerStatefulWidget {
   final String itemType;
@@ -38,12 +41,23 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   @override
   void initState() {
     super.initState();
-    // Start with "All Items" tab (index 0) as default
-    _tabController = TabController(length: 2, vsync: this, initialIndex: 0);
+    
+    // Restore last active tab from provider
+    final lastTab = ref.read(itemTypeTabProvider(widget.itemType));
+    
+    // Start with last active tab (defaults to "All Items" if never set)
+    _tabController = TabController(
+      length: 2, 
+      vsync: this, 
+      initialIndex: lastTab.clamp(0, 1), // Ensure valid tab index
+    );
 
-    // Listen to tab changes to update FAB visibility and clear tab-specific filters
+    // Listen to tab changes to save state and update FAB visibility
     _tabController.addListener(() {
-      _onTabChanged(); // Clear tab-specific filters first
+      // Save current tab to provider
+      ref.read(itemTypeTabProvider(widget.itemType).notifier).state = _tabController.index;
+      
+      _onTabChanged(); // Clear tab-specific filters
       setState(() {
         // Rebuild to update FAB visibility
       });
