@@ -763,6 +763,24 @@ Artifacts Cleanup (sequential - safety net)
 - Document the change in the changeset
 - Consider adding changeset validation to PR checks
 
+### Issue: Workflow runs even with no app changes
+
+**Problem:** PR with only docs/CI changes triggers builds
+
+**Solution:**
+- ✅ Fixed: `generate-version` job now has conditional check
+- ✅ Only runs if at least one app has changes
+- ✅ `no-changes` job provides clear feedback when builds are skipped
+- Workflow structure:
+  ```yaml
+  generate-version:
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.api == 'true' ||
+      needs.detect-changes.outputs.client == 'true' ||
+      needs.detect-changes.outputs.admin == 'true'
+  ```
+
 ---
 
 **Last reviewed:** January 2025  
