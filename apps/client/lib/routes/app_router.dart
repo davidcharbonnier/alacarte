@@ -17,6 +17,7 @@ import '../screens/settings/user_settings_screen.dart';
 import '../screens/settings/privacy_settings_screen.dart';
 import '../screens/cheese/cheese_form_screens.dart';
 import '../screens/gin/gin_form_screens.dart';
+import '../screens/wine/wine_form_screens.dart';
 
 /// Provider for the GoRouter configuration with OAuth authentication
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -191,6 +192,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             return _buildPlaceholderScreen('Invalid Gin ID');
           }
           return GinEditScreen(ginId: ginId);
+        },
+      ),
+
+      // Wine-specific routes
+      GoRoute(
+        path: RoutePaths.wineCreate,
+        name: RouteNames.wineCreate,
+        builder: (context, state) => const WineCreateScreen(),
+      ),
+
+      GoRoute(
+        path: RoutePaths.wineEdit,
+        name: RouteNames.wineEdit,
+        builder: (context, state) {
+          final wineIdParam = state.pathParameters[RouteParams.wineId];
+          final wineId = int.tryParse(wineIdParam ?? '');
+          if (wineId == null) {
+            return _buildPlaceholderScreen('Invalid Wine ID');
+          }
+          return WineEditScreen(wineId: wineId);
         },
       ),
 

@@ -106,6 +106,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       GoRouter.of(context).go(RouteNames.cheeseCreate);
     } else if (widget.itemType == 'gin') {
       GoRouter.of(context).go(RouteNames.ginCreate);
+    } else if (widget.itemType == 'wine') {
+      GoRouter.of(context).go(RouteNames.wineCreate);
     } else {
       // Future enhancement: support other item types
       GoRouter.of(context).go(RouteNames.cheeseCreate);
@@ -412,6 +414,26 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                   fontWeight:
                       widget.itemType == 'gin' ? FontWeight.bold : FontWeight.normal,
                   color: widget.itemType == 'gin' ? Colors.teal : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'wine',
+          child: Row(
+            children: [
+              Icon(
+                Icons.wine_bar,
+                color: widget.itemType == 'wine' ? const Color(0xFF8E24AA) : null,
+              ),
+              const SizedBox(width: AppConstants.spacingS),
+              Text(
+                ItemTypeLocalizer.getLocalizedItemType(context, 'wine'),
+                style: TextStyle(
+                  fontWeight:
+                      widget.itemType == 'wine' ? FontWeight.bold : FontWeight.normal,
+                  color: widget.itemType == 'wine' ? const Color(0xFF8E24AA) : null,
                 ),
               ),
             ],

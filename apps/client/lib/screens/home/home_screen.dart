@@ -44,6 +44,7 @@ class HomeScreen extends ConsumerWidget {
     // Ensure data is loaded when accessing the home screen
     final cheeseItemState = ref.watch(cheeseItemProvider);
     final ginItemState = ref.watch(ginItemProvider);
+    final wineItemState = ref.watch(wineItemProvider);
     
     // Load cheese data if not already loaded and not currently loading
     if (!cheeseItemState.hasLoadedOnce && !cheeseItemState.isLoading) {
@@ -56,6 +57,13 @@ class HomeScreen extends ConsumerWidget {
     if (!ginItemState.hasLoadedOnce && !ginItemState.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(ginItemProvider.notifier).loadItems();
+      });
+    }
+    
+    // Load wine data if not already loaded and not currently loading
+    if (!wineItemState.hasLoadedOnce && !wineItemState.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(wineItemProvider.notifier).loadItems();
       });
     }
     
@@ -79,6 +87,7 @@ class HomeScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.read(cheeseItemProvider.notifier).refreshItems();
           ref.read(ginItemProvider.notifier).refreshItems();
+          ref.read(wineItemProvider.notifier).refreshItems();
           ref.read(ratingProvider.notifier).refreshRatings();
         },
         child: SingleChildScrollView(
@@ -120,6 +129,18 @@ class HomeScreen extends ConsumerWidget {
                     Colors.teal,
                     ginItemState.items.length,
                     _getUniqueItemCount(ratingState.ratings, 'gin'),
+                  ),
+                  
+                  const SizedBox(height: AppConstants.spacingM),
+                  
+                  _buildItemTypeCard(
+                    context,
+                    ItemTypeLocalizer.getLocalizedItemType(context, 'wine'),
+                    'wine',
+                    Icons.wine_bar,
+                    const Color(0xFF8E24AA),
+                    wineItemState.items.length,
+                    _getUniqueItemCount(ratingState.ratings, 'wine'),
                   ),
                   
                   const SizedBox(height: AppConstants.spacingM),

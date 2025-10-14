@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/rateable_item.dart';
 import '../../models/cheese_item.dart';
 import '../../models/gin_item.dart';
+import '../../models/wine_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 
@@ -19,6 +20,8 @@ class ItemDetailHeader extends StatelessWidget {
         return item.categories['type'] ?? 'Unknown';
       case 'gin':
         return item.categories['profile'] ?? 'Unknown';
+      case 'wine':
+        return item.categories['color'] ?? 'Unknown';
       default:
         return item.categories['type'] ?? 'Unknown';
     }
@@ -90,6 +93,8 @@ class ItemDetailHeader extends StatelessWidget {
                 return (item as CheeseItem).getLocalizedDetailFields(context);
               } else if (item is GinItem) {
                 return (item as GinItem).getLocalizedDetailFields(context);
+              } else if (item is WineItem) {
+                return (item as WineItem).getLocalizedDetailFields(context);
               }
               return item.detailFields;
             }())

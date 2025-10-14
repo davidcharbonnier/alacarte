@@ -2,6 +2,7 @@ import '../../models/rateable_item.dart';
 import 'item_form_strategy.dart';
 import 'cheese_form_strategy.dart';
 import 'gin_form_strategy.dart';
+import 'wine_form_strategy.dart';
 
 /// Central registry for all item form strategies
 /// 
@@ -17,8 +18,8 @@ class ItemFormStrategyRegistry {
   static final Map<String, ItemFormStrategy> _strategies = {
     'cheese': CheeseFormStrategy(),
     'gin': GinFormStrategy(),
+    'wine': WineFormStrategy(),
     // Future item types:
-    // 'wine': WineFormStrategy(),
     // 'beer': BeerFormStrategy(),
     // 'coffee': CoffeeFormStrategy(),
   };

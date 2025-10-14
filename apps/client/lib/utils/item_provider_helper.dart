@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/rateable_item.dart';
 import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
+import '../models/wine_item.dart';
 import '../models/api_response.dart';
 import '../providers/item_provider.dart';
 import '../services/item_service.dart';
@@ -15,6 +16,8 @@ class ItemProviderHelper {
         return ref.watch(cheeseItemProvider).items.cast<RateableItem>();
       case 'gin':
         return ref.watch(ginItemProvider).items.cast<RateableItem>();
+      case 'wine':
+        return ref.watch(wineItemProvider).items.cast<RateableItem>();
       default:
         return [];
     }
@@ -27,6 +30,8 @@ class ItemProviderHelper {
         return ref.watch(cheeseItemProvider).filteredItems.cast<RateableItem>();
       case 'gin':
         return ref.watch(ginItemProvider).filteredItems.cast<RateableItem>();
+      case 'wine':
+        return ref.watch(wineItemProvider).filteredItems.cast<RateableItem>();
       default:
         return [];
     }
@@ -39,6 +44,8 @@ class ItemProviderHelper {
         return ref.watch(cheeseItemProvider).isLoading;
       case 'gin':
         return ref.watch(ginItemProvider).isLoading;
+      case 'wine':
+        return ref.watch(wineItemProvider).isLoading;
       default:
         return false;
     }
@@ -51,6 +58,8 @@ class ItemProviderHelper {
         return ref.watch(cheeseItemProvider).hasLoadedOnce;
       case 'gin':
         return ref.watch(ginItemProvider).hasLoadedOnce;
+      case 'wine':
+        return ref.watch(wineItemProvider).hasLoadedOnce;
       default:
         return false;
     }
@@ -63,6 +72,8 @@ class ItemProviderHelper {
         return ref.watch(cheeseItemProvider).error;
       case 'gin':
         return ref.watch(ginItemProvider).error;
+      case 'wine':
+        return ref.watch(wineItemProvider).error;
       default:
         return null;
     }
@@ -75,6 +86,8 @@ class ItemProviderHelper {
         return ref.watch(cheeseItemProvider).searchQuery;
       case 'gin':
         return ref.watch(ginItemProvider).searchQuery;
+      case 'wine':
+        return ref.watch(wineItemProvider).searchQuery;
       default:
         return '';
     }
@@ -87,6 +100,8 @@ class ItemProviderHelper {
         return ref.watch(cheeseItemProvider).categoryFilters;
       case 'gin':
         return ref.watch(ginItemProvider).categoryFilters;
+      case 'wine':
+        return ref.watch(wineItemProvider).categoryFilters;
       default:
         return {};
     }
@@ -99,6 +114,8 @@ class ItemProviderHelper {
         return ref.watch(cheeseItemProvider).filterOptions;
       case 'gin':
         return ref.watch(ginItemProvider).filterOptions;
+      case 'wine':
+        return ref.watch(wineItemProvider).filterOptions;
       default:
         return {};
     }
@@ -113,6 +130,9 @@ class ItemProviderHelper {
       case 'gin':
         ref.read(ginItemProvider.notifier).loadItems();
         break;
+      case 'wine':
+        ref.read(wineItemProvider.notifier).loadItems();
+        break;
     }
   }
 
@@ -124,6 +144,9 @@ class ItemProviderHelper {
         break;
       case 'gin':
         await ref.read(ginItemProvider.notifier).refreshItems();
+        break;
+      case 'wine':
+        await ref.read(wineItemProvider.notifier).refreshItems();
         break;
     }
   }
@@ -137,6 +160,9 @@ class ItemProviderHelper {
       case 'gin':
         ref.read(ginItemProvider.notifier).clearFilters();
         break;
+      case 'wine':
+        ref.read(wineItemProvider.notifier).clearFilters();
+        break;
     }
   }
 
@@ -149,6 +175,9 @@ class ItemProviderHelper {
       case 'gin':
         ref.read(ginItemProvider.notifier).clearTabSpecificFilters();
         break;
+      case 'wine':
+        ref.read(wineItemProvider.notifier).clearTabSpecificFilters();
+        break;
     }
   }
 
@@ -160,6 +189,9 @@ class ItemProviderHelper {
         break;
       case 'gin':
         ref.read(ginItemProvider.notifier).updateSearchQuery(query);
+        break;
+      case 'wine':
+        ref.read(wineItemProvider.notifier).updateSearchQuery(query);
         break;
     }
   }
@@ -177,6 +209,9 @@ class ItemProviderHelper {
         break;
       case 'gin':
         ref.read(ginItemProvider.notifier).setCategoryFilter(key, value);
+        break;
+      case 'wine':
+        ref.read(wineItemProvider.notifier).setCategoryFilter(key, value);
         break;
     }
   }
@@ -209,6 +244,13 @@ class ItemProviderHelper {
           return response.data;
         }
         return null;
+      case 'wine':
+        final service = ref.read(wineItemServiceProvider);
+        final response = await service.getItemById(itemId);
+        if (response is ApiSuccess<WineItem>) {
+          return response.data;
+        }
+        return null;
       default:
         return null;
     }
@@ -226,6 +268,9 @@ class ItemProviderHelper {
         break;
       case 'gin':
         await ref.read(ginItemProvider.notifier).loadSpecificItems(itemIds);
+        break;
+      case 'wine':
+        await ref.read(wineItemProvider.notifier).loadSpecificItems(itemIds);
         break;
       default:
         // Unknown item type - skip loading

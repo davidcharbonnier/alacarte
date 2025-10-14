@@ -2323,6 +2323,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit item'**
   String get editItemTooltip;
+
+  /// Wine category name
+  ///
+  /// In en, this message translates to:
+  /// **'Wine'**
+  String get wine;
+
+  /// Plural wine category name
+  ///
+  /// In en, this message translates to:
+  /// **'Wines'**
+  String get wines;
+
+  /// Wine color field label
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get colorLabel;
+
+  /// Country field label
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get country;
+
+  /// Region field label
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get region;
+
+  /// Grape varieties field label
+  ///
+  /// In en, this message translates to:
+  /// **'Grape Varieties'**
+  String get grapeLabel;
+
+  /// Wine designation field label
+  ///
+  /// In en, this message translates to:
+  /// **'Designation'**
+  String get designationLabel;
+
+  /// Alcohol content field label
+  ///
+  /// In en, this message translates to:
+  /// **'Alcohol %'**
+  String get alcoholLabel;
+
+  /// Sugar content field label
+  ///
+  /// In en, this message translates to:
+  /// **'Sugar (g/L)'**
+  String get sugarLabel;
+
+  /// Organic field label
+  ///
+  /// In en, this message translates to:
+  /// **'Organic'**
+  String get organicLabel;
+
+  /// Placeholder for wine name field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter wine name'**
+  String get enterWineName;
+
+  /// Placeholder for color field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter color'**
+  String get enterColor;
+
+  /// Placeholder for country field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter country'**
+  String get enterCountry;
+
+  /// Placeholder for region field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter region'**
+  String get enterRegion;
+
+  /// Placeholder for grape field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter grape varieties'**
+  String get enterGrape;
+
+  /// Placeholder for designation field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter designation'**
+  String get enterDesignation;
+
+  /// Placeholder for alcohol field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter alcohol %'**
+  String get enterAlcohol;
+
+  /// Placeholder for sugar field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter sugar content'**
+  String get enterSugar;
+
+  /// Hint text for color field
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Rouge, Blanc, Rosé, Mousseux, Orange'**
+  String get colorHint;
+
+  /// Hint text for grape varieties field
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Syrah 50%, Grenache 25%'**
+  String get grapeHint;
+
+  /// Hint text for designation field
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., AOC, DOC, Rioja, Bordeaux'**
+  String get designationHint;
+
+  /// Validation message for required color field
+  ///
+  /// In en, this message translates to:
+  /// **'Color is required'**
+  String get colorRequired;
+
+  /// Validation message for required country field
+  ///
+  /// In en, this message translates to:
+  /// **'Country is required'**
+  String get countryRequired;
+
+  /// Success message after creating wine
+  ///
+  /// In en, this message translates to:
+  /// **'Wine created successfully!'**
+  String get wineCreated;
+
+  /// Success message after updating wine
+  ///
+  /// In en, this message translates to:
+  /// **'Wine updated successfully!'**
+  String get wineUpdated;
+
+  /// Success message after deleting wine
+  ///
+  /// In en, this message translates to:
+  /// **'Wine deleted successfully!'**
+  String get wineDeleted;
+
+  /// Create wine screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Create Wine'**
+  String get createWine;
+
+  /// Edit wine screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Wine'**
+  String get editWine;
+
+  /// Add wine button text
+  ///
+  /// In en, this message translates to:
+  /// **'Add Wine'**
+  String get addWine;
 }
 
 class _AppLocalizationsDelegate
