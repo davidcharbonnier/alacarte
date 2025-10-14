@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 interface GenericItemTableProps<T extends BaseItem> {
   itemType: string;
@@ -43,6 +43,49 @@ export function GenericItemTable<T extends BaseItem>({
   const getFieldLabel = (fieldKey: string): string => {
     const field = config.fields.find((f: any) => f.key === fieldKey);
     return field?.label || fieldKey;
+  };
+
+  // Get field type from config
+  const getFieldType = (fieldKey: string): string => {
+    const field = config.fields.find((f: any) => f.key === fieldKey);
+    return field?.type || 'text';
+  };
+
+  // Format cell value based on field type
+  const formatCellValue = (fieldKey: string, value: any) => {
+    if (value === null || value === undefined || value === '') {
+      const fieldType = getFieldType(fieldKey);
+      
+      // For checkbox in table, show gray X
+      if (fieldType === 'checkbox') {
+        return (
+          <span className="flex items-center text-gray-400">
+            <XCircle className="w-4 h-4" />
+          </span>
+        );
+      }
+      
+      // For other fields in table, show em dash
+      return <span className="text-gray-400">—</span>;
+    }
+
+    const fieldType = getFieldType(fieldKey);
+
+    // Handle boolean/checkbox fields with icons
+    if (fieldType === 'checkbox') {
+      return value ? (
+        <span className="flex items-center text-green-600">
+          <CheckCircle className="w-4 h-4" />
+        </span>
+      ) : (
+        <span className="flex items-center text-gray-400">
+          <XCircle className="w-4 h-4" />
+        </span>
+      );
+    }
+
+    // Default: return as string
+    return value.toString();
   };
 
   return (
@@ -76,7 +119,7 @@ export function GenericItemTable<T extends BaseItem>({
                 <TableRow key={item.id}>
                   {config.table.columns.map((column: any) => (
                     <TableCell key={column} className={column === 'name' ? 'font-medium' : ''}>
-                      {item[column] || '-'}
+                      {formatCellValue(column, item[column])}
                     </TableCell>
                   ))}
                   <TableCell className="text-right space-x-2">

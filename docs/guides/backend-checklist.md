@@ -18,11 +18,17 @@ import "gorm.io/gorm"
 
 type Wine struct {
     gorm.Model
-    Name        string   `gorm:"unique" json:"name"`
+    Name        string   `gorm:"not null" json:"name"`
     Producer    string   `json:"producer"`
-    Origin      string   `json:"origin"`
-    Varietal    string   `json:"varietal"`  // Item-specific field
+    Country     string   `gorm:"not null" json:"country"`
+    Region      string   `json:"region"`
+    Color       string   `gorm:"not null" json:"color"`
+    Grape       string   `json:"grape"`
+    Alcohol     float64  `json:"alcohol"`
     Description string   `json:"description"`
+    Designation string   `json:"designation"`
+    Sugar       float64  `json:"sugar"`
+    Organic     bool     `json:"organic" gorm:"default:false"`
     Ratings     []Rating `gorm:"polymorphic:Item;"`
 }
 ```
@@ -30,44 +36,124 @@ type Wine struct {
 **Checklist:**
 - [ ] Create `models/[itemtype]Model.go`
 - [ ] Fields match data source structure
-- [ ] `gorm:"unique"` on Name
+- [ ] Required fields have `gorm:"not null"`
 - [ ] Polymorphic ratings: `gorm:"polymorphic:Item;"`
 - [ ] JSON tags lowercase
-- [ ] 4-6 core fields + description
+- [ ] Support for both required and optional fields
 
 ---
 
-### **2. Create Controller** (~10 min)
+### **2. Create Controller** (~25 min)
 **File:** `controllers/[itemtype]Controller.go`
 
-**Checklist:**
-- [ ] Create `controllers/[itemtype]Controller.go`
-- [ ] Copy cheese controller pattern
-- [ ] Implement: Create, Index, Details, Edit, Remove
-- [ ] Update struct binding fields to match model
-- [ ] Update validation logic
+**Implement 9 endpoints:**
 
----
+**Public CRUD (5 endpoints):**
+- `WineCreate` - POST with JSON binding
+- `WineIndex` - GET all items
+- `WineDetails` - GET single item by ID
+- `WineEdit` - PUT with updates
+- `WineRemove` - DELETE by ID
 
-### **3. Add Routes** (~5 min)
-**File:** `main.go`
+**Admin Endpoints (4 endpoints):**
+- `GetWineDeleteImpact` - Show affected ratings/users before delete
+- `DeleteWine` - Cascade delete with transactions
+- `SeedWines` - Bulk import from URL or direct file upload (uses `utils.GetSeedData()`)
+- `ValidateWines` - Validate JSON without importing (uses `utils.GetSeedData()`)
 
+**Example (using generic helper):**
 ```go
-itemType := api.Group("/wine")
-itemType.Use(middleware.RequireAuth())
-{
-    itemType.POST("/new", controllers.WineCreate)
-    itemType.GET("/all", controllers.WineIndex)
-    itemType.GET("/:id", controllers.WineDetails)
-    itemType.PUT("/:id", controllers.WineEdit)
-    itemType.DELETE("/:id", controllers.WineRemove)
+func SeedWines(c *gin.Context) {
+    // Use generic helper to get data from either URL or direct upload
+    data, err := utils.GetSeedData(c)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    
+    // Parse wine-specific JSON structure
+    var jsonData struct {
+        Wines []models.Wine `json:"wines"`
+    }
+    if err := json.Unmarshal(data, &jsonData); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid JSON format: %v", err)})
+        return
+    }
+    
+    // Import wines with natural key logic
+    result := utils.SeedResult{Errors: []string{}}
+    
+    for _, wineItem := range jsonData.Wines {
+        // Natural key: name + color
+        var existing models.Wine
+        err := utils.DB.Where("name = ? AND color = ?", wineItem.Name, wineItem.Color).First(&existing).Error
+        
+        if err == nil {
+            result.Skipped++
+            continue
+        }
+        
+        if err := utils.DB.Create(&wineItem).Error; err != nil {
+            result.Errors = append(result.Errors, fmt.Sprintf("Failed to create %s: %v", wineItem.Name, err))
+            continue
+        }
+        result.Added++
+    }
+    
+    c.JSON(http.StatusOK, gin.H{
+        "added":   result.Added,
+        "skipped": result.Skipped,
+        "errors":  result.Errors,
+    })
 }
 ```
 
 **Checklist:**
-- [ ] Routes added to `/api` group
+- [ ] Create `controllers/[itemtype]Controller.go`
+- [ ] Copy gin or cheese controller as template
+- [ ] Implement all 5 public CRUD endpoints
+- [ ] Implement all 4 admin endpoints
+- [ ] Use `utils.GetSeedData()` for seed/validate (supports URL + file upload)
+- [ ] Define natural key for duplicate detection
+- [ ] Update struct binding fields to match model
+- [ ] Update validation logic for required fields
+
+---
+
+### **3. Register Routes** (~8 min)
+**File:** `main.go`
+
+**Public routes:**
+```go
+wineItem := api.Group("/wine")
+wineItem.Use(utils.RequireAuth())
+{
+    wineItem.POST("/new", controllers.WineCreate)
+    wineItem.GET("/all", controllers.WineIndex)
+    wineItem.GET("/:id", controllers.WineDetails)
+    wineItem.PUT("/:id", controllers.WineEdit)
+    wineItem.DELETE("/:id", controllers.WineRemove)
+}
+```
+
+**Admin routes:**
+```go
+wineAdmin := admin.Group("/wine")
+wineAdmin.Use(utils.RequireAuth(), utils.RequireAdmin())
+{
+    wineAdmin.GET("/:id/delete-impact", controllers.GetWineDeleteImpact)
+    wineAdmin.DELETE("/:id", controllers.DeleteWine)
+    wineAdmin.POST("/seed", controllers.SeedWines)
+    wineAdmin.POST("/validate", controllers.ValidateWines)
+}
+```
+
+**Checklist:**
+- [ ] Public routes added to `/api` group
+- [ ] Admin routes added to `/admin` group
 - [ ] Authentication middleware applied
 - [ ] All 5 CRUD endpoints registered
+- [ ] All 4 admin endpoints registered
 
 ---
 
@@ -90,179 +176,112 @@ err := DB.AutoMigrate(
 
 ---
 
-### **5. Add Seeding Logic** (~15 min)
-**File:** `utils/database.go`
+### **5. Seeding is Handled by Admin Panel** ✅
 
-**Add to `RunSeeding()`:**
-```go
-wineSource := os.Getenv("WINE_DATA_SOURCE")
-if wineSource != "" {
-    if err := seedWineData(wineSource); err != nil {
-        log.Printf("Wine seeding failed (continuing anyway): %v", err)
-    }
-}
-```
+**No backend seeding code needed!** Seeding is done through the admin panel using:
+- `POST /admin/wine/seed` - Accepts `{"url": "..."}` OR `{"data": {...}}`
+- `POST /admin/wine/validate` - Validates before importing
 
-**Add seeding functions:**
-```go
-func seedWineData(source string) error {
-    wines, err := loadWineData(source)
-    if err != nil {
-        return fmt.Errorf("failed to load wine data: %v", err)
-    }
-
-    for _, wine := range wines {
-        var existing models.Wine
-        result := DB.Where("name = ? AND origin = ?", wine.Name, wine.Origin).First(&existing)
-        
-        if result.Error == gorm.ErrRecordNotFound {
-            if err := DB.Create(&wine).Error; err != nil {
-                log.Printf("Failed to create wine %s: %v", wine.Name, err)
-            }
-        }
-    }
-    return nil
-}
-
-func loadWineData(source string) ([]models.Wine, error) {
-    var data struct {
-        Wines []models.Wine `json:"wines"`
-    }
-    
-    if err := loadJSONData(source, &data); err != nil {
-        return nil, err
-    }
-    
-    return data.Wines, nil
-}
-```
+The generic `utils.GetSeedData()` helper handles both URL and direct file upload automatically.
 
 **Checklist:**
-- [ ] `seedWineData()` function created
-- [ ] `loadWineData()` function created
-- [ ] Natural key matching: `name + origin`
-- [ ] Called from `RunSeeding()`
-- [ ] Handles both file paths and URLs
-- [ ] Error handling in place
+- [ ] ✅ Seed/Validate endpoints use `utils.GetSeedData()`
+- [ ] ✅ No manual seeding code needed in utils/database.go
 
 ---
 
-### **6. Configure Environment** (~2 min)
-**File:** `.env`
+### **6. Skip Environment Config** ✅
 
-```bash
-# Add wine data source
-WINE_DATA_SOURCE=../alacarte-seed/wines.json
-# Or remote URL for production:
-# WINE_DATA_SOURCE=https://raw.githubusercontent.com/user/alacarte-seed/main/wines.json
-
-# Enable seeding
-RUN_SEEDING=true
-```
+No environment variables needed! Seeding is handled through the admin panel.
 
 **Checklist:**
-- [ ] `WINE_DATA_SOURCE` variable added
-- [ ] Points to seed data file or URL
-- [ ] `RUN_SEEDING=true` for development
+- [ ] ✅ No .env configuration required for seeding
 
 ---
 
 ### **7. Create Seed Data** (~varies)
-**File:** `alacarte-seed/wines.json` (separate repository)
+**File:** `alacarte-seed/wines.json` (separate location)
 
 ```json
 {
   "wines": [
     {
-      "name": "Château Example",
-      "producer": "Vignoble Example",
-      "origin": "Quebec",
-      "varietal": "Frontenac",
-      "description": "Description from source..."
+      "name": "Mas Bruguière L'Arbouse Pic Saint-Loup",
+      "producer": "Mas Bruguière",
+      "country": "France",
+      "region": "Languedoc-Roussillon",
+      "color": "Rouge",
+      "grape": "Syrah 50%, Grenache 25%, Mourvèdre 25%",
+      "alcohol": 13.5,
+      "description": "Vin rouge biologique...",
+      "designation": "Pic Saint-Loup AOC",
+      "sugar": 2.0,
+      "organic": true
     }
   ]
 }
 ```
 
 **Checklist:**
-- [ ] JSON file created in `alacarte-seed` repo
+- [ ] JSON file created
 - [ ] 10-30 items for initial launch
-- [ ] All required fields populated
-- [ ] Data in appropriate language (authentic)
+- [ ] All required fields populated (name, color, country)
+- [ ] Optional fields included where available
+- [ ] Data in appropriate language
+- [ ] Natural key values unique (name + color)
 - [ ] Data source documented
 
 ---
 
-### **8. Add Admin Endpoints** (~15 min)
-**File:** `controllers/[itemtype]Controller.go`
-
-**Checklist:**
-- [ ] Add admin section after public CRUD operations
-- [ ] Implement `Get[ItemType]DeleteImpact` - shows affected ratings/users/sharings
-- [ ] Implement `Delete[ItemType]` - cascade deletion with transactions
-- [ ] Implement `Seed[ItemType]s` - bulk import from remote URL
-- [ ] Implement `Validate[ItemType]s` - JSON validation without importing
-- [ ] Add required imports: `encoding/json`, `fmt`, `io`
+### **8. Removed - Admin endpoints now in step 2** ✅
 
 ---
 
-### **9. Add Admin Routes** (~3 min)
-**File:** `main.go`
-
-```go
-// Admin routes (requires admin privileges)
-admin := router.Group("/admin")
-admin.Use(utils.RequireAuth(), utils.RequireAdmin())
-{
-	wineAdmin := admin.Group("/wine")
-	{
-		wineAdmin.GET("/:id/delete-impact", controllers.GetWineDeleteImpact)
-		wineAdmin.DELETE("/:id", controllers.DeleteWine)
-		wineAdmin.POST("/seed", controllers.SeedWines)
-		wineAdmin.POST("/validate", controllers.ValidateWines)
-	}
-}
-```
-
-**Checklist:**
-- [ ] Admin route group created
-- [ ] `RequireAuth()` + `RequireAdmin()` middleware applied
-- [ ] All 4 admin endpoints registered
-- [ ] Variable name doesn't conflict (use `wineAdmin` not `wine`)
+### **9. Removed - Admin routes now in step 3** ✅
 
 ---
 
-### **10. Test Backend** (~10 min)
+### **8. Test Backend** (~10 min)
 
 ```bash
-# Reset database
-go run scripts/reset_database.go
+# Start API
+go run main.go
 
-# Seed data
-RUN_SEEDING=true \
-  CHEESE_DATA_SOURCE=../alacarte-seed/cheeses.json \
-  GIN_DATA_SOURCE=../alacarte-seed/gins.json \
-  WINE_DATA_SOURCE=../alacarte-seed/wines.json \
-  go run main.go
+# Migration will create wines table automatically
 
-# Test API endpoints
+# Test public endpoints (requires JWT token)
 curl -H "Authorization: Bearer $JWT_TOKEN" http://localhost:8080/api/wine/all
 curl -H "Authorization: Bearer $JWT_TOKEN" http://localhost:8080/api/wine/1
+
+# Test admin endpoints (requires admin JWT token)
+curl -H "Authorization: Bearer $ADMIN_TOKEN" \
+  http://localhost:8080/admin/wine/1/delete-impact
+
+curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"http://example.com/wines.json"}' \
+  http://localhost:8080/admin/wine/validate
+
+# Test with direct file data
+curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"data":{"wines":[{...}]}}' \
+  http://localhost:8080/admin/wine/seed
 ```
 
 **Checklist:**
 - [ ] Migration creates wines table
-- [ ] Seeding loads all wines
-- [ ] GET /api/wine/all returns items
-- [ ] GET /api/wine/:id returns single item
+- [ ] GET /api/wine/all returns empty array
+- [ ] GET /api/wine/:id returns 404 for non-existent
 - [ ] POST /api/wine/new creates wine
 - [ ] PUT /api/wine/:id updates wine
 - [ ] DELETE /api/wine/:id deletes wine
-- [ ] GET /admin/wine/:id/delete-impact requires admin auth
-- [ ] GET /admin/wine/:id/delete-impact shows impact correctly
-- [ ] DELETE /admin/wine/:id cascade deletes item
-- [ ] POST /admin/wine/seed bulk imports successfully
-- [ ] POST /admin/wine/validate validates JSON without importing
+- [ ] GET /admin/wine/:id/delete-impact requires admin
+- [ ] GET /admin/wine/:id/delete-impact shows impact
+- [ ] DELETE /admin/wine/:id cascade deletes
+- [ ] POST /admin/wine/seed works with URL
+- [ ] POST /admin/wine/seed works with direct data
+- [ ] POST /admin/wine/validate validates JSON
 
 ---
 
@@ -273,12 +292,11 @@ Backend is complete when:
 - ✅ All 5 CRUD endpoints working
 - ✅ All 4 admin endpoints working
 - ✅ Auto-migration creates table
-- ✅ Seeding loads data with natural key
-- ✅ No duplicate entries on re-seeding
+- ✅ Seed/validate endpoints support both URL and file upload
+- ✅ Natural key prevents duplicates
 - ✅ API returns correct JSON format
-- ✅ Public endpoints tested
-- ✅ Admin endpoints require authentication
-- ✅ Admin endpoints tested (impact, delete, seed, validate)
+- ✅ Public endpoints require authentication
+- ✅ Admin endpoints require admin authentication
 
 ---
 
@@ -290,5 +308,5 @@ Backend is complete when:
 
 ---
 
-**Last Updated:** October 1, 2025  
-**Status:** Current and accurate
+**Last Updated:** January 2025  
+**Status:** Current (includes file upload support and enum pattern)

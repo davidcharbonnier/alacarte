@@ -111,6 +111,16 @@ func main() {
 			ginItem.DELETE("/:id", controllers.GinRemove)
 		}
 
+		// wine
+		wineItem := api.Group("/wine")
+		{
+			wineItem.POST("/new", controllers.WineCreate)
+			wineItem.GET("/all", controllers.WineIndex)
+			wineItem.GET("/:id", controllers.WineDetails)
+			wineItem.PUT("/:id", controllers.WineEdit)
+			wineItem.DELETE("/:id", controllers.WineRemove)
+		}
+
 		// rating
 		rating := api.Group("/rating")
 		{
@@ -155,6 +165,15 @@ func main() {
 			ginAdmin.DELETE("/:id", controllers.DeleteGin)
 			ginAdmin.POST("/seed", controllers.SeedGins)
 			ginAdmin.POST("/validate", controllers.ValidateGins)
+		}
+
+		// Wine admin
+		wineAdmin := admin.Group("/wine")
+		{
+			wineAdmin.GET("/:id/delete-impact", controllers.GetWineDeleteImpact)
+			wineAdmin.DELETE("/:id", controllers.DeleteWine)
+			wineAdmin.POST("/seed", controllers.SeedWines)
+			wineAdmin.POST("/validate", controllers.ValidateWines)
 		}
 
 		// User admin

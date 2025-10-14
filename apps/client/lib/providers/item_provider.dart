@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/rateable_item.dart';
 import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
+import '../models/wine_item.dart';
 import '../models/api_response.dart';
 import '../services/item_service.dart';
 
@@ -145,6 +146,8 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
           (_itemService as CheeseItemService).clearCache();
         } else if (_itemService is GinItemService) {
           (_itemService as GinItemService).clearCache();
+        } else if (_itemService is WineItemService) {
+          (_itemService as WineItemService).clearCache();
         }
         
         final updatedItems = [...state.items, createdItem];
@@ -503,5 +506,72 @@ final filteredGinItemsProvider = Provider<List<GinItem>>((ref) {
 /// Computed provider for checking if gin data exists
 final hasGinItemDataProvider = Provider<bool>((ref) {
   final itemState = ref.watch(ginItemProvider);
+  return itemState.items.isNotEmpty;
+});
+
+/// Specific provider for Wine items
+final wineItemProvider = StateNotifierProvider<WineItemProvider, ItemState<WineItem>>(
+  (ref) => WineItemProvider(ref.read(wineItemServiceProvider)),
+);
+
+/// Concrete implementation for Wine provider
+class WineItemProvider extends ItemProvider<WineItem> {
+  WineItemProvider(WineItemService wineService) : super(wineService);
+
+  @override
+  Future<void> _loadFilterOptions() async {
+    final wineService = _itemService as WineItemService;
+    
+    final colorsResponse = await wineService.getWineColors();
+    final countriesResponse = await wineService.getWineCountries();
+    final regionsResponse = await wineService.getWineRegions();
+
+    colorsResponse.when(
+      success: (colors, _) {
+        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
+        currentOptions['color'] = colors;
+        state = state.copyWith(filterOptions: currentOptions);
+      },
+      error: (_, __, ___, ____) {},
+      loading: () {},
+    );
+
+    countriesResponse.when(
+      success: (countries, _) {
+        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
+        currentOptions['country'] = countries;
+        state = state.copyWith(filterOptions: currentOptions);
+      },
+      error: (_, __, ___, ____) {},
+      loading: () {},
+    );
+
+    regionsResponse.when(
+      success: (regions, _) {
+        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
+        currentOptions['region'] = regions;
+        state = state.copyWith(filterOptions: currentOptions);
+      },
+      error: (_, __, ___, ____) {},
+      loading: () {},
+    );
+  }
+
+  /// Wine-specific filtering methods
+  void setColorFilter(String? color) => setCategoryFilter('color', color);
+  void setCountryFilter(String? country) => setCategoryFilter('country', country);
+  void setRegionFilter(String? region) => setCategoryFilter('region', region);
+  void setProducerFilter(String? producer) => setCategoryFilter('producer', producer);
+}
+
+/// Computed provider for filtered wine items
+final filteredWineItemsProvider = Provider<List<WineItem>>((ref) {
+  final itemState = ref.watch(wineItemProvider);
+  return itemState.filteredItems;
+});
+
+/// Computed provider for checking if wine data exists
+final hasWineItemDataProvider = Provider<bool>((ref) {
+  final itemState = ref.watch(wineItemProvider);
   return itemState.items.isNotEmpty;
 });

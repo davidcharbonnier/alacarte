@@ -1393,4 +1393,103 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get editItemTooltip => 'Modifier l\'article';
+
+  @override
+  String get wine => 'Vin';
+
+  @override
+  String get wines => 'Vins';
+
+  @override
+  String get colorLabel => 'Couleur';
+
+  @override
+  String get country => 'Pays';
+
+  @override
+  String get region => 'Région';
+
+  @override
+  String get grapeLabel => 'Cépages';
+
+  @override
+  String get designationLabel => 'Appellation';
+
+  @override
+  String get alcoholLabel => 'Alcool';
+
+  @override
+  String get sugarLabel => 'Sucre';
+
+  @override
+  String get organicLabel => 'Biologique';
+
+  @override
+  String get enterWineName => 'Entrer le nom du vin';
+
+  @override
+  String get enterColor => 'Entrer la couleur';
+
+  @override
+  String get enterCountry => 'Entrer le pays';
+
+  @override
+  String get enterRegion => 'Entrer la région';
+
+  @override
+  String get enterGrape => 'Entrer les cépages';
+
+  @override
+  String get enterDesignation => 'Entrer l\'appellation';
+
+  @override
+  String get enterAlcohol => 'Entrer le % d\'alcool';
+
+  @override
+  String get enterSugar => 'Entrer le taux de sucre';
+
+  @override
+  String get colorHint => 'ex: Rouge, Blanc, Rosé, Mousseux, Orange';
+
+  @override
+  String get grapeHint => 'ex: Syrah 50%, Grenache 25%';
+
+  @override
+  String get designationHint => 'ex: AOC, DOC, Rioja, Bordeaux';
+
+  @override
+  String get colorRequired => 'La couleur est requise';
+
+  @override
+  String get countryRequired => 'Le pays est requis';
+
+  @override
+  String get wineCreated => 'Vin créé avec succès !';
+
+  @override
+  String get wineUpdated => 'Vin mis à jour avec succès !';
+
+  @override
+  String get wineDeleted => 'Vin supprimé avec succès !';
+
+  @override
+  String get createWine => 'Créer un Vin';
+
+  @override
+  String get editWine => 'Modifier le Vin';
+
+  @override
+  String get addWine => 'Ajouter un Vin';
+
+  @override
+  String get selectColor => 'Sélectionner la couleur';
+
+  @override
+  String get organicHelper => 'Vin certifié biologique';
+
+  @override
+  String get yes => 'Oui';
+
+  @override
+  String get no => 'Non';
 }

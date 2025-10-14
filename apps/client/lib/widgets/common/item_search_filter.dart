@@ -309,6 +309,12 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
         return context.l10n.producer;
       case 'profile':
         return context.l10n.profileLabel;
+      case 'color':
+        return context.l10n.colorLabel;
+      case 'country':
+        return context.l10n.country;
+      case 'region':
+        return context.l10n.region;
       default:
         return categoryKey;
     }

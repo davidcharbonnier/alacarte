@@ -3,7 +3,7 @@ import { LucideIcon } from 'lucide-react';
 /**
  * Field configuration for item types
  */
-export type FieldType = 'text' | 'textarea' | 'number' | 'select';
+export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'checkbox';
 
 export interface FieldConfig {
   key: string;

@@ -119,6 +119,8 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
       GoRouter.of(context).go('${RouteNames.cheeseEdit}/${widget.itemId}');
     } else if (widget.itemType == 'gin') {
       GoRouter.of(context).go('${RouteNames.ginEdit}/${widget.itemId}');
+    } else if (widget.itemType == 'wine') {
+      GoRouter.of(context).go('${RouteNames.wineEdit}/${widget.itemId}');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

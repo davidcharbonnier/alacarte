@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/rateable_item.dart';
 import '../../models/cheese_item.dart';
 import '../../models/gin_item.dart';
+import '../../models/wine_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 
@@ -19,6 +20,8 @@ class ItemDetailHeader extends StatelessWidget {
         return item.categories['type'] ?? 'Unknown';
       case 'gin':
         return item.categories['profile'] ?? 'Unknown';
+      case 'wine':
+        return item.categories['color'] ?? 'Unknown';
       default:
         return item.categories['type'] ?? 'Unknown';
     }
@@ -90,6 +93,8 @@ class ItemDetailHeader extends StatelessWidget {
                 return (item as CheeseItem).getLocalizedDetailFields(context);
               } else if (item is GinItem) {
                 return (item as GinItem).getLocalizedDetailFields(context);
+              } else if (item is WineItem) {
+                return (item as WineItem).getLocalizedDetailFields(context);
               }
               return item.detailFields;
             }())
@@ -115,6 +120,11 @@ class ItemDetailHeader extends StatelessWidget {
     String value,
     IconData? icon,
   ) {
+    // Check if this is a boolean field (Yes/No or Oui/Non)
+    final isYes = value == context.l10n.yes || value == 'Yes' || value == 'Oui';
+    final isNo = value == context.l10n.no || value == 'No' || value == 'Non';
+    final isBooleanField = isYes || isNo;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppConstants.spacingS),
       child: Row(
@@ -135,7 +145,22 @@ class ItemDetailHeader extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+            child: isBooleanField
+                ? Row(
+                    children: [
+                      Icon(
+                        isYes ? Icons.check_circle_outline : Icons.radio_button_unchecked,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      const SizedBox(width: AppConstants.spacingXS),
+                      Text(
+                        value,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  )
+                : Text(value, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),

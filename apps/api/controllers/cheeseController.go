@@ -219,19 +219,10 @@ func DeleteCheese(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Cheese deleted successfully"})
 }
 
-// SeedCheeses bulk imports cheeses from remote URL
+// SeedCheeses bulk imports cheeses from remote URL or direct file upload
 func SeedCheeses(c *gin.Context) {
-	var req struct {
-		URL string `json:"url" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "URL is required"})
-		return
-	}
-
-	// Fetch data using generic utility
-	data, err := utils.FetchURLData(req.URL)
+	// Use generic helper to get data from either URL or direct upload
+	data, err := utils.GetSeedData(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -277,17 +268,8 @@ func SeedCheeses(c *gin.Context) {
 
 // ValidateCheeses validates JSON structure without importing
 func ValidateCheeses(c *gin.Context) {
-	var req struct {
-		URL string `json:"url" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "URL is required"})
-		return
-	}
-
-	// Fetch data using generic utility
-	data, err := utils.FetchURLData(req.URL)
+	// Use generic helper to get data from either URL or direct upload
+	data, err := utils.GetSeedData(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

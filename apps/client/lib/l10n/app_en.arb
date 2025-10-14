@@ -2281,5 +2281,170 @@
   "editItemTooltip": "Edit item",
   "@editItemTooltip": {
     "description": "Tooltip for edit item button"
+  },
+  
+  "wine": "Wine",
+  "@wine": {
+    "description": "Wine category name"
+  },
+  
+  "wines": "Wines",
+  "@wines": {
+    "description": "Plural wine category name"
+  },
+  
+  "colorLabel": "Color",
+  "@colorLabel": {
+    "description": "Wine color field label"
+  },
+  
+  "country": "Country",
+  "@country": {
+    "description": "Country field label"
+  },
+  
+  "region": "Region",
+  "@region": {
+    "description": "Region field label"
+  },
+  
+  "grapeLabel": "Grape Varieties",
+  "@grapeLabel": {
+    "description": "Grape varieties field label"
+  },
+  
+  "designationLabel": "Designation",
+  "@designationLabel": {
+    "description": "Wine designation field label"
+  },
+  
+  "alcoholLabel": "Alcohol",
+  "@alcoholLabel": {
+    "description": "Alcohol content field label"
+  },
+  
+  "sugarLabel": "Sugar",
+  "@sugarLabel": {
+    "description": "Sugar content field label"
+  },
+  
+  "organicLabel": "Organic",
+  "@organicLabel": {
+    "description": "Organic field label"
+  },
+  
+  "enterWineName": "Enter wine name",
+  "@enterWineName": {
+    "description": "Placeholder for wine name field"
+  },
+  
+  "enterColor": "Enter color",
+  "@enterColor": {
+    "description": "Placeholder for color field"
+  },
+  
+  "enterCountry": "Enter country",
+  "@enterCountry": {
+    "description": "Placeholder for country field"
+  },
+  
+  "enterRegion": "Enter region",
+  "@enterRegion": {
+    "description": "Placeholder for region field"
+  },
+  
+  "enterGrape": "Enter grape varieties",
+  "@enterGrape": {
+    "description": "Placeholder for grape field"
+  },
+  
+  "enterDesignation": "Enter designation",
+  "@enterDesignation": {
+    "description": "Placeholder for designation field"
+  },
+  
+  "enterAlcohol": "Enter alcohol %",
+  "@enterAlcohol": {
+    "description": "Placeholder for alcohol field"
+  },
+  
+  "enterSugar": "Enter sugar content",
+  "@enterSugar": {
+    "description": "Placeholder for sugar field"
+  },
+  
+  "colorHint": "e.g., Rouge, Blanc, Rosé, Mousseux, Orange",
+  "@colorHint": {
+    "description": "Hint text for color field"
+  },
+  
+  "grapeHint": "e.g., Syrah 50%, Grenache 25%",
+  "@grapeHint": {
+    "description": "Hint text for grape varieties field"
+  },
+  
+  "designationHint": "e.g., AOC, DOC, Rioja, Bordeaux",
+  "@designationHint": {
+    "description": "Hint text for designation field"
+  },
+  
+  "colorRequired": "Color is required",
+  "@colorRequired": {
+    "description": "Validation message for required color field"
+  },
+  
+  "countryRequired": "Country is required",
+  "@countryRequired": {
+    "description": "Validation message for required country field"
+  },
+  
+  "wineCreated": "Wine created successfully!",
+  "@wineCreated": {
+    "description": "Success message after creating wine"
+  },
+  
+  "wineUpdated": "Wine updated successfully!",
+  "@wineUpdated": {
+    "description": "Success message after updating wine"
+  },
+  
+  "wineDeleted": "Wine deleted successfully!",
+  "@wineDeleted": {
+    "description": "Success message after deleting wine"
+  },
+  
+  "createWine": "Create Wine",
+  "@createWine": {
+    "description": "Create wine screen title"
+  },
+  
+  "editWine": "Edit Wine",
+  "@editWine": {
+    "description": "Edit wine screen title"
+  },
+  
+  "addWine": "Add Wine",
+  "@addWine": {
+    "description": "Add wine button text"
+  },
+  
+  "selectColor": "Select color",
+  "@selectColor": {
+    "description": "Hint text for color dropdown"
+  },
+  
+  "organicHelper": "Certified organic wine",
+  "@organicHelper": {
+    "description": "Helper text for organic checkbox"
+  },
+  
+  "yes": "Yes",
+  "@yes": {
+    "description": "Yes (affirmative)"
+  },
+  
+  "no": "No",
+  "@no": {
+    "description": "No (negative)"
   }
 }

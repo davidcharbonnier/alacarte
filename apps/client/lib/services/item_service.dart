@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/rateable_item.dart';
 import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
+import '../models/wine_item.dart';
 import '../models/api_response.dart';
 import '../services/api_service.dart';
 
@@ -367,5 +368,151 @@ final ginItemServiceProvider = Provider<GinItemService>(
   (ref) {
     // Return singleton instance to preserve cache across provider reads
     return GinItemService._instance;
+  },
+);
+
+/// Concrete implementation for Wine items
+class WineItemService extends ItemService<WineItem> {
+  // Singleton pattern to preserve cache across provider recreations
+  static final WineItemService _instance = WineItemService._internal();
+  
+  factory WineItemService() => _instance;
+  
+  WineItemService._internal();
+  
+  // Cache for avoiding duplicate API calls
+  ApiResponse<List<WineItem>>? _cachedResponse;
+  DateTime? _cacheTime;
+  static const Duration _cacheExpiry = Duration(minutes: 5);
+  
+  @override
+  String get itemTypeEndpoint => '/api/wine';
+
+  @override
+  WineItem Function(dynamic) get fromJson =>
+      (dynamic json) => WineItem.fromJson(json as Map<String, dynamic>);
+
+  @override
+  List<String> Function(WineItem) get validateItem => _validateWineItem;
+  
+  @override
+  Future<ApiResponse<List<WineItem>>> getAllItems() async {
+    // Check if we have valid cached data
+    if (_cachedResponse != null && _cacheTime != null) {
+      final age = DateTime.now().difference(_cacheTime!);
+      if (age < _cacheExpiry) {
+        return _cachedResponse!;
+      }
+    }
+    
+    // Make API call and cache result
+    final response = await handleListResponse<WineItem>(get('$itemTypeEndpoint/all'), fromJson);
+    
+    // Cache successful responses
+    if (response is ApiSuccess<List<WineItem>>) {
+      _cachedResponse = response;
+      _cacheTime = DateTime.now();
+    }
+    
+    return response;
+  }
+  
+  /// Clear cache (useful for testing or after data changes)
+  void clearCache() {
+    _cachedResponse = null;
+    _cacheTime = null;
+  }
+
+  static List<String> _validateWineItem(WineItem wine) {
+    final errors = <String>[];
+
+    if (wine.name.trim().isEmpty) {
+      errors.add('Name is required');
+    }
+
+    // Color is always valid (enum type)
+    // No validation needed
+
+    if (wine.country.trim().isEmpty) {
+      errors.add('Country is required');
+    }
+
+    return errors;
+  }
+
+  /// Get unique wine colors for filtering
+  Future<ApiResponse<List<String>>> getWineColors() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (wines, _) {
+        final colors = wines
+            .map((wine) => wine.color.value)
+            .toSet()
+            .toList()
+          ..sort();
+        return ApiResponseHelper.success(colors);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Get unique wine countries for filtering
+  Future<ApiResponse<List<String>>> getWineCountries() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (wines, _) {
+        final countries = wines
+            .map((wine) => wine.country)
+            .where((country) => country.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+        return ApiResponseHelper.success(countries);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Get unique wine regions for filtering
+  Future<ApiResponse<List<String>>> getWineRegions() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (wines, _) {
+        final regions = wines
+            .map((wine) => wine.region)
+            .where((region) => region.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+        return ApiResponseHelper.success(regions);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+}
+
+/// Provider for WineItemService (cached to preserve service-level cache)
+final wineItemServiceProvider = Provider<WineItemService>(
+  (ref) {
+    // Return singleton instance to preserve cache across provider reads
+    return WineItemService._instance;
   },
 );

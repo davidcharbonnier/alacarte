@@ -425,6 +425,12 @@ class _GenericItemFormScreenState<T extends RateableItem>
 
       case FormFieldType.multiline:
         return _buildDescriptionField(field, controller);
+
+      case FormFieldType.dropdown:
+        return _buildDropdownField(field, controller);
+
+      case FormFieldType.checkbox:
+        return _buildCheckboxField(field, controller);
     }
   }
 
@@ -467,6 +473,159 @@ class _GenericItemFormScreenState<T extends RateableItem>
         ItemDescriptionField(
           controller: controller,
           enabled: !_isLoading,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField(
+    FormFieldConfig field,
+    TextEditingController controller,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (field.icon != null) ...[
+              Icon(
+                field.icon,
+                size: AppConstants.iconS,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+              const SizedBox(width: AppConstants.spacingS),
+            ],
+            Text(
+              '${field.getLabel(context)}:',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.7),
+                  ),
+            ),
+            if (field.required)
+              Text(
+                ' *',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
+        ),
+        if (field.getHelperText(context) != null) ...[
+          const SizedBox(height: AppConstants.spacingXS),
+          Text(
+            field.getHelperText(context)!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
+        ],
+        const SizedBox(height: AppConstants.spacingS),
+        DropdownButtonFormField<String>(
+          value: controller.text.isEmpty ? null : controller.text,
+          decoration: InputDecoration(
+            hintText: field.getHint(context),
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.spacingM,
+              vertical: AppConstants.spacingS,
+            ),
+          ),
+          items: field.options!.map((option) {
+            return DropdownMenuItem<String>(
+              value: option.value,
+              child: Text(option.getLabel(context)),
+            );
+          }).toList(),
+          onChanged: _isLoading
+              ? null
+              : (value) {
+                  if (value != null) {
+                    controller.text = value;
+                  }
+                },
+          validator: field.required
+              ? (value) {
+                  if (value == null || value.isEmpty) {
+                    return field.getLabel(context) + ' is required';
+                  }
+                  return null;
+                }
+              : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckboxField(
+    FormFieldConfig field,
+    TextEditingController controller,
+  ) {
+    // Controller holds 'true' or 'false' as string
+    final isChecked = controller.text == 'true';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _isLoading
+              ? null
+              : () {
+                  setState(() {
+                    controller.text = isChecked ? 'false' : 'true';
+                  });
+                },
+          borderRadius: BorderRadius.circular(AppConstants.radiusS),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: AppConstants.spacingS,
+              horizontal: AppConstants.spacingXS,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        field.getLabel(context),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      if (field.getHelperText(context) != null) ...[
+                        const SizedBox(height: AppConstants.spacingXS),
+                        Text(
+                          field.getHelperText(context)!,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppConstants.spacingS),
+                Checkbox(
+                  value: isChecked,
+                  onChanged: _isLoading
+                      ? null
+                      : (value) {
+                          setState(() {
+                            controller.text = value == true ? 'true' : 'false';
+                          });
+                        },
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );

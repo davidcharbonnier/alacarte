@@ -1364,4 +1364,103 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editItemTooltip => 'Edit item';
+
+  @override
+  String get wine => 'Wine';
+
+  @override
+  String get wines => 'Wines';
+
+  @override
+  String get colorLabel => 'Color';
+
+  @override
+  String get country => 'Country';
+
+  @override
+  String get region => 'Region';
+
+  @override
+  String get grapeLabel => 'Grape Varieties';
+
+  @override
+  String get designationLabel => 'Designation';
+
+  @override
+  String get alcoholLabel => 'Alcohol';
+
+  @override
+  String get sugarLabel => 'Sugar';
+
+  @override
+  String get organicLabel => 'Organic';
+
+  @override
+  String get enterWineName => 'Enter wine name';
+
+  @override
+  String get enterColor => 'Enter color';
+
+  @override
+  String get enterCountry => 'Enter country';
+
+  @override
+  String get enterRegion => 'Enter region';
+
+  @override
+  String get enterGrape => 'Enter grape varieties';
+
+  @override
+  String get enterDesignation => 'Enter designation';
+
+  @override
+  String get enterAlcohol => 'Enter alcohol %';
+
+  @override
+  String get enterSugar => 'Enter sugar content';
+
+  @override
+  String get colorHint => 'e.g., Rouge, Blanc, Rosé, Mousseux, Orange';
+
+  @override
+  String get grapeHint => 'e.g., Syrah 50%, Grenache 25%';
+
+  @override
+  String get designationHint => 'e.g., AOC, DOC, Rioja, Bordeaux';
+
+  @override
+  String get colorRequired => 'Color is required';
+
+  @override
+  String get countryRequired => 'Country is required';
+
+  @override
+  String get wineCreated => 'Wine created successfully!';
+
+  @override
+  String get wineUpdated => 'Wine updated successfully!';
+
+  @override
+  String get wineDeleted => 'Wine deleted successfully!';
+
+  @override
+  String get createWine => 'Create Wine';
+
+  @override
+  String get editWine => 'Edit Wine';
+
+  @override
+  String get addWine => 'Add Wine';
+
+  @override
+  String get selectColor => 'Select color';
+
+  @override
+  String get organicHelper => 'Certified organic wine';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
 }

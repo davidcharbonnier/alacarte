@@ -71,11 +71,30 @@ export function createItemApi<T extends BaseItem>(itemType: string) {
     },
 
     /**
-     * Validate seed data
+     * Seed items from direct data upload
+     */
+    seedData: async (data: any): Promise<{ added: number; skipped: number; errors: string[] }> => {
+      return apiClient.post(config.apiEndpoints.seed, { data });
+    },
+
+    /**
+     * Validate seed data from URL
      */
     validate: async (url: string): Promise<{ valid: boolean; errors: string[] }> => {
       if (config.apiEndpoints.validate) {
         return apiClient.post(config.apiEndpoints.validate, { url });
+      }
+      
+      // If no validate endpoint, just return valid
+      return { valid: true, errors: [] };
+    },
+
+    /**
+     * Validate seed data from direct upload
+     */
+    validateData: async (data: any): Promise<{ valid: boolean; errors: string[] }> => {
+      if (config.apiEndpoints.validate) {
+        return apiClient.post(config.apiEndpoints.validate, { data });
       }
       
       // If no validate endpoint, just return valid
