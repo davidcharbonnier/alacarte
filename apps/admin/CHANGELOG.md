@@ -1,5 +1,11 @@
 # @alacarte/admin
 
+## 0.3.0
+
+### Minor Changes
+
+- [#11](https://github.com/davidcharbonnier/alacarte/pull/11) [`934b3d2`](https://github.com/davidcharbonnier/alacarte/commit/934b3d2ccefa1f3bcaf7b7545e4d6ee5d9db06ad) Thanks [@davidcharbonnier](https://github.com/davidcharbonnier)! - Add wine item type
+
 ## 0.2.4
 
 ## 0.2.3
