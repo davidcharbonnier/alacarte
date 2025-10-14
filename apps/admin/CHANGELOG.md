@@ -1,5 +1,11 @@
 # @alacarte/admin
 
+## 0.3.1
+
+### Patch Changes
+
+- [#13](https://github.com/davidcharbonnier/alacarte/pull/13) [`e67c9ee`](https://github.com/davidcharbonnier/alacarte/commit/e67c9ee46c1cd8d71d8e15380ca8d8aa93182023) Thanks [@davidcharbonnier](https://github.com/davidcharbonnier)! - Fixing CI workflow for releasing
+
 ## 0.3.0
 
 ### Minor Changes
