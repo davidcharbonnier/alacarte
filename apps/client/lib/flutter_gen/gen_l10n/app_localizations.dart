@@ -2369,13 +2369,13 @@ abstract class AppLocalizations {
   /// Alcohol content field label
   ///
   /// In en, this message translates to:
-  /// **'Alcohol %'**
+  /// **'Alcohol'**
   String get alcoholLabel;
 
   /// Sugar content field label
   ///
   /// In en, this message translates to:
-  /// **'Sugar (g/L)'**
+  /// **'Sugar'**
   String get sugarLabel;
 
   /// Organic field label
@@ -2497,6 +2497,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add Wine'**
   String get addWine;
+
+  /// Hint text for color dropdown
+  ///
+  /// In en, this message translates to:
+  /// **'Select color'**
+  String get selectColor;
+
+  /// Helper text for organic checkbox
+  ///
+  /// In en, this message translates to:
+  /// **'Certified organic wine'**
+  String get organicHelper;
+
+  /// Yes (affirmative)
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No (negative)
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
 }
 
 class _AppLocalizationsDelegate

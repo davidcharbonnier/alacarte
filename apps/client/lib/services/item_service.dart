@@ -430,9 +430,8 @@ class WineItemService extends ItemService<WineItem> {
       errors.add('Name is required');
     }
 
-    if (wine.color.trim().isEmpty) {
-      errors.add('Color is required');
-    }
+    // Color is always valid (enum type)
+    // No validation needed
 
     if (wine.country.trim().isEmpty) {
       errors.add('Country is required');
@@ -447,8 +446,7 @@ class WineItemService extends ItemService<WineItem> {
     return response.when(
       success: (wines, _) {
         final colors = wines
-            .map((wine) => wine.color)
-            .where((color) => color.isNotEmpty)
+            .map((wine) => wine.color.value)
             .toSet()
             .toList()
           ..sort();

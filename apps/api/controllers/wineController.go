@@ -26,12 +26,19 @@ func WineCreate(c *gin.Context) {
 	}
 	c.Bind(&body)
 
+	// Validate and convert color to enum
+	wineColor := models.WineColor(body.Color)
+	if !wineColor.IsValid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid wine color. Must be one of: Rouge, Blanc, Rosé, Mousseux, Orange"})
+		return
+	}
+
 	wineItem := models.Wine{
 		Name:        body.Name,
 		Producer:    body.Producer,
 		Country:     body.Country,
 		Region:      body.Region,
-		Color:       body.Color,
+		Color:       wineColor,
 		Grape:       body.Grape,
 		Alcohol:     body.Alcohol,
 		Description: body.Description,
@@ -90,6 +97,13 @@ func WineEdit(c *gin.Context) {
 	}
 	c.Bind(&body)
 
+	// Validate and convert color to enum
+	wineColor := models.WineColor(body.Color)
+	if !wineColor.IsValid() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid wine color. Must be one of: Rouge, Blanc, Rosé, Mousseux, Orange"})
+		return
+	}
+
 	wineItem := models.Wine{}
 
 	if err := utils.DB.First(&wineItem, id).Error; err != nil {
@@ -102,7 +116,7 @@ func WineEdit(c *gin.Context) {
 		Producer:    body.Producer,
 		Country:     body.Country,
 		Region:      body.Region,
-		Color:       body.Color,
+		Color:       wineColor,
 		Grape:       body.Grape,
 		Alcohol:     body.Alcohol,
 		Description: body.Description,
@@ -331,6 +345,9 @@ func ValidateWines(c *gin.Context) {
 		if wineItem.Color == "" {
 			result.Valid = false
 			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing color", i+1))
+		} else if !wineItem.Color.IsValid() {
+			result.Valid = false
+			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: invalid color '%s'. Must be one of: Rouge, Blanc, Rosé, Mousseux, Orange", i+1, wineItem.Color))
 		}
 		if wineItem.Country == "" {
 			result.Valid = false
@@ -338,7 +355,7 @@ func ValidateWines(c *gin.Context) {
 		}
 
 		// Check for duplicates within file (wine natural key: name + color)
-		key := wineItem.Name + "|" + wineItem.Color
+		key := wineItem.Name + "|" + string(wineItem.Color)
 		if seen[key] {
 			result.Duplicates++
 		}

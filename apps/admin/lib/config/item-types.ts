@@ -170,10 +170,15 @@ export const itemTypesConfig: ItemTypeRegistry = {
       {
         key: 'color',
         label: 'Color',
-        type: 'text',
+        type: 'select',
         required: true,
-        maxLength: 50,
-        placeholder: 'e.g., Red, White, Pink, Orange, Sparkling',
+        options: [
+          { value: 'Rouge', label: 'Rouge' },
+          { value: 'Blanc', label: 'Blanc' },
+          { value: 'Rosé', label: 'Rosé' },
+          { value: 'Mousseux', label: 'Mousseux' },
+          { value: 'Orange', label: 'Orange' },
+        ],
         helperText: 'Wine color/type',
       },
       {

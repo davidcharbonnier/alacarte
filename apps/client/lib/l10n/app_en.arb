@@ -2318,12 +2318,12 @@
     "description": "Wine designation field label"
   },
   
-  "alcoholLabel": "Alcohol %",
+  "alcoholLabel": "Alcohol",
   "@alcoholLabel": {
     "description": "Alcohol content field label"
   },
   
-  "sugarLabel": "Sugar (g/L)",
+  "sugarLabel": "Sugar",
   "@sugarLabel": {
     "description": "Sugar content field label"
   },
@@ -2426,5 +2426,25 @@
   "addWine": "Add Wine",
   "@addWine": {
     "description": "Add wine button text"
+  },
+  
+  "selectColor": "Select color",
+  "@selectColor": {
+    "description": "Hint text for color dropdown"
+  },
+  
+  "organicHelper": "Certified organic wine",
+  "@organicHelper": {
+    "description": "Helper text for organic checkbox"
+  },
+  
+  "yes": "Yes",
+  "@yes": {
+    "description": "Yes (affirmative)"
+  },
+  
+  "no": "No",
+  "@no": {
+    "description": "No (negative)"
   }
 }

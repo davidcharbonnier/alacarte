@@ -120,6 +120,11 @@ class ItemDetailHeader extends StatelessWidget {
     String value,
     IconData? icon,
   ) {
+    // Check if this is a boolean field (Yes/No or Oui/Non)
+    final isYes = value == context.l10n.yes || value == 'Yes' || value == 'Oui';
+    final isNo = value == context.l10n.no || value == 'No' || value == 'Non';
+    final isBooleanField = isYes || isNo;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppConstants.spacingS),
       child: Row(
@@ -140,7 +145,22 @@ class ItemDetailHeader extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+            child: isBooleanField
+                ? Row(
+                    children: [
+                      Icon(
+                        isYes ? Icons.check_circle_outline : Icons.radio_button_unchecked,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      const SizedBox(width: AppConstants.spacingXS),
+                      Text(
+                        value,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  )
+                : Text(value, style: Theme.of(context).textTheme.bodyMedium),
           ),
         ],
       ),

@@ -145,21 +145,66 @@ Thanks to recent refactorings, these features **require ZERO code** for new item
 - [ ] File created
 - [ ] Implements `ItemFormStrategy<WineItem>`
 - [ ] `getFormFields()` returns wine-specific field configs
-  - Use FormFieldConfig.text() for text fields
-  - Use FormFieldConfig.multiline() for description
-  - ⚠️ No checkbox or custom keyboardType support currently
-- [ ] `initializeControllers()` handles all wine fields including numbers
-- [ ] `buildItem()` constructs WineItem (use double.tryParse for numbers)
+  - Use `FormFieldConfig.text()` for text fields
+  - Use `FormFieldConfig.multiline()` for description
+  - Use `FormFieldConfig.dropdown()` for enums/fixed values
+  - Use `FormFieldConfig.checkbox()` for boolean fields
+- [ ] `initializeControllers()` handles all wine fields including numbers and enums
+- [ ] `buildItem()` constructs WineItem:
+  - Use `double.tryParse()` for numbers
+  - Use `WineColor.fromString()` for enum parsing
+  - Use `controller.text == 'true'` for booleans
 - [ ] `getProvider()` returns wineItemProvider
 - [ ] `validate()` provides localized error messages
 - [ ] All localization uses builder functions: `(context) => context.l10n.label`
 
 **Template:** Copy `gin_form_strategy.dart`
 
-**⚠️ Limitations:**
-- FormFieldConfig doesn't support checkbox or keyboardType
-- Use text fields for numbers (parse in buildItem)
-- Use text fields for booleans (check 'true'/'false' string)
+**Field Types Available:**
+```dart
+// Text input
+FormFieldConfig.text(
+  key: 'name',
+  labelBuilder: (context) => context.l10n.name,
+  hintBuilder: (context) => context.l10n.enterWineName,
+  icon: Icons.label,
+  required: true,
+)
+
+// Dropdown (for enums)
+FormFieldConfig.dropdown(
+  key: 'color',
+  labelBuilder: (context) => context.l10n.colorLabel,
+  hintBuilder: (context) => context.l10n.selectColor,
+  options: [
+    DropdownOption(value: 'Rouge', labelBuilder: (_) => 'Rouge'),
+    DropdownOption(value: 'Blanc', labelBuilder: (_) => 'Blanc'),
+  ],
+  icon: Icons.palette,
+  required: true,
+)
+
+// Checkbox (for booleans)
+FormFieldConfig.checkbox(
+  key: 'organic',
+  labelBuilder: (context) => context.l10n.organicLabel,
+  helperTextBuilder: (context) => context.l10n.organicHelper,
+)
+
+// Multiline text
+FormFieldConfig.multiline(
+  key: 'description',
+  labelBuilder: (context) => context.l10n.description,
+  hintBuilder: (context) => context.l10n.enterDescription,
+  maxLines: 3,
+  maxLength: 1000,
+)
+```
+
+**⚠️ Important:**
+- Dropdown options can be localized or static (use `labelBuilder: (_) => 'Static'` for data values)
+- Checkbox stores 'true'/'false' as string in controller
+- Boolean display shows localized Yes/No with subtle icons automatically
 
 ---
 
@@ -611,12 +656,16 @@ Generic screens have NO item-type conditionals because:
 
 1. **Work sequentially** - Complete each step fully before moving to next
 2. **Add imports first** - Add all imports before writing code
-3. **Copy-paste is your friend** - Use gin as template, find/replace carefully
+3. **Copy-paste is your friend** - Use gin/wine as template, find/replace carefully
 4. **Test incrementally** - Test after major steps (model, service, provider, forms)
 5. **Check ALL switch statements** - Easy to miss one case statement
-6. **Use IDE search** - Search "case 'gin':" to find all places to add wine
+6. **Use IDE search** - Search "case 'gin':" to find all places to add new type
 7. **Localization last** - Add strings as you encounter missing ones
 8. **Cache clearing matters** - New items won't appear without it
+9. **Use dropdown for enums** - Much better UX than text input
+10. **Use checkbox for booleans** - Clearer than text 'true'/'false'
+11. **Exclude name from detailFields** - Already shown in title
+12. **Use enum.value for filtering** - Don't forget .value when using enums
 
 ---
 

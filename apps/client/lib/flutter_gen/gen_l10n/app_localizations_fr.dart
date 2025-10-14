@@ -1416,10 +1416,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get designationLabel => 'Appellation';
 
   @override
-  String get alcoholLabel => 'Alcool %';
+  String get alcoholLabel => 'Alcool';
 
   @override
-  String get sugarLabel => 'Sucre (g/L)';
+  String get sugarLabel => 'Sucre';
 
   @override
   String get organicLabel => 'Biologique';
@@ -1480,4 +1480,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get addWine => 'Ajouter un Vin';
+
+  @override
+  String get selectColor => 'Sélectionner la couleur';
+
+  @override
+  String get organicHelper => 'Vin certifié biologique';
+
+  @override
+  String get yes => 'Oui';
+
+  @override
+  String get no => 'Non';
 }

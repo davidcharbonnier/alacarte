@@ -1387,10 +1387,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get designationLabel => 'Designation';
 
   @override
-  String get alcoholLabel => 'Alcohol %';
+  String get alcoholLabel => 'Alcohol';
 
   @override
-  String get sugarLabel => 'Sugar (g/L)';
+  String get sugarLabel => 'Sugar';
 
   @override
   String get organicLabel => 'Organic';
@@ -1451,4 +1451,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addWine => 'Add Wine';
+
+  @override
+  String get selectColor => 'Select color';
+
+  @override
+  String get organicHelper => 'Certified organic wine';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
 }

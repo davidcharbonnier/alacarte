@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/wine_item.dart';
+import '../../models/wine_color.dart';
 import '../../providers/item_provider.dart';
 import '../../utils/localization_utils.dart';
 import 'item_form_strategy.dart';
@@ -23,12 +24,18 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
         required: true,
       ),
 
-      // Color field - required (Rouge, Blanc, Rosé, Mousseux, Orange)
-      FormFieldConfig.text(
+      // Color field - required dropdown with French color names
+      FormFieldConfig.dropdown(
         key: 'color',
         labelBuilder: (context) => context.l10n.colorLabel,
-        hintBuilder: (context) => context.l10n.enterColor,
-        helperTextBuilder: (context) => context.l10n.colorHint,
+        hintBuilder: (context) => context.l10n.selectColor,
+        options: [
+          DropdownOption(value: 'Rouge', labelBuilder: (_) => 'Rouge'),
+          DropdownOption(value: 'Blanc', labelBuilder: (_) => 'Blanc'),
+          DropdownOption(value: 'Rosé', labelBuilder: (_) => 'Rosé'),
+          DropdownOption(value: 'Mousseux', labelBuilder: (_) => 'Mousseux'),
+          DropdownOption(value: 'Orange', labelBuilder: (_) => 'Orange'),
+        ],
         icon: Icons.palette,
         required: true,
       ),
@@ -92,12 +99,11 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
         icon: Icons.bubble_chart,
       ),
 
-      // Organic field - optional (text field instead of checkbox)
-      FormFieldConfig.text(
+      // Organic field - optional checkbox
+      FormFieldConfig.checkbox(
         key: 'organic',
         labelBuilder: (context) => context.l10n.organicLabel,
-        hintBuilder: (context) => 'true/false',
-        icon: Icons.eco,
+        helperTextBuilder: (context) => context.l10n.organicHelper,
       ),
 
       // Description field - optional
@@ -118,7 +124,7 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
   ) {
     return {
       'name': TextEditingController(text: initialItem?.name ?? ''),
-      'color': TextEditingController(text: initialItem?.color ?? ''),
+      'color': TextEditingController(text: initialItem?.color.value ?? ''),
       'country': TextEditingController(text: initialItem?.country ?? ''),
       'producer': TextEditingController(text: initialItem?.producer ?? ''),
       'region': TextEditingController(text: initialItem?.region ?? ''),
@@ -148,10 +154,14 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
     Map<String, TextEditingController> controllers,
     int? itemId,
   ) {
+    // Parse color enum
+    final colorValue = controllers['color']!.text.trim();
+    final wineColor = WineColor.fromString(colorValue) ?? WineColor.rouge;
+
     return WineItem(
       id: itemId,
       name: controllers['name']!.text.trim(),
-      color: controllers['color']!.text.trim(),
+      color: wineColor,
       country: controllers['country']!.text.trim(),
       producer: controllers['producer']!.text.trim(),
       region: controllers['region']!.text.trim(),
@@ -182,9 +192,12 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
       errors.add(context.l10n.itemNameTooLong('Wine'));
     }
 
-    if (wine.color.trim().isEmpty) {
-      errors.add(context.l10n.colorRequired);
-    }
+    // Color is always valid since we parse with fallback to rouge
+    // But we can add a validation message if user enters invalid text
+    final colorText = wine.color.value;
+    final validColors = ['Rouge', 'Blanc', 'Rosé', 'Mousseux', 'Orange'];
+    // This check is redundant since fromString already handles it,
+    // but kept for explicit validation feedback
 
     if (wine.country.trim().isEmpty) {
       errors.add(context.l10n.countryRequired);

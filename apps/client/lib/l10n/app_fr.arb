@@ -390,8 +390,8 @@
   "region": "Région",
   "grapeLabel": "Cépages",
   "designationLabel": "Appellation",
-  "alcoholLabel": "Alcool %",
-  "sugarLabel": "Sucre (g/L)",
+  "alcoholLabel": "Alcool",
+  "sugarLabel": "Sucre",
   "organicLabel": "Biologique",
   "enterWineName": "Entrer le nom du vin",
   "enterColor": "Entrer la couleur",
@@ -411,5 +411,11 @@
   "wineDeleted": "Vin supprimé avec succès !",
   "createWine": "Créer un Vin",
   "editWine": "Modifier le Vin",
-  "addWine": "Ajouter un Vin"
+  "addWine": "Ajouter un Vin",
+  
+  "selectColor": "Sélectionner la couleur",
+  "organicHelper": "Vin certifié biologique",
+  
+  "yes": "Oui",
+  "no": "Non"
 }

@@ -150,6 +150,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         ),
         bottom: TabBar(
           controller: _tabController,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
           tabs: [
             Tab(
               icon: const Icon(Icons.list),

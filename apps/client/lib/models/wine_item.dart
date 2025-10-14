@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'rateable_item.dart';
+import 'wine_color.dart';
 import '../utils/localization_utils.dart';
 
 class WineItem implements RateableItem {
@@ -8,7 +9,7 @@ class WineItem implements RateableItem {
   final String producer;
   final String country;
   final String region;
-  final String color;
+  final WineColor color;
   final String grape;
   final double alcohol;
   final String description;
@@ -44,7 +45,7 @@ class WineItem implements RateableItem {
   @override
   String get displaySubtitle {
     final parts = <String>[];
-    if (color.isNotEmpty) parts.add(color);
+    parts.add(color.value);
     if (producer.isNotEmpty) parts.add(producer);
     if (country.isNotEmpty) parts.add(country);
     return parts.join(' • ');
@@ -55,11 +56,11 @@ class WineItem implements RateableItem {
 
   @override
   String get searchableText =>
-      '$name $producer $country $region $color $grape $designation'.toLowerCase();
+      '$name $producer $country $region ${color.value} $grape $designation'.toLowerCase();
 
   @override
   Map<String, String> get categories => {
-        'color': color,
+        'color': color.value,
         'country': country,
         'producer': producer.isNotEmpty ? producer : 'Unknown',
         'region': region.isNotEmpty ? region : 'Unknown',
@@ -166,12 +167,11 @@ class WineItem implements RateableItem {
           value: '${sugar} g/L',
           icon: Icons.bubble_chart,
         ),
-      if (organic)
-        DetailField(
-          label: context.l10n.organicLabel,
-          value: 'Yes',
-          icon: Icons.eco,
-        ),
+      DetailField(
+        label: context.l10n.organicLabel,
+        value: organic ? context.l10n.yes : context.l10n.no,
+        icon: Icons.eco,
+      ),
       if (description.isNotEmpty)
         DetailField(
           label: context.l10n.description,
@@ -188,7 +188,7 @@ class WineItem implements RateableItem {
       producer: json['producer'] as String? ?? '',
       country: json['country'] as String? ?? '',
       region: json['region'] as String? ?? '',
-      color: json['color'] as String? ?? '',
+      color: WineColor.fromString(json['color'] as String?) ?? WineColor.rouge,
       grape: json['grape'] as String? ?? '',
       alcohol: (json['alcohol'] as num?)?.toDouble() ?? 0.0,
       description: json['description'] as String? ?? '',
@@ -211,7 +211,7 @@ class WineItem implements RateableItem {
       'producer': producer,
       'country': country,
       'region': region,
-      'color': color,
+      'color': color.value,
       'grape': grape,
       'alcohol': alcohol,
       'description': description,
@@ -231,7 +231,11 @@ class WineItem implements RateableItem {
       producer: updates['producer'] as String? ?? producer,
       country: updates['country'] as String? ?? country,
       region: updates['region'] as String? ?? region,
-      color: updates['color'] as String? ?? color,
+      color: updates['color'] is WineColor 
+          ? updates['color'] as WineColor
+          : (updates['color'] is String 
+              ? WineColor.fromString(updates['color'] as String) ?? color
+              : color),
       grape: updates['grape'] as String? ?? grape,
       alcohol: updates['alcohol'] as double? ?? alcohol,
       description: updates['description'] as String? ?? description,
