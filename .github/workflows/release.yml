@@ -8,7 +8,7 @@ on:
 jobs:
   detect-release:
     # Only run if IS a release commit
-    if: startsWith(github.event.head_commit.message, 'chore: release')
+    if: "startsWith(github.event.head_commit.message, 'chore: release')"
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.detect.outputs.version }}
