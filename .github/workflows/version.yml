@@ -36,16 +36,14 @@ jobs:
           echo "$CHANGED_FILES"
           echo ""
           
-          # Filter for apps code changes
-          # Include: apps/**/anything
-          # Exclude: apps/**/docs/**, apps/**/README.md, apps/**/*.md (except CHANGELOG.md)
+          # Filter for apps code changes (exclude docs, README, and .md files except CHANGELOG)
           CODE_CHANGES=$(echo "$CHANGED_FILES" | \
             grep -E '^apps/(api|client|admin)/' | \
             grep -v -E '^apps/[^/]+/docs/' | \
             grep -v -E '^apps/[^/]+/README\.md$' | \
-            grep -v -E '^apps/[^/]+/[^/]+\.md$' | \
+            { grep -v -E '\.md$' || true; } | \
             grep -E '.' || \
-            echo "$CHANGED_FILES" | grep -E 'apps/[^/]+/CHANGELOG\.md')
+            echo "$CHANGED_FILES" | grep -E 'apps/[^/]+/CHANGELOG\.md' || true)
           
           if [ -z "$CODE_CHANGES" ]; then
             echo "has_code_changes=false" >> $GITHUB_OUTPUT
