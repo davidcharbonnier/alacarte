@@ -1,0 +1,118 @@
+name: Version Packages
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  version:
+    # Only run if NOT a release commit
+    if: "!startsWith(github.event.head_commit.message, 'chore: release')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Detect code changes (exclude docs)
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          predicate-quantifier: 'every'
+          filters: |
+            api:
+              - 'apps/api/**'
+              - '!apps/api/docs/**'
+              - '!apps/api/README.md'
+              - '!apps/api/**/*.md'
+              - 'apps/api/**/CHANGELOG.md'
+            client:
+              - 'apps/client/**'
+              - '!apps/client/docs/**'
+              - '!apps/client/README.md'
+              - '!apps/client/**/*.md'
+              - 'apps/client/**/CHANGELOG.md'
+            admin:
+              - 'apps/admin/**'
+              - '!apps/admin/docs/**'
+              - '!apps/admin/README.md'
+              - '!apps/admin/**/*.md'
+              - 'apps/admin/**/CHANGELOG.md'
+
+      - name: Check if any app has code changes
+        id: has_changes
+        run: |
+          if [ "${{ steps.filter.outputs.api }}" == "true" ] || \
+             [ "${{ steps.filter.outputs.client }}" == "true" ] || \
+             [ "${{ steps.filter.outputs.admin }}" == "true" ]; then
+            echo "has_code_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Code changes detected in:"
+            [ "${{ steps.filter.outputs.api }}" == "true" ] && echo "  - API"
+            [ "${{ steps.filter.outputs.client }}" == "true" ] && echo "  - Client"
+            [ "${{ steps.filter.outputs.admin }}" == "true" ] && echo "  - Admin"
+          else
+            echo "has_code_changes=false" >> $GITHUB_OUTPUT
+            echo "❌ No code changes detected (only documentation or non-code files)"
+          fi
+
+      - name: Check for changesets
+        id: check_changesets
+        if: steps.has_changes.outputs.has_code_changes == 'true'
+        run: |
+          # Check if any changesets exist (excluding README.md)
+          CHANGESETS=$(find .changeset -name "*.md" ! -name "README.md" 2>/dev/null || true)
+          
+          if [ -z "$CHANGESETS" ]; then
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No changesets found - skipping versioning"
+          else
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+            echo "✅ Changesets found:"
+            echo "$CHANGESETS"
+          fi
+
+      - name: Run changesets version
+        if: steps.has_changes.outputs.has_code_changes == 'true' && steps.check_changesets.outputs.has_changesets == 'true'
+        run: |
+          echo "Running changesets version..."
+          npm run version
+          echo "✅ Changesets version completed"
+
+      - name: Get new version and commit
+        if: steps.has_changes.outputs.has_code_changes == 'true' && steps.check_changesets.outputs.has_changesets == 'true'
+        run: |
+          # Check if there are changes to commit
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "ℹ️ No changes to commit - versions already up to date"
+            exit 0
+          fi
+          
+          # Get the new version (all apps have same version due to linked config)
+          NEW_VERSION=$(node -p "require('./apps/api/package.json').version")
+          
+          echo "🚀 New version: v${NEW_VERSION}"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add all changes
+          git add .
+          
+          # Commit with version
+          git commit -m "chore: release v${NEW_VERSION}"
+          
+          # Push to master
+          git push origin master
+          
+          echo "✅ Committed and pushed version v${NEW_VERSION}"
