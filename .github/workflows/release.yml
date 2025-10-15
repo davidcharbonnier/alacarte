@@ -6,18 +6,18 @@ on:
       - master
 
 jobs:
-  version-and-release:
+  detect-release:
+    # Only run if IS a release commit
+    if: startsWith(github.event.head_commit.message, 'chore: release')
     runs-on: ubuntu-latest
     outputs:
-      has_release: ${{ steps.detect_release.outputs.should_release }}
-      api_version: ${{ steps.get_versions.outputs.api }}
-      client_version: ${{ steps.get_versions.outputs.client }}
-      admin_version: ${{ steps.get_versions.outputs.admin }}
-      api_changed: ${{ steps.detect_changes.outputs.api_changed }}
-      client_changed: ${{ steps.detect_changes.outputs.client_changed }}
-      admin_changed: ${{ steps.detect_changes.outputs.admin_changed }}
+      version: ${{ steps.detect.outputs.version }}
+      api_changed: ${{ steps.detect.outputs.api_changed }}
+      client_changed: ${{ steps.detect.outputs.client_changed }}
+      admin_changed: ${{ steps.detect.outputs.admin_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -26,116 +26,48 @@ jobs:
         with:
           node-version: "18"
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Create Release Pull Request or Version Packages
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          version: npm run version
-          commit: "chore: version packages"
-          title: "chore: version packages"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Detect if this should trigger a release
-        id: detect_release
+      - name: Extract version and detect changes
+        id: detect
         run: |
-          # A release should trigger when:
-          # 1. No changesets remain (they were just consumed)
-          # 2. AND the commit history contains a recent "chore: version packages" commit
+          # Extract version from package.json (all apps have same version)
+          VERSION=$(node -p "require('./apps/api/package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "📦 Version: v${VERSION}"
           
-          HAS_CHANGESETS="${{ steps.changesets.outputs.hasChangesets }}"
+          # Detect which apps had CHANGELOG updates (indicates actual code changes)
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
           
-          if [ "$HAS_CHANGESETS" = "false" ]; then
-            # Check if last 2 commits include a version packages commit
-            # (could be HEAD or HEAD~1 if it's a merge commit)
-            RECENT_COMMITS=$(git log -2 --pretty=%B)
-            
-            if echo "$RECENT_COMMITS" | grep -q "chore: version packages"; then
-              echo "should_release=true" >> $GITHUB_OUTPUT
-              echo "✅ Release triggered: changesets consumed and version packages commit found"
-            else
-              echo "should_release=false" >> $GITHUB_OUTPUT
-              echo "ℹ️ No release: no version packages commit in recent history"
-            fi
-          else
-            echo "should_release=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ No release: changesets still present (Version Packages PR being created/updated)"
-          fi
-
-      - name: Get current versions
-        if: steps.detect_release.outputs.should_release == 'true'
-        id: get_versions
-        run: |
-          API_VERSION=$(node -p "require('./apps/api/package.json').version")
-          CLIENT_VERSION=$(node -p "require('./apps/client/package.json').version")
-          ADMIN_VERSION=$(node -p "require('./apps/admin/package.json').version")
-
-          echo "api=${API_VERSION}" >> $GITHUB_OUTPUT
-          echo "client=${CLIENT_VERSION}" >> $GITHUB_OUTPUT
-          echo "admin=${ADMIN_VERSION}" >> $GITHUB_OUTPUT
-
-          echo "🚀 Release versions:"
-          echo "  API: ${API_VERSION}"
-          echo "  Client: ${CLIENT_VERSION}"
-          echo "  Admin: ${ADMIN_VERSION}"
-
-      - name: Detect which apps had version changes
-        if: steps.detect_release.outputs.should_release == 'true'
-        id: detect_changes
-        run: |
-          # Get the version packages commit
-          VERSION_COMMIT=$(git log -1 --grep="chore: version packages" --format=%H)
-          
-          if [ -z "$VERSION_COMMIT" ]; then
-            echo "⚠️ Warning: Could not find version packages commit, building all apps"
-            echo "api_changed=true" >> $GITHUB_OUTPUT
-            echo "client_changed=true" >> $GITHUB_OUTPUT
-            echo "admin_changed=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          # Get files changed in the version commit
-          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r $VERSION_COMMIT)
-          
-          echo "Files changed in version commit:"
-          echo "$CHANGED_FILES"
-          echo ""
-          
-          # Check if each app's CHANGELOG was updated (indicates version bump)
           if echo "$CHANGED_FILES" | grep -q "apps/api/CHANGELOG.md"; then
             echo "api_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ API version changed"
+            echo "✅ API changed"
           else
             echo "api_changed=false" >> $GITHUB_OUTPUT
-            echo "❌ API version unchanged"
+            echo "ℹ️ API unchanged"
           fi
           
           if echo "$CHANGED_FILES" | grep -q "apps/client/CHANGELOG.md"; then
             echo "client_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ Client version changed"
+            echo "✅ Client changed"
           else
             echo "client_changed=false" >> $GITHUB_OUTPUT
-            echo "❌ Client version unchanged"
+            echo "ℹ️ Client unchanged"
           fi
           
           if echo "$CHANGED_FILES" | grep -q "apps/admin/CHANGELOG.md"; then
             echo "admin_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ Admin version changed"
+            echo "✅ Admin changed"
           else
             echo "admin_changed=false" >> $GITHUB_OUTPUT
-            echo "❌ Admin version unchanged"
+            echo "ℹ️ Admin unchanged"
           fi
 
   build-api:
-    needs: version-and-release
-    if: needs.version-and-release.outputs.has_release == 'true'
+    needs: detect-release
     runs-on: ubuntu-latest
     environment: prod
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -153,50 +85,18 @@ jobs:
           file: ./apps/api/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.version-and-release.outputs.api_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.detect-release.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  build-admin:
-    needs: version-and-release
-    if: needs.version-and-release.outputs.has_release == 'true'
-    runs-on: ubuntu-latest
-    environment: prod
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push Admin
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/admin
-          file: ./apps/admin/Dockerfile
-          push: true
-          target: prod
-          build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.version-and-release.outputs.admin_version }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   build-client:
-    needs: version-and-release
-    if: needs.version-and-release.outputs.has_release == 'true'
+    needs: detect-release
     runs-on: ubuntu-latest
     environment: prod
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Create .env file
         working-directory: ./apps/client
@@ -204,7 +104,7 @@ jobs:
           cat << EOF > .env
           API_BASE_URL=${{ vars.CLIENT_API_BASE_URL }}
           GOOGLE_CLIENT_ID=${{ vars.CLIENT_GOOGLE_CLIENT_ID }}
-          APP_VERSION=${{ needs.version-and-release.outputs.client_version }}
+          APP_VERSION=${{ needs.detect-release.outputs.version }}
           EOF
           echo "✅ Created .env file for production build"
 
@@ -254,148 +154,112 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: client-apk-${{ needs.version-and-release.outputs.client_version }}
+          name: client-apk-${{ needs.detect-release.outputs.version }}
           path: apps/client/build/app/outputs/flutter-apk/app-release.apk
 
-  create-releases:
-    needs: [version-and-release, build-api, build-admin, build-client]
+  build-admin:
+    needs: detect-release
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Admin
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/admin
+          file: ./apps/admin/Dockerfile
+          push: true
+          target: prod
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.detect-release.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  create-release:
+    needs: [detect-release, build-api, build-client, build-admin]
     if: |
       always() &&
-      needs.version-and-release.outputs.has_release == 'true' &&
-      (needs.build-api.result == 'success' || needs.build-api.result == 'skipped') &&
-      (needs.build-admin.result == 'success' || needs.build-admin.result == 'skipped') &&
-      (needs.build-client.result == 'success' || needs.build-client.result == 'skipped')
+      needs.build-api.result == 'success' &&
+      needs.build-client.result == 'success' &&
+      needs.build-admin.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Determine release strategy
-        id: strategy
-        run: |
-          API_VERSION="${{ needs.version-and-release.outputs.api_version }}"
-          CLIENT_VERSION="${{ needs.version-and-release.outputs.client_version }}"
-          ADMIN_VERSION="${{ needs.version-and-release.outputs.admin_version }}"
-          
-          API_CHANGED="${{ needs.version-and-release.outputs.api_changed }}"
-          CLIENT_CHANGED="${{ needs.version-and-release.outputs.client_changed }}"
-          ADMIN_CHANGED="${{ needs.version-and-release.outputs.admin_changed }}"
-
-          echo "api=${API_VERSION}" >> $GITHUB_OUTPUT
-          echo "client=${CLIENT_VERSION}" >> $GITHUB_OUTPUT
-          echo "admin=${ADMIN_VERSION}" >> $GITHUB_OUTPUT
-          
-          echo "api_changed=${API_CHANGED}" >> $GITHUB_OUTPUT
-          echo "client_changed=${CLIENT_CHANGED}" >> $GITHUB_OUTPUT
-          echo "admin_changed=${ADMIN_CHANGED}" >> $GITHUB_OUTPUT
-
-          # Check if all versions are the same AND all changed (synchronized release)
-          if [ "$API_VERSION" = "$CLIENT_VERSION" ] && [ "$API_VERSION" = "$ADMIN_VERSION" ] && \
-             [ "$API_CHANGED" = "true" ] && [ "$CLIENT_CHANGED" = "true" ] && [ "$ADMIN_CHANGED" = "true" ]; then
-            echo "synchronized=true" >> $GITHUB_OUTPUT
-            echo "✅ Synchronized release detected: v${API_VERSION}"
-          else
-            echo "synchronized=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ Independent patch releases detected"
-          fi
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Download Client APK
-        if: needs.version-and-release.outputs.client_changed == 'true'
         uses: actions/download-artifact@v4
         with:
-          name: client-apk-${{ steps.strategy.outputs.client }}
+          name: client-apk-${{ needs.detect-release.outputs.version }}
           path: ./artifacts
 
-      # Synchronized release (all apps same version and all changed)
-      - name: Create combined release
-        if: steps.strategy.outputs.synchronized == 'true'
+      - name: Build components list
+        id: components
+        run: |
+          COMPONENTS=""
+          
+          if [ "${{ needs.detect-release.outputs.api_changed }}" = "true" ]; then
+            COMPONENTS="${COMPONENTS}API, "
+          fi
+          
+          if [ "${{ needs.detect-release.outputs.client_changed }}" = "true" ]; then
+            COMPONENTS="${COMPONENTS}Client, "
+          fi
+          
+          if [ "${{ needs.detect-release.outputs.admin_changed }}" = "true" ]; then
+            COMPONENTS="${COMPONENTS}Admin, "
+          fi
+          
+          # Remove trailing comma and space
+          COMPONENTS=$(echo "$COMPONENTS" | sed 's/, $//')
+          
+          # If no components changed (shouldn't happen, but safety check)
+          if [ -z "$COMPONENTS" ]; then
+            COMPONENTS="All components"
+          fi
+          
+          echo "components=${COMPONENTS}" >> $GITHUB_OUTPUT
+          echo "📋 Components updated: ${COMPONENTS}"
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.strategy.outputs.api }}
-          name: Release v${{ steps.strategy.outputs.api }}
+          tag_name: v${{ needs.detect-release.outputs.version }}
+          name: Release v${{ needs.detect-release.outputs.version }}
           body: |
-            ## 📦 Component Versions
-            - **API:** v${{ steps.strategy.outputs.api }}
-            - **Client:** v${{ steps.strategy.outputs.client }}
-            - **Admin:** v${{ steps.strategy.outputs.admin }}
-
+            ## 📦 Release v${{ needs.detect-release.outputs.version }}
+            
+            **Components updated:** ${{ steps.components.outputs.components }}
+            
+            All components synchronized to version ${{ needs.detect-release.outputs.version }}.
+            
             ## 🐳 Docker Images
-            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ steps.strategy.outputs.api }}`
-            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ steps.strategy.outputs.admin }}`
-
+            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.detect-release.outputs.version }}`
+            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.detect-release.outputs.version }}`
+            
             ## 📱 Client APK
             - Flutter APK attached to this release
-
+            
             ## 📝 Changelog
-            See individual CHANGELOG.md files in each app directory for detailed changes:
+            See individual CHANGELOG.md files for detailed changes:
             - [API Changelog](./apps/api/CHANGELOG.md)
             - [Client Changelog](./apps/client/CHANGELOG.md)
             - [Admin Changelog](./apps/admin/CHANGELOG.md)
           files: ./artifacts/app-release.apk
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Independent patch releases (only for changed apps)
-      - name: Create API release
-        if: steps.strategy.outputs.synchronized == 'false' && steps.strategy.outputs.api_changed == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: api-v${{ steps.strategy.outputs.api }}
-          name: API v${{ steps.strategy.outputs.api }}
-          body: |
-            ## 🔧 Patch Release: API
-
-            **Version:** v${{ steps.strategy.outputs.api }}
-
-            ## 🐳 Docker Image
-            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ steps.strategy.outputs.api }}`
-
-            ## 📝 Changelog
-            See [API Changelog](./apps/api/CHANGELOG.md) for detailed changes.
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Client release
-        if: steps.strategy.outputs.synchronized == 'false' && steps.strategy.outputs.client_changed == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: client-v${{ steps.strategy.outputs.client }}
-          name: Client v${{ steps.strategy.outputs.client }}
-          body: |
-            ## 🔧 Patch Release: Client
-
-            **Version:** v${{ steps.strategy.outputs.client }}
-
-            ## 📱 APK
-            - Flutter APK attached to this release
-
-            ## 📝 Changelog
-            See [Client Changelog](./apps/client/CHANGELOG.md) for detailed changes.
-          files: ./artifacts/app-release.apk
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Admin release
-        if: steps.strategy.outputs.synchronized == 'false' && steps.strategy.outputs.admin_changed == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: admin-v${{ steps.strategy.outputs.admin }}
-          name: Admin v${{ steps.strategy.outputs.admin }}
-          body: |
-            ## 🔧 Patch Release: Admin
-
-            **Version:** v${{ steps.strategy.outputs.admin }}
-
-            ## 🐳 Docker Image
-            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ steps.strategy.outputs.admin }}`
-
-            ## 📝 Changelog
-            See [Admin Changelog](./apps/admin/CHANGELOG.md) for detailed changes.
           draft: false
           prerelease: false
         env:
