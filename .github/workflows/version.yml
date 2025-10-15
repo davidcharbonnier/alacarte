@@ -25,44 +25,35 @@ jobs:
         run: npm ci
 
       - name: Detect code changes (exclude docs)
-        uses: dorny/paths-filter@v3.0.2
-        id: filter
-        with:
-          predicate-quantifier: 'every'
-          filters: |
-            api:
-              - 'apps/api/**'
-              - '!apps/api/docs/**'
-              - '!apps/api/README.md'
-              - '!apps/api/**/*.md'
-              - 'apps/api/**/CHANGELOG.md'
-            client:
-              - 'apps/client/**'
-              - '!apps/client/docs/**'
-              - '!apps/client/README.md'
-              - '!apps/client/**/*.md'
-              - 'apps/client/**/CHANGELOG.md'
-            admin:
-              - 'apps/admin/**'
-              - '!apps/admin/docs/**'
-              - '!apps/admin/README.md'
-              - '!apps/admin/**/*.md'
-              - 'apps/admin/**/CHANGELOG.md'
-
-      - name: Check if any app has code changes
         id: has_changes
         run: |
-          if [ "${{ steps.filter.outputs.api }}" == "true" ] || \
-             [ "${{ steps.filter.outputs.client }}" == "true" ] || \
-             [ "${{ steps.filter.outputs.admin }}" == "true" ]; then
-            echo "has_code_changes=true" >> $GITHUB_OUTPUT
-            echo "✅ Code changes detected in:"
-            [ "${{ steps.filter.outputs.api }}" == "true" ] && echo "  - API"
-            [ "${{ steps.filter.outputs.client }}" == "true" ] && echo "  - Client"
-            [ "${{ steps.filter.outputs.admin }}" == "true" ] && echo "  - Admin"
-          else
+          echo "Checking for code changes in apps/ (excluding documentation)..."
+          
+          # Get changed files between HEAD~1 and HEAD
+          CHANGED_FILES=$(git diff HEAD~1 HEAD --name-only)
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          echo ""
+          
+          # Filter for apps code changes
+          # Include: apps/**/anything
+          # Exclude: apps/**/docs/**, apps/**/README.md, apps/**/*.md (except CHANGELOG.md)
+          CODE_CHANGES=$(echo "$CHANGED_FILES" | \
+            grep -E '^apps/(api|client|admin)/' | \
+            grep -v -E '^apps/[^/]+/docs/' | \
+            grep -v -E '^apps/[^/]+/README\.md$' | \
+            grep -v -E '^apps/[^/]+/[^/]+\.md$' | \
+            grep -E '.' || \
+            echo "$CHANGED_FILES" | grep -E 'apps/[^/]+/CHANGELOG\.md')
+          
+          if [ -z "$CODE_CHANGES" ]; then
             echo "has_code_changes=false" >> $GITHUB_OUTPUT
             echo "❌ No code changes detected (only documentation or non-code files)"
+          else
+            echo "has_code_changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Code changes detected:"
+            echo "$CODE_CHANGES"
           fi
 
       - name: Check for changesets
