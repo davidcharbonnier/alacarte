@@ -1,5 +1,19 @@
 # @alacarte/admin
 
+## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/admin-v0.3.1...admin-v0.4.0) (2025-10-17)
+
+
+### Features
+
+* add wine item type to admin and improve seeding screen to support file upload and display of nullable fields in both lists and details pages ([a529cc1](https://github.com/davidcharbonnier/alacarte/commit/a529cc1e6f7ff5586f35173bfa0d38b3b8cd2d56))
+* migrate wine color to enum type, add support for checkboxes and dropdown in forms and fix some issues for wine display ([0116dc4](https://github.com/davidcharbonnier/alacarte/commit/0116dc468c5a71727855834f4958cf77bebc49a2))
+
+
+### Bug Fixes
+
+* add missing field type on admin panel ([2ad612e](https://github.com/davidcharbonnier/alacarte/commit/2ad612e2a885bd73d39ccb0be370a5bcaef9ec19))
+* add package-lock.json and fix docker permissions ([bf48593](https://github.com/davidcharbonnier/alacarte/commit/bf485934b2da10c7b943d55c58553b388a633f1c))
+
 ## 0.3.1
 
 ### Patch Changes

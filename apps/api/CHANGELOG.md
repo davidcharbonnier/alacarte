@@ -1,5 +1,13 @@
 # @alacarte/api
 
+## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/api-v0.3.1...api-v0.4.0) (2025-10-17)
+
+
+### Features
+
+* add wine item type to api and improve seeding process by supporting json file upload ([c064fa8](https://github.com/davidcharbonnier/alacarte/commit/c064fa8bee1c6f7f7e91fc03486eeb1b1e87d6dc))
+* migrate wine color to enum type, add support for checkboxes and dropdown in forms and fix some issues for wine display ([0116dc4](https://github.com/davidcharbonnier/alacarte/commit/0116dc468c5a71727855834f4958cf77bebc49a2))
+
 ## 0.3.1
 
 ### Patch Changes
