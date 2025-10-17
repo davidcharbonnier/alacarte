@@ -4,13 +4,12 @@
   "private": true,
   "description": "A la carte - Multi-platform rating and sharing system for consumables",
   "scripts": {
-    "changeset": "changeset",
-    "version": "changeset version",
-    "release": "changeset publish"
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.5.1",
-    "@changesets/cli": "^2.27.1"
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0"
   },
   "workspaces": [
     "apps/*"

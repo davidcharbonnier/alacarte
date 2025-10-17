@@ -4,8 +4,8 @@
 
 This document defines the versioning strategy, tooling, and release management approach for the A la carte monorepo.
 
-**Last Updated:** January 2025  
-**Status:** Active
+**Last Updated:** October 2025  
+**Status:** Active - Using release-please with Conventional Commits
 
 ## 📦 Monorepo Structure
 
@@ -15,7 +15,8 @@ alacarte/
 │   └── workflows/
 │       ├── pr-snapshot.yml       # Build & publish snapshots
 │       ├── cleanup-snapshots.yml # Automated cleanup
-│       └── release.yml           # Production releases
+│       ├── release-please.yml    # Create release PRs
+│       └── release.yml           # Build & release from tags
 ├── apps/
 │   ├── api/                      # Go REST API
 │   │   ├── Dockerfile
@@ -26,7 +27,10 @@ alacarte/
 │   └── admin/                    # Next.js admin panel
 │       ├── Dockerfile
 │       └── ... (Next.js code)
-├── .changeset/                   # Changesets configuration
+├── release-please-config.json    # Release automation config
+├── .release-please-manifest.json # Current versions
+├── commitlint.config.js          # Commit validation rules
+├── .husky/                       # Git hooks
 ├── docker-compose.yml            # Root orchestration
 ├── package.json                  # Root package.json for tooling
 ├── docs/                         # Consolidated documentation
@@ -38,45 +42,98 @@ alacarte/
 
 ## 🛠️ Tooling Stack
 
-### **Changesets** - Version Management ⭐
+### **release-please** - Automated Release Management ⭐
 
-**Purpose:** Independent versioning and changelog generation per app
+**Purpose:** Fully automated versioning, changelog generation, and release management from conventional commits
 
 **Why chosen:**
-- ✅ Industry standard for monorepo versioning
-- ✅ Human-readable changeset files (reviewable in PRs)
-- ✅ Supports independent versioning per app
-- ✅ Automatic CHANGELOG.md generation
-- ✅ GitHub Action available for CI automation
-- ✅ Flexible enough to coordinate releases when needed
+- ✅ Google-maintained, production-proven
+- ✅ Native monorepo support
+- ✅ Automatic version bumps from commit messages
+- ✅ Auto-generated changelogs from commits
+- ✅ Creates release PRs for review before release
+- ✅ Works seamlessly with Git tags
+- ✅ Supports independent and synchronized releases
+- ✅ Zero manual versioning needed
 
-**Installation:**
-```bash
-npm install -D @changesets/cli @changesets/changelog-github
-npx changeset init
-```
-
-**Configuration:** (`.changeset/config.json`)
+**Configuration:** (`release-please-config.json`)
 ```json
 {
-  "changelog": [
-    "@changesets/changelog-github",
-    { "repo": "davidcharbonnier/alacarte" }
-  ],
-  "commit": false,
-  "fixed": [],
-  "linked": [],
-  "access": "public",
-  "baseBranch": "master",
-  "updateInternalDependencies": "patch",
-  "ignore": []
+  "packages": {
+    "apps/api": {
+      "release-type": "simple",
+      "package-name": "api",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "apps/client": {
+      "release-type": "simple",
+      "package-name": "client",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "apps/admin": {
+      "release-type": "simple",
+      "package-name": "admin",
+      "changelog-path": "CHANGELOG.md"
+    }
+  },
+  "separate-pull-requests": false
 }
 ```
 
-**Key Configuration Notes:**
-- `"fixed": []` - Allows independent versioning per app (patches can be released separately)
-- `"updateInternalDependencies": "patch"` - Bumps patch versions when dependencies update
-- `"baseBranch": "master"` - Main branch for releases
+### **Conventional Commits** - Commit Format Standard
+
+**Purpose:** Structured commit messages that enable automated versioning
+
+**Format:**
+```
+<type>(<scope>): <subject>
+
+type: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+scope: api, client, admin, deps, ci, docs, release (REQUIRED)
+subject: Brief description in sentence case
+```
+
+**Version Bumps:**
+- `feat:` → **minor** bump (0.3.1 → 0.4.0)
+- `fix:` → **patch** bump (0.3.1 → 0.3.2)
+- `BREAKING CHANGE:` → **major** bump (0.3.1 → 1.0.0)
+- `docs:`, `chore:`, etc → no version bump
+
+**Examples:**
+```bash
+feat(api): Add wine filtering endpoint
+fix(client): Resolve cache invalidation bug
+docs(admin): Update deployment guide
+chore(deps): Bump dependencies
+```
+
+### **commitlint** - Commit Message Validation
+
+**Purpose:** Enforce conventional commit format via git hooks
+
+**Installation:**
+```bash
+npm install  # Installs commitlint + husky
+```
+
+**Configuration:** (`commitlint.config.js`)
+```javascript
+module.exports = {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'scope-enum': [2, 'always', ['api', 'client', 'admin', 'deps', 'ci', 'docs', 'release']],
+    'scope-empty': [2, 'never'],  // Scope is REQUIRED
+    'subject-case': [2, 'always', 'sentence-case']
+  }
+};
+```
+
+**Git Hook:** (`.husky/commit-msg`)
+```bash
+npx --no -- commitlint --edit $1
+```
+
+**Result:** Commits are automatically validated before push. Invalid format = commit rejected.
 
 ### **GitHub Actions** - Change Detection & Build Orchestration
 
@@ -84,479 +141,340 @@ npx changeset init
 
 **Why chosen:**
 - ✅ Native GitHub integration
-- ✅ Simple bash scripts with `git diff` for reliable change detection
-- ✅ Conditional job execution based on file changes
-- ✅ Transparent logic - no black box behavior
-- ✅ No external dependencies
+- ✅ Simple, transparent change detection
+- ✅ Conditional job execution
+- ✅ No black box behavior
 
-**PR Change Detection Pattern:**
-```bash
-# Get changed files comparing PR branch to base
-git fetch origin ${{ github.event.pull_request.base.ref }}
-CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
-
-# Check if API changed (excluding markdown)
-if echo "$CHANGED_FILES" | grep '^apps/api/' | grep -v '\.md
+**Workflows:**
+- `release-please.yml` - Creates release PRs from commits
+- `release.yml` - Builds and releases from git tags
+- `pr-snapshot.yml` - Creates snapshot builds for QA
+- `cleanup-snapshots.yml` - Cleans up old snapshots
 
 ## 📌 Versioning Strategy
 
-### **Independent Versioning with Manual Coordination**
+### **Automated Versioning with Synchronized & Independent Releases**
 
 **Approach:**
-- Each app versions independently based on its changesets
-- Coordinated releases require manually selecting all affected apps
-- True semantic versioning per component
+- Commits in conventional format drive versioning
+- release-please analyzes commits and determines version bumps
+- Synchronized releases when any app has `feat` or `BREAKING CHANGE`
+- Independent patch releases for single-app `fix` commits
 
 **Example Timeline:**
 ```
-v2.1.0 - Coordinated Feature Release (2025-01-15)
-├── API: v2.1.0      (selected in changeset)
-├── Client: v2.1.0   (selected in changeset)
-└── Admin: v2.1.0    (selected in changeset)
+v0.4.0 - Synchronized Feature Release (2025-10-15)
+├── API: v0.4.0      (had feat commit)
+├── Client: v0.4.0   (had feat commit)
+└── Admin: v0.4.0    (synced, no changes)
 
-v2.1.x - Independent Patch Releases
-├── API: v2.1.5      (hotfix, 2025-01-20)
-├── Client: v2.1.3   (hotfix, 2025-01-18)
-└── Admin: v2.1.1    (hotfix, 2025-01-16)
+v0.4.x - Independent Patch Releases
+├── API: v0.4.1      (fix commit, 2025-10-18)
+├── Client: v0.4.2   (fix commit, 2025-10-20)
+└── Admin: v0.4.0    (unchanged)
 
-v2.2.0 - Next Coordinated Feature (2025-02-01)
-├── API: v2.2.0      (selected in changeset)
-├── Client: v2.2.0   (selected in changeset)
-└── Admin: v2.2.0    (selected in changeset)
+v0.5.0 - Next Feature Release (2025-11-01)
+├── API: v0.5.0      (had feat commit)
+├── Client: v0.5.0   (synced from 0.4.2)
+└── Admin: v0.5.0    (synced from 0.4.0)
 ```
 
 **Benefits:**
-- ✅ True semantic versioning per component
-- ✅ Hotfixes don't force unnecessary version bumps
-- ✅ Clear understanding of what changed per app
-- ✅ Flexibility to release independently when needed
+- ✅ Zero manual versioning - fully automated
+- ✅ Automatic changelog generation from commits
+- ✅ Clear, semantic versioning per component
+- ✅ Hotfixes release independently
+- ✅ Features coordinate all apps automatically
+- ✅ Enforced commit standards via git hooks
 
 **Trade-offs:**
-- ⚠️ Requires manual selection of apps in changesets
-- ⚠️ Developer must remember to select all apps for coordinated features
-- ⚠️ Version numbers may drift between apps over time
+- ⚠️ Requires disciplined commit messages
+- ⚠️ Must use correct conventional commit format
+- ⚠️ All team members must understand the system
 
-## 🎨 Changeset Best Practices
+## 🎨 Commit Best Practices
 
-### **When to Select Single App**
+### **When to Use Each Commit Type**
 
-Use single-app changesets for:
-- **Hotfixes:** Bug fixes that only affect one component
-- **Refactoring:** Internal improvements with no external impact
-- **Documentation:** Updates to app-specific docs
-- **Dependencies:** Updating libraries for one app
-- **Performance:** Optimizations isolated to one app
-
-**Example:**
+**Features (`feat:`)** - New functionality:
 ```bash
-npx changeset
-# Select: client only
-# Type: patch
-# Summary: "Fixed authentication timeout issue"
+feat(api): Add wine filtering endpoint
+feat(client): Implement offline mode
+feat(admin): Add user management dashboard
 ```
+**Result:** Minor version bump (0.3.1 → 0.4.0)
 
-### **When to Select Multiple Apps**
-
-Use multi-app changesets for:
-- **New Features:** Features that span across apps
-- **API Changes:** Backend changes requiring frontend updates
-- **Breaking Changes:** Changes that affect multiple components
-- **Major Releases:** Coordinated version bumps
-- **Cross-App Improvements:** Performance or security updates across apps
-
-**Example:**
+**Bug Fixes (`fix:`)** - Bug corrections:
 ```bash
-npx changeset
-# Select: api, client, admin
-# Type: minor
-# Summary: "Added wine item type support"
+fix(api): Resolve database connection timeout
+fix(client): Fix cache invalidation issue
+fix(admin): Correct pagination bug
+```
+**Result:** Patch version bump (0.3.1 → 0.3.2)
+
+**Breaking Changes (`BREAKING CHANGE:`)** - Incompatible changes:
+```bash
+feat(api): Redesign authentication system
+
+BREAKING CHANGE: OAuth flow now requires additional redirect_uri parameter
+```
+**Result:** Major version bump (0.3.1 → 1.0.0)
+
+**No Version Bump:**
+```bash
+docs(api): Update API documentation
+chore(deps): Bump dependencies
+style(client): Format code
+refactor(admin): Restructure components
+test(api): Add unit tests
+ci(release): Update workflow
+```
+**Result:** No version change, not in changelog
+
+### **Scope Guidelines**
+
+**Always use appropriate scope:**
+- `api` - Backend API changes
+- `client` - Flutter app changes
+- `admin` - Admin panel changes
+- `deps` - Dependency updates
+- `ci` - CI/CD workflow changes
+- `docs` - Documentation updates
+- `release` - Release-related changes
+
+**Multiple apps affected?** Make multiple commits:
+```bash
+feat(api): Add wine endpoints
+feat(client): Add wine browsing UI
+feat(admin): Add wine management interface
 ```
 
 ### **PR Review Checklist**
 
-When reviewing changesets in PRs:
+When reviewing PRs:
 
-✅ **Correct apps selected?**
-- If PR changes multiple apps, changeset should select all affected apps
-- If PR changes one app, changeset should select only that app
+✅ **Commit messages follow conventional format?**
+- Type is valid (`feat`, `fix`, etc.)
+- Scope is present and correct
+- Subject is clear and descriptive
 
-✅ **Correct version bump type?**
-- `major`: Breaking changes
-- `minor`: New features (backward compatible)
-- `patch`: Bug fixes, refactoring
+✅ **Correct scopes used?**
+- If PR changes API, commits have `(api)` scope
+- If PR changes multiple apps, multiple commits with different scopes
 
-✅ **Clear summary?**
-- Describes what changed
-- Will make sense in CHANGELOG.md
-- Uses conventional commit style (optional but recommended)
+✅ **Appropriate version bump?**
+- New features use `feat:`
+- Bug fixes use `fix:`
+- Breaking changes have `BREAKING CHANGE:` footer
+
+## 🔄 Developer Workflow
+
+### **1. Making Changes with Conventional Commits**
+
+```bash
+# Create feature branch
+git checkout -b feat/add-wine-filtering
+
+# Make changes in apps/api
+# ... edit files ...
+
+# Commit with conventional format (validated automatically)
+git commit -m "feat(api): Add wine filtering endpoint
+
+Implements regional filtering with fuzzy matching support."
+
+# Git hook validates commit message
+# ✅ Valid format - commit succeeds
+# ❌ Invalid format - commit rejected, fix and retry
+
+# Push to create PR
+git push origin feat/add-wine-filtering
+```
+
+### **2. CI Builds Snapshot for QA**
+
+```bash
+# PR created → CI workflow runs automatically
+1. Detects API changed (only API)
+2. Generates snapshot: v0.3.1-pr-123.abc1234
+3. Builds API Docker image
+4. Pushes to Docker Hub
+5. Comments on PR with image tag
+
+# QA can manually deploy snapshot for testing
+```
+
+### **3. Merge to Master**
+
+```bash
+# PR approved and merged to master
+# release-please workflow runs:
+1. Analyzes commits since last release
+   - Found: feat(api) → minor bump needed
+2. Determines: API 0.3.1 → 0.4.0
+3. Checks if other apps need sync: YES (any feat)
+4. Creates/updates "Release PR" with:
+   - All apps bumped to 0.4.0
+   - Auto-generated CHANGELOGs
+   - All pending changes
+```
+
+### **4. Review & Merge Release PR**
+
+```bash
+# Review Release PR on GitHub
+- Check versions look correct
+- Review auto-generated changelogs
+- Verify all changes are included
+
+# Merge Release PR
+# On merge, release-please:
+1. Creates git tags: v0.4.0
+2. Tags trigger build workflow
+3. All apps built (synced release)
+4. Docker images pushed
+5. Client APK built
+6. GitHub release created with artifacts
+```
+
+### **Example: Hotfix Workflow**
+
+```bash
+# Urgent bug in client only
+git checkout -b fix/client-auth-timeout
+
+# Fix the bug
+# ... edit apps/client files ...
+
+# Commit with conventional format
+git commit -m "fix(client): Resolve authentication timeout
+
+Fixes issue where offline mode caused 401 errors after 30 seconds."
+
+git push origin fix/client-auth-timeout
+
+# PR created → snapshot built (client only)
+# PR merged → release-please creates Release PR
+# Release PR shows: Client 0.4.0 → 0.4.1 (patch, independent)
+# Merge Release PR → client-v0.4.1 tag created
+# Build workflow runs → only Client APK built
+# GitHub release created: "Client v0.4.1"
+```
 
 ## 🎭 Prerelease Strategy for QA
 
 ### **Snapshot Versions**
 
-**Purpose:** Build and publish every PR commit with unique versions for manual QA deployment
+**Purpose:** Build and publish every PR commit for manual QA deployment
 
 **Version Format:**
 ```
-Production:  v2.1.0
-Prerelease:  v2.1.0-pr-123.abc1234  (PR number + short commit SHA)
+Production:  v0.4.0
+Prerelease:  v0.4.0-pr-123.abc1234  (PR number + short commit SHA)
 ```
 
-**Benefits:**
-- ✅ Unique per commit (SHA ensures uniqueness)
-- ✅ Traceable to PR and exact commit
-- ✅ Doesn't interfere with Changesets production versioning
-- ✅ Clearly identifiable as non-production
-- ✅ Ready for manual deployment to QA
-
-### **How It Works**
-
+**How It Works:**
 ```bash
 # PR commit triggers CI
-commit: abc1234
-branch: feat/add-wine
-PR: #123
-
-# CI detects which apps changed
-Changed: apps/api, apps/client
+commit: abc1234, PR: #123
 
 # CI generates snapshot version
-CURRENT_VERSION="2.1.0"  # from package.json
-SNAPSHOT_VERSION="2.1.0-pr-123.abc1234"
+CURRENT_VERSION="0.4.0"
+SNAPSHOT="0.4.0-pr-123.abc1234"
 
-# Build only changed apps (conditional GitHub Actions jobs)
-if: needs.detect-changes.outputs.api == 'true'
-  → docker build -t alacarte-api:2.1.0-pr-123.abc1234 apps/api
-
-if: needs.detect-changes.outputs.client == 'true'
-  → flutter build apk (with APP_VERSION=2.1.0-pr-123.abc1234)
-
-# Tag and push Docker images with snapshot version
-docker push davidcharbonnier/alacarte-api:2.1.0-pr-123.abc1234
-docker push davidcharbonnier/alacarte-api:pr-123-latest
-
-# Comment on PR with available images for manual deployment
+# Builds only changed apps
+API changed → docker build alacarte-api:0.4.0-pr-123.abc1234
 ```
 
-### **Docker Tag Strategy**
-
+**Docker Tag Strategy:**
 ```bash
 # Per-commit snapshots (unique, traceable)
-alacarte-api:2.1.0-pr-123.abc1234
-alacarte-client:2.1.0-pr-123.abc1234
-alacarte-admin:2.1.0-pr-123.abc1234
+alacarte-api:0.4.0-pr-123.abc1234
+alacarte-client:0.4.0-pr-123.abc1234
+alacarte-admin:0.4.0-pr-123.abc1234
 
-# PR convenience tags (always latest in PR)
+# PR convenience tags (latest in PR)
 alacarte-api:pr-123-latest
-alacarte-client:pr-123-latest
-alacarte-admin:pr-123-latest
 
-# Production tags (master branch, managed by Changesets)
-alacarte-api:2.1.0
+# Production tags (from release-please)
+alacarte-api:0.4.0
 alacarte-api:latest
 ```
 
-### **Manual QA Deployment**
-
-After snapshot images are published, deploy manually:
-
-```bash
-# Deploy API to QA
-gcloud run deploy alacarte-api-qa \
-  --image=davidcharbonnier/alacarte-api:2.1.0-pr-123.abc1234 \
-  --region=northamerica-northeast1
-
-# Deploy Admin to QA
-gcloud run deploy alacarte-admin-qa \
-  --image=davidcharbonnier/alacarte-admin:2.1.0-pr-123.abc1234 \
-  --region=northamerica-northeast1
-
-# Download Client APK from GitHub Actions artifacts
-# Test locally or distribute to QA team
-```
-
-### **Snapshot Lifecycle**
-
-1. **Creation:** Every PR commit generates unique snapshot (only for changed apps)
-2. **Publishing:** Docker images pushed to Docker Hub (only changed apps)
-3. **Manual Deployment:** QA team deploys as needed
-4. **Testing:** QA team tests using deployed versions
-5. **Cleanup:** Automated cleanup keeps only active snapshots
-
-### **Automated Cleanup Strategy**
-
-**Retention Policy:**
-- ✅ Keep all snapshots from **open PRs** (active development)
-- ✅ Keep snapshots from **last merged PR** (rollback capability)
-- ❌ Delete all other snapshots (closed/merged PRs older than last merge)
-
-**What Gets Cleaned:**
-1. **Docker Hub Tags** - Snapshot image tags (parallel cleanup, independent)
-2. **GitHub Releases** - Pre-release entries (must be deleted before git tags)
-3. **Git Tags** - Snapshot version tags (deleted after releases)
-4. **GitHub Artifacts** - Client APK builds (deleted with releases)
-
-**Cleanup Order (Important!):**
-```
-Step 1: Docker Hub cleanup (parallel) ─┐
-                                        ├─→ Can run independently
-Step 2: GitHub Releases cleanup ───────┘
-         ↓ (releases reference git tags)
-Step 3: Git Tags cleanup
-         ↓ (artifacts attached to releases)
-Step 4: Artifacts cleanup (if not auto-deleted)
-```
-
-**Cleanup Triggers:**
-- When a PR is closed (merged or not) - immediate cleanup
-- Daily scheduled cleanup at 2 AM UTC (safety net)
-- Manual trigger (workflow_dispatch)
-
-**Example Scenario:**
-```
-Open PRs: #123, #125, #127
-Last merged PR: #124
-
-Keep:
-✅ All tags/images from PR #123 (open)
-✅ All tags/images from PR #125 (open)
-✅ All tags/images from PR #127 (open)
-✅ All tags/images from PR #124 (last merged - rollback)
-
-Delete:
-❌ All tags/images from PR #122 (merged before #124)
-❌ All tags/images from PR #120, #121 (old merged PRs)
-❌ All tags/images from PR #126 (closed without merge)
-```
-
-### **PR Comment Example**
-
-```markdown
-## 📦 Snapshot Build Available
-
-**Version:** `v2.1.0-pr-123.abc1234`
-**Commit:** abc1234
-
-### Published Images
-✅ **API:** `davidcharbonnier/alacarte-api:2.1.0-pr-123.abc1234`
-   - Convenience: `davidcharbonnier/alacarte-api:pr-123-latest`
-
-✅ **Client APK:** [Download from artifacts](https://github.com/.../actions/runs/...)
-
-✅ **Admin:** `davidcharbonnier/alacarte-admin:2.1.0-pr-123.abc1234`
-   - Convenience: `davidcharbonnier/alacarte-admin:pr-123-latest`
-```
-
-## 🔄 Developer Workflow
-
-### **1. Feature Development (Single App)**
-
-```bash
-# Create feature branch
-git checkout -b fix/client-auth-timeout
-
-# Make changes in apps/client only
-# ... edit files ...
-
-# Commit and push
-git commit -m "fix: client authentication timeout"
-git push
-
-# CI automatically:
-# 1. Detects only client changed (dorny/paths-filter)
-# 2. Generates snapshot version: v2.1.0-pr-123.abc1234
-# 3. Builds only client app
-# 4. Uploads Client APK as artifact
-# 5. Comments on PR with artifact link
-
-# Create changeset (required before merge)
-npx changeset
-
-# Prompts:
-# - Which packages changed? (select: client only)
-# - What type of change? (select: patch)
-# - Summary: "Fixed authentication timeout issue"
-
-# Creates .changeset/random-words.md
-git add .changeset/
-git commit -m "docs: add changeset"
-git push
-
-# Merge PR when ready
-```
-
-**Changeset File Example:**
-```markdown
----
-"@alacarte/client": patch
----
-
-Fixed authentication timeout issue causing 401 errors in offline mode.
-```
-
-### **2. Coordinated Feature (Multiple Apps)**
-
-```bash
-git checkout -b feat/add-wine-support
-
-# Make changes across apps/api, apps/client, apps/admin
-# ... edit files in all three apps ...
-
-# Commit and push
-git commit -m "feat: add wine support"
-git push
-
-# CI automatically:
-# 1. Detects all three apps changed
-# 2. Generates snapshot version: v2.1.0-pr-124.def5678
-# 3. Builds API, Client, and Admin in parallel
-# 4. Pushes Docker images for API and Admin
-# 5. Uploads Client APK
-# 6. Comments on PR with all artifacts
-
-# Create changeset selecting ALL affected apps
-npx changeset
-
-# Prompts:
-# - Which packages? (select: api, client, admin)
-# - What type? (select: minor for new feature)
-# - Summary: "Added wine item type support"
-
-git add .changeset/
-git commit -m "docs: add changeset for coordinated release"
-git push
-```
-
-**Changeset File Example:**
-```markdown
----
-"@alacarte/api": minor
-"@alacarte/client": minor
-"@alacarte/admin": minor
----
-
-Added wine item type support across all applications.
-Includes wine-specific endpoints, UI screens, and admin management.
-```
-
-### **3. CI Validation (Automated)**
-
-When PR is opened:
-
-```bash
-# GitHub Action runs:
-1. Detect changes (dorny/paths-filter)
-2. Build only changed apps (conditional jobs)
-3. Generate snapshot version
-4. Publish artifacts
-
-# Changesets Action validates:
-# - Changeset file exists (enforces changelog entry)
-# - Changeset format is valid
-# - Version bumps are appropriate
-```
-
-### **4. Merge & Release (Automated)**
-
-After PR merge to master:
-
-```bash
-# GitHub Action (Changesets Bot):
-npx changeset version           # Bumps versions in package.json
-                                # Updates CHANGELOG.md files
-                                # Deletes consumed changeset files
-
-npx changeset publish           # Creates git tags (api-v2.1.0, etc.)
-                                # Triggers deployment workflows
-
-# Deployment workflows:
-# Build and deploy only apps with version changes
-# Push Docker images with production tags
-```
+**Automated Cleanup:**
+- Keeps snapshots from open PRs
+- Keeps snapshots from last merged PR (rollback)
+- Deletes all other snapshots
+- Runs on PR close + daily at 2 AM UTC
 
 ## 📝 Release Notes Strategy
 
-### **Independent Release Notes Per App**
+### **Auto-Generated Changelogs Per App**
 
-Each app maintains its own CHANGELOG.md with independent version history.
+Each app maintains its own CHANGELOG.md, auto-generated from conventional commits.
 
-#### **Example: Client Patch Release**
-
+**Example: API CHANGELOG.md**
 ```markdown
-# @alacarte/client
+# Changelog
 
-## 2.1.3 (2025-01-20)
+## 0.4.0 (2025-10-15)
 
-### Patch Changes
+### Features
 
-- Fixed authentication timeout issue causing 401 errors in offline mode (#127)
-- Improved retry logic for API requests
+* Add wine filtering endpoint ([abc1234](https://github.com/.../commit/abc1234))
+* Add terroir field support ([def5678](https://github.com/.../commit/def5678))
 
-## 2.1.2 (2025-01-18)
+### Bug Fixes
 
-### Patch Changes
-
-- Fixed rating slider UI glitch on Android devices (#125)
+* Resolve database connection timeout ([789abcd](https://github.com/.../commit/789abcd))
 ```
 
-#### **Example: Coordinated Feature Release**
-
-When a coordinated feature is released, all app CHANGELOGs are updated:
-
-**API CHANGELOG:**
+**Example: Client CHANGELOG.md**
 ```markdown
-## 2.2.0 (2025-02-01)
+# Changelog
 
-### Minor Changes
+## 0.4.2 (2025-10-20)
 
-- Added wine item type support with terroir fields (#124)
-- New endpoints: GET/POST/PATCH/DELETE /api/wines
-```
+### Bug Fixes
 
-**Client CHANGELOG:**
-```markdown
-## 2.2.0 (2025-02-01)
+* Resolve authentication timeout ([abc1234](https://github.com/.../commit/abc1234))
 
-### Minor Changes
+## 0.4.0 (2025-10-15)
 
-- Added wine item type support (#124)
-- New wine rating screens with tasting notes
-- Updated search filters for wine characteristics
-```
+### Features
 
-**Admin CHANGELOG:**
-```markdown
-## 2.2.0 (2025-02-01)
-
-### Minor Changes
-
-- Added wine management dashboard (#124)
-- CSV import for wine seeding
-- Delete impact assessment for wines
+* Add wine browsing UI ([def5678](https://github.com/.../commit/def5678))
+* Implement offline mode ([789abcd](https://github.com/.../commit/789abcd))
 ```
 
 ## 🏗️ CI/CD Pipeline
 
-### **Two-Stage Pipeline**
+### **Three-Stage Pipeline**
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  STAGE 1: PR Commits (Prerelease)                     │
-│  • Detect changed apps (dorny/paths-filter)           │
-│  • Generate snapshot version (v2.1.0-pr-123.abc1234)   │
-│  • Build only changed apps (conditional jobs)          │
-│  • Push Docker images to Docker Hub                    │
-│  • Comment PR with artifact links                      │
-│  • Publish Client APK as GitHub artifact              │
+│  STAGE 1: PR Commits (Snapshots)                      │
+│  • Detect changed apps                                 │
+│  • Generate snapshot version (v0.4.0-pr-123.abc1234)   │
+│  • Build only changed apps                             │
+│  • Push Docker images + APK artifacts                  │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
-│  STAGE 2: Master Merge (Production Release)           │
-│  • Changesets bumps versions independently             │
-│  • Build apps with version changes                     │
-│  • Push production Docker tags                         │
-│  • Publish Client APK as GitHub release               │
-│  • Create GitHub release with notes per app            │
+│  STAGE 2: Master Merge (Release PR)                   │
+│  • release-please analyzes commits                     │
+│  • Determines version bumps                            │
+│  • Creates/updates Release PR                          │
+│  • Auto-generates CHANGELOGs                           │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│  STAGE 3: Release PR Merge (Production)               │
+│  • Git tags created (v0.4.0, api-v0.4.1, etc.)         │
+│  • Tags trigger build workflow                         │
+│  • Build changed apps                                  │
+│  • Push production Docker images                       │
+│  • Create GitHub releases with artifacts               │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -564,908 +482,79 @@ When a coordinated feature is released, all app CHANGELOGs are updated:
 
 ```
 .github/workflows/
-├── pr-snapshot.yml       # Stage 1: Build & publish snapshots on PR commits
-├── cleanup-snapshots.yml # Cleanup: Remove old snapshot artifacts
-└── release.yml           # Stage 2: Production release from master
+├── pr-snapshot.yml       # Stage 1: Snapshot builds
+├── cleanup-snapshots.yml # Cleanup old snapshots
+├── release-please.yml    # Stage 2: Create release PRs
+└── release.yml           # Stage 3: Build & release from tags
 ```
-
-**Cleanup Workflow Triggers:**
-- On PR close (merged or not)
-- Daily at 2 AM UTC (safety net)
-- Manual trigger (workflow_dispatch)
-
-## 🔍 Change Detection Strategy
-
-### **How GitHub Actions Detects Changes**
-
-Using `dorny/paths-filter@v3` action:
-
-```yaml
-- uses: dorny/paths-filter@v3
-  id: changes
-  with:
-    filters: |
-      api:
-        - 'apps/api/**'
-        - '!apps/api/**/*.md'     # Ignore markdown changes
-      client:
-        - 'apps/client/**'
-        - '!apps/client/**/*.md'
-      admin:
-        - 'apps/admin/**'
-        - '!apps/admin/**/*.md'
-```
-
-**Output Usage:**
-```yaml
-build-api:
-  needs: detect-changes
-  if: needs.detect-changes.outputs.api == 'true'
-  # Only runs if API files changed
-```
-
-### **CI Build Optimization**
-
-**Before (separate repos):**
-- API PR: ~5 min (build API)
-- Client PR: ~8 min (build Client)
-- Cross-repo change: 2 PRs × 5-8 min = 10-16 min
-
-**After (monorepo with change detection):**
-- API-only PR commit: ~5 min (only API builds)
-- Client-only PR commit: ~8 min (only Client builds)
-- Cross-app PR commit: ~10 min (parallel builds for changed apps)
-- Snapshot overhead: +1 min (version generation, Docker push)
-
-### **Build Efficiency Per Commit**
-
-**Per-commit snapshot builds:**
-```bash
-# Only builds and publishes changed apps
-Commit 1: API changes → Build API only (~5 min)
-Commit 2: Client changes → Build Client only (~8 min)
-Commit 3: All changes → Build all in parallel (~10 min)
-```
-
-**Result:** Fast feedback loop with snapshot versions available for manual QA deployment
-
-## ⚠️ Important Notes
-
-### **Docker Hub Token Permissions**
-
-You'll need a Docker Hub token with **DELETE** permissions:
-
-```bash
-# In Docker Hub:
-1. Go to Account Settings → Security
-2. Create new Access Token
-3. Ensure "Read, Write, Delete" permissions
-4. Add to GitHub Secrets as DOCKERHUB_TOKEN
-```
-
-### **Cleanup Order & Dependencies**
-
-```
-Docker Hub Cleanup (independent)
-         ↓ (can run in parallel)
-GitHub Releases Cleanup (sequential - must be first)
-         ↓ (releases reference git tags)
-Git Tags Cleanup (sequential - after releases)
-         ↓ (artifacts may be attached to releases)
-Artifacts Cleanup (sequential - safety net)
-```
-
-**Why this order matters:**
-- **Releases before tags:** Deleting a git tag before its release causes the release to become orphaned
-- **Releases before artifacts:** Artifacts attached to releases are auto-deleted when release is deleted
-- **Docker parallel:** Docker images are independent and don't reference GitHub entities
-
-### **Failure Handling**
-
-- **Workflow fails if any cleanup job fails** - Ensures visibility of cleanup issues
-- **Docker cleanup uses `fail-fast: false`** - One app failure doesn't stop cleanup of other apps
-- **Sequential cleanups are strict** - Each step must succeed before proceeding
-- **No silent failures** - All errors are surfaced immediately
-
-## 🚀 Migration Checklist
-
-### **Core Setup**
-- [x] Install Changesets
-- [x] Configure `.changeset/config.json`
-- [x] Move existing repos to `apps/` directory structure
-- [x] Configure independent versioning (`"fixed": []`)
-
-### **CI/CD Setup**
-- [x] Setup GitHub Actions workflows
-  - [x] `pr-snapshot.yml` - Build & publish snapshot versions
-  - [x] `cleanup-snapshots.yml` - Automated cleanup of old snapshots
-  - [x] `release.yml` - Production releases
-- [x] Configure Docker Hub credentials in GitHub secrets
-- [x] Configure Docker Hub token with delete permissions
-- [x] Implement change detection with `dorny/paths-filter`
-- [x] Test snapshot build workflow on feature branch
-- [x] Test cleanup workflow on closed PR
-- [x] Test production release workflow on master
-
-### **Development Workflow**
-- [x] Document changeset best practices
-- [x] Document manual QA deployment process
-- [ ] Train team on changeset workflow (when applicable)
-- [ ] Add changeset validation to PR template
-
-### **Future Enhancements (Optional)**
-- [ ] Add pre-commit hooks with Husky for changeset validation
-- [ ] Setup automated QA deployment (currently manual)
-- [ ] Add Renovate Bot for dependency updates
-- [ ] Implement commitlint for conventional commits enforcement
 
 ## 📚 Resources
 
-**Changesets:**
-- [Official Documentation](https://github.com/changesets/changesets)
-- [GitHub Action](https://github.com/changesets/action)
-- [Independent vs Fixed Versioning](https://github.com/changesets/changesets/blob/main/docs/fixed-packages.md)
+**release-please:**
+- [Official Documentation](https://github.com/googleapis/release-please)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [Monorepo Configuration](https://github.com/googleapis/release-please/blob/main/docs/manifest-releaser.md)
 
-**GitHub Actions:**
-- [dorny/paths-filter](https://github.com/dorny/paths-filter) - File change detection
-- [Conditional Workflows](https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution)
+**Commitlint:**
+- [Official Documentation](https://commitlint.js.org/)
+- [Config Conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional)
 
 **Examples:**
-- [Vercel's monorepo](https://github.com/vercel/next.js) (uses similar approach)
-- [Supabase monorepo](https://github.com/supabase/supabase) (Changesets)
+- [Google Cloud Client Libraries](https://github.com/googleapis/google-cloud-node) (uses release-please)
+- [Angular](https://github.com/angular/angular) (conventional commits)
 
 ## 📋 Common Issues & Solutions
 
-### Issue: Changeset selected wrong apps
+### Issue: Commit rejected by git hook
 
-**Problem:** Developer forgot to select all affected apps in changeset
-
-**Solution:**
-- Review changeset in PR before merge
-- Check which apps changed in PR (use GitHub's "Files changed" tab)
-- Verify changeset matches changed apps
-- Request changes if mismatch
-
-### Issue: Version numbers drifting
-
-**Problem:** Apps have very different version numbers (e.g., API at 2.5.0, Client at 2.1.3)
+**Problem:** Invalid conventional commit format
 
 **Solution:**
-- This is expected with independent versioning
-- Version numbers don't need to match
-- What matters: semantic versioning is correct per app
-- Use CHANGELOG.md to track coordinated releases
+```bash
+# Error: "scope may not be empty"
+git commit -m "feat: Add feature"  # ❌ No scope
+git commit -m "feat(api): Add feature"  # ✅ With scope
 
-### Issue: Forgot to create changeset
+# Error: "type must be one of..."
+git commit -m "feature(api): Add thing"  # ❌ Invalid type
+git commit -m "feat(api): Add thing"  # ✅ Valid type
+```
 
-**Problem:** PR merged without changeset
+### Issue: Release PR not created
 
-**Solution:**
-- Create changeset manually after merge
-- Run `npx changeset` on master branch
-- Commit directly to master (exception)
-- Document the change in the changeset
-- Consider adding changeset validation to PR checks
-
-### Issue: Workflow runs even with no app changes
-
-**Problem:** PR with only docs/CI changes triggers builds
+**Problem:** No commits since last release or no version-worthy commits
 
 **Solution:**
-- ✅ Fixed: `generate-version` job now has conditional check
-- ✅ Only runs if at least one app has changes
-- ✅ `no-changes` job provides clear feedback when builds are skipped
-- Workflow structure:
-  ```yaml
-  generate-version:
-    needs: detect-changes
-    if: |
-      needs.detect-changes.outputs.api == 'true' ||
-      needs.detect-changes.outputs.client == 'true' ||
-      needs.detect-changes.outputs.admin == 'true'
-  ```
+- Verify commits follow conventional format
+- Check that commits have `feat:` or `fix:` (not just `docs:` or `chore:`)
+- Wait a few minutes for workflow to run
+- Check GitHub Actions tab for errors
+
+### Issue: Wrong apps in release
+
+**Problem:** Only API changed but all apps in Release PR
+
+**Solution:**
+- This is expected if commit was `feat:` (synchronized release)
+- If only patch needed: use `fix:` commit type
+- For independent releases: ensure only `fix:` commits, no `feat:`
+
+### Issue: Git hook not working
+
+**Problem:** Commits not being validated
+
+**Solution:**
+```bash
+# Reinstall husky
+npm install
+npx husky install
+
+# Check hook exists and is executable
+ls -la .husky/commit-msg
+chmod +x .husky/commit-msg
+```
 
 ---
 
-**Last reviewed:** January 2025  
-**Next review:** After initial production releases
- > /dev/null; then
-  echo "api=true"
-else
-  echo "api=false"
-fi
-```
-
-**Release Change Detection Pattern:**
-```bash
-# Get the version packages commit
-VERSION_COMMIT=$(git log -1 --grep="chore: version packages" --format=%H)
-CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r $VERSION_COMMIT)
-
-# Check if CHANGELOG was updated (indicates version bump)
-if echo "$CHANGED_FILES" | grep -q "apps/api/CHANGELOG.md"; then
-  echo "api_changed=true"
-else
-  echo "api_changed=false"
-fi
-```
-
-**Conditional Builds:**
-```yaml
-build-api:
-  needs: detect-changes
-  if: needs.detect-changes.outputs.api == 'true'
-  # Only runs if API files changed
-```
-
-## 📌 Versioning Strategy
-
-### **Independent Versioning with Manual Coordination**
-
-**Approach:**
-- Each app versions independently based on its changesets
-- Coordinated releases require manually selecting all affected apps
-- True semantic versioning per component
-
-**Example Timeline:**
-```
-v2.1.0 - Coordinated Feature Release (2025-01-15)
-├── API: v2.1.0      (selected in changeset)
-├── Client: v2.1.0   (selected in changeset)
-└── Admin: v2.1.0    (selected in changeset)
-
-v2.1.x - Independent Patch Releases
-├── API: v2.1.5      (hotfix, 2025-01-20)
-├── Client: v2.1.3   (hotfix, 2025-01-18)
-└── Admin: v2.1.1    (hotfix, 2025-01-16)
-
-v2.2.0 - Next Coordinated Feature (2025-02-01)
-├── API: v2.2.0      (selected in changeset)
-├── Client: v2.2.0   (selected in changeset)
-└── Admin: v2.2.0    (selected in changeset)
-```
-
-**Benefits:**
-- ✅ True semantic versioning per component
-- ✅ Hotfixes don't force unnecessary version bumps
-- ✅ Clear understanding of what changed per app
-- ✅ Flexibility to release independently when needed
-
-**Trade-offs:**
-- ⚠️ Requires manual selection of apps in changesets
-- ⚠️ Developer must remember to select all apps for coordinated features
-- ⚠️ Version numbers may drift between apps over time
-
-## 🎨 Changeset Best Practices
-
-### **When to Select Single App**
-
-Use single-app changesets for:
-- **Hotfixes:** Bug fixes that only affect one component
-- **Refactoring:** Internal improvements with no external impact
-- **Documentation:** Updates to app-specific docs
-- **Dependencies:** Updating libraries for one app
-- **Performance:** Optimizations isolated to one app
-
-**Example:**
-```bash
-npx changeset
-# Select: client only
-# Type: patch
-# Summary: "Fixed authentication timeout issue"
-```
-
-### **When to Select Multiple Apps**
-
-Use multi-app changesets for:
-- **New Features:** Features that span across apps
-- **API Changes:** Backend changes requiring frontend updates
-- **Breaking Changes:** Changes that affect multiple components
-- **Major Releases:** Coordinated version bumps
-- **Cross-App Improvements:** Performance or security updates across apps
-
-**Example:**
-```bash
-npx changeset
-# Select: api, client, admin
-# Type: minor
-# Summary: "Added wine item type support"
-```
-
-### **PR Review Checklist**
-
-When reviewing changesets in PRs:
-
-✅ **Correct apps selected?**
-- If PR changes multiple apps, changeset should select all affected apps
-- If PR changes one app, changeset should select only that app
-
-✅ **Correct version bump type?**
-- `major`: Breaking changes
-- `minor`: New features (backward compatible)
-- `patch`: Bug fixes, refactoring
-
-✅ **Clear summary?**
-- Describes what changed
-- Will make sense in CHANGELOG.md
-- Uses conventional commit style (optional but recommended)
-
-## 🎭 Prerelease Strategy for QA
-
-### **Snapshot Versions**
-
-**Purpose:** Build and publish every PR commit with unique versions for manual QA deployment
-
-**Version Format:**
-```
-Production:  v2.1.0
-Prerelease:  v2.1.0-pr-123.abc1234  (PR number + short commit SHA)
-```
-
-**Benefits:**
-- ✅ Unique per commit (SHA ensures uniqueness)
-- ✅ Traceable to PR and exact commit
-- ✅ Doesn't interfere with Changesets production versioning
-- ✅ Clearly identifiable as non-production
-- ✅ Ready for manual deployment to QA
-
-### **How It Works**
-
-```bash
-# PR commit triggers CI
-commit: abc1234
-branch: feat/add-wine
-PR: #123
-
-# CI detects which apps changed
-Changed: apps/api, apps/client
-
-# CI generates snapshot version
-CURRENT_VERSION="2.1.0"  # from package.json
-SNAPSHOT_VERSION="2.1.0-pr-123.abc1234"
-
-# Build only changed apps (conditional GitHub Actions jobs)
-if: needs.detect-changes.outputs.api == 'true'
-  → docker build -t alacarte-api:2.1.0-pr-123.abc1234 apps/api
-
-if: needs.detect-changes.outputs.client == 'true'
-  → flutter build apk (with APP_VERSION=2.1.0-pr-123.abc1234)
-
-# Tag and push Docker images with snapshot version
-docker push davidcharbonnier/alacarte-api:2.1.0-pr-123.abc1234
-docker push davidcharbonnier/alacarte-api:pr-123-latest
-
-# Comment on PR with available images for manual deployment
-```
-
-### **Docker Tag Strategy**
-
-```bash
-# Per-commit snapshots (unique, traceable)
-alacarte-api:2.1.0-pr-123.abc1234
-alacarte-client:2.1.0-pr-123.abc1234
-alacarte-admin:2.1.0-pr-123.abc1234
-
-# PR convenience tags (always latest in PR)
-alacarte-api:pr-123-latest
-alacarte-client:pr-123-latest
-alacarte-admin:pr-123-latest
-
-# Production tags (master branch, managed by Changesets)
-alacarte-api:2.1.0
-alacarte-api:latest
-```
-
-### **Manual QA Deployment**
-
-After snapshot images are published, deploy manually:
-
-```bash
-# Deploy API to QA
-gcloud run deploy alacarte-api-qa \
-  --image=davidcharbonnier/alacarte-api:2.1.0-pr-123.abc1234 \
-  --region=northamerica-northeast1
-
-# Deploy Admin to QA
-gcloud run deploy alacarte-admin-qa \
-  --image=davidcharbonnier/alacarte-admin:2.1.0-pr-123.abc1234 \
-  --region=northamerica-northeast1
-
-# Download Client APK from GitHub Actions artifacts
-# Test locally or distribute to QA team
-```
-
-### **Snapshot Lifecycle**
-
-1. **Creation:** Every PR commit generates unique snapshot (only for changed apps)
-2. **Publishing:** Docker images pushed to Docker Hub (only changed apps)
-3. **Manual Deployment:** QA team deploys as needed
-4. **Testing:** QA team tests using deployed versions
-5. **Cleanup:** Automated cleanup keeps only active snapshots
-
-### **Automated Cleanup Strategy**
-
-**Retention Policy:**
-- ✅ Keep all snapshots from **open PRs** (active development)
-- ✅ Keep snapshots from **last merged PR** (rollback capability)
-- ❌ Delete all other snapshots (closed/merged PRs older than last merge)
-
-**What Gets Cleaned:**
-1. **Docker Hub Tags** - Snapshot image tags (parallel cleanup, independent)
-2. **GitHub Releases** - Pre-release entries (must be deleted before git tags)
-3. **Git Tags** - Snapshot version tags (deleted after releases)
-4. **GitHub Artifacts** - Client APK builds (deleted with releases)
-
-**Cleanup Order (Important!):**
-```
-Step 1: Docker Hub cleanup (parallel) ─┐
-                                        ├─→ Can run independently
-Step 2: GitHub Releases cleanup ───────┘
-         ↓ (releases reference git tags)
-Step 3: Git Tags cleanup
-         ↓ (artifacts attached to releases)
-Step 4: Artifacts cleanup (if not auto-deleted)
-```
-
-**Cleanup Triggers:**
-- When a PR is closed (merged or not) - immediate cleanup
-- Daily scheduled cleanup at 2 AM UTC (safety net)
-- Manual trigger (workflow_dispatch)
-
-**Example Scenario:**
-```
-Open PRs: #123, #125, #127
-Last merged PR: #124
-
-Keep:
-✅ All tags/images from PR #123 (open)
-✅ All tags/images from PR #125 (open)
-✅ All tags/images from PR #127 (open)
-✅ All tags/images from PR #124 (last merged - rollback)
-
-Delete:
-❌ All tags/images from PR #122 (merged before #124)
-❌ All tags/images from PR #120, #121 (old merged PRs)
-❌ All tags/images from PR #126 (closed without merge)
-```
-
-### **PR Comment Example**
-
-```markdown
-## 📦 Snapshot Build Available
-
-**Version:** `v2.1.0-pr-123.abc1234`
-**Commit:** abc1234
-
-### Published Images
-✅ **API:** `davidcharbonnier/alacarte-api:2.1.0-pr-123.abc1234`
-   - Convenience: `davidcharbonnier/alacarte-api:pr-123-latest`
-
-✅ **Client APK:** [Download from artifacts](https://github.com/.../actions/runs/...)
-
-✅ **Admin:** `davidcharbonnier/alacarte-admin:2.1.0-pr-123.abc1234`
-   - Convenience: `davidcharbonnier/alacarte-admin:pr-123-latest`
-```
-
-## 🔄 Developer Workflow
-
-### **1. Feature Development (Single App)**
-
-```bash
-# Create feature branch
-git checkout -b fix/client-auth-timeout
-
-# Make changes in apps/client only
-# ... edit files ...
-
-# Commit and push
-git commit -m "fix: client authentication timeout"
-git push
-
-# CI automatically:
-# 1. Detects only client changed (dorny/paths-filter)
-# 2. Generates snapshot version: v2.1.0-pr-123.abc1234
-# 3. Builds only client app
-# 4. Uploads Client APK as artifact
-# 5. Comments on PR with artifact link
-
-# Create changeset (required before merge)
-npx changeset
-
-# Prompts:
-# - Which packages changed? (select: client only)
-# - What type of change? (select: patch)
-# - Summary: "Fixed authentication timeout issue"
-
-# Creates .changeset/random-words.md
-git add .changeset/
-git commit -m "docs: add changeset"
-git push
-
-# Merge PR when ready
-```
-
-**Changeset File Example:**
-```markdown
----
-"@alacarte/client": patch
----
-
-Fixed authentication timeout issue causing 401 errors in offline mode.
-```
-
-### **2. Coordinated Feature (Multiple Apps)**
-
-```bash
-git checkout -b feat/add-wine-support
-
-# Make changes across apps/api, apps/client, apps/admin
-# ... edit files in all three apps ...
-
-# Commit and push
-git commit -m "feat: add wine support"
-git push
-
-# CI automatically:
-# 1. Detects all three apps changed
-# 2. Generates snapshot version: v2.1.0-pr-124.def5678
-# 3. Builds API, Client, and Admin in parallel
-# 4. Pushes Docker images for API and Admin
-# 5. Uploads Client APK
-# 6. Comments on PR with all artifacts
-
-# Create changeset selecting ALL affected apps
-npx changeset
-
-# Prompts:
-# - Which packages? (select: api, client, admin)
-# - What type? (select: minor for new feature)
-# - Summary: "Added wine item type support"
-
-git add .changeset/
-git commit -m "docs: add changeset for coordinated release"
-git push
-```
-
-**Changeset File Example:**
-```markdown
----
-"@alacarte/api": minor
-"@alacarte/client": minor
-"@alacarte/admin": minor
----
-
-Added wine item type support across all applications.
-Includes wine-specific endpoints, UI screens, and admin management.
-```
-
-### **3. CI Validation (Automated)**
-
-When PR is opened:
-
-```bash
-# GitHub Action runs:
-1. Detect changes (dorny/paths-filter)
-2. Build only changed apps (conditional jobs)
-3. Generate snapshot version
-4. Publish artifacts
-
-# Changesets Action validates:
-# - Changeset file exists (enforces changelog entry)
-# - Changeset format is valid
-# - Version bumps are appropriate
-```
-
-### **4. Merge & Release (Automated)**
-
-After PR merge to master:
-
-```bash
-# GitHub Action (Changesets Bot):
-npx changeset version           # Bumps versions in package.json
-                                # Updates CHANGELOG.md files
-                                # Deletes consumed changeset files
-
-npx changeset publish           # Creates git tags (api-v2.1.0, etc.)
-                                # Triggers deployment workflows
-
-# Deployment workflows:
-# Build and deploy only apps with version changes
-# Push Docker images with production tags
-```
-
-## 📝 Release Notes Strategy
-
-### **Independent Release Notes Per App**
-
-Each app maintains its own CHANGELOG.md with independent version history.
-
-#### **Example: Client Patch Release**
-
-```markdown
-# @alacarte/client
-
-## 2.1.3 (2025-01-20)
-
-### Patch Changes
-
-- Fixed authentication timeout issue causing 401 errors in offline mode (#127)
-- Improved retry logic for API requests
-
-## 2.1.2 (2025-01-18)
-
-### Patch Changes
-
-- Fixed rating slider UI glitch on Android devices (#125)
-```
-
-#### **Example: Coordinated Feature Release**
-
-When a coordinated feature is released, all app CHANGELOGs are updated:
-
-**API CHANGELOG:**
-```markdown
-## 2.2.0 (2025-02-01)
-
-### Minor Changes
-
-- Added wine item type support with terroir fields (#124)
-- New endpoints: GET/POST/PATCH/DELETE /api/wines
-```
-
-**Client CHANGELOG:**
-```markdown
-## 2.2.0 (2025-02-01)
-
-### Minor Changes
-
-- Added wine item type support (#124)
-- New wine rating screens with tasting notes
-- Updated search filters for wine characteristics
-```
-
-**Admin CHANGELOG:**
-```markdown
-## 2.2.0 (2025-02-01)
-
-### Minor Changes
-
-- Added wine management dashboard (#124)
-- CSV import for wine seeding
-- Delete impact assessment for wines
-```
-
-## 🏗️ CI/CD Pipeline
-
-### **Two-Stage Pipeline**
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  STAGE 1: PR Commits (Prerelease)                     │
-│  • Detect changed apps (dorny/paths-filter)           │
-│  • Generate snapshot version (v2.1.0-pr-123.abc1234)   │
-│  • Build only changed apps (conditional jobs)          │
-│  • Push Docker images to Docker Hub                    │
-│  • Comment PR with artifact links                      │
-│  • Publish Client APK as GitHub artifact              │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  STAGE 2: Master Merge (Production Release)           │
-│  • Changesets bumps versions independently             │
-│  • Build apps with version changes                     │
-│  • Push production Docker tags                         │
-│  • Publish Client APK as GitHub release               │
-│  • Create GitHub release with notes per app            │
-└─────────────────────────────────────────────────────────┘
-```
-
-### **Workflow Files**
-
-```
-.github/workflows/
-├── pr-snapshot.yml       # Stage 1: Build & publish snapshots on PR commits
-├── cleanup-snapshots.yml # Cleanup: Remove old snapshot artifacts
-└── release.yml           # Stage 2: Production release from master
-```
-
-**Cleanup Workflow Triggers:**
-- On PR close (merged or not)
-- Daily at 2 AM UTC (safety net)
-- Manual trigger (workflow_dispatch)
-
-## 🔍 Change Detection Strategy
-
-### **How GitHub Actions Detects Changes**
-
-Using `dorny/paths-filter@v3` action:
-
-```yaml
-- uses: dorny/paths-filter@v3
-  id: changes
-  with:
-    filters: |
-      api:
-        - 'apps/api/**'
-        - '!apps/api/**/*.md'     # Ignore markdown changes
-      client:
-        - 'apps/client/**'
-        - '!apps/client/**/*.md'
-      admin:
-        - 'apps/admin/**'
-        - '!apps/admin/**/*.md'
-```
-
-**Output Usage:**
-```yaml
-build-api:
-  needs: detect-changes
-  if: needs.detect-changes.outputs.api == 'true'
-  # Only runs if API files changed
-```
-
-### **CI Build Optimization**
-
-**Before (separate repos):**
-- API PR: ~5 min (build API)
-- Client PR: ~8 min (build Client)
-- Cross-repo change: 2 PRs × 5-8 min = 10-16 min
-
-**After (monorepo with change detection):**
-- API-only PR commit: ~5 min (only API builds)
-- Client-only PR commit: ~8 min (only Client builds)
-- Cross-app PR commit: ~10 min (parallel builds for changed apps)
-- Snapshot overhead: +1 min (version generation, Docker push)
-
-### **Build Efficiency Per Commit**
-
-**Per-commit snapshot builds:**
-```bash
-# Only builds and publishes changed apps
-Commit 1: API changes → Build API only (~5 min)
-Commit 2: Client changes → Build Client only (~8 min)
-Commit 3: All changes → Build all in parallel (~10 min)
-```
-
-**Result:** Fast feedback loop with snapshot versions available for manual QA deployment
-
-## ⚠️ Important Notes
-
-### **Docker Hub Token Permissions**
-
-You'll need a Docker Hub token with **DELETE** permissions:
-
-```bash
-# In Docker Hub:
-1. Go to Account Settings → Security
-2. Create new Access Token
-3. Ensure "Read, Write, Delete" permissions
-4. Add to GitHub Secrets as DOCKERHUB_TOKEN
-```
-
-### **Cleanup Order & Dependencies**
-
-```
-Docker Hub Cleanup (independent)
-         ↓ (can run in parallel)
-GitHub Releases Cleanup (sequential - must be first)
-         ↓ (releases reference git tags)
-Git Tags Cleanup (sequential - after releases)
-         ↓ (artifacts may be attached to releases)
-Artifacts Cleanup (sequential - safety net)
-```
-
-**Why this order matters:**
-- **Releases before tags:** Deleting a git tag before its release causes the release to become orphaned
-- **Releases before artifacts:** Artifacts attached to releases are auto-deleted when release is deleted
-- **Docker parallel:** Docker images are independent and don't reference GitHub entities
-
-### **Failure Handling**
-
-- **Workflow fails if any cleanup job fails** - Ensures visibility of cleanup issues
-- **Docker cleanup uses `fail-fast: false`** - One app failure doesn't stop cleanup of other apps
-- **Sequential cleanups are strict** - Each step must succeed before proceeding
-- **No silent failures** - All errors are surfaced immediately
-
-## 🚀 Migration Checklist
-
-### **Core Setup**
-- [x] Install Changesets
-- [x] Configure `.changeset/config.json`
-- [x] Move existing repos to `apps/` directory structure
-- [x] Configure independent versioning (`"fixed": []`)
-
-### **CI/CD Setup**
-- [x] Setup GitHub Actions workflows
-  - [x] `pr-snapshot.yml` - Build & publish snapshot versions
-  - [x] `cleanup-snapshots.yml` - Automated cleanup of old snapshots
-  - [x] `release.yml` - Production releases
-- [x] Configure Docker Hub credentials in GitHub secrets
-- [x] Configure Docker Hub token with delete permissions
-- [x] Implement change detection with `dorny/paths-filter`
-- [x] Test snapshot build workflow on feature branch
-- [x] Test cleanup workflow on closed PR
-- [x] Test production release workflow on master
-
-### **Development Workflow**
-- [x] Document changeset best practices
-- [x] Document manual QA deployment process
-- [ ] Train team on changeset workflow (when applicable)
-- [ ] Add changeset validation to PR template
-
-### **Future Enhancements (Optional)**
-- [ ] Add pre-commit hooks with Husky for changeset validation
-- [ ] Setup automated QA deployment (currently manual)
-- [ ] Add Renovate Bot for dependency updates
-- [ ] Implement commitlint for conventional commits enforcement
-
-## 📚 Resources
-
-**Changesets:**
-- [Official Documentation](https://github.com/changesets/changesets)
-- [GitHub Action](https://github.com/changesets/action)
-- [Independent vs Fixed Versioning](https://github.com/changesets/changesets/blob/main/docs/fixed-packages.md)
-
-**GitHub Actions:**
-- [dorny/paths-filter](https://github.com/dorny/paths-filter) - File change detection
-- [Conditional Workflows](https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution)
-
-**Examples:**
-- [Vercel's monorepo](https://github.com/vercel/next.js) (uses similar approach)
-- [Supabase monorepo](https://github.com/supabase/supabase) (Changesets)
-
-## 📋 Common Issues & Solutions
-
-### Issue: Changeset selected wrong apps
-
-**Problem:** Developer forgot to select all affected apps in changeset
-
-**Solution:**
-- Review changeset in PR before merge
-- Check which apps changed in PR (use GitHub's "Files changed" tab)
-- Verify changeset matches changed apps
-- Request changes if mismatch
-
-### Issue: Version numbers drifting
-
-**Problem:** Apps have very different version numbers (e.g., API at 2.5.0, Client at 2.1.3)
-
-**Solution:**
-- This is expected with independent versioning
-- Version numbers don't need to match
-- What matters: semantic versioning is correct per app
-- Use CHANGELOG.md to track coordinated releases
-
-### Issue: Forgot to create changeset
-
-**Problem:** PR merged without changeset
-
-**Solution:**
-- Create changeset manually after merge
-- Run `npx changeset` on master branch
-- Commit directly to master (exception)
-- Document the change in the changeset
-- Consider adding changeset validation to PR checks
-
-### Issue: Workflow runs even with no app changes
-
-**Problem:** PR with only docs/CI changes triggers builds
-
-**Solution:**
-- ✅ Fixed: `generate-version` job now has conditional check
-- ✅ Only runs if at least one app has changes
-- ✅ `no-changes` job provides clear feedback when builds are skipped
-- Workflow structure:
-  ```yaml
-  generate-version:
-    needs: detect-changes
-    if: |
-      needs.detect-changes.outputs.api == 'true' ||
-      needs.detect-changes.outputs.client == 'true' ||
-      needs.detect-changes.outputs.admin == 'true'
-  ```
-
----
-
-**Last reviewed:** January 2025  
-**Next review:** After initial production releases
+**Last reviewed:** October 2025  
+**Next review:** After first production release

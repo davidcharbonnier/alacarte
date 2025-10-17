@@ -11,7 +11,7 @@ Welcome to the centralized documentation for the A la carte platform.
 
 ### Architecture
 - [Overview](architecture/overview.md) - System architecture and design principles
-- ⭐ [Monorepo Strategy](architecture/monorepo-strategy.md) - Changesets, versioning, and release management
+- ⭐ [Monorepo Strategy](architecture/monorepo-strategy.md) - release-please, conventional commits, and release management
 - [Tech Stack](architecture/tech-stack.md) - Technologies used across the platform
 - [Design Resources](architecture/design-resources.md) - Logo and branding assets
 
@@ -26,7 +26,7 @@ Welcome to the centralized documentation for the A la carte platform.
 
 ### Guides
 - ⭐ [Adding New Item Types](guides/adding-new-item-types.md) - Complete guide for all 3 apps
-- ⭐ [Contributing Guide](guides/contributing.md) - Development workflow and changeset management
+- ⭐ [Contributing Guide](guides/contributing.md) - Development workflow and conventional commits
 - [Backend Checklist](guides/backend-checklist.md) - Quick reference for API
 - [Client Checklist](guides/client-checklist.md) - Quick reference for Flutter
 - [Admin Checklist](guides/admin-checklist.md) - Quick reference for Next.js
@@ -76,6 +76,7 @@ This documentation is organized by **purpose** rather than by app:
 - Deploy to production → [API Deployment](api/deployment.md) | [Admin Deployment](admin/deployment.md)
 - Understand privacy → [Privacy Model](features/privacy-model.md)
 - Add a new feature → Check [Features](features/) for existing patterns
+- Understand releases → [Monorepo Strategy](architecture/monorepo-strategy.md)
 
 **I'm a...**
 - Backend developer → Start with [API Overview](api/README.md)
@@ -88,11 +89,17 @@ This documentation is organized by **purpose** rather than by app:
 **[Contributing Guide](guides/contributing.md)** - Required reading for contributors!
 
 Covers:
-- Development workflow
-- Changeset management (required for all code changes)
+- Development workflow with conventional commits
+- Commit message format (enforced by git hooks)
 - PR review checklist
 - Code style guidelines
 - Bug fix process
+
+**Key points:**
+- All commits must follow conventional format
+- Scope is required: `feat(api):`, `fix(client):`, etc.
+- Commit messages drive automated versioning
+- See [Monorepo Strategy](architecture/monorepo-strategy.md) for complete details
 
 ### Contributing to Documentation
 

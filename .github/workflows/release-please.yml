@@ -1,0 +1,59 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
+      api_tag: ${{ steps.release.outputs['apps/api--tag_name'] }}
+      client_tag: ${{ steps.release.outputs['apps/client--tag_name'] }}
+      admin_tag: ${{ steps.release.outputs['apps/admin--tag_name'] }}
+      api_version: ${{ steps.release.outputs['apps/api--version'] }}
+      client_version: ${{ steps.release.outputs['apps/client--version'] }}
+      admin_version: ${{ steps.release.outputs['apps/admin--version'] }}
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Show release outputs
+        if: steps.release.outputs.releases_created == 'true'
+        run: |
+          echo "🚀 Releases created!"
+          echo "Paths released: ${{ steps.release.outputs.paths_released }}"
+          echo "API tag: ${{ steps.release.outputs['apps/api--tag_name'] }}"
+          echo "Client tag: ${{ steps.release.outputs['apps/client--tag_name'] }}"
+          echo "Admin tag: ${{ steps.release.outputs['apps/admin--tag_name'] }}"
+
+  trigger-builds:
+    needs: release-please
+    if: needs.release-please.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger release workflow via repository_dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: release-created
+          client-payload: |
+            {
+              "api_tag": "${{ needs.release-please.outputs.api_tag }}",
+              "client_tag": "${{ needs.release-please.outputs.client_tag }}",
+              "admin_tag": "${{ needs.release-please.outputs.admin_tag }}",
+              "api_version": "${{ needs.release-please.outputs.api_version }}",
+              "client_version": "${{ needs.release-please.outputs.client_version }}",
+              "admin_version": "${{ needs.release-please.outputs.admin_version }}"
+            }
