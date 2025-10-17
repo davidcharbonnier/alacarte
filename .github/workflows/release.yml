@@ -1,68 +1,80 @@
-name: Production Release
+name: Build and Release
 
 on:
   push:
-    branches:
-      - master
+    tags:
+      - 'api-v*'
+      - 'client-v*'
+      - 'admin-v*'
+      - 'v*'
 
 jobs:
-  detect-release:
-    # Only run if IS a release commit
-    if: "startsWith(github.event.head_commit.message, 'chore: release')"
+  determine-releases:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.detect.outputs.version }}
-      api_changed: ${{ steps.detect.outputs.api_changed }}
-      client_changed: ${{ steps.detect.outputs.client_changed }}
-      admin_changed: ${{ steps.detect.outputs.admin_changed }}
+      build_api: ${{ steps.check.outputs.build_api }}
+      build_client: ${{ steps.check.outputs.build_client }}
+      build_admin: ${{ steps.check.outputs.build_admin }}
+      api_version: ${{ steps.versions.outputs.api_version }}
+      client_version: ${{ steps.versions.outputs.client_version }}
+      admin_version: ${{ steps.versions.outputs.admin_version }}
+      release_type: ${{ steps.check.outputs.release_type }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Extract version and detect changes
-        id: detect
+      - name: Determine what to build from tag
+        id: check
         run: |
-          # Extract version from package.json (all apps have same version)
-          VERSION=$(node -p "require('./apps/api/package.json').version")
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "📦 Version: v${VERSION}"
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Tag: $TAG"
           
-          # Detect which apps had CHANGELOG updates (indicates actual code changes)
-          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
-          
-          if echo "$CHANGED_FILES" | grep -q "apps/api/CHANGELOG.md"; then
-            echo "api_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ API changed"
-          else
-            echo "api_changed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ API unchanged"
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Synchronized release (v1.2.3)
+            echo "build_api=true" >> $GITHUB_OUTPUT
+            echo "build_client=true" >> $GITHUB_OUTPUT
+            echo "build_admin=true" >> $GITHUB_OUTPUT
+            echo "release_type=synced" >> $GITHUB_OUTPUT
+            echo "✅ Synced release detected"
+          elif [[ "$TAG" =~ ^api-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # API only
+            echo "build_api=true" >> $GITHUB_OUTPUT
+            echo "build_client=false" >> $GITHUB_OUTPUT
+            echo "build_admin=false" >> $GITHUB_OUTPUT
+            echo "release_type=api" >> $GITHUB_OUTPUT
+            echo "✅ API release detected"
+          elif [[ "$TAG" =~ ^client-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Client only
+            echo "build_api=false" >> $GITHUB_OUTPUT
+            echo "build_client=true" >> $GITHUB_OUTPUT
+            echo "build_admin=false" >> $GITHUB_OUTPUT
+            echo "release_type=client" >> $GITHUB_OUTPUT
+            echo "✅ Client release detected"
+          elif [[ "$TAG" =~ ^admin-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            # Admin only
+            echo "build_api=false" >> $GITHUB_OUTPUT
+            echo "build_client=false" >> $GITHUB_OUTPUT
+            echo "build_admin=true" >> $GITHUB_OUTPUT
+            echo "release_type=admin" >> $GITHUB_OUTPUT
+            echo "✅ Admin release detected"
           fi
+
+      - name: Get versions from package.json
+        id: versions
+        run: |
+          API_VERSION=$(node -p "require('./apps/api/package.json').version")
+          CLIENT_VERSION=$(node -p "require('./apps/client/package.json').version")
+          ADMIN_VERSION=$(node -p "require('./apps/admin/package.json').version")
           
-          if echo "$CHANGED_FILES" | grep -q "apps/client/CHANGELOG.md"; then
-            echo "client_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ Client changed"
-          else
-            echo "client_changed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ Client unchanged"
-          fi
+          echo "api_version=$API_VERSION" >> $GITHUB_OUTPUT
+          echo "client_version=$CLIENT_VERSION" >> $GITHUB_OUTPUT
+          echo "admin_version=$ADMIN_VERSION" >> $GITHUB_OUTPUT
           
-          if echo "$CHANGED_FILES" | grep -q "apps/admin/CHANGELOG.md"; then
-            echo "admin_changed=true" >> $GITHUB_OUTPUT
-            echo "✅ Admin changed"
-          else
-            echo "admin_changed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ Admin unchanged"
-          fi
+          echo "📦 Versions: API=$API_VERSION, Client=$CLIENT_VERSION, Admin=$ADMIN_VERSION"
 
   build-api:
-    needs: detect-release
+    needs: determine-releases
+    if: needs.determine-releases.outputs.build_api == 'true'
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -85,13 +97,14 @@ jobs:
           file: ./apps/api/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.detect-release.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.determine-releases.outputs.api_version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   build-client:
-    needs: detect-release
+    needs: determine-releases
+    if: needs.determine-releases.outputs.build_client == 'true'
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -104,9 +117,8 @@ jobs:
           cat << EOF > .env
           API_BASE_URL=${{ vars.CLIENT_API_BASE_URL }}
           GOOGLE_CLIENT_ID=${{ vars.CLIENT_GOOGLE_CLIENT_ID }}
-          APP_VERSION=${{ needs.detect-release.outputs.version }}
+          APP_VERSION=${{ needs.determine-releases.outputs.client_version }}
           EOF
-          echo "✅ Created .env file for production build"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -124,20 +136,13 @@ jobs:
       - name: Setup Android Keystore
         working-directory: ./apps/client
         run: |
-          echo "Setting up Android keystore for release signing..."
-
-          # Decode keystore from base64
           echo "${{ secrets.CLIENT_KEYSTORE_BASE64 }}" | base64 -d > android/app/release-keystore.jks
-
-          # Create key.properties file
           cat << EOF > android/key.properties
           storePassword=${{ secrets.CLIENT_KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.CLIENT_KEY_PASSWORD }}
           keyAlias=${{ secrets.CLIENT_KEY_ALIAS }}
           storeFile=release-keystore.jks
           EOF
-
-          echo "✅ Keystore configured for release signing"
 
       - name: Install dependencies
         working-directory: ./apps/client
@@ -154,11 +159,12 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: client-apk-${{ needs.detect-release.outputs.version }}
+          name: client-apk-${{ needs.determine-releases.outputs.client_version }}
           path: apps/client/build/app/outputs/flutter-apk/app-release.apk
 
   build-admin:
-    needs: detect-release
+    needs: determine-releases
+    if: needs.determine-releases.outputs.build_admin == 'true'
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -184,83 +190,30 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.detect-release.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.determine-releases.outputs.admin_version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  create-release:
-    needs: [detect-release, build-api, build-client, build-admin]
-    if: |
-      always() &&
-      needs.build-api.result == 'success' &&
-      needs.build-client.result == 'success' &&
-      needs.build-admin.result == 'success'
+  create-github-release:
+    needs: [determine-releases, build-api, build-client, build-admin]
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Download Client APK
+        if: needs.determine-releases.outputs.build_client == 'true' && needs.build-client.result == 'success'
         uses: actions/download-artifact@v4
         with:
-          name: client-apk-${{ needs.detect-release.outputs.version }}
+          name: client-apk-${{ needs.determine-releases.outputs.client_version }}
           path: ./artifacts
 
-      - name: Build components list
-        id: components
-        run: |
-          COMPONENTS=""
-          
-          if [ "${{ needs.detect-release.outputs.api_changed }}" = "true" ]; then
-            COMPONENTS="${COMPONENTS}API, "
-          fi
-          
-          if [ "${{ needs.detect-release.outputs.client_changed }}" = "true" ]; then
-            COMPONENTS="${COMPONENTS}Client, "
-          fi
-          
-          if [ "${{ needs.detect-release.outputs.admin_changed }}" = "true" ]; then
-            COMPONENTS="${COMPONENTS}Admin, "
-          fi
-          
-          # Remove trailing comma and space
-          COMPONENTS=$(echo "$COMPONENTS" | sed 's/, $//')
-          
-          # If no components changed (shouldn't happen, but safety check)
-          if [ -z "$COMPONENTS" ]; then
-            COMPONENTS="All components"
-          fi
-          
-          echo "components=${COMPONENTS}" >> $GITHUB_OUTPUT
-          echo "📋 Components updated: ${COMPONENTS}"
-
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.detect-release.outputs.version }}
-          name: Release v${{ needs.detect-release.outputs.version }}
-          body: |
-            ## 📦 Release v${{ needs.detect-release.outputs.version }}
-            
-            **Components updated:** ${{ steps.components.outputs.components }}
-            
-            All components synchronized to version ${{ needs.detect-release.outputs.version }}.
-            
-            ## 🐳 Docker Images
-            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.detect-release.outputs.version }}`
-            - `${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.detect-release.outputs.version }}`
-            
-            ## 📱 Client APK
-            - Flutter APK attached to this release
-            
-            ## 📝 Changelog
-            See individual CHANGELOG.md files for detailed changes:
-            - [API Changelog](./apps/api/CHANGELOG.md)
-            - [Client Changelog](./apps/client/CHANGELOG.md)
-            - [Admin Changelog](./apps/admin/CHANGELOG.md)
           files: ./artifacts/app-release.apk
-          draft: false
-          prerelease: false
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,9 +11,8 @@ alacarte/
 │   ├── client/       # Flutter mobile/web app
 │   └── admin/        # Next.js admin panel
 ├── docs/             # Consolidated documentation
-├── .github/
-│   └── workflows/    # CI/CD pipelines
-└── .changeset/       # Version management
+└── .github/
+    └── workflows/    # CI/CD pipelines
 ```
 
 ## 🚀 Quick Start
@@ -27,7 +26,7 @@ alacarte/
 ### Installation
 
 ```bash
-# Install monorepo tooling
+# Install monorepo tooling (includes commit hooks)
 npm install
 
 # Install dependencies for all apps
@@ -50,25 +49,46 @@ See [Local Development Guide](./docs/local-development.md) for detailed setup in
 
 ## 🔄 Versioning & Releases
 
-This monorepo uses [Changesets](https://github.com/changesets/changesets) for version management.
+This monorepo uses **[release-please](https://github.com/googleapis/release-please)** with **[Conventional Commits](https://www.conventionalcommits.org/)** for fully automated releases.
 
-### Creating a Changeset
+### Making Commits
+
+All commits must follow the conventional format:
 
 ```bash
-npm run changeset
+<type>(<scope>): <subject>
+
+# Examples:
+git commit -m "feat(api): Add wine filtering endpoint"
+git commit -m "fix(client): Resolve cache invalidation"
+git commit -m "docs(admin): Update deployment guide"
 ```
 
-Follow the prompts:
-1. Select which apps changed (api, client, admin)
-2. Select change type (major, minor, patch)
-3. Write a summary of changes
+**Valid types:** `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`  
+**Valid scopes:** `api`, `client`, `admin`, `deps`, `ci`, `docs`, `release`
+
+Commits are automatically validated via git hooks powered by commitlint.
 
 ### Release Process
 
-Releases are automated via GitHub Actions:
-1. Merge PR to `master`
-2. Changesets bot creates a "Version Packages" PR
-3. Merge the version PR to trigger release
+Releases are **fully automated**:
+
+1. **Make conventional commits** and merge to `master`
+2. **Release PR is auto-created** by release-please bot
+   - Contains version bumps
+   - Auto-generated changelogs
+   - All pending changes
+3. **Review & merge** the Release PR
+4. **Git tags are created** automatically
+5. **Builds & releases** are triggered by tags
+
+**Version bumps:**
+- `feat:` → minor bump (0.3.1 → 0.4.0)
+- `fix:` → patch bump (0.3.1 → 0.3.2)
+- `BREAKING CHANGE:` → major bump (0.3.1 → 1.0.0)
+- `docs:`, `chore:`, etc → no version bump
+
+See [Release Workflow Guide](./docs/RELEASE_WORKFLOW.md) for complete details.
 
 ## 🎭 Prerelease (Snapshot) Versions
 
@@ -90,45 +110,39 @@ Docker images are published automatically:
 - **Admin:** Next.js + TypeScript
 - **Infrastructure:** Google Cloud Run + Cloud SQL
 - **CI/CD:** GitHub Actions + Docker Hub
+- **Release Automation:** release-please + Conventional Commits
 
 ## 📚 Documentation
 
-- [Local Development Guide](./docs/local-development.md) ⭐
+- [Release Workflow Guide](./docs/RELEASE_WORKFLOW.md) ⭐ **NEW!**
+- [Local Development Guide](./docs/local-development.md)
 - [API Documentation](./apps/api/README.md)
 - [Client Documentation](./apps/client/README.md)
 - [Admin Documentation](./apps/admin/README.md)
 
 ## 🔧 Monorepo Tools
 
-- **Changesets:** Version management and changelogs
+- **release-please:** Automated versioning and changelogs
+- **commitlint:** Enforces conventional commit format
+- **husky:** Git hooks for commit validation
 - **Docker Compose:** Local development orchestration
-- **GitHub Actions:** CI/CD with change detection
-
-## 📋 Available Scripts
-
-```bash
-npm run changeset      # Create a changeset
-npm run version        # Bump versions (automated)
-npm run release        # Publish releases (automated)
-```
+- **GitHub Actions:** CI/CD with automated releases
 
 ## 🤝 Contributing
 
-**See [Contributing Guide](./docs/guides/contributing.md) for detailed guidelines!**
-
-Quick workflow:
+**Quick workflow:**
 1. Create a feature branch
-2. Make changes
-3. **Create a changeset:** `npm run changeset` (required!)
-4. Push and open PR
-5. Snapshot versions are automatically published
-6. After merge, changesets bot handles versioning
+2. Make changes with **conventional commits** (format enforced automatically)
+3. Push and open PR
+4. Snapshot versions are automatically published
+5. After merge, release-please handles versioning
+6. Merge the auto-generated Release PR when ready
 
-Key points:
-- Every code change requires a changeset
-- Select correct apps in changeset (only those you changed)
-- Choose correct version bump (major/minor/patch)
-- See [Monorepo Strategy](./docs/architecture/monorepo-strategy.md) for versioning details
+**Important:**
+- Commit messages must follow conventional format (enforced by git hooks)
+- Choose correct scope: `api`, `client`, `admin`, etc.
+- Use correct type: `feat` for features, `fix` for bugs, etc.
+- See [Release Workflow Guide](./docs/RELEASE_WORKFLOW.md) for details
 
 ## 📄 License
 
