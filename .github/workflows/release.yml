@@ -19,14 +19,21 @@ jobs:
       client_version: ${{ steps.versions.outputs.client_version }}
       admin_version: ${{ steps.versions.outputs.admin_version }}
       release_type: ${{ steps.check.outputs.release_type }}
+      tag_name: ${{ steps.check.outputs.tag_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
 
       - name: Determine what to build from tag
         id: check
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
           echo "Tag: $TAG"
           
           if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -195,7 +202,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  create-github-release:
+  update-release:
     needs: [determine-releases, build-api, build-client, build-admin]
     if: always()
     runs-on: ubuntu-latest
@@ -210,10 +217,135 @@ jobs:
           name: client-apk-${{ needs.determine-releases.outputs.client_version }}
           path: ./artifacts
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./artifacts/app-release.apk
-          fail_on_unmatched_files: false
+      - name: Read existing release notes
+        id: read_release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ needs.determine-releases.outputs.tag_name }}"
+          
+          # Get existing release body (created by release-please)
+          EXISTING_BODY=$(gh release view "$TAG" --json body -q .body || echo "")
+          
+          # Save to file for easier handling
+          echo "$EXISTING_BODY" > existing_notes.md
+          
+          echo "📝 Existing release notes captured"
+
+      - name: Build enhanced release notes
+        id: build_notes
+        run: |
+          TAG="${{ needs.determine-releases.outputs.tag_name }}"
+          RELEASE_TYPE="${{ needs.determine-releases.outputs.release_type }}"
+          
+          # Start with existing release-please generated notes
+          cat existing_notes.md > enhanced_notes.md
+          
+          # Add deployment information section
+          echo "" >> enhanced_notes.md
+          echo "---" >> enhanced_notes.md
+          echo "" >> enhanced_notes.md
+          echo "## 🚀 Deployment Information" >> enhanced_notes.md
+          echo "" >> enhanced_notes.md
+          
+          if [ "$RELEASE_TYPE" = "synced" ]; then
+            # Synced release - all apps
+            VERSION="${{ needs.determine-releases.outputs.api_version }}"
+            
+            echo "**All components released at version \`${VERSION}\`**" >> enhanced_notes.md
+            echo "" >> enhanced_notes.md
+            
+            if [ "${{ needs.build-api.result }}" = "success" ]; then
+              echo "### 🐳 API - Docker Image" >> enhanced_notes.md
+              echo "\`\`\`bash" >> enhanced_notes.md
+              echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${VERSION}" >> enhanced_notes.md
+              echo "\`\`\`" >> enhanced_notes.md
+              echo "" >> enhanced_notes.md
+            fi
+            
+            if [ "${{ needs.build-client.result }}" = "success" ]; then
+              echo "### 📱 Client - APK" >> enhanced_notes.md
+              echo "Download the APK from the assets below." >> enhanced_notes.md
+              echo "" >> enhanced_notes.md
+            fi
+            
+            if [ "${{ needs.build-admin.result }}" = "success" ]; then
+              echo "### 🐳 Admin - Docker Image" >> enhanced_notes.md
+              echo "\`\`\`bash" >> enhanced_notes.md
+              echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${VERSION}" >> enhanced_notes.md
+              echo "\`\`\`" >> enhanced_notes.md
+              echo "" >> enhanced_notes.md
+            fi
+            
+            echo "### 📝 Changelogs" >> enhanced_notes.md
+            echo "- [API Changelog](./apps/api/CHANGELOG.md)" >> enhanced_notes.md
+            echo "- [Client Changelog](./apps/client/CHANGELOG.md)" >> enhanced_notes.md
+            echo "- [Admin Changelog](./apps/admin/CHANGELOG.md)" >> enhanced_notes.md
+            
+          elif [ "$RELEASE_TYPE" = "api" ]; then
+            VERSION="${{ needs.determine-releases.outputs.api_version }}"
+            echo "### 🐳 API Docker Image" >> enhanced_notes.md
+            echo "\`\`\`bash" >> enhanced_notes.md
+            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${VERSION}" >> enhanced_notes.md
+            echo "\`\`\`" >> enhanced_notes.md
+            echo "" >> enhanced_notes.md
+            echo "### 📝 Changelog" >> enhanced_notes.md
+            echo "See [API Changelog](./apps/api/CHANGELOG.md) for detailed changes." >> enhanced_notes.md
+            
+          elif [ "$RELEASE_TYPE" = "client" ]; then
+            VERSION="${{ needs.determine-releases.outputs.client_version }}"
+            echo "### 📱 Client APK" >> enhanced_notes.md
+            echo "Download the APK from the assets below." >> enhanced_notes.md
+            echo "" >> enhanced_notes.md
+            echo "### 📝 Changelog" >> enhanced_notes.md
+            echo "See [Client Changelog](./apps/client/CHANGELOG.md) for detailed changes." >> enhanced_notes.md
+            
+          elif [ "$RELEASE_TYPE" = "admin" ]; then
+            VERSION="${{ needs.determine-releases.outputs.admin_version }}"
+            echo "### 🐳 Admin Docker Image" >> enhanced_notes.md
+            echo "\`\`\`bash" >> enhanced_notes.md
+            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${VERSION}" >> enhanced_notes.md
+            echo "\`\`\`" >> enhanced_notes.md
+            echo "" >> enhanced_notes.md
+            echo "### 📝 Changelog" >> enhanced_notes.md
+            echo "See [Admin Changelog](./apps/admin/CHANGELOG.md) for detailed changes." >> enhanced_notes.md
+          fi
+
+      - name: Update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ needs.determine-releases.outputs.tag_name }}"
+          RELEASE_TYPE="${{ needs.determine-releases.outputs.release_type }}"
+          
+          # Determine release title
+          if [ "$RELEASE_TYPE" = "synced" ]; then
+            VERSION="${{ needs.determine-releases.outputs.api_version }}"
+            TITLE="Platform v${VERSION}"
+          elif [ "$RELEASE_TYPE" = "api" ]; then
+            VERSION="${{ needs.determine-releases.outputs.api_version }}"
+            TITLE="API v${VERSION}"
+          elif [ "$RELEASE_TYPE" = "client" ]; then
+            VERSION="${{ needs.determine-releases.outputs.client_version }}"
+            TITLE="Client v${VERSION}"
+          elif [ "$RELEASE_TYPE" = "admin" ]; then
+            VERSION="${{ needs.determine-releases.outputs.admin_version }}"
+            TITLE="Admin v${VERSION}"
+          fi
+          
+          # Update the release with enhanced notes and title
+          gh release edit "$TAG" --title "$TITLE" --notes-file enhanced_notes.md
+          
+          echo "✅ Release updated: $TITLE"
+
+      - name: Upload APK to Release
+        if: needs.determine-releases.outputs.build_client == 'true' && needs.build-client.result == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ needs.determine-releases.outputs.tag_name }}"
+          
+          # Upload APK as release asset
+          gh release upload "$TAG" ./artifacts/app-release.apk --clobber
+          
+          echo "✅ APK uploaded to release"
