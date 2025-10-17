@@ -5,26 +5,30 @@
       "package-name": "api",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": false
+      "bump-patch-for-minor-pre-major": false,
+      "include-component-in-tag": false
     },
     "apps/client": {
       "release-type": "simple",
       "package-name": "client",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": false
+      "bump-patch-for-minor-pre-major": false,
+      "include-component-in-tag": false
     },
     "apps/admin": {
       "release-type": "simple",
       "package-name": "admin",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": false
+      "bump-patch-for-minor-pre-major": false,
+      "include-component-in-tag": false
     }
   },
-  "group-pull-request-title-pattern": "chore: release ${version}",
+  "bootstrap-sha": "44b37edbcc575f0b6827e9500778e22993aa2cf1",
+  "group-pull-request-title-pattern": "chore: release v${version}",
   "separate-pull-requests": false,
-  "release-search-depth": 100,
+  "release-search-depth": 500,
   "changelog-sections": [
     { "type": "feat", "section": "Features", "hidden": false },
     { "type": "fix", "section": "Bug Fixes", "hidden": false },
