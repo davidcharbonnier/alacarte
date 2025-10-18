@@ -1,5 +1,12 @@
 # @alacarte/admin
 
+## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/v0.3.1...v0.4.0) (2025-10-18)
+
+
+### Features
+
+* **admin:** Redesign admin panel by creating a design system and dark theme support ([bf5a70a](https://github.com/davidcharbonnier/alacarte/commit/bf5a70a06c485d6a8070d15835fbf7350625e475))
+
 ## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/admin-v0.3.1...admin-v0.4.0) (2025-10-17)
 
 
