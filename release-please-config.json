@@ -29,6 +29,8 @@
   "group-pull-request-title-pattern": "chore: release",
   "separate-pull-requests": false,
   "always-link-local": true,
+  "include-component-in-tag": false,
+  "tag-separator": "-",
   "release-search-depth": 500,
   "changelog-sections": [
     { "type": "feat", "section": "Features", "hidden": false },
