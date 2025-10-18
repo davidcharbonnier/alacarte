@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getItemTypeConfig } from '@/lib/config/item-types';
+import { getItemTypeColor } from '@/lib/config/design-system';
 import { getItemApi } from '@/lib/api/generic-item-api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ type SeedSource = 'url' | 'file';
 
 export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
   const config = getItemTypeConfig(itemType);
+  const colors = getItemTypeColor(itemType);
   const router = useRouter();
   const queryClient = useQueryClient();
   
@@ -167,21 +169,30 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
   };
 
   return (
-    <div>
-      <div className="flex items-center space-x-4 mb-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center space-x-4">
         <Link href={`/${itemType}`}>
-          <Button variant="ghost" size="sm">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="hover:bg-transparent"
+            style={{ color: colors.hex }}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to List
+            Back to {config.labels.plural}
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Seed {config.labels.plural} Data</h1>
+        <h1 className="text-3xl font-bold">Seed {config.labels.plural} Data</h1>
       </div>
 
       <div className="max-w-2xl">
-        <Card>
+        <Card
+          className="border-l-4"
+          style={{ borderLeftColor: colors.hex }}
+        >
           <CardHeader>
-            <CardTitle>Bulk Import</CardTitle>
+            <CardTitle style={{ color: colors.hex }}>Bulk Import</CardTitle>
             <CardDescription>
               Import {config.labels.plural.toLowerCase()} data from a JSON file or remote URL.
             </CardDescription>
@@ -229,6 +240,10 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
                       disabled={!fileData || validateMutation.isPending}
                       className="flex-1"
                       variant="outline"
+                      style={{ 
+                        borderColor: colors.hex,
+                        color: colors.hex,
+                      }}
                     >
                       {validateMutation.isPending ? (
                         <>
@@ -247,7 +262,11 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
                       type="button"
                       onClick={handleSeed}
                       disabled={seedMutation.isPending}
-                      className="flex-1"
+                      className="flex-1 hover:opacity-90"
+                      style={{
+                        backgroundColor: colors.hex,
+                        color: 'white',
+                      }}
                     >
                       {seedMutation.isPending ? (
                         <>
@@ -291,6 +310,10 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
                         disabled={!url || validateMutation.isPending}
                         className="flex-1"
                         variant="outline"
+                        style={{ 
+                          borderColor: colors.hex,
+                          color: colors.hex,
+                        }}
                       >
                         {validateMutation.isPending ? (
                           <>
@@ -309,7 +332,11 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
                         type="button"
                         onClick={handleSeed}
                         disabled={seedMutation.isPending}
-                        className="flex-1"
+                        className="flex-1 hover:opacity-90"
+                        style={{
+                          backgroundColor: colors.hex,
+                          color: 'white',
+                        }}
                       >
                         {seedMutation.isPending ? (
                           <>
@@ -381,6 +408,10 @@ export function GenericSeedForm({ itemType }: GenericSeedFormProps) {
                     variant="outline"
                     size="sm"
                     className="mt-3"
+                    style={{ 
+                      borderColor: colors.hex,
+                      color: colors.hex,
+                    }}
                     onClick={() => router.push(`/${itemType}`)}
                   >
                     View {config.labels.plural}

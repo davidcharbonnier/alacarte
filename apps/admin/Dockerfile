@@ -31,6 +31,12 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy source code
 COPY . .
 
+# Create .next directory with proper permissions for volume mount
+RUN mkdir -p .next && chown -R node:node .next
+
+# Switch to node user (UID 1000, GID 1000 by default in node images)
+USER node
+
 # Expose port
 EXPOSE 3000
 

@@ -1,4 +1,5 @@
 import { ItemTypeRegistry, ItemTypeConfig } from '../types/item-config';
+import { itemTypeColors, getItemTypeColor } from './design-system';
 
 // Re-export types for convenience
 export type { ItemTypeConfig } from '../types/item-config';
@@ -18,7 +19,8 @@ export const itemTypesConfig: ItemTypeRegistry = {
       singular: 'Cheese',
       plural: 'Cheeses',
     },
-    icon: 'ChefHat',
+    icon: 'Pizza',
+    color: itemTypeColors.cheese.hex,
     
     fields: [
       {
@@ -88,6 +90,7 @@ export const itemTypesConfig: ItemTypeRegistry = {
       plural: 'Gins',
     },
     icon: 'Wine',
+    color: itemTypeColors.gin.hex,
     
     fields: [
       {
@@ -157,6 +160,7 @@ export const itemTypesConfig: ItemTypeRegistry = {
       plural: 'Wines',
     },
     icon: 'Wine',
+    color: itemTypeColors.wine.hex,
     
     fields: [
       {

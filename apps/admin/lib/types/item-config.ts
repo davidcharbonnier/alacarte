@@ -51,6 +51,7 @@ export interface ItemTypeConfig {
     plural: string; // Display name plural (e.g., 'Cheeses')
   };
   icon: string; // Lucide icon name (e.g., 'ChefHat')
+  color: string; // Hex color for visual identification (e.g., '#673AB7')
   fields: FieldConfig[];
   table: TableConfig;
   apiEndpoints: ApiEndpointConfig;

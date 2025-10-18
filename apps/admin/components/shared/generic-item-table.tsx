@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { getItemTypeConfig } from '@/lib/config/item-types';
+import { getItemTypeColor } from '@/lib/config/design-system';
 import type { BaseItem } from '@/lib/types/item-config';
 import {
   Table,
@@ -26,6 +27,7 @@ export function GenericItemTable<T extends BaseItem>({
   items 
 }: GenericItemTableProps<T>) {
   const config = getItemTypeConfig(itemType);
+  const colors = getItemTypeColor(itemType);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Generic filtering based on searchable fields from config
@@ -90,47 +92,104 @@ export function GenericItemTable<T extends BaseItem>({
 
   return (
     <div className="space-y-4">
+      {/* Search Input with colored focus ring */}
       <Input
         placeholder={`Search ${config.labels.plural.toLowerCase()}...`}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-md"
+        className="max-w-md focus-visible:ring-offset-0"
+        style={{
+          '--tw-ring-color': colors.hex,
+        } as React.CSSProperties}
       />
 
-      <div className="rounded-md border">
+      <div className="rounded-md border" style={{ borderColor: `${colors.hex}20` }}>
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               {config.table.columns.map((column: any) => (
-                <TableHead key={column}>{getFieldLabel(column)}</TableHead>
+                <TableHead 
+                  key={column}
+                  className="font-semibold"
+                  style={{ color: colors.hex }}
+                >
+                  {getFieldLabel(column)}
+                </TableHead>
               ))}
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead 
+                className="text-right font-semibold"
+                style={{ color: colors.hex }}
+              >
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredItems.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={config.table.columns.length + 1} className="text-center text-gray-500">
-                  No {config.labels.plural.toLowerCase()} found
+              <TableRow className="hover:bg-transparent">
+                <TableCell 
+                  colSpan={config.table.columns.length + 1} 
+                  className="text-center py-12"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <div 
+                      className="w-12 h-12 rounded-full flex items-center justify-center mb-2"
+                      style={{ backgroundColor: `${colors.hex}10` }}
+                    >
+                      <span className="text-2xl" style={{ color: colors.hex }}>∅</span>
+                    </div>
+                    <p className="text-muted-foreground font-medium">
+                      No {config.labels.plural.toLowerCase()} found
+                    </p>
+                    {searchTerm && (
+                      <p className="text-sm text-muted-foreground">
+                        Try adjusting your search term
+                      </p>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredItems.map((item: any) => (
-                <TableRow key={item.id}>
-                  {config.table.columns.map((column: any) => (
-                    <TableCell key={column} className={column === 'name' ? 'font-medium' : ''}>
+              filteredItems.map((item: any, index: number) => (
+                <TableRow 
+                  key={item.id}
+                  className="transition-colors"
+                  style={{
+                    backgroundColor: index % 2 === 0 ? 'transparent' : `${colors.hex}03`,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = `${colors.hex}08`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'transparent' : `${colors.hex}03`;
+                  }}
+                >
+                  {config.table.columns.map((column: any, colIndex: number) => (
+                    <TableCell 
+                      key={column} 
+                      className={column === 'name' ? 'font-medium' : ''}
+                    >
                       {formatCellValue(column, item[column])}
                     </TableCell>
                   ))}
                   <TableCell className="text-right space-x-2">
                     <Link href={`/${itemType}/${item.id}`}>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="hover:bg-transparent"
+                        style={{ color: colors.hex }}
+                      >
                         <Eye className="w-4 h-4 mr-1" />
                         View
                       </Button>
                     </Link>
                     <Link href={`/${itemType}/${item.id}/delete`}>
-                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
                       </Button>
@@ -143,8 +202,18 @@ export function GenericItemTable<T extends BaseItem>({
         </Table>
       </div>
 
-      <div className="text-sm text-gray-600">
-        Showing {filteredItems.length} of {items.length} {config.labels.plural.toLowerCase()}
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">
+          Showing {filteredItems.length} of {items.length} {config.labels.plural.toLowerCase()}
+        </span>
+        {filteredItems.length > 0 && (
+          <span 
+            className="font-medium"
+            style={{ color: colors.hex }}
+          >
+            {filteredItems.length} result{filteredItems.length !== 1 ? 's' : ''}
+          </span>
+        )}
       </div>
     </div>
   );
