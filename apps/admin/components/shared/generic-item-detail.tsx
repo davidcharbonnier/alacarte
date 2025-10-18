@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { getItemTypeConfig } from '@/lib/config/item-types';
+import { getItemTypeColor } from '@/lib/config/design-system';
 import type { BaseItem } from '@/lib/types/item-config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import * as Icons from 'lucide-react';
 
 interface GenericItemDetailProps<T extends BaseItem> {
   itemType: string;
@@ -17,6 +19,8 @@ export function GenericItemDetail<T extends BaseItem>({
   item 
 }: GenericItemDetailProps<T>) {
   const config = getItemTypeConfig(itemType);
+  const colors = getItemTypeColor(itemType);
+  const IconComponent = (Icons as any)[config.icon] || Icons.HelpCircle;
 
   // Split fields into main fields and description
   const mainFields = config.fields.filter((f: any) => f.type !== 'textarea');
@@ -63,17 +67,37 @@ export function GenericItemDetail<T extends BaseItem>({
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
+    <div className="space-y-6">
+      {/* Colored Header */}
+      <div className="flex justify-between items-start">
+        <div>
           <Link href={`/${itemType}`}>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="mb-4 hover:bg-transparent"
+              style={{ color: colors.hex }}
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to List
+              Back to {config.labels.plural}
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">{item.name}</h1>
+          
+          <div className="flex items-center gap-3">
+            {/* Colored Icon */}
+            <div
+              className="flex items-center justify-center w-12 h-12 rounded-xl"
+              style={{ backgroundColor: `${colors.hex}20` }}
+            >
+              <IconComponent
+                className="w-6 h-6"
+                style={{ color: colors.hex }}
+              />
+            </div>
+            <h1 className="text-3xl font-bold">{item.name}</h1>
+          </div>
         </div>
+        
         <Link href={`/${itemType}/${item.id}/delete`}>
           <Button variant="destructive">
             <Trash2 className="w-4 h-4 mr-2" />
@@ -83,9 +107,13 @@ export function GenericItemDetail<T extends BaseItem>({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        {/* Basic Information Card with colored border */}
+        <Card 
+          className="border-l-4"
+          style={{ borderLeftColor: colors.hex }}
+        >
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle style={{ color: colors.hex }}>Basic Information</CardTitle>
             <CardDescription>Details about this {config.labels.singular.toLowerCase()}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -103,14 +131,19 @@ export function GenericItemDetail<T extends BaseItem>({
         </Card>
 
         {descriptionField && (
-          <Card>
+          <Card 
+            className="border-l-4"
+            style={{ borderLeftColor: colors.hex }}
+          >
             <CardHeader>
-              <CardTitle>{descriptionField.label}</CardTitle>
+              <CardTitle style={{ color: colors.hex }}>{descriptionField.label}</CardTitle>
               <CardDescription>Additional information</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700">
-                {item[descriptionField.key] || 'No description available'}
+              <p className="text-foreground leading-relaxed">
+                {item[descriptionField.key] || (
+                  <span className="text-muted-foreground italic">No description available</span>
+                )}
               </p>
             </CardContent>
           </Card>
@@ -119,7 +152,7 @@ export function GenericItemDetail<T extends BaseItem>({
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Metadata</CardTitle>
+          <CardTitle style={{ color: colors.hex }}>Metadata</CardTitle>
           <CardDescription>System information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">

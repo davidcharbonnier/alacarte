@@ -1,7 +1,7 @@
 # Adding New Item Types - Complete Platform Guide
 
 **Last Updated:** January 2025  
-**Current Item Types:** Cheese, Gin  
+**Current Item Types:** Cheese, Gin, Wine  
 **Total Time:** ~2 hours (Backend: 65 min | Client: 50 min | Admin: 5 min)
 
 This guide covers the complete process of adding a new item type (e.g., wine, beer, coffee) to the A la carte platform across all three applications.
@@ -28,7 +28,7 @@ This guide covers the complete process of adding a new item type (e.g., wine, be
 ### Time Estimates
 - **Backend (API):** ~65 minutes
 - **Frontend (Client):** ~50 minutes  
-- **Admin Panel:** ~5 minutes
+- **Admin Panel:** ~5 minutes (config + color, navigation is automatic!)
 - **Total:** ~2 hours
 
 ---
@@ -423,7 +423,7 @@ flutter run -d linux
 
 ### Phase 3: Admin Panel Implementation (~5 min)
 
-The admin panel uses a **config-driven architecture** where everything works automatically from a single config entry.
+The admin panel uses a **config-driven architecture** where everything works automatically from a single config entry plus a color definition. The sidebar navigation is now dynamic and updates automatically!
 
 #### Step 1: Add to Config (~3 min)
 
@@ -434,6 +434,7 @@ wine: {
   name: 'wine',
   labels: { singular: 'Wine', plural: 'Wines' },
   icon: 'Wine',
+  color: itemTypeColors.wine.hex,  // ← ADD THIS (from design-system.ts)
   
   fields: [
     { key: 'name', label: 'Name', type: 'text', required: true },
@@ -459,19 +460,56 @@ wine: {
 }
 ```
 
-#### Step 2: Update Navigation (~2 min)
+#### Step 2: Add Color to Design System (~2 min)
 
-**File:** `apps/admin/components/layout/sidebar.tsx`
+**File:** `apps/admin/lib/config/design-system.ts`
+
+Add the new color to the `itemTypeColors` object:
 
 ```typescript
-const navigationItems = [
-  { name: 'Dashboard', href: '/', iconName: 'Home' },
-  { name: 'Cheese', href: '/cheese', iconName: 'ChefHat' },
-  { name: 'Gin', href: '/gin', iconName: 'Wine' },
-  { name: 'Wine', href: '/wine', iconName: 'Wine' },  // ← ADD THIS
-  { name: 'Users', href: '/users', iconName: 'Users' },
-];
+export const itemTypeColors = {
+  cheese: {
+    hex: '#673AB7',
+    rgb: 'rgb(103, 58, 183)',
+    hsl: 'hsl(262, 52%, 47%)',
+    className: 'text-[#673AB7] bg-[#673AB7]/10',
+  },
+  gin: {
+    hex: '#009688',
+    rgb: 'rgb(0, 150, 136)',
+    hsl: 'hsl(174, 100%, 29%)',
+    className: 'text-[#009688] bg-[#009688]/10',
+  },
+  wine: {
+    hex: '#8E24AA',
+    rgb: 'rgb(142, 36, 170)',
+    hsl: 'hsl(288, 65%, 40%)',
+    className: 'text-[#8E24AA] bg-[#8E24AA]/10',
+  },
+  beer: {  // ← ADD YOUR NEW ITEM TYPE
+    hex: '#FFA726',        // Choose a color that doesn't conflict
+    rgb: 'rgb(255, 167, 38)',
+    hsl: 'hsl(36, 100%, 57%)',
+    className: 'text-[#FFA726] bg-[#FFA726]/10',
+  },
+} as const;
 ```
+
+**Color Selection Tips:**
+- Choose colors that stand out from existing ones
+- Ensure good contrast for accessibility
+- Test in both light and dark modes
+- Common choices: Orange (#FFA726), Blue (#2196F3), Red (#F44336), Amber (#FFC107)
+
+#### Step 3: ~~Update Navigation~~ **Automatic!** 🎉
+
+**No action needed!** The sidebar now dynamically loads item types from your config.
+
+Your new item type will automatically appear in the sidebar with:
+- Correct icon and color
+- Proper routing
+- Active states
+- Hover effects
 
 **✅ Admin Complete!** All features work automatically:
 - List view with table
@@ -479,6 +517,7 @@ const navigationItems = [
 - Delete with impact assessment
 - Bulk seed import
 - Dashboard stats card
+- **Sidebar navigation** (automatic!)
 
 See [Admin Checklist](admin-checklist.md) for details.
 
@@ -508,7 +547,8 @@ See [Admin Checklist](admin-checklist.md) for details.
 
 ### Admin Panel
 - [ ] Config entry added to item-types.ts
-- [ ] Navigation updated in sidebar
+- [ ] Color added to design-system.ts
+- [ ] ~~Navigation updated in sidebar~~ (automatic!)
 - [ ] List view works at /wine
 - [ ] Detail view works
 - [ ] Delete impact works

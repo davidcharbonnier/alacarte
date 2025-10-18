@@ -26,6 +26,8 @@ npm run dev
 ## Key Features
 
 - **Config-Driven Architecture** - Add item types in ~5 minutes
+- **Dynamic Sidebar** - Automatically updates with colored icons
+- **Design System** - Consistent colors and styling matching Flutter client
 - **Generic Components** - Reusable UI for all item types
 - **User Management** - Admin/user administration
 - **Bulk Operations** - Seed data, delete with impact assessment
@@ -37,7 +39,7 @@ npm run dev
 ### Adding a New Item Type
 See [Adding New Item Types - Admin Section](/docs/guides/adding-new-item-types.md#phase-3-admin-panel-implementation-5-min)
 
-Just add config entry + navigation item = done!
+Just add config entry + color = done! Sidebar updates automatically (~5 minutes)
 
 ### Running Development Server
 ```bash
@@ -52,16 +54,18 @@ npm start
 
 ### Adding New Item Type
 1. Add config to `lib/config/item-types.ts`
-2. Add navigation item to `components/layout/sidebar.tsx`
-3. Done! (~5 minutes)
+2. Add color to `lib/config/design-system.ts`
+3. Done! Sidebar updates automatically (~5 minutes)
 
 ## 📚 Full Documentation
 
 Complete admin documentation available at [/docs/admin/](/docs/admin/)
 
 ### Admin-Specific Docs
+- [Design System](/docs/admin/design-system.md) - Complete design system guide
 - [Deployment Guide](/docs/admin/deployment.md) - Production deployment
 - [Backend Requirements](/docs/admin/backend-requirements.md) - API specs
+- [Authentication System](/docs/admin/authentication-system.md) - Auth implementation
 - [Phased Implementation](/docs/admin/phased-implementation.md) - Development phases
 
 ### Cross-App Features
