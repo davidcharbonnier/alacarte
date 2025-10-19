@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Eye, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, Trash2, CheckCircle, XCircle, Package } from 'lucide-react';
 
 interface GenericItemTableProps<T extends BaseItem> {
   itemType: string;
@@ -107,6 +107,12 @@ export function GenericItemTable<T extends BaseItem>({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
+              <TableHead 
+                className="font-semibold w-20"
+                style={{ color: colors.hex }}
+              >
+                Image
+              </TableHead>
               {config.table.columns.map((column: any) => (
                 <TableHead 
                   key={column}
@@ -128,7 +134,7 @@ export function GenericItemTable<T extends BaseItem>({
             {filteredItems.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell 
-                  colSpan={config.table.columns.length + 1} 
+                  colSpan={config.table.columns.length + 2} 
                   className="text-center py-12"
                 >
                   <div className="flex flex-col items-center gap-2">
@@ -164,6 +170,28 @@ export function GenericItemTable<T extends BaseItem>({
                     e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'transparent' : `${colors.hex}03`;
                   }}
                 >
+                  {/* Image thumbnail */}
+                  <TableCell>
+                    {item.image_url ? (
+                      <div className="relative w-12 h-12 rounded-md overflow-hidden bg-gray-100">
+                        <img
+                          src={item.image_url}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div 
+                        className="w-12 h-12 rounded-md flex items-center justify-center"
+                        style={{ backgroundColor: `${colors.hex}10` }}
+                      >
+                        <Package 
+                          className="w-6 h-6"
+                          style={{ color: `${colors.hex}40` }}
+                        />
+                      </div>
+                    )}
+                  </TableCell>
                   {config.table.columns.map((column: any, colIndex: number) => (
                     <TableCell 
                       key={column} 

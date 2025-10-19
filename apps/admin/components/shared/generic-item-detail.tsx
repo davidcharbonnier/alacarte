@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { getItemTypeConfig } from '@/lib/config/item-types';
 import { getItemTypeColor } from '@/lib/config/design-system';
 import type { BaseItem } from '@/lib/types/item-config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
+import { ArrowLeft, Trash2, CheckCircle, XCircle, Package, Expand } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
 interface GenericItemDetailProps<T extends BaseItem> {
@@ -21,6 +23,7 @@ export function GenericItemDetail<T extends BaseItem>({
   const config = getItemTypeConfig(itemType);
   const colors = getItemTypeColor(itemType);
   const IconComponent = (Icons as any)[config.icon] || Icons.HelpCircle;
+  const [imageZoomOpen, setImageZoomOpen] = useState(false);
 
   // Split fields into main fields and description
   const mainFields = config.fields.filter((f: any) => f.type !== 'textarea');
@@ -106,7 +109,7 @@ export function GenericItemDetail<T extends BaseItem>({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Basic Information Card with colored border */}
         <Card 
           className="border-l-4"
@@ -148,6 +151,66 @@ export function GenericItemDetail<T extends BaseItem>({
             </CardContent>
           </Card>
         )}
+
+        {/* Image Card */}
+        <Card 
+          className="border-l-4"
+          style={{ borderLeftColor: colors.hex }}
+        >
+          <CardHeader>
+            <CardTitle style={{ color: colors.hex }}>Image</CardTitle>
+            <CardDescription>Product photo</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {item.image_url ? (
+              <Dialog open={imageZoomOpen} onOpenChange={setImageZoomOpen}>
+                <DialogTrigger asChild>
+                  <div className="relative w-full rounded-lg overflow-hidden bg-gray-100 cursor-pointer group">
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-full h-auto object-contain transition-opacity group-hover:opacity-90"
+                    />
+                    {/* Zoom overlay hint */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div 
+                          className="rounded-full p-3"
+                          style={{ backgroundColor: colors.hex }}
+                        >
+                          <Expand className="w-6 h-6 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl w-[90vw] p-0 bg-black [&>button]:bg-white/90 [&>button]:hover:bg-white [&>button]:text-gray-800" showCloseButton={true}>
+                  <DialogTitle className="sr-only">{item.name} - Full Size Image</DialogTitle>
+                  <div className="relative w-full">
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-full h-auto object-contain max-h-[85vh]"
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <div 
+                className="w-full h-48 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: `${colors.hex}10` }}
+              >
+                <div className="text-center">
+                  <Package 
+                    className="w-12 h-12 mx-auto mb-2"
+                    style={{ color: `${colors.hex}40` }}
+                  />
+                  <p className="text-sm text-muted-foreground">No image</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="mt-6">

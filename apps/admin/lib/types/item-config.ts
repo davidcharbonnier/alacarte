@@ -68,6 +68,7 @@ export type ItemTypeRegistry = Record<string, ItemTypeConfig>;
 export interface BaseItem {
   id: number;
   name: string;
+  image_url?: string | null; // Optional image URL
   created_at: string;
   updated_at: string;
   [key: string]: any; // Allow additional fields
