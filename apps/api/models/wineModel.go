@@ -15,5 +15,16 @@ type Wine struct {
 	Designation string    `json:"designation"`
 	Sugar       float64   `json:"sugar"`
 	Organic     bool      `json:"organic" gorm:"default:false"`
+	ImageURL    *string   `json:"image_url,omitempty"`
 	Ratings     []Rating  `gorm:"polymorphic:Item;"`
+}
+
+// GetImageURL implements ItemWithImage interface
+func (w *Wine) GetImageURL() *string {
+	return w.ImageURL
+}
+
+// SetImageURL implements ItemWithImage interface
+func (w *Wine) SetImageURL(url *string) {
+	w.ImageURL = url
 }
