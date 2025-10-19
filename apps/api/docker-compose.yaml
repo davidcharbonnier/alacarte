@@ -8,7 +8,12 @@ services:
     volumes:
       - ./:/project/
     depends_on:
-      - mysql
+      mysql:
+        condition: service_started
+      minio:
+        condition: service_healthy
+      create-bucket:
+        condition: service_completed_successfully
     networks:
       - alacarte-network
       - default
@@ -28,6 +33,44 @@ services:
     networks:
       - alacarte-network
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Web Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_VOLUMES: /data
+    command: minio server --console-address :9001
+    healthcheck:
+      test: "/usr/bin/mc alias set minio http://localhost:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD && /usr/bin/mc admin info minio"
+      interval: 30s
+      timeout: 10s
+      retries: 4
+    volumes:
+      - minio_data:/data
+    networks:
+      - alacarte-network
+      - default
+
+  create-bucket:
+    image: minio/mc:latest
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set minio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb --ignore-existing minio/alacarte-images;
+      /usr/bin/mc anonymous set download minio/alacarte-images;
+      "
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - alacarte-network
+
 volumes:
   mysql_data:
     name: alacarte-mysql-data
+  minio_data:
+    name: alacarte-minio-data
