@@ -100,6 +100,23 @@ export function createItemApi<T extends BaseItem>(itemType: string) {
       // If no validate endpoint, just return valid
       return { valid: true, errors: [] };
     },
+
+    /**
+     * Upload image for item
+     */
+    uploadImage: async (id: number, file: File): Promise<{ message: string; image_url: string }> => {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      return apiClient.postFormData(`/api/${itemType}/${id}/image`, formData);
+    },
+
+    /**
+     * Delete image for item
+     */
+    deleteImage: async (id: number): Promise<{ message: string }> => {
+      return apiClient.delete(`/api/${itemType}/${id}/image`);
+    },
   };
 }
 
