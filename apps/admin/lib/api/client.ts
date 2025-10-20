@@ -68,6 +68,17 @@ class ApiClient {
     const response = await this.client.delete<T>(url, config);
     return response.data;
   }
+
+  async postFormData<T>(url: string, formData: FormData, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.client.post<T>(url, formData, {
+      ...config,
+      headers: {
+        ...config?.headers,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
 }
 
 export const apiClient = new ApiClient();
