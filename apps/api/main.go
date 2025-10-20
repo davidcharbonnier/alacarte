@@ -147,6 +147,10 @@ func main() {
 		{
 			stats.GET("/community/:type/:id", controllers.GetCommunityStats)
 		}
+
+		// Image management (works for ANY item type!)
+		api.POST("/:itemType/:id/image", controllers.UploadItemImage)
+		api.DELETE("/:itemType/:id/image", controllers.DeleteItemImage)
 	}
 
 	// Admin routes (requires admin privileges)
@@ -194,10 +198,6 @@ func main() {
 			user.PATCH("/:id/promote", controllers.PromoteUser)
 			user.PATCH("/:id/demote", controllers.DemoteUser)
 		}
-
-		// Image management (works for ANY item type!)
-		admin.POST("/:itemType/:id/image", controllers.UploadItemImage)
-		admin.DELETE("/:itemType/:id/image", controllers.DeleteItemImage)
 	}
 
 	router.Run()
