@@ -14,11 +14,13 @@ The A la carte platform supports image uploads for all item types (cheese, gin, 
 - **Processing:** Server-side validation, resizing, and compression
 - **Delivery:** Public URLs with configurable endpoints
 - **Integration:** Generic implementation works for all item types
+- **Access:** Any authenticated user can upload/delete images (collaborative platform)
 
 ### Current Status
-- ✅ Backend API endpoints (upload, delete)
+- ✅ Backend API endpoints (upload, delete) at `/api/:itemType/:id/image`
 - ✅ Image validation and processing
 - ✅ Admin panel display (thumbnails, full-size, zoom)
+- ✅ Admin panel API client (uploadImage, deleteImage methods)
 - ⏳ Admin panel upload UI (not yet implemented)
 - ⏳ Client app display and upload (not yet implemented)
 
@@ -52,9 +54,9 @@ type Wine struct {
 
 ### Upload Image
 
-**Endpoint:** `POST /admin/:itemType/:id/image`
+**Endpoint:** `POST /api/:itemType/:id/image`
 
-**Authentication:** Admin JWT required
+**Authentication:** JWT required (any authenticated user)
 
 **Request:**
 - Content-Type: `multipart/form-data`
@@ -64,9 +66,9 @@ type Wine struct {
 **Example:**
 ```bash
 curl -X POST \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Authorization: Bearer $TOKEN" \
   -F "image=@wine-bottle.jpg" \
-  http://localhost:8080/admin/wine/1/image
+  http://localhost:8080/api/wine/1/image
 ```
 
 **Response (200 OK):**
@@ -84,15 +86,15 @@ curl -X POST \
 
 ### Delete Image
 
-**Endpoint:** `DELETE /admin/:itemType/:id/image`
+**Endpoint:** `DELETE /api/:itemType/:id/image`
 
-**Authentication:** Admin JWT required
+**Authentication:** JWT required (any authenticated user)
 
 **Example:**
 ```bash
 curl -X DELETE \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  http://localhost:8080/admin/wine/1/image
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/wine/1/image
 ```
 
 **Response (200 OK):**
@@ -287,7 +289,7 @@ func (c *Cheese) SetImageURL(url *string) {
 ### Upload Flow
 
 ```
-1. Admin uploads image via API
+1. User uploads image via API
 2. Backend validates file (size, format, content)
 3. Backend processes image (resize, compress)
 4. Backend generates UUID filename
@@ -307,7 +309,7 @@ func (c *Cheese) SetImageURL(url *string) {
 ### Delete Flow
 
 ```
-1. Admin deletes image via API
+1. User deletes image via API
 2. Backend fetches item from database
 3. Backend extracts filename from URL
 4. Backend deletes image from storage
@@ -318,7 +320,34 @@ func (c *Cheese) SetImageURL(url *string) {
 
 ---
 
-## 🖼️ Admin Panel Display
+## 🖼️ Admin Panel Integration
+
+### API Client Methods
+
+The admin panel includes image upload/delete methods in the generic item API:
+
+```typescript
+import { getItemApi } from '@/lib/api/generic-item-api';
+
+// Get API client for item type
+const wineApi = getItemApi('wine');
+
+// Upload image
+const result = await wineApi.uploadImage(itemId, imageFile);
+// Returns: { message: string, image_url: string }
+
+// Delete image
+await wineApi.deleteImage(itemId);
+// Returns: { message: string }
+```
+
+**Features:**
+- Works for all item types (cheese, gin, wine, etc.)
+- Automatic authentication (uses NextAuth session token)
+- FormData handling for file uploads
+- Type-safe responses
+
+### Display Components
 
 ### Table View (List Page)
 
@@ -368,6 +397,11 @@ func (c *Cheese) SetImageURL(url *string) {
 - ✅ Image structure validation
 - ✅ Size and dimension limits
 
+**Access Control:**
+- Any authenticated user can upload/delete images
+- Users can update images for any item (collaborative platform)
+- JWT authentication required
+
 **What's prevented:**
 - Malware disguised as images
 - Corrupted/invalid files
@@ -381,10 +415,10 @@ func (c *Cheese) SetImageURL(url *string) {
 - URLs are non-guessable (UUID-based)
 - No directory listing enabled
 
-**Access Control:**
-- Only admins can upload/delete images
-- JWT authentication required
-- Rate limiting recommended (not yet implemented)
+**Future Considerations:**
+- Rate limiting per user (prevent abuse)
+- Image moderation queue (admin approval)
+- User-specific upload quotas
 
 ---
 
@@ -422,14 +456,14 @@ func (c *Cheese) SetImageURL(url *string) {
 
 **Upload Test:**
 ```bash
-# Get admin token
-export ADMIN_TOKEN="your-jwt-token"
+# Get user token
+export TOKEN="your-jwt-token"
 
 # Upload image
 curl -X POST \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Authorization: Bearer $TOKEN" \
   -F "image=@test-image.jpg" \
-  http://localhost:8080/admin/wine/1/image
+  http://localhost:8080/api/wine/1/image
 
 # Verify in admin panel
 # Navigate to http://localhost:3001/wine/1
@@ -439,8 +473,8 @@ curl -X POST \
 ```bash
 # Delete image
 curl -X DELETE \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  http://localhost:8080/admin/wine/1/image
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/wine/1/image
 
 # Verify in admin panel (should show placeholder)
 ```
