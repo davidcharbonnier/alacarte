@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
 import '../../models/rateable_item.dart';
 import '../../models/cheese_item.dart';
 import '../../models/gin_item.dart';
+import '../../models/wine_item.dart';
 import '../../providers/item_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/appbar_helper.dart';
 import '../../utils/safe_navigation.dart';
 import '../../widgets/forms/item_form_fields.dart';
+import '../../widgets/items/item_image_picker.dart';
+import '../../services/image_service.dart';
 
 /// Generic form screen with inline single-card design matching item detail style
 class GenericItemFormScreen<T extends RateableItem>
@@ -44,6 +48,8 @@ class _GenericItemFormScreenState<T extends RateableItem>
   bool _isLoading = false;
   String? _error;
   bool _hasChanges = false;
+  File? _selectedImage;
+  bool _imageRemoved = false;
 
   @override
   void initState() {
@@ -116,6 +122,20 @@ class _GenericItemFormScreenState<T extends RateableItem>
     return ItemTypeLocalizer.getLocalizedItemType(context, widget.itemType);
   }
 
+  String? _getCurrentImageUrl() {
+    if (widget.initialItem == null) return null;
+    
+    if (widget.initialItem is CheeseItem) {
+      return (widget.initialItem as CheeseItem).imageUrl;
+    } else if (widget.initialItem is GinItem) {
+      return (widget.initialItem as GinItem).imageUrl;
+    } else if (widget.initialItem is WineItem) {
+      return (widget.initialItem as WineItem).imageUrl;
+    }
+    
+    return null;
+  }
+
   bool get _isFormValid {
     final baseValid =
         _nameController.text.trim().isNotEmpty &&
@@ -184,6 +204,9 @@ class _GenericItemFormScreenState<T extends RateableItem>
     });
 
     try {
+      int? createdItemId;
+      bool itemSuccess = false;
+
       if (widget.itemType == 'cheese') {
         final cheese = CheeseItem(
           id: widget.itemId,
@@ -196,16 +219,18 @@ class _GenericItemFormScreenState<T extends RateableItem>
               : null,
         );
 
-        final success = _isEditMode
-            ? await ref
-                  .read(cheeseItemProvider.notifier)
-                  .updateItem(widget.itemId!, cheese)
-            : await ref.read(cheeseItemProvider.notifier).createItem(cheese);
-
-        if (success) {
-          _showSuccessMessage();
-          _navigateBack();
+        if (_isEditMode) {
+          itemSuccess = await ref
+              .read(cheeseItemProvider.notifier)
+              .updateItem(widget.itemId!, cheese);
+          createdItemId = widget.itemId;
         } else {
+          final result = await ref.read(cheeseItemProvider.notifier).createItem(cheese);
+          itemSuccess = result != null;
+          createdItemId = result;
+        }
+
+        if (!itemSuccess) {
           final error = ref.read(cheeseItemProvider).error;
           setState(() {
             _error =
@@ -218,6 +243,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
                         _localizedItemType.toLowerCase(),
                       ));
           });
+          return;
         }
       } else if (widget.itemType == 'gin') {
         final gin = GinItem(
@@ -231,16 +257,18 @@ class _GenericItemFormScreenState<T extends RateableItem>
               : null,
         );
 
-        final success = _isEditMode
-            ? await ref
-                  .read(ginItemProvider.notifier)
-                  .updateItem(widget.itemId!, gin)
-            : await ref.read(ginItemProvider.notifier).createItem(gin);
-
-        if (success) {
-          _showSuccessMessage();
-          _navigateBack();
+        if (_isEditMode) {
+          itemSuccess = await ref
+              .read(ginItemProvider.notifier)
+              .updateItem(widget.itemId!, gin);
+          createdItemId = widget.itemId;
         } else {
+          final result = await ref.read(ginItemProvider.notifier).createItem(gin);
+          itemSuccess = result != null;
+          createdItemId = result;
+        }
+
+        if (!itemSuccess) {
           final error = ref.read(ginItemProvider).error;
           setState(() {
             _error =
@@ -253,7 +281,43 @@ class _GenericItemFormScreenState<T extends RateableItem>
                         _localizedItemType.toLowerCase(),
                       ));
           });
+          return;
         }
+      }
+
+      // Handle image upload/delete if item creation/update was successful
+      if (itemSuccess && createdItemId != null) {
+        final imageService = ref.read(imageServiceProvider);
+
+        // If user selected a new image, upload it
+        if (_selectedImage != null) {
+          final imageUrl = await imageService.uploadImage(
+            widget.itemType,
+            createdItemId,
+            _selectedImage!,
+          );
+
+          if (imageUrl == null) {
+            // Image upload failed, but item was created/updated
+            // Show warning but don't fail the whole operation
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Item saved, but image upload failed'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          }
+        } else if (_imageRemoved && _isEditMode) {
+          // User removed the image, delete it from backend
+          await imageService.deleteImage(widget.itemType, createdItemId);
+        }
+      }
+
+      if (itemSuccess) {
+        _showSuccessMessage();
+        _navigateBack();
       }
     } finally {
       if (mounted) {
@@ -512,6 +576,35 @@ class _GenericItemFormScreenState<T extends RateableItem>
                                       required: true,
                                       enabled: !_isLoading,
                                       prefixIcon: Icons.business,
+                                    ),
+
+                                    const SizedBox(
+                                      height: AppConstants.spacingL,
+                                    ),
+
+                                    // Image picker (centered, before description)
+                                    ItemImagePicker(
+                                      currentImageUrl: _getCurrentImageUrl(),
+                                      selectedImage: _selectedImage,
+                                      itemType: widget.itemType,
+                                      enabled: !_isLoading,
+                                      onImageSelected: (file) {
+                                        setState(() {
+                                          _selectedImage = file;
+                                          _hasChanges = true;
+                                          if (file == null && _getCurrentImageUrl() != null) {
+                                            _imageRemoved = true;
+                                          } else {
+                                            _imageRemoved = false;
+                                          }
+                                        });
+                                      },
+                                      onImageRemoved: () {
+                                        setState(() {
+                                          _imageRemoved = true;
+                                          _hasChanges = true;
+                                        });
+                                      },
                                     ),
 
                                     const SizedBox(

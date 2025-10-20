@@ -5,6 +5,7 @@ import '../models/gin_item.dart';
 import '../models/wine_item.dart';
 import '../models/api_response.dart';
 import '../services/api_service.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 /// Generic service for managing any type of rateable item
 abstract class ItemService<T extends RateableItem> extends ApiService {
@@ -105,9 +106,15 @@ class CheeseItemService extends ItemService<CheeseItem> {
   }
   
   /// Clear cache (useful for testing or after data changes)
-  void clearCache() {
+  Future<void> clearCache() async {
     _cachedResponse = null;
     _cacheTime = null;
+    // Also clear image cache and wait for completion
+    try {
+      await DefaultCacheManager().emptyCache();
+    } catch (e) {
+      print('Failed to clear image cache: $e');
+    }
   }
 
   static List<String> _validateCheeseItem(CheeseItem cheese) {
@@ -277,9 +284,15 @@ class GinItemService extends ItemService<GinItem> {
   }
   
   /// Clear cache (useful for testing or after data changes)
-  void clearCache() {
+  Future<void> clearCache() async {
     _cachedResponse = null;
     _cacheTime = null;
+    // Also clear image cache and wait for completion
+    try {
+      await DefaultCacheManager().emptyCache();
+    } catch (e) {
+      print('Failed to clear image cache: $e');
+    }
   }
 
   static List<String> _validateGinItem(GinItem gin) {
@@ -418,9 +431,15 @@ class WineItemService extends ItemService<WineItem> {
   }
   
   /// Clear cache (useful for testing or after data changes)
-  void clearCache() {
+  Future<void> clearCache() async {
     _cachedResponse = null;
     _cacheTime = null;
+    // Also clear image cache and wait for completion
+    try {
+      await DefaultCacheManager().emptyCache();
+    } catch (e) {
+      print('Failed to clear image cache: $e');
+    }
   }
 
   static List<String> _validateWineItem(WineItem wine) {

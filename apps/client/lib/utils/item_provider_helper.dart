@@ -277,4 +277,22 @@ class ItemProviderHelper {
         break;
     }
   }
+
+  /// Invalidate a specific item from cache
+  /// 
+  /// Removes the item from provider state, forcing it to be refetched
+  /// from the API next time it's needed.
+  static void invalidateItem(WidgetRef ref, String itemType, int itemId) {
+    switch (itemType.toLowerCase()) {
+      case 'cheese':
+        ref.read(cheeseItemProvider.notifier).invalidateItem(itemId);
+        break;
+      case 'gin':
+        ref.read(ginItemProvider.notifier).invalidateItem(itemId);
+        break;
+      case 'wine':
+        ref.read(wineItemProvider.notifier).invalidateItem(itemId);
+        break;
+    }
+  }
 }

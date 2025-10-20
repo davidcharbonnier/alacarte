@@ -5,6 +5,7 @@ import '../../models/gin_item.dart';
 import '../../models/wine_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
+import '../items/item_image.dart';
 
 /// Reusable header component for any item type detail display
 class ItemDetailHeader extends StatelessWidget {
@@ -29,6 +30,16 @@ class ItemDetailHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get image URL based on item type
+    String? imageUrl;
+    if (item is CheeseItem) {
+      imageUrl = (item as CheeseItem).imageUrl;
+    } else if (item is GinItem) {
+      imageUrl = (item as GinItem).imageUrl;
+    } else if (item is WineItem) {
+      imageUrl = (item as WineItem).imageUrl;
+    }
+
     return Card(
       child: Padding(
         padding: AppConstants.cardPadding,
@@ -87,7 +98,7 @@ class ItemDetailHeader extends StatelessWidget {
 
             const SizedBox(height: AppConstants.spacingM),
 
-            // Item-specific fields (from detailFields)
+            // Item-specific fields (from detailFields) - excluding description
             ...(() {
               if (item is CheeseItem) {
                 return (item as CheeseItem).getLocalizedDetailFields(context);
@@ -98,15 +109,45 @@ class ItemDetailHeader extends StatelessWidget {
               }
               return item.detailFields;
             }())
+                .where((field) => !field.isDescription)
                 .map(
-                  (field) => field.isDescription
-                      ? _buildDescriptionField(context, field)
-                      : _buildDetailRow(
-                          context,
-                          field.label,
-                          field.value,
-                          field.icon,
-                        ),
+                  (field) => _buildDetailRow(
+                    context,
+                    field.label,
+                    field.value,
+                    field.icon,
+                  ),
+                ),
+
+            // Image display (centered, before description)
+            if (imageUrl != null && imageUrl.isNotEmpty) ...[
+              const SizedBox(height: AppConstants.spacingM),
+              const Divider(),
+              const SizedBox(height: AppConstants.spacingM),
+              Center(
+                child: ItemImageFull(
+                  imageUrl: imageUrl,
+                  itemType: item.itemType,
+                  itemName: item.name,
+                  maxHeight: 250,
+                ),
+              ),
+            ],
+
+            // Description field (if available)
+            ...(() {
+              if (item is CheeseItem) {
+                return (item as CheeseItem).getLocalizedDetailFields(context);
+              } else if (item is GinItem) {
+                return (item as GinItem).getLocalizedDetailFields(context);
+              } else if (item is WineItem) {
+                return (item as WineItem).getLocalizedDetailFields(context);
+              }
+              return item.detailFields;
+            }())
+                .where((field) => field.isDescription)
+                .map(
+                  (field) => _buildDescriptionField(context, field),
                 ),
           ],
         ),

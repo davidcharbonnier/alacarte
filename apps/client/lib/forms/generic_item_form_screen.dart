@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../models/rateable_item.dart';
 import '../utils/constants.dart';
 import '../utils/localization_utils.dart';
 import '../utils/appbar_helper.dart';
 import '../utils/safe_navigation.dart';
 import '../widgets/forms/item_form_fields.dart';
+import '../widgets/items/item_image_picker.dart';
+import '../services/image_service.dart';
+import '../utils/item_provider_helper.dart';
 import 'strategies/item_form_strategy.dart';
 import 'strategies/item_form_strategy_registry.dart';
 import 'strategies/form_field_config.dart';
@@ -43,6 +48,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
   bool _isLoading = false;
   String? _error;
   bool _hasChanges = false;
+  File? _selectedImage;
 
   @override
   void initState() {
@@ -76,6 +82,18 @@ class _GenericItemFormScreenState<T extends RateableItem>
 
   String get _localizedItemType {
     return ItemTypeLocalizer.getLocalizedItemType(context, widget.itemType);
+  }
+
+  String? _getCurrentImageUrl() {
+    if (widget.initialItem == null) return null;
+    
+    // Use runtime type checking to access imageUrl
+    final item = widget.initialItem as dynamic;
+    try {
+      return item.imageUrl as String?;
+    } catch (e) {
+      return null;
+    }
   }
 
   bool get _isFormValid {
@@ -162,9 +180,51 @@ class _GenericItemFormScreenState<T extends RateableItem>
       final provider = _strategy.getProvider();
 
       // Perform create or update
-      final success = _isEditMode
-          ? await ref.read(provider.notifier).updateItem(widget.itemId!, item)
-          : await ref.read(provider.notifier).createItem(item);
+      final bool success;
+      int? createdItemId;
+      
+      if (_isEditMode) {
+        success = await ref.read(provider.notifier).updateItem(widget.itemId!, item);
+        createdItemId = widget.itemId;
+      } else {
+        final result = await ref.read(provider.notifier).createItem(item);
+        success = result != null;
+        createdItemId = result;
+      }
+
+      // Handle image upload if item creation/update was successful
+      if (success && createdItemId != null && _selectedImage != null) {
+        final imageService = ref.read(imageServiceProvider);
+
+        final imageUrl = await imageService.uploadImage(
+          widget.itemType,
+          createdItemId,
+          _selectedImage!,
+        );
+
+        if (imageUrl == null) {
+          // Image upload failed, but item was created/updated
+          // Show warning but don't fail the whole operation
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Item saved, but image upload failed'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        } else {
+          // Image uploaded successfully - use granular cache clearing
+          // 1. Clear old image from cache (if exists)
+          if (_isEditMode && _getCurrentImageUrl() != null) {
+            await DefaultCacheManager().removeFile(_getCurrentImageUrl()!);
+          }
+          // 2. Invalidate this item from provider state
+          ItemProviderHelper.invalidateItem(ref, widget.itemType, createdItemId);
+          // 3. Reload this item immediately so it's back in provider state
+          await ItemProviderHelper.loadSpecificItems(ref, widget.itemType, [createdItemId]);
+        }
+      }
 
       if (success) {
         _showSuccessMessage();
@@ -399,11 +459,13 @@ class _GenericItemFormScreenState<T extends RateableItem>
       // Build appropriate widget for this field type
       widgets.add(_buildFieldWidget(field));
 
-      // Add spacing between fields (except after last field)
-      if (i < fields.length - 1) {
-        widgets.add(const SizedBox(height: AppConstants.spacingL));
-      }
+      // Add spacing between fields
+      widgets.add(const SizedBox(height: AppConstants.spacingL));
     }
+
+    // Add image picker after all other fields
+    widgets.add(_buildImagePicker());
+    widgets.add(const SizedBox(height: AppConstants.spacingL));
 
     return widgets;
   }
@@ -682,6 +744,21 @@ class _GenericItemFormScreenState<T extends RateableItem>
       child: const Center(
         child: CircularProgressIndicator(),
       ),
+    );
+  }
+
+  Widget _buildImagePicker() {
+    return ItemImagePicker(
+      currentImageUrl: _getCurrentImageUrl(),
+      selectedImage: _selectedImage,
+      itemType: widget.itemType,
+      enabled: !_isLoading,
+      onImageSelected: (file) {
+        setState(() {
+          _selectedImage = file;
+          _hasChanges = true;
+        });
+      },
     );
   }
 }
