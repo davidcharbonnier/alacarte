@@ -9,6 +9,9 @@ import '../../providers/community_stats_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/rating.dart';
 import '../../models/rateable_item.dart';
+import '../../models/cheese_item.dart';
+import '../../models/gin_item.dart';
+import '../../models/wine_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/appbar_helper.dart';
@@ -16,6 +19,7 @@ import '../../utils/safe_navigation.dart';
 import '../../utils/item_provider_helper.dart';
 import '../../routes/route_names.dart';
 import '../../widgets/common/item_search_filter.dart';
+import '../../widgets/items/item_image.dart';
 import '../../utils/item_filter_helper.dart';
 
 /// Provider to remember the last active tab for each item type
@@ -876,6 +880,16 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     bool showCommunityData, {
     Map<int, Map<String, dynamic>>? statsMap,
   }) {
+    // Get image URL based on item type
+    String? imageUrl;
+    if (item is CheeseItem) {
+      imageUrl = item.imageUrl;
+    } else if (item is GinItem) {
+      imageUrl = item.imageUrl;
+    } else if (item is WineItem) {
+      imageUrl = item.imageUrl;
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: AppConstants.spacingM),
       child: InkWell(
@@ -885,41 +899,55 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
         child: Padding(
           padding: AppConstants.cardPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              // Title row with inline rating badges
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      item.displayTitle,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+              // Image thumbnail
+              ItemImage(
+                imageUrl: imageUrl,
+                itemType: widget.itemType,
+                size: 60,
+              ),
+              const SizedBox(width: AppConstants.spacingM),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title row with inline rating badges
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.displayTitle,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: AppConstants.spacingS),
+                        // Inline rating badges
+                        if (showCommunityData)
+                          _buildCommunityRatingsSummary(item.id!, statsMap: statsMap)
+                        else
+                          ..._buildCompactRatingBadges(
+                            myRating,
+                            sharedRatings,
+                            item.id!,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: AppConstants.spacingXS),
+                    Text(
+                      item.displaySubtitle,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7),
                           ),
                     ),
-                  ),
-                  const SizedBox(width: AppConstants.spacingS),
-                  // Inline rating badges
-                  if (showCommunityData)
-                    _buildCommunityRatingsSummary(item.id!, statsMap: statsMap)
-                  else
-                    ..._buildCompactRatingBadges(
-                      myRating,
-                      sharedRatings,
-                      item.id!,
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppConstants.spacingXS),
-              Text(
-                item.displaySubtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.7),
-                    ),
+                  ],
+                ),
               ),
             ],
           ),

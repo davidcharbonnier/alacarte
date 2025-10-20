@@ -12,6 +12,7 @@ class CheeseItem implements RateableItem {
   final String origin;
   final String producer;
   final String? description;
+  final String? imageUrl;
 
   const CheeseItem({
     this.id,
@@ -20,6 +21,7 @@ class CheeseItem implements RateableItem {
     required this.origin,
     required this.producer,
     this.description,
+    this.imageUrl,
   });
 
   @override
@@ -96,6 +98,7 @@ class CheeseItem implements RateableItem {
       'origin': origin,
       'producer': producer,
       'description': description,
+      'image_url': imageUrl,
     };
   }
 
@@ -108,6 +111,7 @@ class CheeseItem implements RateableItem {
       origin: (json['origin'] as String?) ?? '',
       producer: (json['producer'] as String?) ?? '',
       description: json['description'] as String?,
+      imageUrl: json['image_url'] as String?,
     );
   }
 
@@ -120,6 +124,7 @@ class CheeseItem implements RateableItem {
       origin: updates['origin'] ?? origin,
       producer: updates['producer'] ?? producer,
       description: updates['description'] ?? description,
+      imageUrl: updates['image_url'] ?? imageUrl,
     );
   }
 
@@ -131,6 +136,7 @@ class CheeseItem implements RateableItem {
     String? origin,
     String? producer,
     String? description,
+    String? imageUrl,
   }) {
     return CheeseItem(
       id: id ?? this.id,
@@ -139,6 +145,7 @@ class CheeseItem implements RateableItem {
       origin: origin ?? this.origin,
       producer: producer ?? this.producer,
       description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 
@@ -151,17 +158,18 @@ class CheeseItem implements RateableItem {
         other.type == type &&
         other.origin == origin &&
         other.producer == producer &&
-        other.description == description;
+        other.description == description &&
+        other.imageUrl == imageUrl;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, name, type, origin, producer, description);
+    return Object.hash(id, name, type, origin, producer, description, imageUrl);
   }
 
   @override
   String toString() {
-    return 'CheeseItem(id: $id, name: $name, type: $type, origin: $origin, producer: $producer, description: $description)';
+    return 'CheeseItem(id: $id, name: $name, type: $type, origin: $origin, producer: $producer, description: $description, imageUrl: $imageUrl)';
   }
 }
 

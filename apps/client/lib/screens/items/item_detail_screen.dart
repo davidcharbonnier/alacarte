@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/rating_provider.dart';
@@ -97,6 +98,33 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _refreshItemData() async {
+    // Use granular cache clearing for single item refresh
+    // 1. Clear this item's image from cache (if exists)
+    if (_item != null) {
+      final imageUrl = _getItemImageUrl(_item!);
+      if (imageUrl != null) {
+        await DefaultCacheManager().removeFile(imageUrl);
+      }
+    }
+    // 2. Invalidate this item from provider state
+    ItemProviderHelper.invalidateItem(ref, widget.itemType, widget.itemId);
+    // 3. Reload this item from API (puts it back in provider state)
+    await ItemProviderHelper.loadSpecificItems(ref, widget.itemType, [widget.itemId]);
+    // 4. Reload local state to display the fresh item
+    await _loadItemData();
+  }
+
+  String? _getItemImageUrl(RateableItem item) {
+    // Use runtime type checking to access imageUrl
+    try {
+      final dynamicItem = item as dynamic;
+      return dynamicItem.imageUrl as String?;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -216,11 +244,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
         ),
       ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          await _loadItemData();
-          // Invalidate community stats to force refresh
-          ref.invalidate(communityStatsProvider);
-        },
+        onRefresh: _refreshItemData,
         child: SingleChildScrollView(
           padding: AppConstants.screenPadding,
           child: Center(

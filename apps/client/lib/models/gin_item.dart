@@ -12,6 +12,7 @@ class GinItem implements RateableItem {
   final String origin;
   final String profile;
   final String? description;
+  final String? imageUrl;
 
   const GinItem({
     this.id,
@@ -20,6 +21,7 @@ class GinItem implements RateableItem {
     required this.origin,
     required this.profile,
     this.description,
+    this.imageUrl,
   });
 
   @override
@@ -96,6 +98,7 @@ class GinItem implements RateableItem {
       'origin': origin,
       'profile': profile,
       'description': description,
+      'image_url': imageUrl,
     };
   }
 
@@ -108,6 +111,7 @@ class GinItem implements RateableItem {
       origin: (json['origin'] as String?) ?? '',
       profile: (json['profile'] as String?) ?? '',
       description: json['description'] as String?,
+      imageUrl: json['image_url'] as String?,
     );
   }
 
@@ -120,6 +124,7 @@ class GinItem implements RateableItem {
       origin: updates['origin'] ?? origin,
       profile: updates['profile'] ?? profile,
       description: updates['description'] ?? description,
+      imageUrl: updates['image_url'] ?? imageUrl,
     );
   }
 
@@ -131,6 +136,7 @@ class GinItem implements RateableItem {
     String? origin,
     String? profile,
     String? description,
+    String? imageUrl,
   }) {
     return GinItem(
       id: id ?? this.id,
@@ -139,6 +145,7 @@ class GinItem implements RateableItem {
       origin: origin ?? this.origin,
       profile: profile ?? this.profile,
       description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 
@@ -151,17 +158,18 @@ class GinItem implements RateableItem {
         other.producer == producer &&
         other.origin == origin &&
         other.profile == profile &&
-        other.description == description;
+        other.description == description &&
+        other.imageUrl == imageUrl;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, name, producer, origin, profile, description);
+    return Object.hash(id, name, producer, origin, profile, description, imageUrl);
   }
 
   @override
   String toString() {
-    return 'GinItem(id: $id, name: $name, producer: $producer, origin: $origin, profile: $profile, description: $description)';
+    return 'GinItem(id: $id, name: $name, producer: $producer, origin: $origin, profile: $profile, description: $description, imageUrl: $imageUrl)';
   }
 }
 

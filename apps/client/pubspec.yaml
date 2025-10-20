@@ -58,6 +58,12 @@ dependencies:
   # Environment variables
   flutter_dotenv: ^5.1.0
 
+  # Image caching
+  cached_network_image: ^3.4.1
+
+  # Image picker
+  image_picker: ^1.1.2
+
   # JSON Handling
   json_annotation: ^4.9.0
   freezed_annotation: ^3.1.0

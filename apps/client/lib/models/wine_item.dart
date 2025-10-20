@@ -16,6 +16,7 @@ class WineItem implements RateableItem {
   final String designation;
   final double sugar;
   final bool organic;
+  final String? imageUrl;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -32,6 +33,7 @@ class WineItem implements RateableItem {
     required this.designation,
     required this.sugar,
     required this.organic,
+    this.imageUrl,
     this.createdAt,
     this.updatedAt,
   });
@@ -195,6 +197,7 @@ class WineItem implements RateableItem {
       designation: json['designation'] as String? ?? '',
       sugar: (json['sugar'] as num?)?.toDouble() ?? 0.0,
       organic: json['organic'] as bool? ?? false,
+      imageUrl: json['image_url'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -218,6 +221,7 @@ class WineItem implements RateableItem {
       'designation': designation,
       'sugar': sugar,
       'organic': organic,
+      'image_url': imageUrl,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -242,6 +246,7 @@ class WineItem implements RateableItem {
       designation: updates['designation'] as String? ?? designation,
       sugar: updates['sugar'] as double? ?? sugar,
       organic: updates['organic'] as bool? ?? organic,
+      imageUrl: updates['image_url'] as String? ?? imageUrl,
       createdAt: updates['created_at'] as DateTime? ?? createdAt,
       updatedAt: updates['updated_at'] as DateTime? ?? updatedAt,
     );

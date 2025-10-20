@@ -101,6 +101,15 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   Future<void> refreshItems() async {
     state = state.copyWith(isLoading: true, error: null);
     
+    // Clear both data and image cache before refreshing
+    if (_itemService is CheeseItemService) {
+      await (_itemService as CheeseItemService).clearCache();
+    } else if (_itemService is GinItemService) {
+      await (_itemService as GinItemService).clearCache();
+    } else if (_itemService is WineItemService) {
+      await (_itemService as WineItemService).clearCache();
+    }
+    
     final response = await _itemService.getAllItems();
     
     response.when(
@@ -134,20 +143,20 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   }
 
   /// Create a new item
-  Future<bool> createItem(T item) async {
+  Future<int?> createItem(T item) async {
     state = state.copyWith(isLoading: true, error: null);
 
     final response = await _itemService.createItem(item);
 
     return response.when(
-      success: (createdItem, _) {
+      success: (createdItem, _) async {
         // Clear service cache after data changes
         if (_itemService is CheeseItemService) {
-          (_itemService as CheeseItemService).clearCache();
+          await (_itemService as CheeseItemService).clearCache();
         } else if (_itemService is GinItemService) {
-          (_itemService as GinItemService).clearCache();
+          await (_itemService as GinItemService).clearCache();
         } else if (_itemService is WineItemService) {
-          (_itemService as WineItemService).clearCache();
+          await (_itemService as WineItemService).clearCache();
         }
         
         final updatedItems = [...state.items, createdItem];
@@ -157,16 +166,16 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
           isLoading: false,
         );
         _refreshFilterOptions();
-        return true;
+        return createdItem.id;
       },
       error: (message, statusCode, errorCode, details) {
         state = state.copyWith(
           isLoading: false,
           error: message,
         );
-        return false;
+        return null;
       },
-      loading: () => false,
+      loading: () => null,
     );
   }
 
@@ -177,7 +186,16 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
     final response = await _itemService.updateItem(itemId, item);
 
     return response.when(
-      success: (updatedItem, _) {
+      success: (updatedItem, _) async {
+        // Clear service cache after data changes (includes image cache)
+        if (_itemService is CheeseItemService) {
+          await (_itemService as CheeseItemService).clearCache();
+        } else if (_itemService is GinItemService) {
+          await (_itemService as GinItemService).clearCache();
+        } else if (_itemService is WineItemService) {
+          await (_itemService as WineItemService).clearCache();
+        }
+        
         final updatedItems = state.items
             .map((i) => i.id == updatedItem.id ? updatedItem : i)
             .toList();
@@ -279,6 +297,15 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   /// Clear error state
   void clearError() {
     state = state.copyWith(error: null);
+  }
+
+  /// Invalidate a specific item from cache
+  /// 
+  /// Removes the item from provider state, forcing it to be refetched
+  /// from the API next time it's needed. Used for granular cache invalidation.
+  void invalidateItem(int itemId) {
+    final updatedItems = state.items.where((i) => i.id != itemId).toList();
+    state = state.copyWith(items: updatedItems);
   }
 
   /// Load filter options
