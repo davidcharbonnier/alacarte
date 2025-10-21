@@ -2399,13 +2399,13 @@ abstract class AppLocalizations {
   /// Placeholder for country field
   ///
   /// In en, this message translates to:
-  /// **'Enter country'**
+  /// **'e.g., Brazil, Ethiopia, Colombia'**
   String get enterCountry;
 
   /// Placeholder for region field
   ///
   /// In en, this message translates to:
-  /// **'Enter region'**
+  /// **'e.g., Yirgacheffe, Huila'**
   String get enterRegion;
 
   /// Placeholder for grape field
@@ -2507,7 +2507,7 @@ abstract class AppLocalizations {
   /// Helper text for organic checkbox
   ///
   /// In en, this message translates to:
-  /// **'Certified organic wine'**
+  /// **'Check if certified organic'**
   String get organicHelper;
 
   /// Yes (affirmative)
@@ -2521,6 +2521,342 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No'**
   String get no;
+
+  /// Coffee category name
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee'**
+  String get coffee;
+
+  /// Plural coffee category name
+  ///
+  /// In en, this message translates to:
+  /// **'Coffees'**
+  String get coffees;
+
+  /// No description provided for @createCoffee.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Coffee'**
+  String get createCoffee;
+
+  /// No description provided for @editCoffee.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Coffee'**
+  String get editCoffee;
+
+  /// No description provided for @coffeeCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee created successfully!'**
+  String get coffeeCreated;
+
+  /// No description provided for @coffeeUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee updated successfully!'**
+  String get coffeeUpdated;
+
+  /// No description provided for @coffeeDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee deleted successfully!'**
+  String get coffeeDeleted;
+
+  /// No description provided for @roasterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Roaster'**
+  String get roasterLabel;
+
+  /// No description provided for @roasterRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Roaster is required'**
+  String get roasterRequired;
+
+  /// No description provided for @enterRoaster.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter roaster name'**
+  String get enterRoaster;
+
+  /// No description provided for @enterCoffeeName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter coffee name'**
+  String get enterCoffeeName;
+
+  /// No description provided for @countryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get countryLabel;
+
+  /// No description provided for @regionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get regionLabel;
+
+  /// No description provided for @farmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Farm'**
+  String get farmLabel;
+
+  /// No description provided for @enterFarm.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Finca El Paraíso'**
+  String get enterFarm;
+
+  /// No description provided for @altitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Altitude'**
+  String get altitudeLabel;
+
+  /// No description provided for @enterAltitude.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 1200-1600m'**
+  String get enterAltitude;
+
+  /// No description provided for @altitudeHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Growing altitude in meters'**
+  String get altitudeHelper;
+
+  /// No description provided for @speciesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Species'**
+  String get speciesLabel;
+
+  /// No description provided for @selectSpecies.
+  ///
+  /// In en, this message translates to:
+  /// **'Select species'**
+  String get selectSpecies;
+
+  /// No description provided for @varietyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Variety'**
+  String get varietyLabel;
+
+  /// No description provided for @enterVariety.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Bourbon, Geisha, Caturra'**
+  String get enterVariety;
+
+  /// No description provided for @varietyHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Coffee plant variety/cultivar'**
+  String get varietyHelper;
+
+  /// No description provided for @processingMethodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing Method'**
+  String get processingMethodLabel;
+
+  /// No description provided for @selectProcessingMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Select processing method'**
+  String get selectProcessingMethod;
+
+  /// No description provided for @processWashed.
+  ///
+  /// In en, this message translates to:
+  /// **'Washed'**
+  String get processWashed;
+
+  /// No description provided for @processNatural.
+  ///
+  /// In en, this message translates to:
+  /// **'Natural'**
+  String get processNatural;
+
+  /// No description provided for @processAnaerobic.
+  ///
+  /// In en, this message translates to:
+  /// **'Anaerobic'**
+  String get processAnaerobic;
+
+  /// No description provided for @processCarbonicMaceration.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbonic Maceration'**
+  String get processCarbonicMaceration;
+
+  /// No description provided for @processWetHulled.
+  ///
+  /// In en, this message translates to:
+  /// **'Wet-Hulled'**
+  String get processWetHulled;
+
+  /// No description provided for @processPulpedNatural.
+  ///
+  /// In en, this message translates to:
+  /// **'Pulped Natural'**
+  String get processPulpedNatural;
+
+  /// No description provided for @decaffeinatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Decaffeinated'**
+  String get decaffeinatedLabel;
+
+  /// No description provided for @decaffeinatedHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Check if this is decaffeinated coffee'**
+  String get decaffeinatedHelper;
+
+  /// No description provided for @roastLevelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Roast Level'**
+  String get roastLevelLabel;
+
+  /// No description provided for @selectRoastLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select roast level'**
+  String get selectRoastLevel;
+
+  /// No description provided for @roastLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get roastLight;
+
+  /// No description provided for @roastMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get roastMedium;
+
+  /// No description provided for @roastDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get roastDark;
+
+  /// No description provided for @tastingNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasting Notes'**
+  String get tastingNotesLabel;
+
+  /// No description provided for @enterTastingNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., chocolate, citrus, floral'**
+  String get enterTastingNotes;
+
+  /// No description provided for @tastingNotesHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Comma-separated flavor notes'**
+  String get tastingNotesHelper;
+
+  /// No description provided for @acidityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Acidity'**
+  String get acidityLabel;
+
+  /// No description provided for @selectAcidity.
+  ///
+  /// In en, this message translates to:
+  /// **'Select acidity level'**
+  String get selectAcidity;
+
+  /// No description provided for @bodyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get bodyLabel;
+
+  /// No description provided for @selectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Select body level'**
+  String get selectBody;
+
+  /// No description provided for @bodyLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get bodyLight;
+
+  /// No description provided for @bodyMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get bodyMedium;
+
+  /// No description provided for @bodyFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get bodyFull;
+
+  /// No description provided for @sweetnessLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sweetness'**
+  String get sweetnessLabel;
+
+  /// No description provided for @selectSweetness.
+  ///
+  /// In en, this message translates to:
+  /// **'Select sweetness level'**
+  String get selectSweetness;
+
+  /// No description provided for @intensityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get intensityLow;
+
+  /// No description provided for @intensityMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get intensityMedium;
+
+  /// No description provided for @intensityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get intensityHigh;
+
+  /// No description provided for @fairTradeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair Trade'**
+  String get fairTradeLabel;
+
+  /// No description provided for @fairTradeHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Check if fair trade certified'**
+  String get fairTradeHelper;
+
+  /// No description provided for @notSpecified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not specified'**
+  String get notSpecified;
 }
 
 class _AppLocalizationsDelegate

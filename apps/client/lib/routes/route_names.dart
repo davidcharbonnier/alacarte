@@ -25,6 +25,8 @@ class RouteNames {
   static const String ginEdit = '/gin/edit';
   static const String wineCreate = '/wine/create';
   static const String wineEdit = '/wine/edit';
+  static const String coffeeCreate = '/coffee/create';
+  static const String coffeeEdit = '/coffee/edit';
   static const String ratingCreate = '/rating/create';
   static const String ratingEdit = '/rating/edit';
   
@@ -37,6 +39,7 @@ class RouteParams {
   static const String cheeseId = 'cheeseId';
   static const String ginId = 'ginId';
   static const String wineId = 'wineId';
+  static const String coffeeId = 'coffeeId';
   static const String userId = 'userId';
   static const String ratingId = 'ratingId';
   static const String itemType = 'itemType';
@@ -67,6 +70,8 @@ class RoutePaths {
   static const String ginEdit = '/gin/edit/:${RouteParams.ginId}';
   static const String wineCreate = '/wine/create';
   static const String wineEdit = '/wine/edit/:${RouteParams.wineId}';
+  static const String coffeeCreate = '/coffee/create';
+  static const String coffeeEdit = '/coffee/edit/:${RouteParams.coffeeId}';
   static const String ratingCreate = '/rating/create/:${RouteParams.itemType}/:${RouteParams.itemId}';
   static const String ratingEdit = '/rating/edit/:${RouteParams.ratingId}';
   

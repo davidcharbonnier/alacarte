@@ -1431,10 +1431,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get enterColor => 'Entrer la couleur';
 
   @override
-  String get enterCountry => 'Entrer le pays';
+  String get enterCountry => 'ex: Brésil, Éthiopie, Colombie';
 
   @override
-  String get enterRegion => 'Entrer la région';
+  String get enterRegion => 'ex: Yirgacheffe, Huila';
 
   @override
   String get enterGrape => 'Entrer les cépages';
@@ -1485,11 +1485,179 @@ class AppLocalizationsFr extends AppLocalizations {
   String get selectColor => 'Sélectionner la couleur';
 
   @override
-  String get organicHelper => 'Vin certifié biologique';
+  String get organicHelper => 'Cochez si certifié biologique';
 
   @override
   String get yes => 'Oui';
 
   @override
   String get no => 'Non';
+
+  @override
+  String get coffee => 'Café';
+
+  @override
+  String get coffees => 'Cafés';
+
+  @override
+  String get createCoffee => 'Créer un café';
+
+  @override
+  String get editCoffee => 'Modifier le café';
+
+  @override
+  String get coffeeCreated => 'Café créé avec succès !';
+
+  @override
+  String get coffeeUpdated => 'Café mis à jour avec succès !';
+
+  @override
+  String get coffeeDeleted => 'Café supprimé avec succès !';
+
+  @override
+  String get roasterLabel => 'Torréfacteur';
+
+  @override
+  String get roasterRequired => 'Le torréfacteur est requis';
+
+  @override
+  String get enterRoaster => 'Entrez le nom du torréfacteur';
+
+  @override
+  String get enterCoffeeName => 'Entrez le nom du café';
+
+  @override
+  String get countryLabel => 'Pays';
+
+  @override
+  String get regionLabel => 'Région';
+
+  @override
+  String get farmLabel => 'Ferme';
+
+  @override
+  String get enterFarm => 'ex: Finca El Paraíso';
+
+  @override
+  String get altitudeLabel => 'Altitude';
+
+  @override
+  String get enterAltitude => 'ex: 1200-1600m';
+
+  @override
+  String get altitudeHelper => 'Altitude de culture en mètres';
+
+  @override
+  String get speciesLabel => 'Espèce';
+
+  @override
+  String get selectSpecies => 'Sélectionner l\'espèce';
+
+  @override
+  String get varietyLabel => 'Variété';
+
+  @override
+  String get enterVariety => 'ex: Bourbon, Geisha, Caturra';
+
+  @override
+  String get varietyHelper => 'Variété/cultivar du plant de café';
+
+  @override
+  String get processingMethodLabel => 'Méthode de traitement';
+
+  @override
+  String get selectProcessingMethod => 'Sélectionner la méthode';
+
+  @override
+  String get processWashed => 'Lavé';
+
+  @override
+  String get processNatural => 'Nature';
+
+  @override
+  String get processAnaerobic => 'Anaérobie';
+
+  @override
+  String get processCarbonicMaceration => 'Macération Carbonique';
+
+  @override
+  String get processWetHulled => 'Décortiqué Humide';
+
+  @override
+  String get processPulpedNatural => 'Nature Dépulpé';
+
+  @override
+  String get decaffeinatedLabel => 'Décaféiné';
+
+  @override
+  String get decaffeinatedHelper => 'Cochez si c\'est du café décaféiné';
+
+  @override
+  String get roastLevelLabel => 'Niveau de torréfaction';
+
+  @override
+  String get selectRoastLevel => 'Sélectionner le niveau';
+
+  @override
+  String get roastLight => 'Pâle';
+
+  @override
+  String get roastMedium => 'Moyen';
+
+  @override
+  String get roastDark => 'Foncé';
+
+  @override
+  String get tastingNotesLabel => 'Notes de dégustation';
+
+  @override
+  String get enterTastingNotes => 'ex: chocolat, agrumes, floral';
+
+  @override
+  String get tastingNotesHelper => 'Notes de saveur séparées par des virgules';
+
+  @override
+  String get acidityLabel => 'Acidité';
+
+  @override
+  String get selectAcidity => 'Sélectionner le niveau d\'acidité';
+
+  @override
+  String get bodyLabel => 'Corps';
+
+  @override
+  String get selectBody => 'Sélectionner le corps';
+
+  @override
+  String get bodyLight => 'Léger';
+
+  @override
+  String get bodyMedium => 'Moyen';
+
+  @override
+  String get bodyFull => 'Corsé';
+
+  @override
+  String get sweetnessLabel => 'Douceur';
+
+  @override
+  String get selectSweetness => 'Sélectionner la douceur';
+
+  @override
+  String get intensityLow => 'Faible';
+
+  @override
+  String get intensityMedium => 'Moyen';
+
+  @override
+  String get intensityHigh => 'Élevé';
+
+  @override
+  String get fairTradeLabel => 'Commerce équitable';
+
+  @override
+  String get fairTradeHelper => 'Cochez si certifié commerce équitable';
+
+  @override
+  String get notSpecified => 'Non spécifié';
 }

@@ -45,6 +45,7 @@ class HomeScreen extends ConsumerWidget {
     final cheeseItemState = ref.watch(cheeseItemProvider);
     final ginItemState = ref.watch(ginItemProvider);
     final wineItemState = ref.watch(wineItemProvider);
+    final coffeeItemState = ref.watch(coffeeItemProvider);
     
     // Load cheese data if not already loaded and not currently loading
     if (!cheeseItemState.hasLoadedOnce && !cheeseItemState.isLoading) {
@@ -64,6 +65,13 @@ class HomeScreen extends ConsumerWidget {
     if (!wineItemState.hasLoadedOnce && !wineItemState.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(wineItemProvider.notifier).loadItems();
+      });
+    }
+    
+    // Load coffee data if not already loaded and not currently loading
+    if (!coffeeItemState.hasLoadedOnce && !coffeeItemState.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(coffeeItemProvider.notifier).loadItems();
       });
     }
     
@@ -88,6 +96,7 @@ class HomeScreen extends ConsumerWidget {
           ref.read(cheeseItemProvider.notifier).refreshItems();
           ref.read(ginItemProvider.notifier).refreshItems();
           ref.read(wineItemProvider.notifier).refreshItems();
+          ref.read(coffeeItemProvider.notifier).refreshItems();
           ref.read(ratingProvider.notifier).refreshRatings();
         },
         child: SingleChildScrollView(
@@ -141,6 +150,18 @@ class HomeScreen extends ConsumerWidget {
                     const Color(0xFF8E24AA),
                     wineItemState.items.length,
                     _getUniqueItemCount(ratingState.ratings, 'wine'),
+                  ),
+                  
+                  const SizedBox(height: AppConstants.spacingM),
+                  
+                  _buildItemTypeCard(
+                    context,
+                    ItemTypeLocalizer.getLocalizedItemType(context, 'coffee'),
+                    'coffee',
+                    Icons.local_cafe,
+                    Colors.brown,
+                    coffeeItemState.items.length,
+                    _getUniqueItemCount(ratingState.ratings, 'coffee'),
                   ),
                   
                   const SizedBox(height: AppConstants.spacingM),

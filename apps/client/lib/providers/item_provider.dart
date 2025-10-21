@@ -3,6 +3,7 @@ import '../models/rateable_item.dart';
 import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
 import '../models/wine_item.dart';
+import '../models/coffee_item.dart';
 import '../models/api_response.dart';
 import '../services/item_service.dart';
 
@@ -108,6 +109,8 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
       await (_itemService as GinItemService).clearCache();
     } else if (_itemService is WineItemService) {
       await (_itemService as WineItemService).clearCache();
+    } else if (_itemService is CoffeeItemService) {
+      await (_itemService as CoffeeItemService).clearCache();
     }
     
     final response = await _itemService.getAllItems();
@@ -157,6 +160,8 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
           await (_itemService as GinItemService).clearCache();
         } else if (_itemService is WineItemService) {
           await (_itemService as WineItemService).clearCache();
+        } else if (_itemService is CoffeeItemService) {
+          await (_itemService as CoffeeItemService).clearCache();
         }
         
         final updatedItems = [...state.items, createdItem];
@@ -194,6 +199,8 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
           await (_itemService as GinItemService).clearCache();
         } else if (_itemService is WineItemService) {
           await (_itemService as WineItemService).clearCache();
+        } else if (_itemService is CoffeeItemService) {
+          await (_itemService as CoffeeItemService).clearCache();
         }
         
         final updatedItems = state.items
@@ -600,5 +607,95 @@ final filteredWineItemsProvider = Provider<List<WineItem>>((ref) {
 /// Computed provider for checking if wine data exists
 final hasWineItemDataProvider = Provider<bool>((ref) {
   final itemState = ref.watch(wineItemProvider);
+  return itemState.items.isNotEmpty;
+});
+
+/// Specific provider for Coffee items
+final coffeeItemProvider = StateNotifierProvider<CoffeeItemProvider, ItemState<CoffeeItem>>(
+  (ref) => CoffeeItemProvider(ref.read(coffeeItemServiceProvider)),
+);
+
+/// Concrete implementation for Coffee provider
+class CoffeeItemProvider extends ItemProvider<CoffeeItem> {
+  CoffeeItemProvider(CoffeeItemService coffeeService) : super(coffeeService);
+
+  @override
+  Future<void> _loadFilterOptions() async {
+    final coffeeService = _itemService as CoffeeItemService;
+    
+    final roastersResponse = await coffeeService.getCoffeeRoasters();
+    final countriesResponse = await coffeeService.getCoffeeCountries();
+    final regionsResponse = await coffeeService.getCoffeeRegions();
+    final processingMethodsResponse = await coffeeService.getCoffeeProcessingMethods();
+    final roastLevelsResponse = await coffeeService.getCoffeeRoastLevels();
+
+    roastersResponse.when(
+      success: (roasters, _) {
+        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
+        currentOptions['roaster'] = roasters;
+        state = state.copyWith(filterOptions: currentOptions);
+      },
+      error: (_, __, ___, ____) {},
+      loading: () {},
+    );
+
+    countriesResponse.when(
+      success: (countries, _) {
+        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
+        currentOptions['country'] = countries;
+        state = state.copyWith(filterOptions: currentOptions);
+      },
+      error: (_, __, ___, ____) {},
+      loading: () {},
+    );
+
+    regionsResponse.when(
+      success: (regions, _) {
+        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
+        currentOptions['region'] = regions;
+        state = state.copyWith(filterOptions: currentOptions);
+      },
+      error: (_, __, ___, ____) {},
+      loading: () {},
+    );
+
+    processingMethodsResponse.when(
+      success: (methods, _) {
+        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
+        currentOptions['processing_method'] = methods;
+        state = state.copyWith(filterOptions: currentOptions);
+      },
+      error: (_, __, ___, ____) {},
+      loading: () {},
+    );
+
+    roastLevelsResponse.when(
+      success: (roastLevels, _) {
+        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
+        currentOptions['roast_level'] = roastLevels;
+        state = state.copyWith(filterOptions: currentOptions);
+      },
+      error: (_, __, ___, ____) {},
+      loading: () {},
+    );
+  }
+
+  /// Coffee-specific filtering methods
+  void setRoasterFilter(String? roaster) => setCategoryFilter('roaster', roaster);
+  void setCountryFilter(String? country) => setCategoryFilter('country', country);
+  void setRegionFilter(String? region) => setCategoryFilter('region', region);
+  void setProcessingMethodFilter(String? processingMethod) => setCategoryFilter('processing_method', processingMethod);
+  void setRoastLevelFilter(String? roastLevel) => setCategoryFilter('roast_level', roastLevel);
+}
+
+/// Computed provider for filtered coffee items
+final filteredCoffeeItemsProvider = Provider<List<CoffeeItem>>((ref) {
+  final itemState = ref.watch(coffeeItemProvider);
+  return itemState.filteredItems;
+});
+
+/// Computed provider for checking if coffee data exists
+final hasCoffeeItemDataProvider = Provider<bool>((ref) {
+  final itemState = ref.watch(coffeeItemProvider);
   return itemState.items.isNotEmpty;
 });

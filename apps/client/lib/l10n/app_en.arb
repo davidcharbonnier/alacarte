@@ -2446,5 +2446,92 @@
   "no": "No",
   "@no": {
     "description": "No (negative)"
-  }
+  },
+  
+  "coffee": "Coffee",
+  "@coffee": {
+    "description": "Coffee category name"
+  },
+  
+  "coffees": "Coffees",
+  "@coffees": {
+    "description": "Plural coffee category name"
+  },
+  
+  "createCoffee": "Create Coffee",
+  "editCoffee": "Edit Coffee",
+  "coffeeCreated": "Coffee created successfully!",
+  "coffeeUpdated": "Coffee updated successfully!",
+  "coffeeDeleted": "Coffee deleted successfully!",
+  
+  "roasterLabel": "Roaster",
+  "roasterRequired": "Roaster is required",
+  "enterRoaster": "Enter roaster name",
+  "enterCoffeeName": "Enter coffee name",
+  
+  "countryLabel": "Country",
+  "enterCountry": "e.g., Brazil, Ethiopia, Colombia",
+  
+  "regionLabel": "Region",
+  "enterRegion": "e.g., Yirgacheffe, Huila",
+  
+  "farmLabel": "Farm",
+  "enterFarm": "e.g., Finca El Paraíso",
+  
+  "altitudeLabel": "Altitude",
+  "enterAltitude": "e.g., 1200-1600m",
+  "altitudeHelper": "Growing altitude in meters",
+  
+  "speciesLabel": "Species",
+  "selectSpecies": "Select species",
+  
+  "varietyLabel": "Variety",
+  "enterVariety": "e.g., Bourbon, Geisha, Caturra",
+  "varietyHelper": "Coffee plant variety/cultivar",
+  
+  "processingMethodLabel": "Processing Method",
+  "selectProcessingMethod": "Select processing method",
+  "processWashed": "Washed",
+  "processNatural": "Natural",
+  "processAnaerobic": "Anaerobic",
+  "processCarbonicMaceration": "Carbonic Maceration",
+  "processWetHulled": "Wet-Hulled",
+  "processPulpedNatural": "Pulped Natural",
+  
+  "decaffeinatedLabel": "Decaffeinated",
+  "decaffeinatedHelper": "Check if this is decaffeinated coffee",
+  
+  "roastLevelLabel": "Roast Level",
+  "selectRoastLevel": "Select roast level",
+  "roastLight": "Light",
+  "roastMedium": "Medium",
+  "roastDark": "Dark",
+  
+  "tastingNotesLabel": "Tasting Notes",
+  "enterTastingNotes": "e.g., chocolate, citrus, floral",
+  "tastingNotesHelper": "Comma-separated flavor notes",
+  
+  "acidityLabel": "Acidity",
+  "selectAcidity": "Select acidity level",
+  
+  "bodyLabel": "Body",
+  "selectBody": "Select body level",
+  "bodyLight": "Light",
+  "bodyMedium": "Medium",
+  "bodyFull": "Full",
+  
+  "sweetnessLabel": "Sweetness",
+  "selectSweetness": "Select sweetness level",
+  
+  "intensityLow": "Low",
+  "intensityMedium": "Medium",
+  "intensityHigh": "High",
+  
+  "organicLabel": "Organic",
+  "organicHelper": "Check if certified organic",
+  
+  "fairTradeLabel": "Fair Trade",
+  "fairTradeHelper": "Check if fair trade certified",
+  
+  "notSpecified": "Not specified"
 }

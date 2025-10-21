@@ -18,6 +18,7 @@ import '../screens/settings/privacy_settings_screen.dart';
 import '../screens/cheese/cheese_form_screens.dart';
 import '../screens/gin/gin_form_screens.dart';
 import '../screens/wine/wine_form_screens.dart';
+import '../screens/coffee/coffee_form_screens.dart';
 
 /// Provider for the GoRouter configuration with OAuth authentication
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -212,6 +213,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             return _buildPlaceholderScreen('Invalid Wine ID');
           }
           return WineEditScreen(wineId: wineId);
+        },
+      ),
+
+      // Coffee-specific routes
+      GoRoute(
+        path: RoutePaths.coffeeCreate,
+        name: RouteNames.coffeeCreate,
+        builder: (context, state) => const CoffeeCreateScreen(),
+      ),
+
+      GoRoute(
+        path: RoutePaths.coffeeEdit,
+        name: RouteNames.coffeeEdit,
+        builder: (context, state) {
+          final coffeeIdParam = state.pathParameters[RouteParams.coffeeId];
+          final coffeeId = int.tryParse(coffeeIdParam ?? '');
+          if (coffeeId == null) {
+            return _buildPlaceholderScreen('Invalid Coffee ID');
+          }
+          return CoffeeEditScreen(coffeeId: coffeeId);
         },
       ),
 

@@ -417,5 +417,84 @@
   "organicHelper": "Vin certifié biologique",
   
   "yes": "Oui",
-  "no": "Non"
+  "no": "Non",
+  
+  "coffee": "Café",
+  "coffees": "Cafés",
+  "createCoffee": "Créer un café",
+  "editCoffee": "Modifier le café",
+  "coffeeCreated": "Café créé avec succès !",
+  "coffeeUpdated": "Café mis à jour avec succès !",
+  "coffeeDeleted": "Café supprimé avec succès !",
+  
+  "roasterLabel": "Torréfacteur",
+  "roasterRequired": "Le torréfacteur est requis",
+  "enterRoaster": "Entrez le nom du torréfacteur",
+  "enterCoffeeName": "Entrez le nom du café",
+  
+  "countryLabel": "Pays",
+  "enterCountry": "ex: Brésil, Éthiopie, Colombie",
+  
+  "regionLabel": "Région",
+  "enterRegion": "ex: Yirgacheffe, Huila",
+  
+  "farmLabel": "Ferme",
+  "enterFarm": "ex: Finca El Paraíso",
+  
+  "altitudeLabel": "Altitude",
+  "enterAltitude": "ex: 1200-1600m",
+  "altitudeHelper": "Altitude de culture en mètres",
+  
+  "speciesLabel": "Espèce",
+  "selectSpecies": "Sélectionner l'espèce",
+  
+  "varietyLabel": "Variété",
+  "enterVariety": "ex: Bourbon, Geisha, Caturra",
+  "varietyHelper": "Variété/cultivar du plant de café",
+  
+  "processingMethodLabel": "Méthode de traitement",
+  "selectProcessingMethod": "Sélectionner la méthode",
+  "processWashed": "Lavé",
+  "processNatural": "Nature",
+  "processAnaerobic": "Anaérobie",
+  "processCarbonicMaceration": "Macération Carbonique",
+  "processWetHulled": "Décortiqué Humide",
+  "processPulpedNatural": "Nature Dépulpé",
+  
+  "decaffeinatedLabel": "Décaféiné",
+  "decaffeinatedHelper": "Cochez si c'est du café décaféiné",
+  
+  "roastLevelLabel": "Niveau de torréfaction",
+  "selectRoastLevel": "Sélectionner le niveau",
+  "roastLight": "Pâle",
+  "roastMedium": "Moyen",
+  "roastDark": "Foncé",
+  
+  "tastingNotesLabel": "Notes de dégustation",
+  "enterTastingNotes": "ex: chocolat, agrumes, floral",
+  "tastingNotesHelper": "Notes de saveur séparées par des virgules",
+  
+  "acidityLabel": "Acidité",
+  "selectAcidity": "Sélectionner le niveau d'acidité",
+  
+  "bodyLabel": "Corps",
+  "selectBody": "Sélectionner le corps",
+  "bodyLight": "Léger",
+  "bodyMedium": "Moyen",
+  "bodyFull": "Corsé",
+  
+  "sweetnessLabel": "Douceur",
+  "selectSweetness": "Sélectionner la douceur",
+  
+  "intensityLow": "Faible",
+  "intensityMedium": "Moyen",
+  "intensityHigh": "Élevé",
+  
+  "organicLabel": "Biologique",
+  "organicHelper": "Cochez si certifié biologique",
+  
+  "fairTradeLabel": "Commerce équitable",
+  "fairTradeHelper": "Cochez si certifié commerce équitable",
+  
+  "notSpecified": "Non spécifié"
 }
