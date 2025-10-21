@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:alc_client/flutter_gen/gen_l10n/app_localizations.dart';
 import '../../models/rateable_item.dart';
 import '../../utils/constants.dart';
 
@@ -27,21 +28,22 @@ class ItemImagePicker extends StatelessWidget {
     final ImagePicker picker = ImagePicker();
 
     // Show options: camera or gallery
+    final l10n = AppLocalizations.of(context)!;
     final source = await showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select image source'),
+        title: Text(l10n.selectImageSource),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
+              title: Text(l10n.gallery),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
+              title: Text(l10n.camera),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
           ],
@@ -64,20 +66,21 @@ class ItemImagePicker extends StatelessWidget {
   }
 
   Future<void> _confirmRemoveImage(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Image'),
-        content: const Text('Are you sure you want to remove this image?'),
+        title: Text(l10n.removeImage),
+        content: Text(l10n.removeImageConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.orange[700]),
-            child: const Text('Remove'),
+            child: Text(l10n.remove),
           ),
         ],
       ),
@@ -91,6 +94,7 @@ class ItemImagePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasImage =
         selectedImage != null ||
         (currentImageUrl != null && currentImageUrl!.isNotEmpty);
@@ -107,7 +111,7 @@ class ItemImagePicker extends StatelessWidget {
             ),
             const SizedBox(width: AppConstants.spacingS),
             Text(
-              'Image:',
+              '${l10n.imageLabel}:',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
@@ -115,7 +119,7 @@ class ItemImagePicker extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              'Optional',
+              l10n.optional,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Colors.grey,
                 fontStyle: FontStyle.italic,
@@ -176,7 +180,7 @@ class ItemImagePicker extends StatelessWidget {
                     hasImage ? Icons.edit : Icons.add_photo_alternate,
                     size: AppConstants.iconM,
                   ),
-                  label: Text(hasImage ? 'Change Image' : 'Add Image'),
+                  label: Text(hasImage ? l10n.changeImage : l10n.addImage),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppConstants.primaryColor,
                     side: BorderSide(color: AppConstants.primaryColor),
@@ -191,7 +195,7 @@ class ItemImagePicker extends StatelessWidget {
                       Icons.delete_outline,
                       size: AppConstants.iconM,
                     ),
-                    label: const Text('Remove Image'),
+                    label: Text(l10n.removeImage),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.orange[700],
                       side: BorderSide(color: Colors.orange[700]!),
@@ -206,6 +210,7 @@ class ItemImagePicker extends StatelessWidget {
   }
 
   Widget _buildPlaceholder(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -217,7 +222,7 @@ class ItemImagePicker extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'No image',
+            l10n.noImage,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
               fontSize: AppConstants.fontS,

@@ -2857,6 +2857,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not specified'**
   String get notSpecified;
+
+  /// Dialog title for choosing image source
+  ///
+  /// In en, this message translates to:
+  /// **'Select image source'**
+  String get selectImageSource;
+
+  /// Gallery option for image picker
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
+  /// Camera option for image picker
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// Remove image button text
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Image'**
+  String get removeImage;
+
+  /// Confirmation message for removing image
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove this image?'**
+  String get removeImageConfirmation;
+
+  /// Remove button text
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// Label for image field
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get imageLabel;
+
+  /// Button text to change existing image
+  ///
+  /// In en, this message translates to:
+  /// **'Change Image'**
+  String get changeImage;
+
+  /// Button text to add new image
+  ///
+  /// In en, this message translates to:
+  /// **'Add Image'**
+  String get addImage;
+
+  /// Placeholder text when no image is available
+  ///
+  /// In en, this message translates to:
+  /// **'No image'**
+  String get noImage;
 }
 
 class _AppLocalizationsDelegate

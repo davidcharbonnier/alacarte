@@ -1660,4 +1660,35 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notSpecified => 'Non spécifié';
+
+  @override
+  String get selectImageSource => 'Sélectionner la source de l\'image';
+
+  @override
+  String get gallery => 'Galerie';
+
+  @override
+  String get camera => 'Caméra';
+
+  @override
+  String get removeImage => 'Supprimer l\'image';
+
+  @override
+  String get removeImageConfirmation =>
+      'Êtes-vous sûr de vouloir supprimer cette image ?';
+
+  @override
+  String get remove => 'Supprimer';
+
+  @override
+  String get imageLabel => 'Image';
+
+  @override
+  String get changeImage => 'Modifier l\'image';
+
+  @override
+  String get addImage => 'Ajouter une image';
+
+  @override
+  String get noImage => 'Aucune image';
 }

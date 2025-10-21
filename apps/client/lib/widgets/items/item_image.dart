@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:alc_client/flutter_gen/gen_l10n/app_localizations.dart';
 import '../../models/rateable_item.dart';
 
 /// Reusable widget for displaying item images with proper fallbacks
@@ -167,7 +168,7 @@ class ItemImageFull extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'No image',
+              AppLocalizations.of(context)!.noImage,
               style: TextStyle(
                 color: Theme.of(
                   context,
