@@ -152,6 +152,25 @@ func main() {
 			})
 		}
 
+		// coffee
+		coffee := api.Group("/coffee")
+		{
+			coffee.POST("/new", controllers.CoffeeCreate)
+			coffee.GET("/all", controllers.CoffeeIndex)
+			coffee.GET("/:id", controllers.CoffeeDetails)
+			coffee.PUT("/:id", controllers.CoffeeEdit)
+			coffee.DELETE("/:id", controllers.CoffeeRemove)
+			// Image management
+			coffee.POST("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "coffee"})
+				controllers.UploadItemImage(c)
+			})
+			coffee.DELETE("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "coffee"})
+				controllers.DeleteItemImage(c)
+			})
+		}
+
 		// rating
 		rating := api.Group("/rating")
 		{
@@ -205,6 +224,15 @@ func main() {
 			wineAdmin.DELETE("/:id", controllers.DeleteWine)
 			wineAdmin.POST("/seed", controllers.SeedWines)
 			wineAdmin.POST("/validate", controllers.ValidateWines)
+		}
+
+		// Coffee admin
+		coffeeAdmin := admin.Group("/coffee")
+		{
+			coffeeAdmin.GET("/:id/delete-impact", controllers.GetCoffeeDeleteImpact)
+			coffeeAdmin.DELETE("/:id", controllers.DeleteCoffee)
+			coffeeAdmin.POST("/seed", controllers.SeedCoffees)
+			coffeeAdmin.POST("/validate", controllers.ValidateCoffees)
 		}
 
 		// User admin
