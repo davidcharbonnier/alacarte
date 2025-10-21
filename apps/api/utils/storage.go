@@ -96,16 +96,25 @@ func UploadToStorage(data io.Reader, filename string, contentType string) (strin
 		return "", fmt.Errorf("failed to read data: %w", err)
 	}
 
-	// Upload to S3
-	_, err = s3Client.PutObject(&s3.PutObjectInput{
+	// Prepare upload input
+	putInput := &s3.PutObjectInput{
 		Bucket:        aws.String(bucketName),
 		Key:           aws.String(filename),
 		Body:          bytes.NewReader(buf.Bytes()),
 		ContentType:   aws.String(contentType),
 		ContentLength: aws.Int64(size),
 		CacheControl:  aws.String("public, max-age=86400"), // 24 hours
-		ACL:           aws.String("public-read"),           // Make publicly readable
-	})
+	}
+
+	// Only set ACL for MinIO (not for GCS)
+	// GCS S3-compatible API doesn't support ACL parameter
+	endpoint := os.Getenv("STORAGE_ENDPOINT")
+	if !strings.Contains(endpoint, "storage.googleapis.com") {
+		putInput.ACL = aws.String("public-read")
+	}
+
+	// Upload to S3
+	_, err = s3Client.PutObject(putInput)
 	if err != nil {
 		return "", fmt.Errorf("failed to upload to storage: %w", err)
 	}
