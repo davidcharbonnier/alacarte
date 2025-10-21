@@ -55,7 +55,18 @@ type Wine struct {
     Origin      string   `json:"origin"`
     Varietal    string   `json:"varietal"`  // Item-specific field
     Description string   `json:"description"`
+    ImageURL    *string  `json:"image_url,omitempty"`  // Required for image support!
     Ratings     []Rating `gorm:"polymorphic:Item;"`  // Required!
+}
+
+// GetImageURL implements ItemWithImage interface
+func (w *Wine) GetImageURL() *string {
+    return w.ImageURL
+}
+
+// SetImageURL implements ItemWithImage interface
+func (w *Wine) SetImageURL(url *string) {
+    w.ImageURL = url
 }
 ```
 
@@ -64,6 +75,8 @@ type Wine struct {
 - `gorm:"unique"` on Name prevents duplicates
 - `gorm:"polymorphic:Item;"` enables rating system
 - JSON tags lowercase match frontend expectations
+- **ImageURL field required** for image upload support
+- **Implement ItemWithImage interface** (GetImageURL/SetImageURL methods)
 
 #### Step 2: Create Controller (~25 min)
 
@@ -101,6 +114,15 @@ wineItem.Use(utils.RequireAuth())
     wineItem.GET("/:id", controllers.WineDetails)
     wineItem.PUT("/:id", controllers.WineEdit)
     wineItem.DELETE("/:id", controllers.WineRemove)
+    // Image management
+    wineItem.POST("/:id/image", func(c *gin.Context) {
+        c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
+        controllers.UploadItemImage(c)
+    })
+    wineItem.DELETE("/:id/image", func(c *gin.Context) {
+        c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
+        controllers.DeleteItemImage(c)
+    })
 }
 
 // Admin routes
@@ -130,7 +152,54 @@ func RunMigrations() {
 }
 ```
 
-#### Step 5: Add Seeding (~15 min)
+#### Step 5: Update Item Helper (~3 min)
+
+**File:** `apps/api/utils/item_helper.go`
+
+Add wine support in three places:
+
+```go
+// 1. Add compile-time interface check
+var (
+    _ ItemWithImage = (*models.Cheese)(nil)
+    _ ItemWithImage = (*models.Gin)(nil)
+    _ ItemWithImage = (*models.Wine)(nil)  // ADD THIS
+)
+
+// 2. Add case to GetItemByType
+func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
+    var model interface{}
+    
+    switch itemType {
+    case "cheese":
+        model = &models.Cheese{}
+    case "gin":
+        model = &models.Gin{}
+    case "wine":  // ADD THIS
+        model = &models.Wine{}
+    default:
+        return nil, fmt.Errorf("invalid item type: %s", itemType)
+    }
+    // ... rest of function
+}
+
+// 3. Add to ValidateItemType
+func ValidateItemType(itemType string) bool {
+    validTypes := map[string]bool{
+        "cheese": true,
+        "gin":    true,
+        "wine":   true,  // ADD THIS
+    }
+    return validTypes[itemType]
+}
+```
+
+**Why this matters:**
+- Enables generic image upload/delete endpoints
+- Type validation for image operations
+- Compile-time safety ensures interface compliance
+
+#### Step 6: Add Seeding (~15 min)
 
 **File:** `apps/api/utils/database.go`
 
@@ -147,7 +216,7 @@ if result.Error == gorm.ErrRecordNotFound {
 }
 ```
 
-#### Step 6: Configure Environment (~2 min)
+#### Step 7: Configure Environment (~2 min)
 
 **File:** `apps/api/.env`
 
@@ -156,7 +225,7 @@ WINE_DATA_SOURCE=../alacarte-seed/wines.json
 RUN_SEEDING=true
 ```
 
-#### Step 7: Test Backend (~8 min)
+#### Step 8: Test Backend (~8 min)
 
 ```bash
 # Reset and seed
@@ -166,6 +235,11 @@ RUN_SEEDING=true go run main.go
 # Test endpoints
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/wine/all
 curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/admin/wine/1/delete-impact
+
+# Test image upload
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+  -F "image=@wine.jpg" \
+  http://localhost:8080/api/wine/1/image
 ```
 
 **✅ Backend Complete!** See [Backend Checklist](backend-checklist.md) for detailed steps.
@@ -527,7 +601,10 @@ See [Admin Checklist](admin-checklist.md) for details.
 
 ### Backend
 - [ ] Model created with polymorphic ratings
+- [ ] Model implements ItemWithImage interface (GetImageURL/SetImageURL)
 - [ ] All 9 endpoints working (5 public + 4 admin)
+- [ ] Image upload/delete endpoints working
+- [ ] Item helper updated (compile check, GetItemByType, ValidateItemType)
 - [ ] Migration creates table on startup
 - [ ] Seeding loads data with natural key matching
 - [ ] Admin endpoints require authentication
