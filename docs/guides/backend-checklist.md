@@ -29,7 +29,18 @@ type Wine struct {
     Designation string   `json:"designation"`
     Sugar       float64  `json:"sugar"`
     Organic     bool     `json:"organic" gorm:"default:false"`
+    ImageURL    *string  `json:"image_url,omitempty"`  // Required for image support!
     Ratings     []Rating `gorm:"polymorphic:Item;"`
+}
+
+// GetImageURL implements ItemWithImage interface
+func (w *Wine) GetImageURL() *string {
+    return w.ImageURL
+}
+
+// SetImageURL implements ItemWithImage interface
+func (w *Wine) SetImageURL(url *string) {
+    w.ImageURL = url
 }
 ```
 
@@ -40,6 +51,9 @@ type Wine struct {
 - [ ] Polymorphic ratings: `gorm:"polymorphic:Item;"`
 - [ ] JSON tags lowercase
 - [ ] Support for both required and optional fields
+- [ ] **ImageURL field added** (`*string` type)
+- [ ] **GetImageURL() method implemented**
+- [ ] **SetImageURL() method implemented**
 
 ---
 
@@ -133,6 +147,15 @@ wineItem.Use(utils.RequireAuth())
     wineItem.GET("/:id", controllers.WineDetails)
     wineItem.PUT("/:id", controllers.WineEdit)
     wineItem.DELETE("/:id", controllers.WineRemove)
+    // Image management
+    wineItem.POST("/:id/image", func(c *gin.Context) {
+        c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
+        controllers.UploadItemImage(c)
+    })
+    wineItem.DELETE("/:id/image", func(c *gin.Context) {
+        c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
+        controllers.DeleteItemImage(c)
+    })
 }
 ```
 
@@ -153,6 +176,8 @@ wineAdmin.Use(utils.RequireAuth(), utils.RequireAdmin())
 - [ ] Admin routes added to `/admin` group
 - [ ] Authentication middleware applied
 - [ ] All 5 CRUD endpoints registered
+- [ ] **Image upload endpoint registered** (POST /:id/image)
+- [ ] **Image delete endpoint registered** (DELETE /:id/image)
 - [ ] All 4 admin endpoints registered
 
 ---
@@ -176,7 +201,55 @@ err := DB.AutoMigrate(
 
 ---
 
-### **5. Seeding is Handled by Admin Panel** ✅
+### **5. Update Item Helper** (~3 min)
+**File:** `utils/item_helper.go`
+
+Add wine support in three places:
+
+```go
+// 1. Add compile-time interface check
+var (
+    _ ItemWithImage = (*models.Cheese)(nil)
+    _ ItemWithImage = (*models.Gin)(nil)
+    _ ItemWithImage = (*models.Wine)(nil)  // ADD THIS
+)
+
+// 2. Add case to GetItemByType
+func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
+    var model interface{}
+    
+    switch itemType {
+    case "cheese":
+        model = &models.Cheese{}
+    case "gin":
+        model = &models.Gin{}
+    case "wine":  // ADD THIS
+        model = &models.Wine{}
+    default:
+        return nil, fmt.Errorf("invalid item type: %s", itemType)
+    }
+    // ... rest of function
+}
+
+// 3. Add to ValidateItemType
+func ValidateItemType(itemType string) bool {
+    validTypes := map[string]bool{
+        "cheese": true,
+        "gin":    true,
+        "wine":   true,  // ADD THIS
+    }
+    return validTypes[itemType]
+}
+```
+
+**Checklist:**
+- [ ] Add compile-time interface check
+- [ ] Add case to `GetItemByType()` switch
+- [ ] Add item type to `ValidateItemType()` map
+
+---
+
+### **6. Seeding is Handled by Admin Panel** ✅
 
 **No backend seeding code needed!** Seeding is done through the admin panel using:
 - `POST /admin/wine/seed` - Accepts `{"url": "..."}` OR `{"data": {...}}`
@@ -190,7 +263,7 @@ The generic `utils.GetSeedData()` helper handles both URL and direct file upload
 
 ---
 
-### **6. Skip Environment Config** ✅
+### **7. Skip Environment Config** ✅
 
 No environment variables needed! Seeding is handled through the admin panel.
 
@@ -199,7 +272,7 @@ No environment variables needed! Seeding is handled through the admin panel.
 
 ---
 
-### **7. Create Seed Data** (~varies)
+### **8. Create Seed Data** (~varies)
 **File:** `alacarte-seed/wines.json` (separate location)
 
 ```json
@@ -233,15 +306,15 @@ No environment variables needed! Seeding is handled through the admin panel.
 
 ---
 
-### **8. Removed - Admin endpoints now in step 2** ✅
+### **9. Removed - Admin endpoints now in step 2** ✅
 
 ---
 
-### **9. Removed - Admin routes now in step 3** ✅
+### **10. Removed - Admin routes now in step 3** ✅
 
 ---
 
-### **8. Test Backend** (~10 min)
+### **11. Test Backend** (~10 min)
 
 ```bash
 # Start API
@@ -267,6 +340,15 @@ curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"data":{"wines":[{...}]}}' \
   http://localhost:8080/admin/wine/seed
+
+# Test image upload
+curl -X POST -H "Authorization: Bearer $JWT_TOKEN" \
+  -F "image=@wine.jpg" \
+  http://localhost:8080/api/wine/1/image
+
+# Test image delete
+curl -X DELETE -H "Authorization: Bearer $JWT_TOKEN" \
+  http://localhost:8080/api/wine/1/image
 ```
 
 **Checklist:**
@@ -276,6 +358,8 @@ curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
 - [ ] POST /api/wine/new creates wine
 - [ ] PUT /api/wine/:id updates wine
 - [ ] DELETE /api/wine/:id deletes wine
+- [ ] **POST /api/wine/:id/image uploads image**
+- [ ] **DELETE /api/wine/:id/image deletes image**
 - [ ] GET /admin/wine/:id/delete-impact requires admin
 - [ ] GET /admin/wine/:id/delete-impact shows impact
 - [ ] DELETE /admin/wine/:id cascade deletes
@@ -289,9 +373,12 @@ curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
 
 Backend is complete when:
 - ✅ Model with GORM polymorphic ratings
+- ✅ Model implements ItemWithImage interface
 - ✅ All 5 CRUD endpoints working
+- ✅ Image upload/delete endpoints working
 - ✅ All 4 admin endpoints working
 - ✅ Auto-migration creates table
+- ✅ Item helper updated with new type
 - ✅ Seed/validate endpoints support both URL and file upload
 - ✅ Natural key prevents duplicates
 - ✅ API returns correct JSON format
