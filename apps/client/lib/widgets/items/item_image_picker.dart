@@ -11,6 +11,7 @@ class ItemImagePicker extends StatelessWidget {
   final String itemType;
   final bool enabled;
   final Function(File?) onImageSelected;
+  final VoidCallback? onImageRemoved;
 
   const ItemImagePicker({
     super.key,
@@ -19,11 +20,12 @@ class ItemImagePicker extends StatelessWidget {
     required this.itemType,
     required this.enabled,
     required this.onImageSelected,
+    this.onImageRemoved,
   });
 
   Future<void> _pickImage(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
-    
+
     // Show options: camera or gallery
     final source = await showDialog<ImageSource>(
       context: context,
@@ -61,9 +63,37 @@ class ItemImagePicker extends StatelessWidget {
     }
   }
 
+  Future<void> _confirmRemoveImage(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Image'),
+        content: const Text('Are you sure you want to remove this image?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.orange[700]),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && onImageRemoved != null) {
+      onImageRemoved!();
+      onImageSelected(null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasImage = selectedImage != null || (currentImageUrl != null && currentImageUrl!.isNotEmpty);
+    final hasImage =
+        selectedImage != null ||
+        (currentImageUrl != null && currentImageUrl!.isNotEmpty);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,17 +109,17 @@ class ItemImagePicker extends StatelessWidget {
             Text(
               'Image:',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
             ),
             const Spacer(),
             Text(
               'Optional',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
-                  ),
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
         ),
@@ -114,23 +144,20 @@ class ItemImagePicker extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppConstants.radiusM),
               child: hasImage
                   ? (selectedImage != null
-                      ? Image.file(
-                          selectedImage!,
-                          fit: BoxFit.contain,
-                        )
-                      : Image.network(
-                          currentImageUrl!,
-                          fit: BoxFit.contain,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholder(context);
-                          },
-                        ))
+                        ? Image.file(selectedImage!, fit: BoxFit.contain)
+                        : Image.network(
+                            currentImageUrl!,
+                            fit: BoxFit.contain,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildPlaceholder(context);
+                            },
+                          ))
                   : _buildPlaceholder(context),
             ),
           ),
@@ -141,19 +168,37 @@ class ItemImagePicker extends StatelessWidget {
         // Pick/Change image button
         if (enabled)
           Center(
-            child: OutlinedButton.icon(
-              onPressed: () => _pickImage(context),
-              icon: Icon(
-                hasImage ? Icons.edit : Icons.add_photo_alternate,
-                size: AppConstants.iconM,
-              ),
-              label: Text(
-                hasImage ? 'Change Image' : 'Add Image',
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppConstants.primaryColor,
-                side: BorderSide(color: AppConstants.primaryColor),
-              ),
+            child: Column(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _pickImage(context),
+                  icon: Icon(
+                    hasImage ? Icons.edit : Icons.add_photo_alternate,
+                    size: AppConstants.iconM,
+                  ),
+                  label: Text(hasImage ? 'Change Image' : 'Add Image'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppConstants.primaryColor,
+                    side: BorderSide(color: AppConstants.primaryColor),
+                  ),
+                ),
+                // Remove image button (only show if image exists)
+                if (hasImage && onImageRemoved != null) ...[
+                  const SizedBox(height: AppConstants.spacingS),
+                  OutlinedButton.icon(
+                    onPressed: () => _confirmRemoveImage(context),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      size: AppConstants.iconM,
+                    ),
+                    label: const Text('Remove Image'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.orange[700],
+                      side: BorderSide(color: Colors.orange[700]!),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
       ],

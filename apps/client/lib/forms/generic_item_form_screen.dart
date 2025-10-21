@@ -49,6 +49,8 @@ class _GenericItemFormScreenState<T extends RateableItem>
   String? _error;
   bool _hasChanges = false;
   File? _selectedImage;
+  bool _imageRemoved = false;
+  String? _oldImageUrl; // Capture image URL before form submission
 
   @override
   void initState() {
@@ -157,12 +159,26 @@ class _GenericItemFormScreenState<T extends RateableItem>
       return;
     }
 
+    // Capture the current image URL BEFORE we start any operations
+    _oldImageUrl = _getCurrentImageUrl();
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
+      // If user is removing an image, delete it FIRST before updating the item
+      // This ensures the DELETE endpoint sees the image still in the database
+      if (_imageRemoved && _isEditMode && _oldImageUrl != null && _oldImageUrl!.isNotEmpty && widget.itemId != null) {
+        final imageService = ref.read(imageServiceProvider);
+        final bool deleted = await imageService.deleteImage(widget.itemType, widget.itemId!);
+        if (deleted) {
+          // Clear old image from cache
+          await DefaultCacheManager().removeFile(_oldImageUrl!);
+        }
+      }
+
       // Strategy builds the item from controllers
       final item = _strategy.buildItem(_controllers, widget.itemId);
 
@@ -193,35 +209,45 @@ class _GenericItemFormScreenState<T extends RateableItem>
       }
 
       // Handle image upload if item creation/update was successful
-      if (success && createdItemId != null && _selectedImage != null) {
+      if (success && createdItemId != null) {
         final imageService = ref.read(imageServiceProvider);
 
-        final imageUrl = await imageService.uploadImage(
-          widget.itemType,
-          createdItemId,
-          _selectedImage!,
-        );
+        // If user selected a new image, upload it
+        if (_selectedImage != null) {
+          final imageUrl = await imageService.uploadImage(
+            widget.itemType,
+            createdItemId,
+            _selectedImage!,
+          );
 
-        if (imageUrl == null) {
-          // Image upload failed, but item was created/updated
-          // Show warning but don't fail the whole operation
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Item saved, but image upload failed'),
-                backgroundColor: Colors.orange,
-              ),
-            );
+          if (imageUrl == null) {
+            // Image upload failed, but item was created/updated
+            // Show warning but don't fail the whole operation
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Item saved, but image upload failed'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          } else {
+            // Image uploaded successfully - use granular cache clearing
+            // 1. Clear old image from cache (if exists)
+            if (_isEditMode && _oldImageUrl != null) {
+              await DefaultCacheManager().removeFile(_oldImageUrl!);
+            }
+            // 2. Invalidate this item from provider state
+            ItemProviderHelper.invalidateItem(ref, widget.itemType, createdItemId);
+            // 3. Reload this item immediately so it's back in provider state
+            await ItemProviderHelper.loadSpecificItems(ref, widget.itemType, [createdItemId]);
           }
-        } else {
-          // Image uploaded successfully - use granular cache clearing
-          // 1. Clear old image from cache (if exists)
-          if (_isEditMode && _getCurrentImageUrl() != null) {
-            await DefaultCacheManager().removeFile(_getCurrentImageUrl()!);
-          }
-          // 2. Invalidate this item from provider state
+        }
+
+        // If image was removed, we already deleted it before the PUT
+        // Just invalidate and reload to refresh the UI
+        if (_imageRemoved && _isEditMode) {
           ItemProviderHelper.invalidateItem(ref, widget.itemType, createdItemId);
-          // 3. Reload this item immediately so it's back in provider state
           await ItemProviderHelper.loadSpecificItems(ref, widget.itemType, [createdItemId]);
         }
       }
@@ -749,13 +775,25 @@ class _GenericItemFormScreenState<T extends RateableItem>
 
   Widget _buildImagePicker() {
     return ItemImagePicker(
-      currentImageUrl: _getCurrentImageUrl(),
+      currentImageUrl: _imageRemoved ? null : _getCurrentImageUrl(),
       selectedImage: _selectedImage,
       itemType: widget.itemType,
       enabled: !_isLoading,
       onImageSelected: (file) {
         setState(() {
           _selectedImage = file;
+          _hasChanges = true;
+          if (file == null && _getCurrentImageUrl() != null) {
+            _imageRemoved = true;
+          } else {
+            _imageRemoved = false;
+          }
+        });
+      },
+      onImageRemoved: () {
+        setState(() {
+          _selectedImage = null;
+          _imageRemoved = true;
           _hasChanges = true;
         });
       },
