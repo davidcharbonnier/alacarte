@@ -1,5 +1,20 @@
 # @alacarte/api
 
+## [0.5.0](https://github.com/davidcharbonnier/alacarte/compare/v0.4.0...v0.5.0) (2025-10-21)
+
+
+### Features
+
+* **api:** Implement image upload and storage to S3 compatible storage ([4ecfac6](https://github.com/davidcharbonnier/alacarte/commit/4ecfac64f2ac0484054a01a228d52458377754b0))
+* **api:** Make image download a user API endpoint ([8a70b26](https://github.com/davidcharbonnier/alacarte/commit/8a70b26dc345361c4058f4fb290f682555d7d664))
+
+
+### Bug Fixes
+
+* **api:** Add GCS compatibility for image storage ([b6af916](https://github.com/davidcharbonnier/alacarte/commit/b6af9165ede8540bf076481bc5abd4fb75eea34f))
+* **api:** Move image management endpoints into item type groups ([73d57a8](https://github.com/davidcharbonnier/alacarte/commit/73d57a85a4be2a7fca16e11da87daabe1c75342e))
+* **api:** Support EXIF orientation before storing image ([83a05b7](https://github.com/davidcharbonnier/alacarte/commit/83a05b741905b66a415f640f180aea529d58680c))
+
 ## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/api-v0.3.1...api-v0.4.0) (2025-10-17)
 
 

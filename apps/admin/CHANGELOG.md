@@ -1,5 +1,13 @@
 # @alacarte/admin
 
+## [0.5.0](https://github.com/davidcharbonnier/alacarte/compare/v0.4.0...v0.5.0) (2025-10-21)
+
+
+### Features
+
+* **admin:** Implement item image display on admin panel ([51817d7](https://github.com/davidcharbonnier/alacarte/commit/51817d756dd31c7c5121f637a73653419f16c0d7))
+* **admin:** Update image API endpoints ([dca755c](https://github.com/davidcharbonnier/alacarte/commit/dca755cebdcaf76b3fe2ace4d272aa17f3383cf0))
+
 ## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/v0.3.1...v0.4.0) (2025-10-18)
 
 
