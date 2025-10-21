@@ -12,6 +12,7 @@ import '../../models/rateable_item.dart';
 import '../../models/cheese_item.dart';
 import '../../models/gin_item.dart';
 import '../../models/wine_item.dart';
+import '../../models/coffee_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/appbar_helper.dart';
@@ -112,6 +113,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       GoRouter.of(context).go(RouteNames.ginCreate);
     } else if (widget.itemType == 'wine') {
       GoRouter.of(context).go(RouteNames.wineCreate);
+    } else if (widget.itemType == 'coffee') {
+      GoRouter.of(context).go(RouteNames.coffeeCreate);
     } else {
       // Future enhancement: support other item types
       GoRouter.of(context).go(RouteNames.cheeseCreate);
@@ -440,6 +443,26 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                   fontWeight:
                       widget.itemType == 'wine' ? FontWeight.bold : FontWeight.normal,
                   color: widget.itemType == 'wine' ? const Color(0xFF8E24AA) : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'coffee',
+          child: Row(
+            children: [
+              Icon(
+                Icons.local_cafe,
+                color: widget.itemType == 'coffee' ? Colors.brown : null,
+              ),
+              const SizedBox(width: AppConstants.spacingS),
+              Text(
+                ItemTypeLocalizer.getLocalizedItemType(context, 'coffee'),
+                style: TextStyle(
+                  fontWeight:
+                      widget.itemType == 'coffee' ? FontWeight.bold : FontWeight.normal,
+                  color: widget.itemType == 'coffee' ? Colors.brown : null,
                 ),
               ),
             ],
@@ -887,6 +910,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     } else if (item is GinItem) {
       imageUrl = item.imageUrl;
     } else if (item is WineItem) {
+      imageUrl = item.imageUrl;
+    } else if (item is CoffeeItem) {
       imageUrl = item.imageUrl;
     }
 

@@ -63,6 +63,8 @@ class ItemTypeHelper {
         return 'Gin';
       case 'wine':
         return 'Wine';
+      case 'coffee':
+        return 'Coffee';
       default:
         return itemType.capitalized;
     }
@@ -106,7 +108,7 @@ class ItemTypeHelper {
   
   /// Check if item type is supported
   static bool isItemTypeSupported(String itemType) {
-    const supportedTypes = ['cheese', 'gin', 'wine']; // Add more as they're implemented
+    const supportedTypes = ['cheese', 'gin', 'wine', 'coffee']; // Add more as they're implemented
     return supportedTypes.contains(itemType.toLowerCase());
   }
 }

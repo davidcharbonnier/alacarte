@@ -1,7 +1,7 @@
 # Adding New Item Types - Complete Platform Guide
 
 **Last Updated:** January 2025  
-**Current Item Types:** Cheese, Gin, Wine  
+**Current Item Types:** Cheese, Gin, Wine, Coffee  
 **Total Time:** ~2 hours (Backend: 65 min | Client: 50 min | Admin: 5 min)
 
 This guide covers the complete process of adding a new item type (e.g., wine, beer, coffee) to the A la carte platform across all three applications.
@@ -441,10 +441,25 @@ static final Map<String, ItemFormStrategy> _strategies = {
 
 - **Routes:** Add wineCreate, wineEdit to route_names.dart and app_router.dart
 - **Navigation:** Add wine cases to item_type_screen.dart and item_detail_screen.dart
-- **ItemProviderHelper:** Add 'wine' case to all 15 methods
+- **ItemProviderHelper:** Add 'wine' case to all 16 methods
 - **ItemTypeHelper:** Add wine icon, color, and supported check
 - **Home Screen:** Add wine card with item count
 - **Item Type Switcher:** Add wine option to dropdown
+- **Item List Images:** Add wine case to `_buildItemCard()` in item_type_screen.dart:
+  ```dart
+  // Add import at top
+  import '../../models/wine_item.dart';
+  
+  // In _buildItemCard method:
+  String? imageUrl;
+  if (item is CheeseItem) {
+    imageUrl = item.imageUrl;
+  } else if (item is GinItem) {
+    imageUrl = item.imageUrl;
+  } else if (item is WineItem) {  // ← ADD THIS
+    imageUrl = item.imageUrl;
+  }
+  ```
 
 #### Step 12: Add Localization (~5 min) ⚠️
 
@@ -700,6 +715,8 @@ Thanks to the generic architecture and October 2025 refactorings:
 - "No form strategy registered" → Add to item_form_strategy_registry.dart
 - "Method 'wine' isn't defined" → Add wine to app_en.arb/app_fr.arb + run gen-l10n
 - "Search hints showing wrong type" → Update ItemTypeLocalizer.getLocalizedItemType()
+- "Images not displaying in item list" → Add wine case to _buildItemCard() in item_type_screen.dart with import
+- "Routes not working / 404 errors" → Check RouteNames constants have leading slash (e.g., '/wine/create' not 'wineCreate')
 
 **Admin:**
 - Config not loading → Check syntax in item-types.ts

@@ -315,6 +315,12 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
         return context.l10n.country;
       case 'region':
         return context.l10n.region;
+      case 'roaster':
+        return context.l10n.roasterLabel;
+      case 'processing_method':
+        return context.l10n.processingMethodLabel;
+      case 'roast_level':
+        return context.l10n.roastLevelLabel;
       default:
         return categoryKey;
     }

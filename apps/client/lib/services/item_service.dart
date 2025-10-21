@@ -3,6 +3,7 @@ import '../models/rateable_item.dart';
 import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
 import '../models/wine_item.dart';
+import '../models/coffee_item.dart';
 import '../models/api_response.dart';
 import '../services/api_service.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -533,5 +534,176 @@ final wineItemServiceProvider = Provider<WineItemService>(
   (ref) {
     // Return singleton instance to preserve cache across provider reads
     return WineItemService._instance;
+  },
+);
+
+/// Concrete implementation for Coffee items
+class CoffeeItemService extends ItemService<CoffeeItem> {
+  // Singleton pattern to preserve cache across provider recreations
+  static final CoffeeItemService _instance = CoffeeItemService._internal();
+  
+  factory CoffeeItemService() => _instance;
+  
+  CoffeeItemService._internal();
+  
+  // Cache for avoiding duplicate API calls
+  ApiResponse<List<CoffeeItem>>? _cachedResponse;
+  DateTime? _cacheTime;
+  static const Duration _cacheExpiry = Duration(minutes: 5);
+  
+  @override
+  String get itemTypeEndpoint => '/api/coffee';
+
+  @override
+  CoffeeItem Function(dynamic) get fromJson =>
+      (dynamic json) => CoffeeItem.fromJson(json as Map<String, dynamic>);
+
+  @override
+  List<String> Function(CoffeeItem) get validateItem => _validateCoffeeItem;
+  
+  @override
+  Future<ApiResponse<List<CoffeeItem>>> getAllItems() async {
+    // Check if we have valid cached data
+    if (_cachedResponse != null && _cacheTime != null) {
+      final age = DateTime.now().difference(_cacheTime!);
+      if (age < _cacheExpiry) {
+        return _cachedResponse!;
+      }
+    }
+    
+    // Make API call and cache result
+    final response = await handleListResponse<CoffeeItem>(get('$itemTypeEndpoint/all'), fromJson);
+    
+    // Cache successful responses
+    if (response is ApiSuccess<List<CoffeeItem>>) {
+      _cachedResponse = response;
+      _cacheTime = DateTime.now();
+    }
+    
+    return response;
+  }
+  
+  /// Clear cache (useful for testing or after data changes)
+  Future<void> clearCache() async {
+    _cachedResponse = null;
+    _cacheTime = null;
+    // Also clear image cache and wait for completion
+    try {
+      await DefaultCacheManager().emptyCache();
+    } catch (e) {
+      print('Failed to clear image cache: $e');
+    }
+  }
+
+  static List<String> _validateCoffeeItem(CoffeeItem coffee) {
+    final errors = <String>[];
+
+    if (coffee.name.trim().isEmpty) {
+      errors.add('Name is required');
+    }
+
+    if (coffee.roaster.trim().isEmpty) {
+      errors.add('Roaster is required');
+    }
+
+    return errors;
+  }
+
+  /// Get unique coffee roasters for filtering
+  Future<ApiResponse<List<String>>> getCoffeeRoasters() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (coffees, _) {
+        final roasters = CoffeeItemExtension.getUniqueRoasters(coffees);
+        return ApiResponseHelper.success(roasters);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Get unique coffee countries for filtering
+  Future<ApiResponse<List<String>>> getCoffeeCountries() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (coffees, _) {
+        final countries = CoffeeItemExtension.getUniqueCountries(coffees);
+        return ApiResponseHelper.success(countries);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Get unique coffee regions for filtering
+  Future<ApiResponse<List<String>>> getCoffeeRegions() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (coffees, _) {
+        final regions = CoffeeItemExtension.getUniqueRegions(coffees);
+        return ApiResponseHelper.success(regions);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Get unique coffee processing methods for filtering
+  Future<ApiResponse<List<String>>> getCoffeeProcessingMethods() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (coffees, _) {
+        final methods = CoffeeItemExtension.getUniqueProcessingMethods(coffees);
+        return ApiResponseHelper.success(methods);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Get unique coffee roast levels for filtering
+  Future<ApiResponse<List<String>>> getCoffeeRoastLevels() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (coffees, _) {
+        final roastLevels = CoffeeItemExtension.getUniqueRoastLevels(coffees);
+        return ApiResponseHelper.success(roastLevels);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+}
+
+/// Provider for CoffeeItemService (cached to preserve service-level cache)
+final coffeeItemServiceProvider = Provider<CoffeeItemService>(
+  (ref) {
+    // Return singleton instance to preserve cache across provider reads
+    return CoffeeItemService._instance;
   },
 );

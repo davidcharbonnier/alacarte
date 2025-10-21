@@ -2,8 +2,9 @@
 
 **Use this checklist when implementing a new item type frontend**
 
-**Time Estimate:** ~71 minutes (with Strategy Pattern)  
-**Last Updated:** January 2025
+**Time Estimate:** ~96 minutes (with Strategy Pattern)  
+**Last Updated:** January 2025  
+**Current Item Types:** Cheese, Gin, Wine, Coffee
 
 **⭐ What Works Automatically:** Rating system, Privacy settings, Item type filtering, Navigation, Offline support, Community stats
 
@@ -245,9 +246,15 @@ FormFieldConfig.multiline(
 ### **7. Update Routes** (~3 min)
 
 **File:** `lib/routes/route_names.dart`
-- [ ] `wineCreate` and `wineEdit` added to RouteNames class
+- [ ] `wineCreate` and `wineEdit` added to RouteNames class **with leading slash**:
+  ```dart
+  static const String wineCreate = '/wine/create';  // ← Must have leading /
+  static const String wineEdit = '/wine/edit';      // ← Must have leading /
+  ```
 - [ ] `wineId` added to RouteParams class
 - [ ] `wineCreate` and `wineEdit` paths added to RoutePaths class
+
+**⚠️ Critical:** Route names in RouteNames class must include the leading slash or navigation will fail!
 
 **File:** `lib/routes/app_router.dart`
 - [ ] **Import added:** `import '../screens/wine/wine_form_screens.dart';`
@@ -331,6 +338,22 @@ Add `case 'wine':` to **ALL 16 methods:**
   - Proper color
   - Localized name
   - Selection highlighting
+
+- [ ] **Import added at TOP:** `import '../../models/wine_item.dart';`
+- [ ] Wine case added to `_buildItemCard()` method for image display:
+  ```dart
+  // Get image URL based on item type
+  String? imageUrl;
+  if (item is CheeseItem) {
+    imageUrl = item.imageUrl;
+  } else if (item is GinItem) {
+    imageUrl = item.imageUrl;
+  } else if (item is WineItem) {
+    imageUrl = item.imageUrl;  // ← ADD THIS
+  }
+  ```
+
+**⚠️ Why Critical:** Without this, images won't display in the item list cards!
 
 ---
 
@@ -597,6 +620,12 @@ Your new item type is complete when:
 
 **Filter chips show "color" instead of "Couleur"**
 → Update _getLocalizedCategoryName() in item_search_filter.dart
+
+**Images not displaying in item list**
+→ Missing wine case in _buildItemCard() method in item_type_screen.dart. Must add import and type check.
+
+**Routes not working / Create and Edit buttons give 404 errors**
+→ Check RouteNames class constants have leading slash. Should be '/wine/create' not 'wineCreate'. Easy to miss when copying!
 
 **Edit/Create buttons navigate to wrong screens**
 → Routes not registered OR navigation switch statement missing wine case

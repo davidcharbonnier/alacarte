@@ -1402,10 +1402,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterColor => 'Enter color';
 
   @override
-  String get enterCountry => 'Enter country';
+  String get enterCountry => 'e.g., Brazil, Ethiopia, Colombia';
 
   @override
-  String get enterRegion => 'Enter region';
+  String get enterRegion => 'e.g., Yirgacheffe, Huila';
 
   @override
   String get enterGrape => 'Enter grape varieties';
@@ -1456,11 +1456,179 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectColor => 'Select color';
 
   @override
-  String get organicHelper => 'Certified organic wine';
+  String get organicHelper => 'Check if certified organic';
 
   @override
   String get yes => 'Yes';
 
   @override
   String get no => 'No';
+
+  @override
+  String get coffee => 'Coffee';
+
+  @override
+  String get coffees => 'Coffees';
+
+  @override
+  String get createCoffee => 'Create Coffee';
+
+  @override
+  String get editCoffee => 'Edit Coffee';
+
+  @override
+  String get coffeeCreated => 'Coffee created successfully!';
+
+  @override
+  String get coffeeUpdated => 'Coffee updated successfully!';
+
+  @override
+  String get coffeeDeleted => 'Coffee deleted successfully!';
+
+  @override
+  String get roasterLabel => 'Roaster';
+
+  @override
+  String get roasterRequired => 'Roaster is required';
+
+  @override
+  String get enterRoaster => 'Enter roaster name';
+
+  @override
+  String get enterCoffeeName => 'Enter coffee name';
+
+  @override
+  String get countryLabel => 'Country';
+
+  @override
+  String get regionLabel => 'Region';
+
+  @override
+  String get farmLabel => 'Farm';
+
+  @override
+  String get enterFarm => 'e.g., Finca El Paraíso';
+
+  @override
+  String get altitudeLabel => 'Altitude';
+
+  @override
+  String get enterAltitude => 'e.g., 1200-1600m';
+
+  @override
+  String get altitudeHelper => 'Growing altitude in meters';
+
+  @override
+  String get speciesLabel => 'Species';
+
+  @override
+  String get selectSpecies => 'Select species';
+
+  @override
+  String get varietyLabel => 'Variety';
+
+  @override
+  String get enterVariety => 'e.g., Bourbon, Geisha, Caturra';
+
+  @override
+  String get varietyHelper => 'Coffee plant variety/cultivar';
+
+  @override
+  String get processingMethodLabel => 'Processing Method';
+
+  @override
+  String get selectProcessingMethod => 'Select processing method';
+
+  @override
+  String get processWashed => 'Washed';
+
+  @override
+  String get processNatural => 'Natural';
+
+  @override
+  String get processAnaerobic => 'Anaerobic';
+
+  @override
+  String get processCarbonicMaceration => 'Carbonic Maceration';
+
+  @override
+  String get processWetHulled => 'Wet-Hulled';
+
+  @override
+  String get processPulpedNatural => 'Pulped Natural';
+
+  @override
+  String get decaffeinatedLabel => 'Decaffeinated';
+
+  @override
+  String get decaffeinatedHelper => 'Check if this is decaffeinated coffee';
+
+  @override
+  String get roastLevelLabel => 'Roast Level';
+
+  @override
+  String get selectRoastLevel => 'Select roast level';
+
+  @override
+  String get roastLight => 'Light';
+
+  @override
+  String get roastMedium => 'Medium';
+
+  @override
+  String get roastDark => 'Dark';
+
+  @override
+  String get tastingNotesLabel => 'Tasting Notes';
+
+  @override
+  String get enterTastingNotes => 'e.g., chocolate, citrus, floral';
+
+  @override
+  String get tastingNotesHelper => 'Comma-separated flavor notes';
+
+  @override
+  String get acidityLabel => 'Acidity';
+
+  @override
+  String get selectAcidity => 'Select acidity level';
+
+  @override
+  String get bodyLabel => 'Body';
+
+  @override
+  String get selectBody => 'Select body level';
+
+  @override
+  String get bodyLight => 'Light';
+
+  @override
+  String get bodyMedium => 'Medium';
+
+  @override
+  String get bodyFull => 'Full';
+
+  @override
+  String get sweetnessLabel => 'Sweetness';
+
+  @override
+  String get selectSweetness => 'Select sweetness level';
+
+  @override
+  String get intensityLow => 'Low';
+
+  @override
+  String get intensityMedium => 'Medium';
+
+  @override
+  String get intensityHigh => 'High';
+
+  @override
+  String get fairTradeLabel => 'Fair Trade';
+
+  @override
+  String get fairTradeHelper => 'Check if fair trade certified';
+
+  @override
+  String get notSpecified => 'Not specified';
 }
