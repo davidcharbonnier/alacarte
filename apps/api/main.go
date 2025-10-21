@@ -103,6 +103,15 @@ func main() {
 			cheese.GET("/:id", controllers.CheeseDetails)
 			cheese.PUT("/:id", controllers.CheeseEdit)
 			cheese.DELETE("/:id", controllers.CheeseRemove)
+			// Image management
+			cheese.POST("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "cheese"})
+				controllers.UploadItemImage(c)
+			})
+			cheese.DELETE("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "cheese"})
+				controllers.DeleteItemImage(c)
+			})
 		}
 
 		// gin
@@ -113,6 +122,15 @@ func main() {
 			ginItem.GET("/:id", controllers.GinDetails)
 			ginItem.PUT("/:id", controllers.GinEdit)
 			ginItem.DELETE("/:id", controllers.GinRemove)
+			// Image management
+			ginItem.POST("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "gin"})
+				controllers.UploadItemImage(c)
+			})
+			ginItem.DELETE("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "gin"})
+				controllers.DeleteItemImage(c)
+			})
 		}
 
 		// wine
@@ -123,6 +141,15 @@ func main() {
 			wineItem.GET("/:id", controllers.WineDetails)
 			wineItem.PUT("/:id", controllers.WineEdit)
 			wineItem.DELETE("/:id", controllers.WineRemove)
+			// Image management
+			wineItem.POST("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
+				controllers.UploadItemImage(c)
+			})
+			wineItem.DELETE("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
+				controllers.DeleteItemImage(c)
+			})
 		}
 
 		// rating
@@ -147,10 +174,6 @@ func main() {
 		{
 			stats.GET("/community/:type/:id", controllers.GetCommunityStats)
 		}
-
-		// Image management (works for ANY item type!)
-		api.POST("/:itemType/:id/image", controllers.UploadItemImage)
-		api.DELETE("/:itemType/:id/image", controllers.DeleteItemImage)
 	}
 
 	// Admin routes (requires admin privileges)
