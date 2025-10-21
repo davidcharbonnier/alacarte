@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/disintegration/imaging"
+	"github.com/rwcarlsen/goexif/exif"
 )
 
 // ProcessedImage contains the processed image data and metadata
@@ -38,19 +39,25 @@ func ValidateAndProcessImage(file multipart.File, header *multipart.FileHeader) 
 		return nil, err
 	}
 
-	// Step 4: Decode and validate image structure
+	// Step 4: Read EXIF orientation before decoding
+	orientation := readEXIFOrientation(file)
+
+	// Step 5: Decode and validate image structure
 	img, format, err := decodeAndValidateImage(file)
 	if err != nil {
 		return nil, err
 	}
 
-	// Step 5: Process image (resize, optimize)
+	// Step 6: Apply EXIF orientation
+	img = applyOrientation(img, orientation)
+
+	// Step 7: Process image (resize, optimize)
 	processedData, err := processImage(img, format)
 	if err != nil {
 		return nil, err
 	}
 
-	// Step 6: Return processed image
+	// Step 8: Return processed image
 	result := &ProcessedImage{
 		Data:        processedData,
 		ContentType: "image/jpeg",
@@ -133,6 +140,65 @@ func decodeAndValidateImage(file multipart.File) (image.Image, string, error) {
 	}
 
 	return img, format, nil
+}
+
+func readEXIFOrientation(file multipart.File) int {
+	// Try to read EXIF data
+	x, err := exif.Decode(file)
+	if err != nil {
+		// No EXIF data or error reading it - assume normal orientation
+		file.Seek(0, 0) // Reset file pointer
+		return 1
+	}
+
+	// Reset file pointer for later use
+	file.Seek(0, 0)
+
+	// Get orientation tag
+	tag, err := x.Get(exif.Orientation)
+	if err != nil {
+		return 1 // Default orientation
+	}
+
+	orientation, err := tag.Int(0)
+	if err != nil {
+		return 1
+	}
+
+	return orientation
+}
+
+func applyOrientation(img image.Image, orientation int) image.Image {
+	// Apply transformation based on EXIF orientation
+	// See: http://sylvana.net/jpegcrop/exif_orientation.html
+	switch orientation {
+	case 1:
+		// Normal - no transformation needed
+		return img
+	case 2:
+		// Flip horizontal
+		return imaging.FlipH(img)
+	case 3:
+		// Rotate 180
+		return imaging.Rotate180(img)
+	case 4:
+		// Flip vertical
+		return imaging.FlipV(img)
+	case 5:
+		// Rotate 90 CW + flip horizontal
+		return imaging.FlipH(imaging.Rotate270(img))
+	case 6:
+		// Rotate 90 CW
+		return imaging.Rotate270(img)
+	case 7:
+		// Rotate 90 CCW + flip horizontal
+		return imaging.FlipH(imaging.Rotate90(img))
+	case 8:
+		// Rotate 90 CCW
+		return imaging.Rotate90(img)
+	default:
+		return img
+	}
 }
 
 func processImage(img image.Image, originalFormat string) (*bytes.Buffer, error) {
