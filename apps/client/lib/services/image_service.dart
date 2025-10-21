@@ -38,6 +38,23 @@ class ImageService {
       return null;
     }
   }
+
+  /// Delete image for an item
+  Future<bool> deleteImage(
+    String itemType,
+    int itemId,
+  ) async {
+    try {
+      final response = await _dio.delete(
+        '/api/$itemType/$itemId/image',
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error deleting image: $e');
+      return false;
+    }
+  }
 }
 
 final imageServiceProvider = Provider<ImageService>((ref) {
