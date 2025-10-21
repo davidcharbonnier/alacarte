@@ -496,5 +496,16 @@
   "fairTradeLabel": "Commerce équitable",
   "fairTradeHelper": "Cochez si certifié commerce équitable",
   
-  "notSpecified": "Non spécifié"
+  "notSpecified": "Non spécifié",
+  
+  "selectImageSource": "Sélectionner la source de l'image",
+  "gallery": "Galerie",
+  "camera": "Caméra",
+  "removeImage": "Supprimer l'image",
+  "removeImageConfirmation": "Êtes-vous sûr de vouloir supprimer cette image ?",
+  "remove": "Supprimer",
+  "imageLabel": "Image",
+  "changeImage": "Modifier l'image",
+  "addImage": "Ajouter une image",
+  "noImage": "Aucune image"
 }

@@ -1631,4 +1631,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notSpecified => 'Not specified';
+
+  @override
+  String get selectImageSource => 'Select image source';
+
+  @override
+  String get gallery => 'Gallery';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get removeImage => 'Remove Image';
+
+  @override
+  String get removeImageConfirmation =>
+      'Are you sure you want to remove this image?';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get imageLabel => 'Image';
+
+  @override
+  String get changeImage => 'Change Image';
+
+  @override
+  String get addImage => 'Add Image';
+
+  @override
+  String get noImage => 'No image';
 }

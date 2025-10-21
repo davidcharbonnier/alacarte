@@ -2533,5 +2533,55 @@
   "fairTradeLabel": "Fair Trade",
   "fairTradeHelper": "Check if fair trade certified",
   
-  "notSpecified": "Not specified"
+  "notSpecified": "Not specified",
+  
+  "selectImageSource": "Select image source",
+  "@selectImageSource": {
+    "description": "Dialog title for choosing image source"
+  },
+  
+  "gallery": "Gallery",
+  "@gallery": {
+    "description": "Gallery option for image picker"
+  },
+  
+  "camera": "Camera",
+  "@camera": {
+    "description": "Camera option for image picker"
+  },
+  
+  "removeImage": "Remove Image",
+  "@removeImage": {
+    "description": "Remove image button text"
+  },
+  
+  "removeImageConfirmation": "Are you sure you want to remove this image?",
+  "@removeImageConfirmation": {
+    "description": "Confirmation message for removing image"
+  },
+  
+  "remove": "Remove",
+  "@remove": {
+    "description": "Remove button text"
+  },
+  
+  "imageLabel": "Image",
+  "@imageLabel": {
+    "description": "Label for image field"
+  },
+  
+  "changeImage": "Change Image",
+  "@changeImage": {
+    "description": "Button text to change existing image"
+  },
+  
+  "addImage": "Add Image",
+  "@addImage": {
+    "description": "Button text to add new image"
+  },
+  
+  "noImage": "No image",
+  "@noImage": {
+    "description": "Placeholder text when no image is available"
+  }
 }
