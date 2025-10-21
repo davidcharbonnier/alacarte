@@ -30,6 +30,12 @@ export const itemTypeColors = {
     hsl: 'hsl(288, 65%, 40%)',
     className: 'text-[#8E24AA] bg-[#8E24AA]/10',
   },
+  coffee: {
+    hex: '#795548',        // Brown (Flutter Colors.brown)
+    rgb: 'rgb(121, 85, 72)',
+    hsl: 'hsl(16, 25%, 38%)',
+    className: 'text-[#795548] bg-[#795548]/10',
+  },
 } as const;
 
 /**
