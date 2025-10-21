@@ -1,5 +1,18 @@
 # @alacarte/client
 
+## [0.5.0](https://github.com/davidcharbonnier/alacarte/compare/v0.4.0...v0.5.0) (2025-10-21)
+
+
+### Features
+
+* **client:** Implement image display, cache and upload ([d4cca13](https://github.com/davidcharbonnier/alacarte/commit/d4cca1327b12b2b262d784c556279955a0f01f49))
+* **client:** Implement image removal ([5b374c6](https://github.com/davidcharbonnier/alacarte/commit/5b374c67899d978387f1b6d70624dd5c545735b4))
+
+
+### Bug Fixes
+
+* **client:** Removing duplicated screen for generic item form ([8af8cf8](https://github.com/davidcharbonnier/alacarte/commit/8af8cf8853c674288e1b3d4c5af7dcd8fb52b743))
+
 ## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/client-v0.3.1...client-v0.4.0) (2025-10-17)
 
 
