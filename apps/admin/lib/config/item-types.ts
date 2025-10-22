@@ -113,7 +113,7 @@ export const itemTypesConfig: ItemTypeRegistry = {
         key: 'origin',
         label: 'Origin',
         type: 'text',
-        required: true,
+        required: false,
         maxLength: 100,
         placeholder: 'e.g., Quebec, Scotland',
       },
