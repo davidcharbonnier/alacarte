@@ -507,8 +507,8 @@ class WineItemService extends ItemService<WineItem> {
     return response.when(
       success: (wines, _) {
         final regions = wines
-            .map((wine) => wine.region)
-            .where((region) => region.isNotEmpty)
+            .where((wine) => wine.region != null && wine.region!.isNotEmpty)
+            .map((wine) => wine.region!)
             .toSet()
             .toList()
           ..sort();

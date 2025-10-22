@@ -6,15 +6,15 @@ import '../utils/localization_utils.dart';
 class WineItem implements RateableItem {
   final int? id;
   final String name;
-  final String producer;
+  final String? producer;
   final String country;
-  final String region;
+  final String? region;
   final WineColor color;
-  final String grape;
-  final double alcohol;
-  final String description;
-  final String designation;
-  final double sugar;
+  final String? grape;
+  final double? alcohol;
+  final String? description;
+  final String? designation;
+  final double? sugar;
   final bool organic;
   final String? imageUrl;
   final DateTime? createdAt;
@@ -23,16 +23,16 @@ class WineItem implements RateableItem {
   WineItem({
     this.id,
     required this.name,
-    required this.producer,
+    this.producer,
     required this.country,
-    required this.region,
+    this.region,
     required this.color,
-    required this.grape,
-    required this.alcohol,
-    required this.description,
-    required this.designation,
-    required this.sugar,
-    required this.organic,
+    this.grape,
+    this.alcohol,
+    this.description,
+    this.designation,
+    this.sugar,
+    this.organic = false,
     this.imageUrl,
     this.createdAt,
     this.updatedAt,
@@ -48,8 +48,8 @@ class WineItem implements RateableItem {
   String get displaySubtitle {
     final parts = <String>[];
     parts.add(color.value);
-    if (producer.isNotEmpty) parts.add(producer);
-    if (country.isNotEmpty) parts.add(country);
+    if (producer != null && producer!.isNotEmpty) parts.add(producer!);
+    parts.add(country);
     return parts.join(' • ');
   }
 
@@ -58,15 +58,18 @@ class WineItem implements RateableItem {
 
   @override
   String get searchableText =>
-      '$name $producer $country $region ${color.value} $grape $designation'.toLowerCase();
+      '$name ${producer ?? ''} $country ${region ?? ''} ${color.value} ${grape ?? ''} ${designation ?? ''}'.toLowerCase();
 
   @override
-  Map<String, String> get categories => {
-        'color': color.value,
-        'country': country,
-        'producer': producer.isNotEmpty ? producer : 'Unknown',
-        'region': region.isNotEmpty ? region : 'Unknown',
-      };
+  Map<String, String> get categories {
+    final cats = <String, String>{
+      'color': color.value,
+      'country': country,
+    };
+    if (producer != null && producer!.isNotEmpty) cats['producer'] = producer!;
+    if (region != null && region!.isNotEmpty) cats['region'] = region!;
+    return cats;
+  }
 
   @override
   List<DetailField> get detailFields => [
@@ -75,37 +78,37 @@ class WineItem implements RateableItem {
           value: country,
           icon: Icons.public,
         ),
-        if (producer.isNotEmpty)
+        if (producer != null && producer!.isNotEmpty)
           DetailField(
             label: 'Producer',
-            value: producer,
+            value: producer!,
             icon: Icons.business,
           ),
-        if (region.isNotEmpty)
+        if (region != null && region!.isNotEmpty)
           DetailField(
             label: 'Region',
-            value: region,
+            value: region!,
             icon: Icons.location_on,
           ),
-        if (grape.isNotEmpty)
+        if (grape != null && grape!.isNotEmpty)
           DetailField(
             label: 'Grape Varieties',
-            value: grape,
+            value: grape!,
             icon: Icons.nature,
           ),
-        if (designation.isNotEmpty)
+        if (designation != null && designation!.isNotEmpty)
           DetailField(
             label: 'Designation',
-            value: designation,
+            value: designation!,
             icon: Icons.verified,
           ),
-        if (alcohol > 0)
+        if (alcohol != null && alcohol! > 0)
           DetailField(
             label: 'Alcohol',
             value: '${alcohol}%',
             icon: Icons.percent,
           ),
-        if (sugar > 0)
+        if (sugar != null && sugar! > 0)
           DetailField(
             label: 'Sugar',
             value: '${sugar} g/L',
@@ -117,10 +120,10 @@ class WineItem implements RateableItem {
             value: 'Yes',
             icon: Icons.eco,
           ),
-        if (description.isNotEmpty)
+        if (description != null && description!.isNotEmpty)
           DetailField(
             label: 'Description',
-            value: description,
+            value: description!,
             isDescription: true,
           ),
       ];
@@ -133,37 +136,37 @@ class WineItem implements RateableItem {
         value: country,
         icon: Icons.public,
       ),
-      if (producer.isNotEmpty)
+      if (producer != null && producer!.isNotEmpty)
         DetailField(
           label: context.l10n.producer,
-          value: producer,
+          value: producer!,
           icon: Icons.business,
         ),
-      if (region.isNotEmpty)
+      if (region != null && region!.isNotEmpty)
         DetailField(
           label: context.l10n.region,
-          value: region,
+          value: region!,
           icon: Icons.location_on,
         ),
-      if (grape.isNotEmpty)
+      if (grape != null && grape!.isNotEmpty)
         DetailField(
           label: context.l10n.grapeLabel,
-          value: grape,
+          value: grape!,
           icon: Icons.nature,
         ),
-      if (designation.isNotEmpty)
+      if (designation != null && designation!.isNotEmpty)
         DetailField(
           label: context.l10n.designationLabel,
-          value: designation,
+          value: designation!,
           icon: Icons.verified,
         ),
-      if (alcohol > 0)
+      if (alcohol != null && alcohol! > 0)
         DetailField(
           label: context.l10n.alcoholLabel,
           value: '${alcohol}%',
           icon: Icons.percent,
         ),
-      if (sugar > 0)
+      if (sugar != null && sugar! > 0)
         DetailField(
           label: context.l10n.sugarLabel,
           value: '${sugar} g/L',
@@ -174,10 +177,10 @@ class WineItem implements RateableItem {
         value: organic ? context.l10n.yes : context.l10n.no,
         icon: Icons.eco,
       ),
-      if (description.isNotEmpty)
+      if (description != null && description!.isNotEmpty)
         DetailField(
           label: context.l10n.description,
-          value: description,
+          value: description!,
           isDescription: true,
         ),
     ];
@@ -186,16 +189,16 @@ class WineItem implements RateableItem {
   factory WineItem.fromJson(Map<String, dynamic> json) {
     return WineItem(
       id: json['ID'] as int?,
-      name: json['name'] as String? ?? '',
-      producer: json['producer'] as String? ?? '',
-      country: json['country'] as String? ?? '',
-      region: json['region'] as String? ?? '',
+      name: (json['name'] as String?) ?? '',
+      producer: json['producer'] as String?,
+      country: (json['country'] as String?) ?? '',
+      region: json['region'] as String?,
       color: WineColor.fromString(json['color'] as String?) ?? WineColor.rouge,
-      grape: json['grape'] as String? ?? '',
-      alcohol: (json['alcohol'] as num?)?.toDouble() ?? 0.0,
-      description: json['description'] as String? ?? '',
-      designation: json['designation'] as String? ?? '',
-      sugar: (json['sugar'] as num?)?.toDouble() ?? 0.0,
+      grape: json['grape'] as String?,
+      alcohol: (json['alcohol'] as num?)?.toDouble(),
+      description: json['description'] as String?,
+      designation: json['designation'] as String?,
+      sugar: (json['sugar'] as num?)?.toDouble(),
       organic: json['organic'] as bool? ?? false,
       imageUrl: json['image_url'] as String?,
       createdAt: json['created_at'] != null
