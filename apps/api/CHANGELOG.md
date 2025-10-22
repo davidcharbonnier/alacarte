@@ -1,5 +1,20 @@
 # @alacarte/api
 
+## [0.6.0](https://github.com/davidcharbonnier/alacarte/compare/v0.5.0...v0.6.0) (2025-10-22)
+
+
+### Features
+
+* **api:** Implement coffee item type ([85f367a](https://github.com/davidcharbonnier/alacarte/commit/85f367a806b69c37d4378b9ee14c493244a829c9))
+
+
+### Bug Fixes
+
+* **api:** Add explicit types on coffee model ([afcc909](https://github.com/davidcharbonnier/alacarte/commit/afcc90966c414f1fda66838b05599bc535623e55))
+* **api:** Update cheese model ([4383a2f](https://github.com/davidcharbonnier/alacarte/commit/4383a2f10f27e7fcc7498ba9a778168befd6109d))
+* **api:** Update gin model required fields and unique constraint ([b4814de](https://github.com/davidcharbonnier/alacarte/commit/b4814de61900b3da58a1bbf97f20b2d464c141aa))
+* **api:** Update wine model ([897cba5](https://github.com/davidcharbonnier/alacarte/commit/897cba55a23f3d0dc7d2b84c76d124c700d452e6))
+
 ## [0.5.0](https://github.com/davidcharbonnier/alacarte/compare/v0.4.0...v0.5.0) (2025-10-21)
 
 
