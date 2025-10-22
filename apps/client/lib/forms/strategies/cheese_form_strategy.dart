@@ -32,22 +32,22 @@ class CheeseFormStrategy extends ItemFormStrategy<CheeseItem> {
         required: true,
       ),
 
-      // Origin field - common to all items
+      // Origin field - optional for cheese
       FormFieldConfig.text(
         key: 'origin',
         labelBuilder: (context) => context.l10n.origin,
         hintBuilder: (context) => context.l10n.enterOrigin,
         icon: Icons.public,
-        required: true,
+        required: false,
       ),
 
-      // Producer field - common to all items
+      // Producer field - optional for cheese
       FormFieldConfig.text(
         key: 'producer',
         labelBuilder: (context) => context.l10n.producer,
         hintBuilder: (context) => context.l10n.enterProducer,
         icon: Icons.business,
-        required: true,
+        required: false,
       ),
 
       // Description field - common to all items (optional)
@@ -86,8 +86,12 @@ class CheeseFormStrategy extends ItemFormStrategy<CheeseItem> {
       id: itemId,
       name: controllers['name']!.text.trim(),
       type: controllers['type']!.text.trim(),
-      origin: controllers['origin']!.text.trim(),
-      producer: controllers['producer']!.text.trim(),
+      origin: controllers['origin']!.text.trim().isNotEmpty
+          ? controllers['origin']!.text.trim()
+          : null,
+      producer: controllers['producer']!.text.trim().isNotEmpty
+          ? controllers['producer']!.text.trim()
+          : null,
       description: controllers['description']!.text.trim().isNotEmpty
           ? controllers['description']!.text.trim()
           : null,
@@ -114,14 +118,6 @@ class CheeseFormStrategy extends ItemFormStrategy<CheeseItem> {
 
     if (cheese.type.trim().isEmpty) {
       errors.add(context.l10n.typeRequired);
-    }
-
-    if (cheese.origin.trim().isEmpty) {
-      errors.add(context.l10n.originRequired);
-    }
-
-    if (cheese.producer.trim().isEmpty) {
-      errors.add(context.l10n.producerRequired);
     }
 
     if (cheese.description != null && cheese.description!.length > 500) {
