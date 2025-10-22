@@ -34,13 +34,13 @@ class GinFormStrategy extends ItemFormStrategy<GinItem> {
         required: true,
       ),
 
-      // Origin field - common to all items
+      // Origin field - optional for gin
       FormFieldConfig.text(
         key: 'origin',
         labelBuilder: (context) => context.l10n.origin,
         hintBuilder: (context) => context.l10n.enterOrigin,
         icon: Icons.public,
-        required: true,
+        required: false,
       ),
 
       // Producer field - common to all items
@@ -88,7 +88,9 @@ class GinFormStrategy extends ItemFormStrategy<GinItem> {
       id: itemId,
       name: controllers['name']!.text.trim(),
       profile: controllers['profile']!.text.trim(),
-      origin: controllers['origin']!.text.trim(),
+      origin: controllers['origin']!.text.trim().isNotEmpty
+          ? controllers['origin']!.text.trim()
+          : null,
       producer: controllers['producer']!.text.trim(),
       description: controllers['description']!.text.trim().isNotEmpty
           ? controllers['description']!.text.trim()
@@ -116,10 +118,6 @@ class GinFormStrategy extends ItemFormStrategy<GinItem> {
 
     if (gin.profile.trim().isEmpty) {
       errors.add(context.l10n.profileRequired);
-    }
-
-    if (gin.origin.trim().isEmpty) {
-      errors.add(context.l10n.originRequired);
     }
 
     if (gin.producer.trim().isEmpty) {

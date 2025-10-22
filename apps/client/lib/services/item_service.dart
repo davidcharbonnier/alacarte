@@ -307,10 +307,6 @@ class GinItemService extends ItemService<GinItem> {
       errors.add('Producer is required');
     }
 
-    if (gin.origin.trim().isEmpty) {
-      errors.add('Origin is required');
-    }
-
     if (gin.profile.trim().isEmpty) {
       errors.add('Profile is required');
     }

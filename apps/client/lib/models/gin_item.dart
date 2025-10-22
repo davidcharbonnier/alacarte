@@ -9,7 +9,7 @@ class GinItem implements RateableItem {
   @override
   final String name;
   final String producer;
-  final String origin;
+  final String? origin;
   final String profile;
   final String? description;
   final String? imageUrl;
@@ -18,7 +18,7 @@ class GinItem implements RateableItem {
     this.id,
     required this.name,
     required this.producer,
-    required this.origin,
+    this.origin,
     required this.profile,
     this.description,
     this.imageUrl,
@@ -31,21 +31,26 @@ class GinItem implements RateableItem {
   String get displayTitle => name;
 
   @override
-  String get displaySubtitle => '$producer • $origin';
+  String get displaySubtitle => origin != null && origin!.isNotEmpty
+      ? '$producer • $origin'
+      : producer;
 
   @override
   bool get isNew => id == null;
 
   @override
   String get searchableText => 
-    '$name $producer $origin $profile ${description ?? ''}'.toLowerCase();
+    '$name $producer ${origin ?? ''} $profile ${description ?? ''}'.toLowerCase();
 
   @override
-  Map<String, String> get categories => {
-    'producer': producer,
-    'origin': origin,
-    'profile': profile,
-  };
+  Map<String, String> get categories {
+    final cats = <String, String>{
+      'producer': producer,
+      'profile': profile,
+    };
+    if (origin != null && origin!.isNotEmpty) cats['origin'] = origin!;
+    return cats;
+  }
 
   @override
   List<DetailField> get detailFields => [
@@ -54,11 +59,12 @@ class GinItem implements RateableItem {
       value: producer,
       icon: Icons.business,
     ),
-    DetailField(
-      label: 'Origin', 
-      value: origin,
-      icon: Icons.location_on,
-    ),
+    if (origin != null && origin!.isNotEmpty)
+      DetailField(
+        label: 'Origin', 
+        value: origin!,
+        icon: Icons.location_on,
+      ),
     if (description != null && description!.isNotEmpty)
       DetailField(
         label: 'Description',
@@ -75,11 +81,12 @@ class GinItem implements RateableItem {
         value: producer,
         icon: Icons.business,
       ),
-      DetailField(
-        label: context.l10n.originLabel,
-        value: origin,
-        icon: Icons.location_on,
-      ),
+      if (origin != null && origin!.isNotEmpty)
+        DetailField(
+          label: context.l10n.originLabel,
+          value: origin!,
+          icon: Icons.location_on,
+        ),
       if (description != null && description!.isNotEmpty)
         DetailField(
           label: context.l10n.descriptionLabel,
@@ -182,7 +189,12 @@ extension GinItemExtension on GinItem {
   
   /// Get all unique origins from a list of gin items
   static List<String> getUniqueOrigins(List<GinItem> gins) {
-    return gins.map((g) => g.origin).toSet().toList()..sort();
+    return gins
+        .where((g) => g.origin != null && g.origin!.isNotEmpty)
+        .map((g) => g.origin!)
+        .toSet()
+        .toList()
+      ..sort();
   }
   
   /// Get all unique profiles from a list of gin items
