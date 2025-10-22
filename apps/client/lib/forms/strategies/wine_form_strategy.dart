@@ -131,12 +131,12 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
       'grape': TextEditingController(text: initialItem?.grape ?? ''),
       'designation': TextEditingController(text: initialItem?.designation ?? ''),
       'alcohol': TextEditingController(
-        text: initialItem?.alcohol != null && initialItem!.alcohol > 0
+        text: initialItem?.alcohol != null && initialItem!.alcohol! > 0
             ? initialItem.alcohol.toString()
             : '',
       ),
       'sugar': TextEditingController(
-        text: initialItem?.sugar != null && initialItem!.sugar > 0
+        text: initialItem?.sugar != null && initialItem!.sugar! > 0
             ? initialItem.sugar.toString()
             : '',
       ),
@@ -163,14 +163,24 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
       name: controllers['name']!.text.trim(),
       color: wineColor,
       country: controllers['country']!.text.trim(),
-      producer: controllers['producer']!.text.trim(),
-      region: controllers['region']!.text.trim(),
-      grape: controllers['grape']!.text.trim(),
-      designation: controllers['designation']!.text.trim(),
-      alcohol: double.tryParse(controllers['alcohol']!.text.trim()) ?? 0.0,
-      sugar: double.tryParse(controllers['sugar']!.text.trim()) ?? 0.0,
+      producer: controllers['producer']!.text.trim().isNotEmpty
+          ? controllers['producer']!.text.trim()
+          : null,
+      region: controllers['region']!.text.trim().isNotEmpty
+          ? controllers['region']!.text.trim()
+          : null,
+      grape: controllers['grape']!.text.trim().isNotEmpty
+          ? controllers['grape']!.text.trim()
+          : null,
+      designation: controllers['designation']!.text.trim().isNotEmpty
+          ? controllers['designation']!.text.trim()
+          : null,
+      alcohol: double.tryParse(controllers['alcohol']!.text.trim()),
+      sugar: double.tryParse(controllers['sugar']!.text.trim()),
       organic: controllers['organic']!.text.trim() == 'true',
-      description: controllers['description']!.text.trim(),
+      description: controllers['description']!.text.trim().isNotEmpty
+          ? controllers['description']!.text.trim()
+          : null,
     );
   }
 
@@ -192,18 +202,11 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
       errors.add(context.l10n.itemNameTooLong('Wine'));
     }
 
-    // Color is always valid since we parse with fallback to rouge
-    // But we can add a validation message if user enters invalid text
-    final colorText = wine.color.value;
-    final validColors = ['Rouge', 'Blanc', 'Rosé', 'Mousseux', 'Orange'];
-    // This check is redundant since fromString already handles it,
-    // but kept for explicit validation feedback
-
     if (wine.country.trim().isEmpty) {
       errors.add(context.l10n.countryRequired);
     }
 
-    if (wine.description.isNotEmpty && wine.description.length > 1000) {
+    if (wine.description != null && wine.description!.length > 1000) {
       errors.add(context.l10n.descriptionTooLong);
     }
 
