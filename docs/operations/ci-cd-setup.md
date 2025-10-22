@@ -114,24 +114,25 @@ Artifacts (sequential - safety net)
 
 ### 3. Production Release (`release.yml`)
 
-**Trigger:** Push to `master` branch (typically from merging Version Packages PR)
+**Trigger:** Push of git tags matching patterns:
+- `v*` - Synchronized release (all apps)
+- `api-v*` - API only
+- `client-v*` - Client only  
+- `admin-v*` - Admin only
 
 **Environment:** Uses `prod` environment for Docker builds
 
-**Two-Stage Process:**
+**Versioning:**
+- Versions are extracted directly from git tags
+- `package.json` files are NOT used for versioning
+- Tags created by release-please workflow
+- Format: `v0.6.0` or `api-v1.2.3`
 
-#### Stage 1: Version Packages PR Creation
-When changesets exist:
-- Changesets Action bumps versions in `package.json` files
-- Updates `CHANGELOG.md` files
-- Creates/updates "Version Packages" PR
-- Commits: `chore: version packages`
-
-#### Stage 2: Production Release (after merging Version Packages PR)
-When Version Packages PR is merged:
-- Changesets Action runs `publish` (creates git tags)
-- Sets `published: true` output
-- Triggers build jobs:
+**Process:**
+When a tag is pushed:
+- Determines release type from tag pattern
+- Extracts version number from tag (strips prefix and 'v')
+- Triggers appropriate build jobs based on tag type:
 
 **Build Jobs:**
 1. **Docker Images (API + Admin):**
@@ -147,21 +148,24 @@ When Version Packages PR is merged:
    - Uploads as artifact
 
 3. **GitHub Releases:**
-   - **Synchronized versions (all apps same):** Single release `v2.1.0`
-   - **Independent patches (versions differ):** Separate releases per changed app
-   - Detection uses Changesets `publishedPackages` output
-   - Includes relevant assets (APK for client, links for Docker)
+   - Release-please creates GitHub releases with changelogs
+   - Workflow updates releases with deployment information
+   - Adds Docker image pull commands
+   - Attaches APK for client releases
+   - Links to relevant changelogs
 
-**Release Strategy Examples:**
+**Release Examples:**
 ```
-Synchronized: API 2.1.0, Client 2.1.0, Admin 2.1.0
-→ 1 release: v2.1.0 (combined)
+Synchronized tag: v0.6.0
+→ Release: "Platform v0.6.0"
+→ Builds: API, Client, Admin all at version 0.6.0
+→ Docker tags: api:0.6.0, admin:0.6.0
+→ APK: client 0.6.0
 
-Single patch: API 2.1.0, Client 2.1.0, Admin 2.1.1
-→ 1 release: admin-v2.1.1 (admin only)
-
-Multiple patches: API 2.1.5, Client 2.1.0, Admin 2.1.3
-→ 2 releases: api-v2.1.5, admin-v2.1.3 (changed apps only)
+App-specific tag: api-v1.2.3  
+→ Release: "API v1.2.3"
+→ Builds: API only at version 1.2.3
+→ Docker tags: api:1.2.3
 ```
 
 **Outputs:**
@@ -184,44 +188,37 @@ git checkout -b feat/add-wine-support
 git commit -m "feat: add wine support"
 git push origin feat/add-wine-support
 
-# 4. Open PR
+# 4. Open PR with conventional commit messages
 # → Snapshot builds automatically trigger
 # → Wait for comment with image tags
-```
 
-### Before Merging
-
-```bash
-# Create changeset (REQUIRED before merge)
-npm run changeset
-
-# Prompts:
-# - Which packages changed? Select: api, client, admin
-# - What type of change? Select: minor (for features)
-# - Summary: "Added wine item type support"
-
-# Commit changeset
-git add .changeset/
-git commit -m "docs: add changeset"
-git push
+# Example commits:
+git commit -m "feat: add wine item type support"
+git commit -m "fix: resolve image upload issue"
+git commit -m "docs: update wine documentation"
 ```
 
 ### Release Process
 
 ```bash
-# 1. Merge feature PR to master
-# → Changesets bot creates/updates "Version Packages" PR
+# 1. Merge feature PR to master with conventional commits
+# → Release-please tracks changes via commits
 
-# 2. Review Version Packages PR
-# - Check version bumps are correct
+# 2. Release-please creates/updates release PR
+# - Bumps versions in .release-please-manifest.json
+# - Updates CHANGELOG.md files
+# - Groups all changes since last release
+
+# 3. Review and merge release PR
+# - Check version bumps (follows semver)
 # - Review CHANGELOG.md updates
-# - Verify all changesets are consumed
+# - Verify all commits are included
 
-# 3. Merge Version Packages PR
-# → Production release triggers automatically
-# → Docker images published
-# → GitHub releases created
-# → APK published
+# 4. Release-please creates git tag automatically
+# → Tag push triggers release.yml workflow
+# → Docker images published with version from tag
+# → GitHub releases updated with artifacts
+# → APK attached to releases
 ```
 
 ## 🧪 Manual QA Deployment
@@ -298,16 +295,17 @@ gh run download <run-id> -n client-apk-<version>
 
 ### Release Issues
 
-**Issue:** Version Packages PR not created
-- Verify changeset files exist in `.changeset/`
-- Check Changesets Action logs
-- Ensure push is to `master` branch
-- Verify `package.json` files are valid
+**Issue:** Release-please PR not created
+- Verify conventional commits exist since last release
+- Check release-please workflow logs
+- Ensure commits are pushed to `master` branch
+- Verify `.release-please-manifest.json` is valid
 
-**Issue:** Wrong release strategy (combined vs separate)
-- Check if all `package.json` versions match
-- Review `publishedPackages` output
-- Verify Changesets consumed correct files
+**Issue:** Version not detected correctly
+- Check git tag format matches patterns (v*, api-v*, etc.)
+- Verify tag was pushed (not just created locally)
+- Review release.yml workflow logs for version extraction
+- Ensure tag follows semantic versioning (e.g., v0.6.0)
 
 **Issue:** Production build fails
 - Check `NEXT_PUBLIC_API_URL` in prod environment
@@ -318,7 +316,6 @@ gh run download <run-id> -n client-apk-<version>
 
 ### Action Versions
 - `actions/checkout@v4`
-- `actions/setup-node@v4` (Node 18)
 - `actions/setup-java@v3` (Java 17, Zulu)
 - `actions/upload-artifact@v4`
 - `actions/download-artifact@v4`
@@ -327,8 +324,7 @@ gh run download <run-id> -n client-apk-<version>
 - `docker/build-push-action@v5`
 - `subosito/flutter-action@v2` (Flutter 3.35.4)
 - `dorny/paths-filter@v3`
-- `changesets/action@v1`
-- `softprops/action-gh-release@v1`
+- `google-github-actions/release-please-action@v4`
 - `actions/github-script@v7`
 
 ### Build Specifications
@@ -344,14 +340,15 @@ gh run download <run-id> -n client-apk-<version>
 
 ## 📝 Best Practices
 
-### Changeset Guidelines
-- Create changeset BEFORE merging PR
-- Choose appropriate bump type:
-  - `major`: Breaking changes
-  - `minor`: New features (backward compatible)
-  - `patch`: Bug fixes
-- Write clear, user-facing summaries
-- Select all affected packages
+### Commit Message Guidelines
+- Use conventional commits (enforced by commitlint)
+- Commit types trigger version bumps:
+  - `feat:` → minor version bump (new features)
+  - `fix:` → patch version bump (bug fixes)
+  - `feat!:` or `BREAKING CHANGE:` → major version bump
+- Other types (docs, chore, refactor) don't trigger releases
+- Write clear, descriptive commit messages
+- Example: `feat: add wine item type support`
 
 ### PR Practices
 - Keep PRs focused and small
@@ -361,9 +358,10 @@ gh run download <run-id> -n client-apk-<version>
 
 ### Release Management
 - Batch multiple features into one release
-- Review Version Packages PR carefully
-- Don't merge Version Packages PR until ready
-- Monitor release workflow completion
+- Review release-please PR carefully
+- Don't merge release PR until ready for deployment
+- Monitor release workflow completion after tag creation
+- Version comes from git tag, not package.json
 
 ### Cleanup Maintenance
 - Cleanup runs automatically (no action needed)
@@ -389,11 +387,11 @@ gh run download <run-id> -n client-apk-<version>
 
 ## 📚 Additional Resources
 
-- [Changesets Documentation](https://github.com/changesets/changesets)
-- [Turborepo Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
+- [Release Please Documentation](https://github.com/googleapis/release-please)
+- [Conventional Commits](https://www.conventionalcommits.org/)
 - [Docker BuildKit](https://docs.docker.com/build/buildkit/)
 - [GitHub Actions Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments)
-- [Monorepo Strategy Document](../A%20la%20carte%20Monorepo%20Strategy.md)
+- [Semantic Versioning](https://semver.org/)
 
 ---
 

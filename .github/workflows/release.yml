@@ -24,11 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
       - name: Determine what to build from tag
         id: check
         run: |
@@ -66,18 +61,20 @@ jobs:
             echo "✅ Admin release detected"
           fi
 
-      - name: Get versions from package.json
+      - name: Get versions from tag
         id: versions
         run: |
-          API_VERSION=$(node -p "require('./apps/api/package.json').version")
-          CLIENT_VERSION=$(node -p "require('./apps/client/package.json').version")
-          ADMIN_VERSION=$(node -p "require('./apps/admin/package.json').version")
+          TAG="${GITHUB_REF#refs/tags/}"
           
-          echo "api_version=$API_VERSION" >> $GITHUB_OUTPUT
-          echo "client_version=$CLIENT_VERSION" >> $GITHUB_OUTPUT
-          echo "admin_version=$ADMIN_VERSION" >> $GITHUB_OUTPUT
+          # Extract version from tag (remove 'v' prefix and any app prefix)
+          # Examples: v0.6.0 -> 0.6.0, api-v1.2.3 -> 1.2.3
+          VERSION=$(echo "$TAG" | sed -E 's/^(api-|client-|admin-)?v//')
           
-          echo "📦 Versions: API=$API_VERSION, Client=$CLIENT_VERSION, Admin=$ADMIN_VERSION"
+          echo "api_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "client_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "admin_version=$VERSION" >> $GITHUB_OUTPUT
+          
+          echo "📦 Versions from tag $TAG: $VERSION"
 
   build-api:
     needs: determine-releases
