@@ -1,5 +1,18 @@
 # @alacarte/admin
 
+## [0.6.0](https://github.com/davidcharbonnier/alacarte/compare/v0.5.0...v0.6.0) (2025-10-22)
+
+
+### Features
+
+* **admin:** Implement coffee item type ([654a3c2](https://github.com/davidcharbonnier/alacarte/commit/654a3c284ff6d3e3de741effbd2ee71936fa5fe8))
+
+
+### Bug Fixes
+
+* **admin:** Update cheese model ([0313e9b](https://github.com/davidcharbonnier/alacarte/commit/0313e9b47dadb6bb83160f864f1b87fcfe7b167c))
+* **admin:** Update gin model handling ([185ecc0](https://github.com/davidcharbonnier/alacarte/commit/185ecc0447944d705908de8c9029e1c1aba88df7))
+
 ## [0.5.0](https://github.com/davidcharbonnier/alacarte/compare/v0.4.0...v0.5.0) (2025-10-21)
 
 

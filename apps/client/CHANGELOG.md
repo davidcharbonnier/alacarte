@@ -1,5 +1,20 @@
 # @alacarte/client
 
+## [0.6.0](https://github.com/davidcharbonnier/alacarte/compare/v0.5.0...v0.6.0) (2025-10-22)
+
+
+### Features
+
+* **client:** Implement coffee item type ([1848338](https://github.com/davidcharbonnier/alacarte/commit/184833850517aaf5e49952201e59c3a8a39012f9))
+
+
+### Bug Fixes
+
+* **client:** Add missing localized strings for image management ([ce1ac50](https://github.com/davidcharbonnier/alacarte/commit/ce1ac504692400ec5703ba75f21b3e006a547cb7))
+* **client:** Update cheese model ([d373960](https://github.com/davidcharbonnier/alacarte/commit/d37396053a91f16034ba17b2f7a475af56c77960))
+* **client:** Update gin model handling ([dc32ed2](https://github.com/davidcharbonnier/alacarte/commit/dc32ed2b91d3e44abf897698630bb7662b21904b))
+* **client:** Update wine model ([a5c1c1f](https://github.com/davidcharbonnier/alacarte/commit/a5c1c1f468687b37df6be6f282518492b688b7e4))
+
 ## [0.5.0](https://github.com/davidcharbonnier/alacarte/compare/v0.4.0...v0.5.0) (2025-10-21)
 
 
