@@ -241,9 +241,9 @@ func SeedGins(c *gin.Context) {
 	result := utils.SeedResult{Errors: []string{}}
 
 	for _, ginItem := range jsonData.Gins {
-		// Check if gin already exists (natural key: name + origin)
+		// Check if gin already exists (natural key: name + producer)
 		var existing models.Gin
-		err := utils.DB.Where("name = ? AND origin = ?", ginItem.Name, ginItem.Origin).First(&existing).Error
+		err := utils.DB.Where("name = ? AND producer = ?", ginItem.Name, ginItem.Producer).First(&existing).Error
 
 		if err == nil {
 			// Already exists - skip
@@ -304,13 +304,17 @@ func ValidateGins(c *gin.Context) {
 			result.Valid = false
 			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing name", i+1))
 		}
-		if ginItem.Origin == "" {
+		if ginItem.Producer == "" {
 			result.Valid = false
-			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing origin", i+1))
+			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing producer", i+1))
+		}
+		if ginItem.Profile == "" {
+			result.Valid = false
+			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing profile", i+1))
 		}
 
-		// Check for duplicates within file (gin natural key: name + origin)
-		key := ginItem.Name + "|" + ginItem.Origin
+		// Check for duplicates within file (gin natural key: name + producer)
+		key := ginItem.Name + "|" + ginItem.Producer
 		if seen[key] {
 			result.Duplicates++
 		}
