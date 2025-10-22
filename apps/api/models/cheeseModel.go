@@ -6,11 +6,11 @@ import (
 
 type Cheese struct {
 	gorm.Model
-	Name        string   `gorm:"unique" json:"name"`
-	Type        string   `json:"type"`
-	Origin      string   `json:"origin"`
-	Producer    string   `json:"producer"`
-	Description string   `json:"description"`
+	Name        string   `gorm:"type:varchar(255);unique;not null" json:"name"`
+	Type        string   `gorm:"type:varchar(255);not null" json:"type"`
+	Origin      string   `gorm:"type:varchar(255)" json:"origin"`
+	Producer    string   `gorm:"type:varchar(255)" json:"producer"`
+	Description string   `gorm:"type:text" json:"description"`
 	ImageURL    *string  `json:"image_url,omitempty"`
 	Ratings     []Rating `gorm:"polymorphic:Item;"`
 }

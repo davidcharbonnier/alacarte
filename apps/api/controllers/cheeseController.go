@@ -241,9 +241,9 @@ func SeedCheeses(c *gin.Context) {
 	result := utils.SeedResult{Errors: []string{}}
 
 	for _, cheese := range jsonData.Cheeses {
-		// Check if cheese already exists (natural key: name + origin)
+		// Check if cheese already exists (natural key: name)
 		var existing models.Cheese
-		err := utils.DB.Where("name = ? AND origin = ?", cheese.Name, cheese.Origin).First(&existing).Error
+		err := utils.DB.Where("name = ?", cheese.Name).First(&existing).Error
 
 		if err == nil {
 			// Already exists - skip
@@ -304,13 +304,13 @@ func ValidateCheeses(c *gin.Context) {
 			result.Valid = false
 			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing name", i+1))
 		}
-		if cheese.Origin == "" {
+		if cheese.Type == "" {
 			result.Valid = false
-			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing origin", i+1))
+			result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing type", i+1))
 		}
 
-		// Check for duplicates within file (cheese natural key: name + origin)
-		key := cheese.Name + "|" + cheese.Origin
+		// Check for duplicates within file (cheese natural key: name)
+		key := cheese.Name
 		if seen[key] {
 			result.Duplicates++
 		}
