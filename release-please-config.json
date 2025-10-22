@@ -23,7 +23,6 @@
     }
   },
   "bootstrap-sha": "44b37edbcc575f0b6827e9500778e22993aa2cf1",
-  "group-pull-request-title-pattern": "chore: release ${version}",
   "separate-pull-requests": false,
   "always-link-local": true,
   "include-component-in-tag": false,
