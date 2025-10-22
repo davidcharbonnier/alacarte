@@ -9,18 +9,18 @@ import (
 type Coffee struct {
 	gorm.Model
 	// Required fields
-	Name    string `gorm:"not null" json:"name"`
-	Roaster string `gorm:"not null" json:"roaster"`
+	Name    string `gorm:"type:varchar(255);not null" json:"name"`
+	Roaster string `gorm:"type:varchar(255);not null" json:"roaster"`
 
 	// Origin information (all optional)
-	Country  string `json:"country"`
-	Region   string `json:"region"`
-	Farm     string `json:"farm"`
-	Altitude string `json:"altitude"`
+	Country  string `gorm:"type:varchar(255)" json:"country"`
+	Region   string `gorm:"type:varchar(255)" json:"region"`
+	Farm     string `gorm:"type:varchar(255)" json:"farm"`
+	Altitude string `gorm:"type:varchar(50)" json:"altitude"`
 
 	// Bean characteristics (all optional)
 	Species          CoffeeSpecies          `json:"species"`
-	Variety          string                 `json:"variety"`
+	Variety          string                 `gorm:"type:varchar(100)" json:"variety"`
 	ProcessingMethod CoffeeProcessingMethod `json:"processing_method"`
 	Decaffeinated    bool                   `gorm:"default:false" json:"decaffeinated"`
 
@@ -38,7 +38,7 @@ type Coffee struct {
 	FairTrade bool `gorm:"default:false" json:"fair_trade"`
 
 	// Description and image (optional)
-	Description string  `json:"description"`
+	Description string  `gorm:"type:text" json:"description"`
 	ImageURL    *string `json:"image_url,omitempty"`
 
 	// Relations
