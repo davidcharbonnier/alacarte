@@ -9,8 +9,8 @@ class CheeseItem implements RateableItem {
   @override
   final String name;
   final String type;
-  final String origin;
-  final String producer;
+  final String? origin;
+  final String? producer;
   final String? description;
   final String? imageUrl;
 
@@ -18,8 +18,8 @@ class CheeseItem implements RateableItem {
     this.id,
     required this.name,
     required this.type,
-    required this.origin,
-    required this.producer,
+    this.origin,
+    this.producer,
     this.description,
     this.imageUrl,
   });
@@ -31,34 +31,44 @@ class CheeseItem implements RateableItem {
   String get displayTitle => name;
 
   @override
-  String get displaySubtitle => '$producer • $origin';
+  String get displaySubtitle {
+    final parts = <String>[];
+    if (producer != null && producer!.isNotEmpty) parts.add(producer!);
+    if (origin != null && origin!.isNotEmpty) parts.add(origin!);
+    return parts.isNotEmpty ? parts.join(' • ') : type;
+  }
 
   @override
   bool get isNew => id == null;
 
   @override
   String get searchableText => 
-    '$name $type $origin $producer ${description ?? ''}'.toLowerCase();
+    '$name $type ${origin ?? ''} ${producer ?? ''} ${description ?? ''}'.toLowerCase();
 
   @override
-  Map<String, String> get categories => {
-    'type': type,
-    'origin': origin,
-    'producer': producer,
-  };
+  Map<String, String> get categories {
+    final cats = <String, String>{
+      'type': type,
+    };
+    if (origin != null && origin!.isNotEmpty) cats['origin'] = origin!;
+    if (producer != null && producer!.isNotEmpty) cats['producer'] = producer!;
+    return cats;
+  }
 
   @override
   List<DetailField> get detailFields => [
-    DetailField(
-      label: 'Origin',
-      value: origin,
-      icon: Icons.public,
-    ),
-    DetailField(
-      label: 'Producer', 
-      value: producer,
-      icon: Icons.business,
-    ),
+    if (origin != null && origin!.isNotEmpty)
+      DetailField(
+        label: 'Origin',
+        value: origin!,
+        icon: Icons.public,
+      ),
+    if (producer != null && producer!.isNotEmpty)
+      DetailField(
+        label: 'Producer', 
+        value: producer!,
+        icon: Icons.business,
+      ),
     if (description != null && description!.isNotEmpty)
       DetailField(
         label: 'Description',
@@ -70,16 +80,18 @@ class CheeseItem implements RateableItem {
   /// Get localized detail fields for display
   List<DetailField> getLocalizedDetailFields(BuildContext context) {
     return [
-      DetailField(
-        label: context.l10n.originLabel,
-        value: origin,
-        icon: Icons.public,
-      ),
-      DetailField(
-        label: context.l10n.producerLabel, 
-        value: producer,
-        icon: Icons.business,
-      ),
+      if (origin != null && origin!.isNotEmpty)
+        DetailField(
+          label: context.l10n.originLabel,
+          value: origin!,
+          icon: Icons.public,
+        ),
+      if (producer != null && producer!.isNotEmpty)
+        DetailField(
+          label: context.l10n.producerLabel, 
+          value: producer!,
+          icon: Icons.business,
+        ),
       if (description != null && description!.isNotEmpty)
         DetailField(
           label: context.l10n.descriptionLabel,
@@ -106,10 +118,10 @@ class CheeseItem implements RateableItem {
   factory CheeseItem.fromJson(Map<String, dynamic> json) {
     return CheeseItem(
       id: json['ID'] as int?,
-      name: (json['name'] as String?) ?? '', // Changed from 'Name' to 'name'
+      name: (json['name'] as String?) ?? '',
       type: (json['type'] as String?) ?? '',
-      origin: (json['origin'] as String?) ?? '',
-      producer: (json['producer'] as String?) ?? '',
+      origin: json['origin'] as String?,
+      producer: json['producer'] as String?,
       description: json['description'] as String?,
       imageUrl: json['image_url'] as String?,
     );
@@ -182,11 +194,21 @@ extension CheeseItemExtension on CheeseItem {
   
   /// Get all unique origins from a list of cheese items
   static List<String> getUniqueOrigins(List<CheeseItem> cheeses) {
-    return cheeses.map((c) => c.origin).toSet().toList()..sort();
+    return cheeses
+        .where((c) => c.origin != null && c.origin!.isNotEmpty)
+        .map((c) => c.origin!)
+        .toSet()
+        .toList()
+      ..sort();
   }
   
   /// Get all unique producers from a list of cheese items
   static List<String> getUniqueProducers(List<CheeseItem> cheeses) {
-    return cheeses.map((c) => c.producer).toSet().toList()..sort();
+    return cheeses
+        .where((c) => c.producer != null && c.producer!.isNotEmpty)
+        .map((c) => c.producer!)
+        .toSet()
+        .toList()
+      ..sort();
   }
 }

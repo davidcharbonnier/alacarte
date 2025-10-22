@@ -129,14 +129,6 @@ class CheeseItemService extends ItemService<CheeseItem> {
       errors.add('Type is required');
     }
 
-    if (cheese.origin.trim().isEmpty) {
-      errors.add('Origin is required');
-    }
-
-    if (cheese.producer.trim().isEmpty) {
-      errors.add('Producer is required');
-    }
-
     if (cheese.description != null && cheese.description!.trim().isEmpty) {
       errors.add('Description cannot be empty if provided');
     }
