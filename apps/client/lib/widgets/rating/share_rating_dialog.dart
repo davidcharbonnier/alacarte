@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/user.dart';
 import '../../models/rating.dart';
 import '../../models/api_response.dart';
-import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
@@ -190,7 +189,7 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
               child: Text(
                 context.l10n.selectUsersToShare,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -303,7 +302,7 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
               Icon(
                 Icons.person_off,
                 size: AppConstants.iconXL,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               const SizedBox(height: AppConstants.spacingM),
               Text(
@@ -325,12 +324,14 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
         final userId = user.id;
         
         // Skip users with null or invalid IDs
-        if (userId == null || userId <= 0) {
+        // ignore: unnecessary_null_comparison
+        if (userId == null) {
           return const SizedBox.shrink();
         }
         
         final isSelected = _selectedUserIds.contains(userId);
         
+        // ignore: sort_child_properties_last
         return Card(
           margin: const EdgeInsets.only(bottom: AppConstants.spacingS),
           child: CheckboxListTile(
@@ -361,7 +362,7 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
         backgroundImage: NetworkImage(avatarUrl),
         backgroundColor: isSelected 
           ? AppConstants.primaryColor.withValues(alpha: 0.1)
-          : Theme.of(context).colorScheme.surfaceVariant,
+          : Theme.of(context).colorScheme.surfaceContainerHighest,
         onBackgroundImageError: (exception, stackTrace) {
           // Fallback will be handled by child
         },

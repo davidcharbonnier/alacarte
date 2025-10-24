@@ -107,14 +107,14 @@ class ItemImagePicker extends StatelessWidget {
             Icon(
               Icons.image_outlined,
               size: AppConstants.iconS,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             const SizedBox(width: AppConstants.spacingS),
             Text(
               '${l10n.imageLabel}:',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const Spacer(),
@@ -137,7 +137,7 @@ class ItemImagePicker extends StatelessWidget {
             decoration: BoxDecoration(
               color: hasImage
                   ? Colors.grey[100]
-                  : ItemTypeHelper.getItemTypeColor(itemType).withOpacity(0.1),
+                  : ItemTypeHelper.getItemTypeColor(itemType).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppConstants.radiusM),
               border: Border.all(
                 color: Theme.of(context).dividerColor,
@@ -218,13 +218,13 @@ class ItemImagePicker extends StatelessWidget {
           Icon(
             ItemTypeHelper.getItemTypeIcon(itemType),
             size: 64,
-            color: ItemTypeHelper.getItemTypeColor(itemType).withOpacity(0.3),
+            color: ItemTypeHelper.getItemTypeColor(itemType).withValues(alpha: 0.3),
           ),
           const SizedBox(height: 8),
           Text(
             l10n.noImage,
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               fontSize: AppConstants.fontS,
             ),
           ),

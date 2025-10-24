@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dio_client.dart';
 
@@ -34,7 +35,7 @@ class ImageService {
       
       return null;
     } catch (e) {
-      print('Error uploading image: $e');
+      if (kDebugMode) print('Error uploading image: $e');
       return null;
     }
   }
@@ -51,7 +52,7 @@ class ImageService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Error deleting image: $e');
+      if (kDebugMode) print('Error deleting image: $e');
       return false;
     }
   }

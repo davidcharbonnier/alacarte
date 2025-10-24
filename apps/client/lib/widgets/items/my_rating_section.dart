@@ -3,12 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/rating.dart';
 import '../../models/rateable_item.dart';
-import '../../models/user.dart';
 import '../../models/api_response.dart';
 import '../../providers/rating_provider.dart';
-import '../../providers/auth_provider.dart';
+// ignore: unused_import
 import '../../services/rating_service.dart';
-import '../../services/api_service.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/notification_helper.dart';
@@ -44,8 +42,7 @@ class MyRatingSection extends ConsumerWidget {
         }
       }
     }
-    
-    print('Rating ${rating.id} currently shared with: $currentlySharedWith');
+
     
     if (context.mounted) {
       showDialog(
@@ -74,10 +71,13 @@ class MyRatingSection extends ConsumerWidget {
   Future<void> _deleteRating(BuildContext context, WidgetRef ref, int ratingId) async {
     final success = await ref.read(ratingProvider.notifier).deleteRating(ratingId);
     
+    if (!context.mounted) return;
+    
     if (success) {
       NotificationHelper.showSuccess(context, context.l10n.ratingDeleted);
       // Navigate back to item detail after a brief delay
       await Future.delayed(const Duration(milliseconds: 500));
+      if (!context.mounted) return;
       SafeNavigation.goBackFromRatingDeletion(context, item.itemType, item.id!);
     } else {
       final error = ref.read(ratingProvider).error ?? context.l10n.couldNotDeleteRating;
@@ -101,6 +101,7 @@ class MyRatingSection extends ConsumerWidget {
       if (success) {
         hasSuccess = true;
       } else {
+        if (!context.mounted) return;
         lastError = ref.read(ratingProvider).error ?? context.l10n.shareRatingError;
       }
     }
@@ -111,9 +112,12 @@ class MyRatingSection extends ConsumerWidget {
       if (success) {
         hasSuccess = true;
       } else {
+        if (!context.mounted) return;
         lastError = context.l10n.shareRatingError;
       }
     }
+    
+    if (!context.mounted) return;
     
     // Show result
     if (hasSuccess) {
@@ -126,18 +130,16 @@ class MyRatingSection extends ConsumerWidget {
         message = context.l10n.sharingPreferencesUpdated;
       }
       
-      if (context.mounted) {
-        NotificationHelper.showSuccess(context, message);
-      }
+      NotificationHelper.showSuccess(context, message);
       
       // Trigger data refresh
       if (onRatingAdded != null) {
         onRatingAdded!();
-        }
-        } else if (lastError != null && context.mounted) {
-        NotificationHelper.showError(context, lastError);
-        }
-}
+      }
+    } else if (lastError != null) {
+      NotificationHelper.showError(context, lastError);
+    }
+  }
   
   Future<bool> _batchUnshareRating(WidgetRef ref, int ratingId, List<int> userIds) async {
     // Use the batch unshare API endpoint
@@ -147,17 +149,8 @@ class MyRatingSection extends ConsumerWidget {
       
       return response.when(
         success: (updatedRating, _) {
-          // Update the rating using the provider's public method
-          final ratingNotifier = ref.read(ratingProvider.notifier);
-          final currentState = ref.read(ratingProvider);
-          final updatedRatings = currentState.ratings
-              .map((r) => r.id == updatedRating.id ? updatedRating : r)
-              .toList();
-          
-          // We need a public method to update the state
-          // For now, trigger a refresh to get updated data
-          ratingNotifier.refreshRatings();
-          
+          // Trigger a refresh to get updated data
+          ref.read(ratingProvider.notifier).refreshRatings();
           return true;
         },
         error: (message, statusCode, errorCode, details) => false,
@@ -190,9 +183,9 @@ class MyRatingSection extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppConstants.spacingM),
                 decoration: BoxDecoration(
-                  color: AppConstants.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                  border: Border.all(color: AppConstants.primaryColor.withValues(alpha: 0.3)),
+                color: AppConstants.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                border: Border.all(color: AppConstants.primaryColor.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,10 +275,10 @@ class MyRatingSection extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppConstants.spacingL),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
                   ),
                 ),
                 child: Column(

@@ -107,6 +107,7 @@ class LoadingScreen extends ConsumerWidget {
 
   /// Build status message with appropriate styling
   Widget _buildStatusMessage(BuildContext context, String? message) {
+    // ignore: unnecessary_null_comparison
     if (message == null) {
       return Text(
         context.l10n.loading,

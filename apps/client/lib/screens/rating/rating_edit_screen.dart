@@ -8,7 +8,6 @@ import '../../utils/localization_utils.dart';
 import '../../utils/notification_helper.dart';
 import '../../utils/safe_navigation.dart';
 import '../../utils/item_provider_helper.dart';
-import '../../models/rateable_item.dart' as rateable;
 import '../../widgets/forms/form_scaffold.dart';
 import '../../widgets/forms/star_rating_input.dart';
 
@@ -122,20 +121,19 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
           note: _noteController.text.trim(),
         );
 
+    if (!mounted) return;
+
     if (success) {
       NotificationHelper.showSuccess(context, context.l10n.ratingUpdated);
       // Navigate back to item detail screen
-      if (mounted) {
-        // Use a delay to ensure the snackbar is shown before navigation
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) {
-          SafeNavigation.goBackFromRatingEdit(
-            context,
-            _existingRating!.itemType,
-            _existingRating!.itemId,
-          );
-        }
-      }
+      // Use a delay to ensure the snackbar is shown before navigation
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      SafeNavigation.goBackFromRatingEdit(
+        context,
+        _existingRating!.itemType,
+        _existingRating!.itemId,
+      );
     } else {
       final error =
           ref.read(ratingProvider).error ?? context.l10n.couldNotUpdateRating;

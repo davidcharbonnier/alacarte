@@ -61,6 +61,8 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
         widget.itemId,
       );
 
+      if (!mounted) return;
+      
       if (_item == null) {
         _loadError = context.l10n.itemNotFound;
       }
@@ -105,20 +107,19 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
           itemId: widget.itemId,
         );
 
+    if (!mounted) return;
+
     if (success) {
       NotificationHelper.showSuccess(context, context.l10n.ratingCreated);
       // Navigate back to item detail screen
-      if (mounted) {
-        // Use a delay to ensure the snackbar is shown before navigation
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) {
-          SafeNavigation.goBackFromRatingCreation(
-            context,
-            widget.itemType,
-            widget.itemId,
-          );
-        }
-      }
+      // Use a delay to ensure the snackbar is shown before navigation
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      SafeNavigation.goBackFromRatingCreation(
+        context,
+        widget.itemType,
+        widget.itemId,
+      );
     } else {
       final error =
           ref.read(ratingProvider).error ?? context.l10n.couldNotSaveRating;
@@ -225,7 +226,7 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
               padding: const EdgeInsets.all(AppConstants.spacingM),
               decoration: BoxDecoration(
                 color: rateable.ItemTypeHelper.getItemTypeColor(widget.itemType)
-                    .withOpacity(0.1),
+                    .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppConstants.radiusL),
               ),
               child: Icon(
@@ -254,7 +255,7 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(
                         context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
+                      ).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

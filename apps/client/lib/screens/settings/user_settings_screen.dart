@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../config/app_config.dart';
 import '../../providers/app_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/connectivity_provider.dart';
 import '../../routes/route_names.dart';
 import '../../utils/constants.dart';
 import '../../utils/appbar_helper.dart';

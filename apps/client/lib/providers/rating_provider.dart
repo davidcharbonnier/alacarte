@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../models/rating.dart';
 import '../models/api_response.dart';
 import '../services/rating_service.dart';
@@ -410,6 +411,7 @@ class RatingNotifier extends StateNotifier<RatingState> {
   Future<void> loadCheeseRatingStats(int cheeseId) async {
     final response = await _ratingService.getCheeseRatingStats(cheeseId);
     
+    // ignore: avoid_types_as_parameter_names, non_constant_identifier_names
     response.when(
       success: (stats, _) {
         final updatedStats = Map<int, Map<String, dynamic>>.from(state.cheeseRatingStats);
@@ -563,7 +565,7 @@ class RatingNotifier extends StateNotifier<RatingState> {
       return false;
     }
     
-    print('Sharing rating $ratingId with user IDs: $userIds (single API call)');
+    if (kDebugMode) print('Sharing rating $ratingId with user IDs: $userIds (single API call)');
     
     state = state.copyWith(isLoading: true, error: null);
 

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// OAuth-enabled User model for A la carte authentication
 class User {
   final int? id;
@@ -49,7 +51,7 @@ class User {
             : null,
       );
     } catch (e) {
-      print('Error parsing User JSON: $e');
+      if (kDebugMode) print('Error parsing User JSON: $e');
       rethrow;
     }
   }

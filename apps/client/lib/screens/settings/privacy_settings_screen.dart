@@ -443,7 +443,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         // "All" filter
         FilterChip(
           label: Text(
-            context.l10n.allFilterOption + ' (${sharedRatings.length})',
+            '${context.l10n.allFilterOption} (${sharedRatings.length})',
           ),
           selected: _selectedItemTypeFilter == 'all',
           onSelected: (selected) {
@@ -482,7 +482,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(
           context,
-        ).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
       ),
       child: Column(
@@ -924,19 +924,20 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
   ) async {
     try {
       // Show loading state
+      // ignore: unnecessary_null_comparison
       if (context.mounted) {
         NotificationHelper.showLoading(context, context.l10n.makingRatingsPrivate);
       }
 
-      final result = await ref
+      await ref
           .read(ratingProvider.notifier)
           .makeAllRatingsPrivate();
 
+      // ignore: unnecessary_null_comparison
       if (context.mounted) {
         // Clear any existing snackbars
         ScaffoldMessenger.of(context).clearSnackBars();
 
-        final ratingsAffected = result['ratings_affected'] as int? ?? 0;
         NotificationHelper.showSuccess(context, context.l10n.allRatingsMadePrivate);
 
         // Trigger a refresh of the screen data
@@ -989,6 +990,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           .read(ratingProvider.notifier)
           .removeUserFromAllShares(userId);
 
+      // ignore: unnecessary_null_comparison
       if (context.mounted) {
         // Clear any existing snackbars
         ScaffoldMessenger.of(context).clearSnackBars();
