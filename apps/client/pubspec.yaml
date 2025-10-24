@@ -53,7 +53,7 @@ dependencies:
   flutter_secure_storage: ^9.2.2
 
   # Authentication
-  google_sign_in: ^6.3.0
+  google_sign_in: ^7.2.0
 
   # Environment variables
   flutter_dotenv: ^6.0.0
