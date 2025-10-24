@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../flutter_gen/gen_l10n/app_localizations.dart';
 import '../../routes/route_names.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/appbar_helper.dart';
@@ -61,7 +60,6 @@ class _DisplayNameSetupScreenState
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final l10n = AppLocalizations.of(context)!;
 
     // Listen for profile completion
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -260,7 +258,7 @@ class _DisplayNameSetupScreenState
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(

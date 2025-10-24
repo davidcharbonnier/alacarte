@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../models/api_response.dart';
@@ -58,7 +59,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _ref.listen<AsyncValue<ConnectivityState>>(connectivityStateProvider, (previous, next) {
       next.whenData((connectivityState) {
         if (connectivityState == ConnectivityState.online && previous?.value != ConnectivityState.online) {
-          print('🔄 Connectivity restored - will revalidate user authentication');
+          if (kDebugMode) print('🔄 Connectivity restored - will revalidate user authentication');
           _handleConnectivityRestored();
         }
       });
@@ -69,7 +70,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _handleConnectivityRestored() async {
     // Always revalidate user when connectivity is restored (if we have a token)
     if (state.isAuthenticated && state.token != null) {
-      print('🔄 Connectivity restored - revalidating user authentication');
+      if (kDebugMode) print('🔄 Connectivity restored - revalidating user authentication');
       await _validateTokenWithBackend(state.token!);
     }
   }
@@ -81,7 +82,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       
       if (response is ApiSuccess<User>) {
         final user = response.data;
-        print('✅ User revalidation successful');
+        if (kDebugMode) print('✅ User revalidation successful');
         state = state.copyWith(
           isAuthenticated: true,
           isLoading: false,
@@ -90,12 +91,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
           needsProfileSetup: !user.profileCompleted,
         );
       } else {
-        print('❌ User revalidation failed - clearing auth');
+        if (kDebugMode) print('❌ User revalidation failed - clearing auth');
         // Token invalid, clear it
         await _clearAuth();
       }
     } catch (e) {
-      print('❌ User revalidation error: $e');
+      if (kDebugMode) print('❌ User revalidation error: $e');
       // Don't clear auth on network errors, might just be temporary
       // Keep offline state and will retry on next connectivity restore
     }
@@ -114,14 +115,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // Initialize authentication on app start
   Future<void> _initializeAuth() async {
-    print('🔐 Initializing authentication...');
+    if (kDebugMode) print('🔐 Initializing authentication...');
     state = state.copyWith(isLoading: true, error: null);
     
     try {
       final token = await TokenStorage.getToken();
       
       if (token != null && !TokenStorage.isTokenExpired(token)) {
-        print('🔑 Found stored token, setting in API service');
+        if (kDebugMode) print('🔑 Found stored token, setting in API service');
         // Set token in API service
         _apiService.setAuthToken(token);
         
@@ -130,18 +131,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await Future.delayed(const Duration(milliseconds: 300));
         
         if (ApiService.isOnline) {
-          print('🌐 Online - validating token with backend');
+          if (kDebugMode) print('🌐 Online - validating token with backend');
           await _validateTokenWithBackend(token);
         } else {
-          print('🚫 Offline - using token without validation');
+          if (kDebugMode) print('🚫 Offline - using token without validation');
           _setOfflineAuthState(token);
         }
       } else {
-        print('🚫 No valid token found');
+        if (kDebugMode) print('🚫 No valid token found');
         state = state.copyWith(isLoading: false);
       }
     } catch (e) {
-      print('❌ Auth initialization failed: $e');
+      if (kDebugMode) print('❌ Auth initialization failed: $e');
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to initialize authentication: $e',
@@ -400,31 +401,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
         error: 'Failed to check authentication: $e',
       );
     }
-  }
-  
-  /// Convert technical errors to user-friendly messages
-  String _convertToUserFriendlyError(String technicalError) {
-    // In development, show technical details. In production, show user-friendly messages
-    if (technicalError.contains('DioException') || technicalError.contains('status code')) {
-      if (technicalError.contains('500')) {
-        return 'Server temporarily unavailable. Please try again.';
-      } else if (technicalError.contains('400') || technicalError.contains('401')) {
-        return 'Authentication failed. Please try again.';
-      } else if (technicalError.contains('403')) {
-        return 'Access denied. Please check your account.';
-      } else if (technicalError.contains('duplicate') || technicalError.contains('already exists')) {
-        return 'Account setup conflict. Please try a different account.';
-      } else {
-        return 'Connection failed. Please check your network and try again.';
-      }
-    }
-    
-    // For development, preserve technical details, but clean them up
-    if (technicalError.contains('Token exchange failed') || technicalError.contains('Backend authentication failed')) {
-      return 'Sign in failed. Please try again or contact support.';
-    }
-    
-    return technicalError; // Return as-is for other cases
   }
 }
 

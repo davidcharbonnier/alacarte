@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/item_provider.dart';
 import '../../providers/rating_provider.dart';
-import '../../providers/app_provider.dart';
-import '../../providers/locale_provider.dart';
-import '../../models/rateable_item.dart';
-import '../../models/cheese_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/appbar_helper.dart';
@@ -20,11 +15,6 @@ class HomeScreen extends ConsumerWidget {
 
   void _navigateToItemType(BuildContext context, String itemType) {
     GoRouter.of(context).go('${RouteNames.itemType}/$itemType');
-  }
-
-  void _navigateToSettings(BuildContext context) {
-    // TODO: Implement OAuth settings screen or remove this
-    // For now, we can show the auth status widget in the home screen
   }
   
   /// Count unique items that have ratings (personal or shared) for this user
@@ -75,11 +65,7 @@ class HomeScreen extends ConsumerWidget {
       });
     }
     
-    final authState = ref.watch(authProvider);
     final ratingState = ref.watch(ratingProvider);
-    final appState = ref.watch(appProvider);
-
-    final currentUser = authState.user;
 
     return Scaffold(
       appBar: AppBar(

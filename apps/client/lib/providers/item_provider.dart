@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../models/rateable_item.dart';
 import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
@@ -10,18 +11,11 @@ import '../services/item_service.dart';
 /// Generic provider for managing any type of rateable item
 class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   final ItemService<T> _itemService;
-  static int _instanceCounter = 0;
-  final int _instanceId;
   
-  ItemProvider(this._itemService) : _instanceId = ++_instanceCounter, super(ItemState<T>()) {
+  ItemProvider(this._itemService) : super(ItemState<T>()) {
     // Don't auto-load data in constructor - let consumers trigger loading
     // Temporarily disable filter options loading to reduce API calls
     // _loadFilterOptions();
-  }
-  
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   /// Load all items from the backend
@@ -87,14 +81,14 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
             }
           },
           error: (message, statusCode, errorCode, details) {
-            print('Failed to load item $itemId: $message');
+            if (kDebugMode) print('Failed to load item $itemId: $message');
             // Continue loading other items
           },
           loading: () {},
         );
       }
     } catch (e) {
-      print('Error in loadSpecificItems: $e');
+      if (kDebugMode) print('Error in loadSpecificItems: $e');
     }
   }
 
@@ -232,11 +226,12 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
 
     final response = await _itemService.deleteItem(itemId);
 
+    // ignore: avoid_types_as_parameter_names, non_constant_identifier_names
     return response.when(
       success: (_, __) {
-        final updatedItems = state.items.where((i) => i.id != itemId).toList();
-        
-        T? newSelectedItem = state.selectedItem;
+      final updatedItems = state.items.where((i) => i.id != itemId).toList();
+      
+      T? newSelectedItem = state.selectedItem;
         if (state.selectedItem?.id == itemId) {
           newSelectedItem = null;
         }
@@ -313,11 +308,6 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   void invalidateItem(int itemId) {
     final updatedItems = state.items.where((i) => i.id != itemId).toList();
     state = state.copyWith(items: updatedItems);
-  }
-
-  /// Load filter options
-  Future<void> _loadFilterOptions() async {
-    // This will be implemented by specific item type providers
   }
 
   /// Refresh filter options after data changes
@@ -429,35 +419,7 @@ final cheeseItemProvider = StateNotifierProvider<CheeseItemProvider, ItemState<C
 
 /// Concrete implementation for Cheese provider
 class CheeseItemProvider extends ItemProvider<CheeseItem> {
-  CheeseItemProvider(CheeseItemService cheeseService) : super(cheeseService);
-
-  @override
-  Future<void> _loadFilterOptions() async {
-    final cheeseService = _itemService as CheeseItemService;
-    
-    final typesResponse = await cheeseService.getCheeseTypes();
-    final originsResponse = await cheeseService.getCheeseOrigins();
-
-    typesResponse.when(
-      success: (types, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['type'] = types;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    originsResponse.when(
-      success: (origins, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['origin'] = origins;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-  }
+  CheeseItemProvider(super.cheeseService);
 
   /// Cheese-specific filtering methods
   void setTypeFilter(String? type) => setCategoryFilter('type', type);
@@ -484,46 +446,7 @@ final ginItemProvider = StateNotifierProvider<GinItemProvider, ItemState<GinItem
 
 /// Concrete implementation for Gin provider
 class GinItemProvider extends ItemProvider<GinItem> {
-  GinItemProvider(GinItemService ginService) : super(ginService);
-
-  @override
-  Future<void> _loadFilterOptions() async {
-    final ginService = _itemService as GinItemService;
-    
-    final producersResponse = await ginService.getGinProducers();
-    final originsResponse = await ginService.getGinOrigins();
-    final profilesResponse = await ginService.getGinProfiles();
-
-    producersResponse.when(
-      success: (producers, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['producer'] = producers;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    originsResponse.when(
-      success: (origins, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['origin'] = origins;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    profilesResponse.when(
-      success: (profiles, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['profile'] = profiles;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-  }
+  GinItemProvider(super.ginService);
 
   /// Gin-specific filtering methods
   void setProducerFilter(String? producer) => setCategoryFilter('producer', producer);
@@ -550,46 +473,7 @@ final wineItemProvider = StateNotifierProvider<WineItemProvider, ItemState<WineI
 
 /// Concrete implementation for Wine provider
 class WineItemProvider extends ItemProvider<WineItem> {
-  WineItemProvider(WineItemService wineService) : super(wineService);
-
-  @override
-  Future<void> _loadFilterOptions() async {
-    final wineService = _itemService as WineItemService;
-    
-    final colorsResponse = await wineService.getWineColors();
-    final countriesResponse = await wineService.getWineCountries();
-    final regionsResponse = await wineService.getWineRegions();
-
-    colorsResponse.when(
-      success: (colors, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['color'] = colors;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    countriesResponse.when(
-      success: (countries, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['country'] = countries;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    regionsResponse.when(
-      success: (regions, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['region'] = regions;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-  }
+  WineItemProvider(super.wineService);
 
   /// Wine-specific filtering methods
   void setColorFilter(String? color) => setCategoryFilter('color', color);
@@ -617,68 +501,7 @@ final coffeeItemProvider = StateNotifierProvider<CoffeeItemProvider, ItemState<C
 
 /// Concrete implementation for Coffee provider
 class CoffeeItemProvider extends ItemProvider<CoffeeItem> {
-  CoffeeItemProvider(CoffeeItemService coffeeService) : super(coffeeService);
-
-  @override
-  Future<void> _loadFilterOptions() async {
-    final coffeeService = _itemService as CoffeeItemService;
-    
-    final roastersResponse = await coffeeService.getCoffeeRoasters();
-    final countriesResponse = await coffeeService.getCoffeeCountries();
-    final regionsResponse = await coffeeService.getCoffeeRegions();
-    final processingMethodsResponse = await coffeeService.getCoffeeProcessingMethods();
-    final roastLevelsResponse = await coffeeService.getCoffeeRoastLevels();
-
-    roastersResponse.when(
-      success: (roasters, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['roaster'] = roasters;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    countriesResponse.when(
-      success: (countries, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['country'] = countries;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    regionsResponse.when(
-      success: (regions, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['region'] = regions;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    processingMethodsResponse.when(
-      success: (methods, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['processing_method'] = methods;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-
-    roastLevelsResponse.when(
-      success: (roastLevels, _) {
-        final currentOptions = Map<String, List<String>>.from(state.filterOptions);
-        currentOptions['roast_level'] = roastLevels;
-        state = state.copyWith(filterOptions: currentOptions);
-      },
-      error: (_, __, ___, ____) {},
-      loading: () {},
-    );
-  }
+  CoffeeItemProvider(super.coffeeService);
 
   /// Coffee-specific filtering methods
   void setRoasterFilter(String? roaster) => setCategoryFilter('roaster', roaster);

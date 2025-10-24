@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:alc_client/flutter_gen/gen_l10n/app_localizations.dart';
 import 'routes/app_router.dart';
@@ -54,8 +53,6 @@ class MyApp extends ConsumerWidget {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      // Use default Flutter locale resolution for now
-      // localeResolutionCallback: ... (removed to fix build issues)
       
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -79,7 +76,7 @@ class MyApp extends ConsumerWidget {
             }
           },
           loading: () => child ?? const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const FullscreenOfflineScreen(
+          error: (error, stackTrace) => const FullscreenOfflineScreen(
             connectivityState: ConnectivityState.networkOffline,
           ),
         );

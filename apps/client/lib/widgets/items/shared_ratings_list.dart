@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/rating.dart';
 import '../../models/rateable_item.dart';
-import '../../providers/auth_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 
@@ -42,7 +41,7 @@ class SharedRatingsList extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(AppConstants.radiusM),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
                   ),
                 ),
                 child: Column(
@@ -50,7 +49,7 @@ class SharedRatingsList extends ConsumerWidget {
                     Icon(
                       Icons.share_outlined,
                       size: AppConstants.iconL,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: AppConstants.spacingS),
                     Text(
@@ -63,7 +62,7 @@ class SharedRatingsList extends ConsumerWidget {
                     Text(
                     context.l10n.noSharedRatingsMessage(item.name),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -96,9 +95,9 @@ class SharedRatingsList extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: AppConstants.spacingM),
       padding: const EdgeInsets.all(AppConstants.spacingM),
       decoration: BoxDecoration(
-        color: AppConstants.recommendationColor.withOpacity(0.1),
+        color: AppConstants.recommendationColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        border: Border.all(color: AppConstants.recommendationColor.withOpacity(0.3)),
+        border: Border.all(color: AppConstants.recommendationColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,8 +181,8 @@ class SharedRatingsList extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontStyle: rating.note.isEmpty ? FontStyle.italic : FontStyle.normal,
               color: rating.note.isEmpty 
-                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)
-                : null,
+              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)
+              : null,
             ),
           ),
         ],

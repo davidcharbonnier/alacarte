@@ -68,10 +68,10 @@ class ItemDetailHeader extends StatelessWidget {
                     vertical: AppConstants.spacingXS,
                   ),
                   decoration: BoxDecoration(
-                    color: AppConstants.primaryColor.withOpacity(0.1),
+                    color: AppConstants.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppConstants.radiusM),
                     border: Border.all(
-                      color: AppConstants.primaryColor.withOpacity(0.3),
+                      color: AppConstants.primaryColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Text(
@@ -90,8 +90,8 @@ class ItemDetailHeader extends StatelessWidget {
                     onPressed: onEditPressed,
                     icon: const Icon(Icons.edit),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppConstants.primaryColor.withOpacity(
-                        0.1,
+                      backgroundColor: AppConstants.primaryColor.withValues(
+                        alpha: 0.1,
                       ),
                       foregroundColor: AppConstants.primaryColor,
                     ),
@@ -187,7 +187,7 @@ class ItemDetailHeader extends StatelessWidget {
             Icon(
               icon,
               size: AppConstants.iconS,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             const SizedBox(width: AppConstants.spacingS),
           ],
@@ -195,7 +195,7 @@ class ItemDetailHeader extends StatelessWidget {
             '$label: ',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           Expanded(
@@ -205,7 +205,7 @@ class ItemDetailHeader extends StatelessWidget {
                       Icon(
                         isYes ? Icons.check_circle_outline : Icons.radio_button_unchecked,
                         size: 16,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: AppConstants.spacingXS),
                       Text(
@@ -257,7 +257,7 @@ class ItemDetailHeader extends StatelessWidget {
                 Icon(
                   icon,
                   size: AppConstants.iconS,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: AppConstants.spacingS),
               ],
@@ -265,7 +265,7 @@ class ItemDetailHeader extends StatelessWidget {
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],

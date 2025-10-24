@@ -67,7 +67,9 @@ class AppNotifier extends StateNotifier<AppState> {
   }
 
   /// Dispose resources when app is closed
+  @override
   void dispose() {
+    super.dispose();
     ApiService.dispose();
   }
   

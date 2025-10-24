@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/api_service.dart';
 import '../../utils/constants.dart';
@@ -152,7 +153,7 @@ class FullscreenOfflineScreen extends ConsumerWidget {
   
   /// Trigger connection retry
   void _retryConnection() {
-    print('🔄 User triggered connection retry from offline screen');
+    if (kDebugMode) print('🔄 User triggered connection retry from offline screen');
     ApiService.checkConnectivityAfterTimeout();
   }
 }
