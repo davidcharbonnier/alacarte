@@ -115,63 +115,63 @@ Artifacts (sequential - safety net)
 ### 3. Production Release (`release.yml`)
 
 **Trigger:** Push of git tags matching patterns:
-- `v*` - Synchronized release (all apps)
 - `api-v*` - API only
 - `client-v*` - Client only  
 - `admin-v*` - Admin only
 
-**Environment:** Uses `prod` environment for Docker builds
-
 **Versioning:**
-- Versions are extracted directly from git tags
-- `package.json` files are NOT used for versioning
-- Tags created by release-please workflow
-- Format: `v0.6.0` or `api-v1.2.3`
+- Versions are managed by versio in `versio.toml`
+- Tags created by versio release workflow
+- Format: `api-v1.2.3`, `client-v1.2.3`, `admin-v1.2.3`
 
 **Process:**
 When a tag is pushed:
-- Determines release type from tag pattern
-- Extracts version number from tag (strips prefix and 'v')
-- Triggers appropriate build jobs based on tag type:
+- Validates tag format and determines which app to build
+- Extracts version number from tag
+- Triggers build job for the specific app
 
 **Build Jobs:**
 1. **Docker Images (API + Admin):**
-   - Matrix build for both apps
+   - Builds only the affected app
    - Uses production environment variables
-   - Admin gets `NEXT_PUBLIC_API_URL` from prod env
    - Tags: `{app}:v{version}` + `{app}:latest`
 
 2. **Client APK:**
    - Flutter 3.35.4 + Java 17
-   - Generates localizations
    - Builds release APK
    - Uploads as artifact
 
 3. **GitHub Releases:**
-   - Release-please creates GitHub releases with changelogs
-   - Workflow updates releases with deployment information
+   - Versio creates GitHub releases with changelogs
+   - Workflow updates releases with build status and deployment information
    - Adds Docker image pull commands
    - Attaches APK for client releases
    - Links to relevant changelogs
 
 **Release Examples:**
 ```
-Synchronized tag: v0.6.0
-→ Release: "Platform v0.6.0"
-→ Builds: API, Client, Admin all at version 0.6.0
-→ Docker tags: api:0.6.0, admin:0.6.0
-→ APK: client 0.6.0
-
-App-specific tag: api-v1.2.3  
+API release: api-v1.2.3
 → Release: "API v1.2.3"
 → Builds: API only at version 1.2.3
 → Docker tags: api:1.2.3
+
+Client release: client-v1.2.4  
+→ Release: "Client v1.2.4"
+→ Builds: Client only at version 1.2.4
+→ APK: client 1.2.4
 ```
+
+**Breaking Changes:**
+- Versio automatically detects breaking changes using conventional commit format
+- `feat!:` commits trigger major version bumps for affected packages
+- Each package maintains independent versioning
+- Breaking changes only affect packages that implement them
 
 **Outputs:**
 - Docker images: `davidcharbonnier/alacarte-{app}:v{version}` + `:latest`
-- GitHub releases with tags (combined or per-app)
+- GitHub releases with tags (app-specific)
 - Client APK attached to relevant release
+- Build status indicators in release notes
 
 ## 🚀 Developer Workflow
 
@@ -202,24 +202,32 @@ git commit -m "docs: update wine documentation"
 
 ```bash
 # 1. Merge feature PR to master with conventional commits
-# → Release-please tracks changes via commits
+# → Versio workflow runs automatically on master push
 
-# 2. Release-please creates/updates release PR
-# - Bumps versions in .release-please-manifest.json
-# - Updates CHANGELOG.md files
-# - Groups all changes since last release
+# 2. Versio analyzes commits and determines releases
+# - Detects conventional commits (feat, fix, feat!, etc.)
+# - Bumps versions according to semantic versioning rules
+# - Only releases packages that have changes
+# - Updates CHANGELOG.md files per package
+# - Creates git tags automatically
 
-# 3. Review and merge release PR
-# - Check version bumps (follows semver)
-# - Review CHANGELOG.md updates
-# - Verify all commits are included
+# 3. Tag push triggers release.yml workflow
+# → Validates tag format
+# → Builds affected apps in parallel
+# → Updates GitHub releases with build status and deployment info
+# → Attaches APK for client releases
 
-# 4. Release-please creates git tag automatically
-# → Tag push triggers release.yml workflow
-# → Docker images published with version from tag
-# → GitHub releases updated with artifacts
-# → APK attached to releases
+# 4. Monitor release completion
+# - Check GitHub Actions for build status
+# - Verify Docker images published
+# - Confirm APK attached to releases
 ```
+
+**Breaking Change Handling:**
+- Use `feat!:` for breaking feature additions
+- Use `fix!:` for breaking bug fixes
+- Versio automatically bumps major version for affected packages
+- Each package versions independently
 
 ## 🧪 Manual QA Deployment
 
@@ -395,5 +403,5 @@ gh run download <run-id> -n client-apk-<version>
 
 ---
 
-**Last Updated:** January 2025  
-**Workflow Versions:** v1.0.0
+**Last Updated:** March 2025  
+**Workflow Versions:** v1.1.0

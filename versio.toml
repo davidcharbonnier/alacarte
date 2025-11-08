@@ -1,0 +1,50 @@
+[[package]]
+name = "api"
+path = "apps/api"
+version = "0.6.0"
+changelog = "CHANGELOG.md"
+
+[[package]]
+name = "client"
+path = "apps/client"
+version = "0.6.0"
+changelog = "CHANGELOG.md"
+version_file = "pubspec.yaml"
+
+[[package]]
+name = "admin"
+path = "apps/admin"
+version = "0.6.0"
+changelog = "CHANGELOG.md"
+version_file = "package.json"
+
+[git]
+tag_format = "{package}-v{version}"
+
+[git.commit]
+message = "chore: release {package} v{version}"
+
+[changelog]
+header = "# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n"
+footer = ""
+
+[[changelog.category]]
+title = "Features"
+types = ["feat"]
+
+[[changelog.category]]
+title = "Bug Fixes"
+types = ["fix"]
+
+[[changelog.category]]
+title = "Performance Improvements"
+types = ["perf"]
+
+[[changelog.category]]
+title = "Breaking Changes"
+types = ["breaking"]
+
+[[changelog.category]]
+title = "Other Changes"
+types = ["docs", "style", "chore", "refactor", "test", "build", "ci"]
+hidden = true
