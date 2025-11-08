@@ -1,0 +1,37 @@
+options:
+  prev_tag: "versio-prev"
+
+projects:
+  - name: "client"
+    root: "apps/client"
+    id: 1
+    tag_prefix: "client"
+    version:
+      #file: "pubspec.yaml"
+      #yaml: "version"
+      tags:
+        default: "0.6.0"
+
+  - name: "admin"
+    root: "apps/admin"
+    id: 2
+    tag_prefix: "admin"
+    version:
+      #file: "package.json"
+      #json: "version"
+      tags:
+        default: "0.6.0"
+    #hooks:
+    #  post_write: 'npm install --package-lock-only'
+
+  - name: "api"
+    root: "apps/api"
+    id: 3
+    tag_prefix: "api"
+    version:
+      tags:
+        default: "0.6.0"
+
+sizes:
+  use_angular: true
+  fail: ["*"]
