@@ -6,84 +6,23 @@ on:
       - 'api-v*'
       - 'client-v*'
       - 'admin-v*'
-      - 'v*'
 
 jobs:
-  determine-releases:
-    runs-on: ubuntu-latest
-    outputs:
-      build_api: ${{ steps.check.outputs.build_api }}
-      build_client: ${{ steps.check.outputs.build_client }}
-      build_admin: ${{ steps.check.outputs.build_admin }}
-      api_version: ${{ steps.versions.outputs.api_version }}
-      client_version: ${{ steps.versions.outputs.client_version }}
-      admin_version: ${{ steps.versions.outputs.admin_version }}
-      release_type: ${{ steps.check.outputs.release_type }}
-      tag_name: ${{ steps.check.outputs.tag_name }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Determine what to build from tag
-        id: check
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
-          echo "Tag: $TAG"
-          
-          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            # Synchronized release (v1.2.3)
-            echo "build_api=true" >> $GITHUB_OUTPUT
-            echo "build_client=true" >> $GITHUB_OUTPUT
-            echo "build_admin=true" >> $GITHUB_OUTPUT
-            echo "release_type=synced" >> $GITHUB_OUTPUT
-            echo "✅ Synced release detected"
-          elif [[ "$TAG" =~ ^api-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            # API only
-            echo "build_api=true" >> $GITHUB_OUTPUT
-            echo "build_client=false" >> $GITHUB_OUTPUT
-            echo "build_admin=false" >> $GITHUB_OUTPUT
-            echo "release_type=api" >> $GITHUB_OUTPUT
-            echo "✅ API release detected"
-          elif [[ "$TAG" =~ ^client-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            # Client only
-            echo "build_api=false" >> $GITHUB_OUTPUT
-            echo "build_client=true" >> $GITHUB_OUTPUT
-            echo "build_admin=false" >> $GITHUB_OUTPUT
-            echo "release_type=client" >> $GITHUB_OUTPUT
-            echo "✅ Client release detected"
-          elif [[ "$TAG" =~ ^admin-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            # Admin only
-            echo "build_api=false" >> $GITHUB_OUTPUT
-            echo "build_client=false" >> $GITHUB_OUTPUT
-            echo "build_admin=true" >> $GITHUB_OUTPUT
-            echo "release_type=admin" >> $GITHUB_OUTPUT
-            echo "✅ Admin release detected"
-          fi
-
-      - name: Get versions from tag
-        id: versions
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          
-          # Extract version from tag (remove 'v' prefix and any app prefix)
-          # Examples: v0.6.0 -> 0.6.0, api-v1.2.3 -> 1.2.3
-          VERSION=$(echo "$TAG" | sed -E 's/^(api-|client-|admin-)?v//')
-          
-          echo "api_version=$VERSION" >> $GITHUB_OUTPUT
-          echo "client_version=$VERSION" >> $GITHUB_OUTPUT
-          echo "admin_version=$VERSION" >> $GITHUB_OUTPUT
-          
-          echo "📦 Versions from tag $TAG: $VERSION"
-
   build-api:
-    needs: determine-releases
-    if: needs.determine-releases.outputs.build_api == 'true'
+    if: startsWith(github.ref, 'refs/tags/api-v')
     runs-on: ubuntu-latest
     environment: prod
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#api-v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -101,19 +40,26 @@ jobs:
           file: ./apps/api/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.determine-releases.outputs.api_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   build-client:
-    needs: determine-releases
-    if: needs.determine-releases.outputs.build_client == 'true'
+    if: startsWith(github.ref, 'refs/tags/client-v')
     runs-on: ubuntu-latest
     environment: prod
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#client-v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Create .env file
         working-directory: ./apps/client
@@ -121,7 +67,7 @@ jobs:
           cat << EOF > .env
           API_BASE_URL=${{ vars.CLIENT_API_BASE_URL }}
           GOOGLE_CLIENT_ID=${{ vars.CLIENT_GOOGLE_CLIENT_ID }}
-          APP_VERSION=${{ needs.determine-releases.outputs.client_version }}
+          APP_VERSION=${{ steps.version.outputs.version }}
           EOF
 
       - name: Set up Flutter
@@ -163,17 +109,24 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: client-apk-${{ needs.determine-releases.outputs.client_version }}
+          name: client-apk-${{ steps.version.outputs.version }}
           path: apps/client/build/app/outputs/flutter-apk/app-release.apk
 
   build-admin:
-    needs: determine-releases
-    if: needs.determine-releases.outputs.build_admin == 'true'
+    if: startsWith(github.ref, 'refs/tags/admin-v')
     runs-on: ubuntu-latest
     environment: prod
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#admin-v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -194,24 +147,48 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.determine-releases.outputs.admin_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ steps.version.outputs.version }}
             ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   update-release:
-    needs: [determine-releases, build-api, build-client, build-admin]
-    if: always()
+    needs: [build-api, build-client, build-admin]
+    if: (needs.build-api.result == 'success' && needs.build-api.result != 'skipped') || (needs.build-client.result == 'success' && needs.build-client.result != 'skipped') || (needs.build-admin.result == 'success' && needs.build-admin.result != 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Extract tag info
+        id: tag_info
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          
+          if [[ "$TAG" =~ ^api-v ]]; then
+            APP="api"
+            VERSION="${TAG#api-v}"
+            TITLE="API v$VERSION"
+          elif [[ "$TAG" =~ ^client-v ]]; then
+            APP="client"
+            VERSION="${TAG#client-v}"
+            TITLE="Client v$VERSION"
+          elif [[ "$TAG" =~ ^admin-v ]]; then
+            APP="admin"
+            VERSION="${TAG#admin-v}"
+            TITLE="Admin v$VERSION"
+          fi
+          
+          echo "app=$APP" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+
       - name: Download Client APK
-        if: needs.determine-releases.outputs.build_client == 'true' && needs.build-client.result == 'success'
+        if: steps.tag_info.outputs.app == 'client'
         uses: actions/download-artifact@v4
         with:
-          name: client-apk-${{ needs.determine-releases.outputs.client_version }}
+          name: client-apk-${{ steps.tag_info.outputs.version }}
           path: ./artifacts
 
       - name: Read existing release notes
@@ -219,9 +196,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${{ needs.determine-releases.outputs.tag_name }}"
+          TAG="${{ steps.tag_info.outputs.tag }}"
           
-          # Get existing release body (created by release-please)
+          # Get existing release body (created by versio)
           EXISTING_BODY=$(gh release view "$TAG" --json body -q .body || echo "")
           
           # Save to file for easier handling
@@ -229,79 +206,40 @@ jobs:
           
           echo "📝 Existing release notes captured"
 
-      - name: Build enhanced release notes
-        id: build_notes
+      - name: Add deployment information
         run: |
-          TAG="${{ needs.determine-releases.outputs.tag_name }}"
-          RELEASE_TYPE="${{ needs.determine-releases.outputs.release_type }}"
+          APP="${{ steps.tag_info.outputs.app }}"
+          VERSION="${{ steps.tag_info.outputs.version }}"
           
-          # Start with existing release-please generated notes
+          # Start with existing versio generated notes
           cat existing_notes.md > enhanced_notes.md
           
-          # Add deployment information section
           echo "" >> enhanced_notes.md
           echo "---" >> enhanced_notes.md
           echo "" >> enhanced_notes.md
           echo "## 🚀 Deployment Information" >> enhanced_notes.md
           echo "" >> enhanced_notes.md
           
-          if [ "$RELEASE_TYPE" = "synced" ]; then
-            # Synced release - all apps
-            VERSION="${{ needs.determine-releases.outputs.api_version }}"
-            
-            echo "**All components released at version \`${VERSION}\`**" >> enhanced_notes.md
-            echo "" >> enhanced_notes.md
-            
-            if [ "${{ needs.build-api.result }}" = "success" ]; then
-              echo "### 🐳 API - Docker Image" >> enhanced_notes.md
-              echo "\`\`\`bash" >> enhanced_notes.md
-              echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${VERSION}" >> enhanced_notes.md
-              echo "\`\`\`" >> enhanced_notes.md
-              echo "" >> enhanced_notes.md
-            fi
-            
-            if [ "${{ needs.build-client.result }}" = "success" ]; then
-              echo "### 📱 Client - APK" >> enhanced_notes.md
-              echo "Download the APK from the assets below." >> enhanced_notes.md
-              echo "" >> enhanced_notes.md
-            fi
-            
-            if [ "${{ needs.build-admin.result }}" = "success" ]; then
-              echo "### 🐳 Admin - Docker Image" >> enhanced_notes.md
-              echo "\`\`\`bash" >> enhanced_notes.md
-              echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${VERSION}" >> enhanced_notes.md
-              echo "\`\`\`" >> enhanced_notes.md
-              echo "" >> enhanced_notes.md
-            fi
-            
-            echo "### 📝 Changelogs" >> enhanced_notes.md
-            echo "- [API Changelog](./apps/api/CHANGELOG.md)" >> enhanced_notes.md
-            echo "- [Client Changelog](./apps/client/CHANGELOG.md)" >> enhanced_notes.md
-            echo "- [Admin Changelog](./apps/admin/CHANGELOG.md)" >> enhanced_notes.md
-            
-          elif [ "$RELEASE_TYPE" = "api" ]; then
-            VERSION="${{ needs.determine-releases.outputs.api_version }}"
+          if [ "$APP" = "api" ]; then
             echo "### 🐳 API Docker Image" >> enhanced_notes.md
             echo "\`\`\`bash" >> enhanced_notes.md
-            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${VERSION}" >> enhanced_notes.md
+            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:$VERSION" >> enhanced_notes.md
             echo "\`\`\`" >> enhanced_notes.md
             echo "" >> enhanced_notes.md
             echo "### 📝 Changelog" >> enhanced_notes.md
             echo "See [API Changelog](./apps/api/CHANGELOG.md) for detailed changes." >> enhanced_notes.md
             
-          elif [ "$RELEASE_TYPE" = "client" ]; then
-            VERSION="${{ needs.determine-releases.outputs.client_version }}"
-            echo "### 📱 Client APK" >> enhanced_notes.md
+          elif [ "$APP" = "client" ]; then
+            echo "### 📱 Client APK" >>> enhanced_notes.md
             echo "Download the APK from the assets below." >> enhanced_notes.md
             echo "" >> enhanced_notes.md
             echo "### 📝 Changelog" >> enhanced_notes.md
             echo "See [Client Changelog](./apps/client/CHANGELOG.md) for detailed changes." >> enhanced_notes.md
             
-          elif [ "$RELEASE_TYPE" = "admin" ]; then
-            VERSION="${{ needs.determine-releases.outputs.admin_version }}"
+          elif [ "$APP" = "admin" ]; then
             echo "### 🐳 Admin Docker Image" >> enhanced_notes.md
             echo "\`\`\`bash" >> enhanced_notes.md
-            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${VERSION}" >> enhanced_notes.md
+            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:$VERSION" >> enhanced_notes.md
             echo "\`\`\`" >> enhanced_notes.md
             echo "" >> enhanced_notes.md
             echo "### 📝 Changelog" >> enhanced_notes.md
@@ -312,23 +250,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${{ needs.determine-releases.outputs.tag_name }}"
-          RELEASE_TYPE="${{ needs.determine-releases.outputs.release_type }}"
-          
-          # Determine release title
-          if [ "$RELEASE_TYPE" = "synced" ]; then
-            VERSION="${{ needs.determine-releases.outputs.api_version }}"
-            TITLE="Platform v${VERSION}"
-          elif [ "$RELEASE_TYPE" = "api" ]; then
-            VERSION="${{ needs.determine-releases.outputs.api_version }}"
-            TITLE="API v${VERSION}"
-          elif [ "$RELEASE_TYPE" = "client" ]; then
-            VERSION="${{ needs.determine-releases.outputs.client_version }}"
-            TITLE="Client v${VERSION}"
-          elif [ "$RELEASE_TYPE" = "admin" ]; then
-            VERSION="${{ needs.determine-releases.outputs.admin_version }}"
-            TITLE="Admin v${VERSION}"
-          fi
+          TAG="${{ steps.tag_info.outputs.tag }}"
+          TITLE="${{ steps.tag_info.outputs.title }}"
           
           # Update the release with enhanced notes and title
           gh release edit "$TAG" --title "$TITLE" --notes-file enhanced_notes.md
@@ -336,11 +259,11 @@ jobs:
           echo "✅ Release updated: $TITLE"
 
       - name: Upload APK to Release
-        if: needs.determine-releases.outputs.build_client == 'true' && needs.build-client.result == 'success'
+        if: steps.tag_info.outputs.app == 'client'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${{ needs.determine-releases.outputs.tag_name }}"
+          TAG="${{ steps.tag_info.outputs.tag }}"
           
           # Upload APK as release asset
           gh release upload "$TAG" ./artifacts/app-release.apk --clobber
