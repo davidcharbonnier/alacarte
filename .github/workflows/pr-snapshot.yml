@@ -19,28 +19,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Versio
-        run: |
-          curl -L https://github.com/chaaz/versio/releases/download/v0.8.5/versio__x86_64-unknown-linux-gnu -o versio
-          chmod +x versio
-          sudo mv versio /usr/local/bin/
-
-      - name: Detect changed apps using versio
+      - name: Detect changed apps using git
         id: changes
         run: |
-          # Use versio to detect which packages have changes
+          # Use git to detect which packages have changes
           git fetch origin ${{ github.event.pull_request.base.ref }}
-
-          # Get list of packages that would be released (have changes)
-          # versio diff outputs package names that have changes
-          CHANGED_PACKAGES=$(versio diff 2>/dev/null || echo "")
-
-          echo "Changed packages: $CHANGED_PACKAGES"
-
+          
+          # Get list of changed files compared to base branch
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
           HAS_CHANGES=false
-
-          # Check each package
-          if echo "$CHANGED_PACKAGES" | grep -q "^api$"; then
+          
+          # Check if API has changes (files in apps/api/)
+          if echo "$CHANGED_FILES" | grep -q "^apps/api/"; then
             echo "api=true" >> $GITHUB_OUTPUT
             echo "✅ API has changes"
             HAS_CHANGES=true
@@ -48,8 +42,9 @@ jobs:
             echo "api=false" >> $GITHUB_OUTPUT
             echo "❌ API has no changes"
           fi
-
-          if echo "$CHANGED_PACKAGES" | grep -q "^client$"; then
+          
+          # Check if Client has changes (files in apps/client/)
+          if echo "$CHANGED_FILES" | grep -q "^apps/client/"; then
             echo "client=true" >> $GITHUB_OUTPUT
             echo "✅ Client has changes"
             HAS_CHANGES=true
@@ -57,8 +52,9 @@ jobs:
             echo "client=false" >> $GITHUB_OUTPUT
             echo "❌ Client has no changes"
           fi
-
-          if echo "$CHANGED_PACKAGES" | grep -q "^admin$"; then
+          
+          # Check if Admin has changes (files in apps/admin/)
+          if echo "$CHANGED_FILES" | grep -q "^apps/admin/"; then
             echo "admin=true" >> $GITHUB_OUTPUT
             echo "✅ Admin has changes"
             HAS_CHANGES=true
@@ -66,7 +62,7 @@ jobs:
             echo "admin=false" >> $GITHUB_OUTPUT
             echo "❌ Admin has no changes"
           fi
-
+          
           echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
 
   generate-version:
