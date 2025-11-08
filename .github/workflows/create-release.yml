@@ -27,7 +27,7 @@ jobs:
 
       - name: Run Versio Release
         run: |
-          versio release --yes
+          versio release
 
       - name: Show release outputs
         run: |
