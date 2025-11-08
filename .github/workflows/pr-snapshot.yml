@@ -32,7 +32,8 @@ jobs:
           git fetch origin ${{ github.event.pull_request.base.ref }}
 
           # Get list of packages that would be released (have changes)
-          CHANGED_PACKAGES=$(versio diff --format json | jq -r '.packages | keys[]' 2>/dev/null || echo "")
+          # versio diff outputs package names that have changes
+          CHANGED_PACKAGES=$(versio diff 2>/dev/null || echo "")
 
           echo "Changed packages: $CHANGED_PACKAGES"
 
