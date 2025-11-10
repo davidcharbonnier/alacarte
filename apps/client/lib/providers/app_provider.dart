@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
@@ -67,7 +68,9 @@ class AppNotifier extends StateNotifier<AppState> {
   }
 
   /// Dispose resources when app is closed
+  @override
   void dispose() {
+    super.dispose();
     ApiService.dispose();
   }
   

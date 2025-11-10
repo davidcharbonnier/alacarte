@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/rateable_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 
@@ -98,7 +97,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
         // Search icon
         Icon(
           Icons.search,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           size: AppConstants.iconM,
         ),
 
@@ -126,7 +125,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
             },
             icon: const Icon(Icons.clear),
             iconSize: AppConstants.iconM,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
 
         // Filter toggle button (only show if filters are available)
@@ -147,7 +146,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
                       ? AppConstants.primaryColor
                       : Theme.of(
                           context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 iconSize: AppConstants.iconM,
                 tooltip: _isFiltersExpanded
@@ -219,7 +218,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
           selected: isActive,
           onSelected: (selected) =>
               _showFilterDialog(category.key, category.value),
-          selectedColor: AppConstants.primaryColor.withOpacity(0.2),
+          selectedColor: AppConstants.primaryColor.withValues(alpha: 0.2),
           checkmarkColor: AppConstants.primaryColor,
         ),
       );
@@ -248,7 +247,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
               selected ? 'personal' : null,
             );
           },
-          selectedColor: AppConstants.primaryColor.withOpacity(0.2),
+          selectedColor: AppConstants.primaryColor.withValues(alpha: 0.2),
           checkmarkColor: AppConstants.primaryColor,
         ),
         FilterChip(
@@ -260,7 +259,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
               selected ? 'recommendations' : null,
             );
           },
-          selectedColor: AppConstants.primaryColor.withOpacity(0.2),
+          selectedColor: AppConstants.primaryColor.withValues(alpha: 0.2),
           checkmarkColor: AppConstants.primaryColor,
         ),
       ];
@@ -276,7 +275,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
               selected ? 'has_ratings' : null,
             );
           },
-          selectedColor: AppConstants.primaryColor.withOpacity(0.2),
+          selectedColor: AppConstants.primaryColor.withValues(alpha: 0.2),
           checkmarkColor: AppConstants.primaryColor,
         ),
         FilterChip(
@@ -288,7 +287,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
               selected ? 'no_ratings' : null,
             );
           },
-          selectedColor: AppConstants.primaryColor.withOpacity(0.2),
+          selectedColor: AppConstants.primaryColor.withValues(alpha: 0.2),
           checkmarkColor: AppConstants.primaryColor,
         ),
       ];
@@ -346,7 +345,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
         vertical: AppConstants.spacingXS,
       ),
       decoration: BoxDecoration(
-        color: AppConstants.primaryColor.withOpacity(0.1),
+        color: AppConstants.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppConstants.radiusS),
       ),
       child: Text(
@@ -412,39 +411,36 @@ class _FilterSelectionDialog extends StatelessWidget {
 
             // Options list
             Flexible(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppConstants.spacingS,
-                ),
-                children: [
-                  // "All" option
-                  ListTile(
-                    title: Text(context.l10n.allFilterOption),
-                    leading: Radio<String?>(
-                      value: null,
-                      groupValue: currentValue,
-                      onChanged: (value) {
-                        onChanged(value);
-                        Navigator.of(context).pop();
-                      },
-                    ),
+              child: RadioGroup<String?>(
+                groupValue: currentValue,
+                onChanged: (value) {
+                  onChanged(value);
+                  Navigator.of(context).pop();
+                },
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppConstants.spacingS,
                   ),
-
-                  // Individual options
-                  ...options.map(
-                    (option) => ListTile(
-                      title: Text(option),
+                  children: [
+                    // "All" option
+                    ListTile(
+                      title: Text(context.l10n.allFilterOption),
                       leading: Radio<String?>(
-                        value: option,
-                        groupValue: currentValue,
-                        onChanged: (value) {
-                          onChanged(value);
-                          Navigator.of(context).pop();
-                        },
+                        value: null,
                       ),
                     ),
-                  ),
-                ],
+
+                    // Individual options
+                    ...options.map(
+                      (option) => ListTile(
+                        title: Text(option),
+                        leading: Radio<String?>(
+                          value: option,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

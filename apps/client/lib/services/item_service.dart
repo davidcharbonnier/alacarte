@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/rateable_item.dart';
 import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
@@ -6,7 +8,6 @@ import '../models/wine_item.dart';
 import '../models/coffee_item.dart';
 import '../models/api_response.dart';
 import '../services/api_service.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 /// Generic service for managing any type of rateable item
 abstract class ItemService<T extends RateableItem> extends ApiService {
@@ -112,9 +113,9 @@ class CheeseItemService extends ItemService<CheeseItem> {
     _cacheTime = null;
     // Also clear image cache and wait for completion
     try {
-      await DefaultCacheManager().emptyCache();
+      await CachedNetworkImage.evictFromCache('');
     } catch (e) {
-      print('Failed to clear image cache: $e');
+      if (kDebugMode) print('Failed to clear image cache: $e');
     }
   }
 
@@ -282,9 +283,9 @@ class GinItemService extends ItemService<GinItem> {
     _cacheTime = null;
     // Also clear image cache and wait for completion
     try {
-      await DefaultCacheManager().emptyCache();
+      await CachedNetworkImage.evictFromCache('');
     } catch (e) {
-      print('Failed to clear image cache: $e');
+      if (kDebugMode) print('Failed to clear image cache: $e');
     }
   }
 
@@ -425,9 +426,9 @@ class WineItemService extends ItemService<WineItem> {
     _cacheTime = null;
     // Also clear image cache and wait for completion
     try {
-      await DefaultCacheManager().emptyCache();
+      await CachedNetworkImage.evictFromCache('');
     } catch (e) {
-      print('Failed to clear image cache: $e');
+      if (kDebugMode) print('Failed to clear image cache: $e');
     }
   }
 
@@ -575,12 +576,7 @@ class CoffeeItemService extends ItemService<CoffeeItem> {
   Future<void> clearCache() async {
     _cachedResponse = null;
     _cacheTime = null;
-    // Also clear image cache and wait for completion
-    try {
-      await DefaultCacheManager().emptyCache();
-    } catch (e) {
-      print('Failed to clear image cache: $e');
-    }
+    // Image cache clearing is handled at the widget level
   }
 
   static List<String> _validateCoffeeItem(CoffeeItem coffee) {

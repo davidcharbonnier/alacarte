@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/locale_provider.dart';
-import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 
 /// Enhanced language selector with Auto/French/English options
@@ -11,7 +10,6 @@ class LanguageSelector extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentPreference = ref.watch(localePreferenceProvider);
-    final currentLocale = ref.watch(localeProvider);
     
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -75,6 +73,13 @@ class _LanguageRadioOption extends StatelessWidget {
     final isSelected = value == groupValue;
     
     return RadioListTile<LocalePreference>(
+      // Ignore deprecated parameters - still the recommended approach until RadioGroup is available
+      // ignore: deprecated_member_use
+      value: value,
+      // ignore: deprecated_member_use  
+      groupValue: groupValue,
+      // ignore: deprecated_member_use
+      onChanged: onChanged,
       title: Text(
         title,
         style: TextStyle(
@@ -84,12 +89,9 @@ class _LanguageRadioOption extends StatelessWidget {
       subtitle: subtitle != null ? Text(
         subtitle!,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
         ),
       ) : null,
-      value: value,
-      groupValue: groupValue,
-      onChanged: onChanged,
       activeColor: Theme.of(context).colorScheme.primary,
       contentPadding: EdgeInsets.zero,
     );

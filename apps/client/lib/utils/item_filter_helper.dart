@@ -1,8 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/rateable_item.dart';
 import '../models/rating.dart';
-import '../providers/item_provider.dart';
-import '../providers/rating_provider.dart';
 
 /// Helper class for filtering items with rating context
 class ItemFilterHelper {
@@ -23,10 +20,6 @@ class ItemFilterHelper {
         switch (ratingSourceFilter) {
           case 'personal':
             // Items user has rated themselves
-            if (currentUserId == null) {
-              return [];
-            }
-            
             final personalRatedIds = userRatings
                 .where((r) => r.authorId == currentUserId)
                 .map((r) => r.itemId)
@@ -37,11 +30,6 @@ class ItemFilterHelper {
             
           case 'recommendations':
             // Items that others have recommended to the user (shared with them)
-            if (currentUserId == null) {
-              // No user selected, can't show recommendations
-              return [];
-            }
-            
             final otherUsersRatings = userRatings.where((r) => r.authorId != currentUserId).toList();
             
             final visibleRecommendations = otherUsersRatings.where((r) => r.isVisibleToUser(currentUserId)).toList();

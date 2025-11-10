@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/item_provider.dart';
 import '../../providers/rating_provider.dart';
-import '../../providers/app_provider.dart';
-import '../../providers/community_stats_provider.dart';
 import '../../models/rating.dart';
 import '../../models/rateable_item.dart';
 import '../../models/api_response.dart';
+// ignore: unused_import
 import '../../services/rating_service.dart';
 import '../../routes/route_names.dart';
 import '../../utils/constants.dart';
@@ -86,7 +85,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               )
               .toList();
         } else if (viewerRatingsResponse is ApiError<List<Rating>>) {
-          print('Error loading viewer ratings: ${viewerRatingsResponse.message}');
+          if (kDebugMode) print('Error loading viewer ratings: ${viewerRatingsResponse.message}');
           _itemRatings = [];
         }
       } else {
@@ -107,7 +106,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     if (_item != null) {
       final imageUrl = _getItemImageUrl(_item!);
       if (imageUrl != null) {
-        await DefaultCacheManager().removeFile(imageUrl);
+        await CachedNetworkImage.evictFromCache(imageUrl);
       }
     }
     // 2. Invalidate this item from provider state
@@ -130,16 +129,6 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
 
   void _navigateBack() {
     SafeNavigation.goBackToItemType(context, widget.itemType);
-  }
-
-  void _navigateToSettings() {
-    // Settings functionality is now in the AuthStatusWidget
-  }
-
-  void _navigateToRating() {
-    GoRouter.of(
-      context,
-    ).go('${RouteNames.ratingCreate}/${widget.itemType}/${widget.itemId}');
   }
 
   void _navigateToEditItem() {

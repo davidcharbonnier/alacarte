@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Secure token storage using flutter_secure_storage
@@ -48,7 +49,7 @@ class TokenStorage {
     // Mark cleanup as complete
     await prefs.setBool(_cleanupKey, true);
     
-    print('🧹 Cleaned up legacy token storage from SharedPreferences');
+    if (kDebugMode) print('🧹 Cleaned up legacy token storage from SharedPreferences');
   }
   
   /// Read JWT token from secure storage

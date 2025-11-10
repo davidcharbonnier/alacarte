@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 
 /// Generic dropdown field for selecting item types
@@ -29,7 +28,7 @@ class ItemTypeDropdownField extends StatelessWidget {
     final safeValue = (value != null && options.contains(value)) ? value : null;
     
     return DropdownButtonFormField<String>(
-      value: safeValue,
+      initialValue: safeValue,
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText ?? context.l10n.selectType,

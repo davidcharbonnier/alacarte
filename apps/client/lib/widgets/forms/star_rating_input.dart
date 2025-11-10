@@ -115,7 +115,7 @@ class _StarRatingInputState extends State<StarRatingInput> {
           Text(
             widget.helperText!,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -148,7 +148,7 @@ class _StarRatingInputState extends State<StarRatingInput> {
         color: widget.enabled
             ? (isActive 
                 ? AppConstants.primaryColor
-                : Theme.of(context).colorScheme.onSurface.withOpacity(0.4))
+                : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4))
             : Theme.of(context).disabledColor,
       ),
     );

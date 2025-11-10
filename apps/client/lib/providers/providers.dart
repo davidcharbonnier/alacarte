@@ -4,7 +4,6 @@ import '../models/rating.dart';
 import '../services/api_service.dart';
 import 'item_provider.dart';
 import 'rating_provider.dart';
-import 'app_provider.dart';
 import 'auth_provider.dart';
 import 'connectivity_provider.dart';
 

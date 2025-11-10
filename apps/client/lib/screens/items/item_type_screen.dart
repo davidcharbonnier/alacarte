@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/item_provider.dart';
 import '../../providers/rating_provider.dart';
-import '../../providers/app_provider.dart';
 import '../../providers/community_stats_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/rating.dart';
@@ -102,10 +101,6 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     }
   }
 
-  void _navigateToSettings() {
-    GoRouter.of(context).go(RouteNames.userSettings);
-  }
-
   void _navigateToAddItem() {
     if (widget.itemType == 'cheese') {
       GoRouter.of(context).go(RouteNames.cheeseCreate);
@@ -133,10 +128,6 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final appState = ref.watch(appProvider);
-    final currentUser = authState.user;
-
     // Generic loading state using helper
     final isLoading = ItemProviderHelper.isLoading(ref, widget.itemType) ||
         ref.watch(ratingProvider).isLoading;
@@ -191,12 +182,14 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           ),
         ],
       ),
+      // ignore: sort_child_properties_last
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton(
               onPressed: _navigateToAddItem,
               tooltip: ItemTypeLocalizer.getAddItemText(context, widget.itemType),
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
+              // ignore: sort_child_properties_last
               child: const Icon(Icons.add),
             )
           : null,
@@ -212,8 +205,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     } else {
       // "My List" tab - show total items in personal list
       final ratingState = ref.read(ratingProvider);
-      final currentUserId = ref.read(authProvider).user?.id;
-      final userRatings = ratingState.ratings as List<Rating>;
+      final userRatings = ratingState.ratings;
 
       final ratedItemIds = userRatings
           .where((r) => r.itemType == widget.itemType)
@@ -229,7 +221,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final activeFilters = ItemProviderHelper.getActiveFilters(ref, widget.itemType);
     final ratingState = ref.read(ratingProvider);
     final currentUserId = ref.read(authProvider).user?.id;
-    final userRatings = ratingState.ratings as List<Rating>;
+    final userRatings = ratingState.ratings;
 
     if (_tabController.index == 0) {
       // "All Items" tab - apply rating filters to get accurate count
@@ -283,6 +275,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             if (entry.key != 'rating_source') {
               allRatedItems = allRatedItems
                   .where(
+                    // ignore: unnecessary_null_aware_assignment
                     (item) =>
                         item.categories[entry.key]?.toLowerCase() ==
                         entry.value?.toLowerCase(),
@@ -318,6 +311,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             if (entry.key != 'rating_source') {
               personalRatedItems = personalRatedItems
                   .where(
+                    // ignore: unnecessary_null_aware_assignment
                     (item) =>
                         item.categories[entry.key]?.toLowerCase() ==
                         entry.value?.toLowerCase(),
@@ -594,7 +588,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
-    final userRatings = ratingState.ratings as List<Rating>;
+    final userRatings = ratingState.ratings;
 
     // Apply search and filter to the base items first
     var filteredBaseItems = filteredItems;
@@ -626,6 +620,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           if (entry.key != 'rating_source') {
             allRatedItems = allRatedItems
                 .where(
+                  // ignore: unnecessary_null_aware_assignment
                   (item) =>
                       item.categories[entry.key]?.toLowerCase() ==
                       entry.value?.toLowerCase(),
@@ -658,6 +653,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           if (entry.key != 'rating_source') {
             personalRatedItems = personalRatedItems
                 .where(
+                  // ignore: unnecessary_null_aware_assignment
                   (item) =>
                       item.categories[entry.key]?.toLowerCase() ==
                       entry.value?.toLowerCase(),
@@ -1261,7 +1257,6 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
     final activeFilters = ItemProviderHelper.getActiveFilters(ref, widget.itemType);
     final searchQuery = ItemProviderHelper.getSearchQuery(ref, widget.itemType);
-    final ratingState = ref.watch(ratingProvider);
 
     // Get available filter options for this item type
     final availableFilters = ItemFilterHelper.getAvailableFilters(

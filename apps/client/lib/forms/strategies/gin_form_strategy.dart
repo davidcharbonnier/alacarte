@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../../models/gin_item.dart';
 import '../../providers/item_provider.dart';
 import '../../utils/localization_utils.dart';

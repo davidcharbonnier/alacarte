@@ -65,7 +65,7 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
             Icon(
               Icons.star_border,
               size: AppConstants.iconL,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             const SizedBox(height: AppConstants.spacingS),
             Text(
@@ -78,7 +78,7 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
             Text(
               context.l10n.beFirstToRate(widget.item.name),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -101,7 +101,7 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
               Icon(
                 Icons.star_border,
                 size: AppConstants.iconL,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               const SizedBox(height: AppConstants.spacingS),
               Text(
@@ -114,7 +114,7 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
               Text(
                 context.l10n.beFirstToRate(widget.item.name),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -143,7 +143,7 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
                 Container(
                   padding: const EdgeInsets.all(AppConstants.spacingM),
                   decoration: BoxDecoration(
-                    color: AppConstants.primaryColor.withOpacity(0.1),
+                    color: AppConstants.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppConstants.radiusL),
                   ),
                   child: Column(
@@ -184,7 +184,7 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
                       Text(
                         context.l10n.averageRating(averageRating.toStringAsFixed(1)),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -239,7 +239,7 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
               child: Text(
                 'Unable to load community statistics',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ),

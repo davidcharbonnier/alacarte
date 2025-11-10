@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
@@ -68,7 +69,7 @@ class _AppInitializationScreenState extends ConsumerState<AppInitializationScree
       
       // Force completion after 20 attempts (10 seconds)
       if (attempts > 20) {
-        print('🆘 Timer timeout after 20 attempts (10s), forcing completion');
+        if (kDebugMode) print('🆘 Timer timeout after 20 attempts (10s), forcing completion');
         timer.cancel();
         final currentAuth = ref.read(authProvider);
         _handleAuthStateComplete(currentAuth);

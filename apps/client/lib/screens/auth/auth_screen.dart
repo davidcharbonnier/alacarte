@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../flutter_gen/gen_l10n/app_localizations.dart';
 import '../../routes/route_names.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/appbar_helper.dart';
@@ -18,7 +17,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final l10n = AppLocalizations.of(context)!;
 
     // Listen for authentication state changes
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -63,7 +61,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             Text(
               'Your personal rating and preference hub',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -132,7 +130,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(

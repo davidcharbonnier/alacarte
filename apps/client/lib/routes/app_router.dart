@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/display_name_setup_screen.dart';
 import '../screens/auth/auth_screen.dart';
-import '../screens/common/loading_screen.dart';
 import '../screens/initialization/app_initialization_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/items/item_type_screen.dart';

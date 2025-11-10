@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/rateable_item.dart';
 import '../utils/constants.dart';
 import '../utils/localization_utils.dart';
@@ -175,9 +175,11 @@ class _GenericItemFormScreenState<T extends RateableItem>
         final bool deleted = await imageService.deleteImage(widget.itemType, widget.itemId!);
         if (deleted) {
           // Clear old image from cache
-          await DefaultCacheManager().removeFile(_oldImageUrl!);
+          await CachedNetworkImage.evictFromCache(_oldImageUrl!);
         }
       }
+
+      if (!mounted) return;
 
       // Strategy builds the item from controllers
       final item = _strategy.buildItem(_controllers, widget.itemId);
@@ -235,7 +237,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
             // Image uploaded successfully - use granular cache clearing
             // 1. Clear old image from cache (if exists)
             if (_isEditMode && _oldImageUrl != null) {
-              await DefaultCacheManager().removeFile(_oldImageUrl!);
+              await CachedNetworkImage.evictFromCache(_oldImageUrl!);
             }
             // 2. Invalidate this item from provider state
             ItemProviderHelper.invalidateItem(ref, widget.itemType, createdItemId);
@@ -427,10 +429,11 @@ class _GenericItemFormScreenState<T extends RateableItem>
   Widget _buildFormHeader() {
     return Row(
       children: [
+        // ignore: sort_child_properties_last
         Container(
           padding: const EdgeInsets.all(AppConstants.spacingM),
           decoration: BoxDecoration(
-            color: AppConstants.primaryColor.withOpacity(0.1),
+            color: AppConstants.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppConstants.radiusL),
           ),
           child: Icon(
@@ -461,7 +464,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
                       color: Theme.of(context)
                           .colorScheme
                           .onSurface
-                          .withOpacity(0.7),
+                          .withValues(alpha: 0.7),
                     ),
               ),
             ],
@@ -534,7 +537,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
             Icon(
               Icons.description_outlined,
               size: AppConstants.iconS,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             const SizedBox(width: AppConstants.spacingS),
             Text(
@@ -544,7 +547,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
                   ),
             ),
             const Spacer(),
@@ -579,7 +582,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
               Icon(
                 field.icon,
                 size: AppConstants.iconS,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
               const SizedBox(width: AppConstants.spacingS),
             ],
@@ -590,7 +593,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
                   ),
             ),
             if (field.required)
@@ -615,6 +618,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
         ],
         const SizedBox(height: AppConstants.spacingS),
         DropdownButtonFormField<String>(
+          // ignore: deprecated_member_use
           value: controller.text.isEmpty ? null : controller.text,
           decoration: InputDecoration(
             hintText: field.getHint(context),
@@ -640,7 +644,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
           validator: field.required
               ? (value) {
                   if (value == null || value.isEmpty) {
-                    return field.getLabel(context) + ' is required';
+                    return '${field.getLabel(context)} is required';
                   }
                   return null;
                 }
@@ -766,7 +770,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
 
   Widget _buildLoadingOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.3),
+      color: Colors.black.withValues(alpha: 0.3),
       child: const Center(
         child: CircularProgressIndicator(),
       ),

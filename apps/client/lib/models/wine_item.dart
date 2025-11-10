@@ -4,7 +4,9 @@ import 'wine_color.dart';
 import '../utils/localization_utils.dart';
 
 class WineItem implements RateableItem {
+  @override
   final int? id;
+  @override
   final String name;
   final String? producer;
   final String country;
@@ -104,15 +106,15 @@ class WineItem implements RateableItem {
           ),
         if (alcohol != null && alcohol! > 0)
           DetailField(
-            label: 'Alcohol',
-            value: '${alcohol}%',
-            icon: Icons.percent,
+          label: 'Alcohol',
+          value: '$alcohol%',
+          icon: Icons.percent,
           ),
         if (sugar != null && sugar! > 0)
           DetailField(
-            label: 'Sugar',
-            value: '${sugar} g/L',
-            icon: Icons.bubble_chart,
+          label: 'Sugar',
+          value: '$sugar g/L',
+          icon: Icons.bubble_chart,
           ),
         if (organic)
           DetailField(
@@ -163,13 +165,13 @@ class WineItem implements RateableItem {
       if (alcohol != null && alcohol! > 0)
         DetailField(
           label: context.l10n.alcoholLabel,
-          value: '${alcohol}%',
+          value: '$alcohol%',
           icon: Icons.percent,
         ),
       if (sugar != null && sugar! > 0)
         DetailField(
           label: context.l10n.sugarLabel,
-          value: '${sugar} g/L',
+          value: '$sugar g/L',
           icon: Icons.bubble_chart,
         ),
       DetailField(
@@ -210,6 +212,7 @@ class WineItem implements RateableItem {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'ID': id,

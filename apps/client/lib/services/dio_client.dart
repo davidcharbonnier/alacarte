@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../config/api_config.dart';
 
 /// Dio HTTP client configuration with interceptors
@@ -34,19 +35,30 @@ class DioClient {
           // TODO: Add API key to headers when backend implements API key middleware
           // options.headers['Authorization'] = 'Bearer $apiKey';
           
-          print('🚀 REQUEST: ${options.method} ${options.path}');
-          if (options.data != null) {
+          if (kDebugMode) {
+            // ignore: avoid_print
+            print('🚀 REQUEST: ${options.method} ${options.path}');
+          }
+          if (kDebugMode && options.data != null) {
+            // ignore: avoid_print
             print('📤 DATA: ${options.data}');
           }
           handler.next(options);
         },
         onResponse: (response, handler) {
-          print('✅ RESPONSE: ${response.statusCode} ${response.requestOptions.path}');
+          if (kDebugMode) {
+            // ignore: avoid_print
+            print('✅ RESPONSE: ${response.statusCode} ${response.requestOptions.path}');
+          }
           handler.next(response);
         },
         onError: (error, handler) {
-          print('❌ ERROR: ${error.response?.statusCode} ${error.requestOptions.path}');
-          print('❌ MESSAGE: ${error.message}');
+          if (kDebugMode) {
+            // ignore: avoid_print
+            print('❌ ERROR: ${error.response?.statusCode} ${error.requestOptions.path}');
+            // ignore: avoid_print
+            print('❌ MESSAGE: ${error.message}');
+          }
           handler.next(error);
         },
       ),
@@ -57,13 +69,19 @@ class DioClient {
   /// TODO: Implement when backend adds API key middleware
   void setApiKey(String apiKey) {
     // _dio.options.headers['Authorization'] = 'Bearer $apiKey';
-    print('📝 API Key set (not yet implemented on backend)');
+    if (kDebugMode) {
+      // ignore: avoid_print
+      print('📝 API Key set (not yet implemented on backend)');
+    }
   }
   
   /// Remove API key
   void clearApiKey() {
     // _dio.options.headers.remove('Authorization');
-    print('🗑️ API Key cleared');
+    if (kDebugMode) {
+      // ignore: avoid_print
+      print('🗑️ API Key cleared');
+    }
   }
   
   /// Reset client (useful for testing)
