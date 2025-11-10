@@ -89,9 +89,9 @@ jobs:
           COMMIT_SHA=${GITHUB_SHA:0:7}
 
           # Get next versions that versio would assign
-          NEXT_API_VERSION=$(versio next api | jq -r '.version' 2>/dev/null || versio show api | jq -r '.version')
-          NEXT_CLIENT_VERSION=$(versio next client | jq -r '.version' 2>/dev/null || versio show client | jq -r '.version')
-          NEXT_ADMIN_VERSION=$(versio next admin | jq -r '.version' 2>/dev/null || versio show admin | jq -r '.version')
+          NEXT_API_VERSION=$(versio --vcs-level=local plan --id 3 --template=builtin:json | jq -r '.release.version' || versio get -n api -v)
+          NEXT_CLIENT_VERSION=$(versio --vcs-level=local plan --id 1 --template=builtin:json | jq -r '.release.version' || versio get -n client -v)
+          NEXT_ADMIN_VERSION=$(versio --vcs-level=local plan --id 2 --template=builtin:json | jq -r '.release.version' || versio get -n admin -v)
 
           # Use the highest next version as base for snapshot
           BASE_VERSION=$(printf "%s\n%s\n%s" "$NEXT_API_VERSION" "$NEXT_CLIENT_VERSION" "$NEXT_ADMIN_VERSION" | sort -V | tail -1)
