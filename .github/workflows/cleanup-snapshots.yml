@@ -15,18 +15,19 @@ jobs:
     outputs:
       stable_versions: ${{ steps.get-versions.outputs.stable_versions }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Get versio
+        uses: chaaz/versio-actions/install@v1.3
+      - name: Fetch history
+        run: git fetch --unshallow
       - name: Get stable versions from versio
         id: get-versions
         run: |
-          # Setup versio
-          curl -L https://github.com/chaaz/versio/releases/download/v0.8.5/versio__x86_64-unknown-linux-gnu -o versio
-          chmod +x versio
-          sudo mv versio /usr/local/bin/
-
           # Get all current versions (these represent our stable releases)
-          API_VERSION=$(versio show api | jq -r '.version')
-          CLIENT_VERSION=$(versio show client | jq -r '.version')
-          ADMIN_VERSION=$(versio show admin | jq -r '.version')
+          API_VERSION=$(versio get -n api -v)
+          CLIENT_VERSION=$(versio get -n client -v)
+          ADMIN_VERSION=$(versio get -n admin -v)
 
           # Combine all stable versions
           STABLE_VERSIONS="${API_VERSION},${CLIENT_VERSION},${ADMIN_VERSION}"
