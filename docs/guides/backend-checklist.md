@@ -60,6 +60,19 @@ func (w *Wine) SetImageURL(url *string) {
 ### **2. Create Controller** (~25 min)
 **File:** `controllers/[itemtype]Controller.go`
 
+**⚠️ Critical:** ALL body struct fields in `Create` and `Edit` functions MUST have JSON tags matching the frontend's snake_case naming (e.g., `json:"fair_trade"`, `json:"processing_method"`). Without JSON tags, fields won't bind correctly from the frontend payload.
+
+**Example of CORRECT body struct:**
+```go
+var body struct {
+    Name             string                         `json:"name"`
+    Producer         string                         `json:"producer"`
+    ProcessingMethod models.CoffeeProcessingMethod  `json:"processing_method"`  // ← snake_case!
+    FairTrade        bool                           `json:"fair_trade"`         // ← Critical for booleans!
+    Organic          bool                           `json:"organic"`
+}
+```
+
 **Implement 9 endpoints:**
 
 **Public CRUD (5 endpoints):**

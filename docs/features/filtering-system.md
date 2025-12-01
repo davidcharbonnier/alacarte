@@ -13,7 +13,8 @@ FilteringSystem/
 ├── ItemSearchAndFilter (Widget)      # Main UI component with collapsible interface
 ├── ItemFilterHelper (Utility)        # Generic filtering logic for rating context
 ├── ItemProvider (State Management)   # Filter state and persistence
-└── Localization Support             # Full French/English translations
+├── Localization Support             # Full French/English translations
+└── Locale-Aware Sorting             # Proper handling of accented characters
 ```
 
 ### Design Philosophy
@@ -32,6 +33,11 @@ FilteringSystem/
 - Collapsible interface saves 70% screen space when collapsed
 - Touch-friendly controls with proper spacing
 - Progressive disclosure of advanced options
+
+**Locale-Aware**
+- Proper alphabetical sorting of accented characters (é, è, à, ç, etc.)
+- Uses `Collator` from `intl` package for locale-aware string comparison
+- Ensures French names sort correctly (e.g., "Équilibre" appears after "E" not at end)
 
 ## User Interface
 
@@ -146,6 +152,74 @@ void _onTabChanged() {
 - Static methods for rating context filtering
 - Handles visibility checks for shared ratings
 - Separates filtering logic from UI concerns
+
+### ⚠️ Deprecated Pattern - Do Not Use
+
+**The following pattern is deprecated and should NOT be used:**
+
+```dart
+// ❌ DEPRECATED - Do not add new methods like these:
+class CoffeeItemService {
+  Future<ApiResponse<List<String>>> getCoffeeRoasters() { ... }
+  Future<ApiResponse<List<String>>> getCoffeeCountries() { ... }
+}
+
+// ❌ DEPRECATED - Do not add extension methods like these:
+extension CoffeeItemExtension on CoffeeItem {
+  static List<String> getUniqueRoasters(List<CoffeeItem> coffees) { ... }
+  static List<String> getUniqueCountries(List<CoffeeItem> coffees) { ... }
+}
+```
+
+**Why these are deprecated:**
+- Requires separate API calls for filter options
+- Duplicates data already available in provider state
+- Not used anywhere in the current codebase
+- Marked for removal (see `docs/dead-code-cleanup.md`)
+
+**✅ Current Best Practice - Filter Option Generation:**
+
+Filter options are now automatically generated from items already in state:
+
+```dart
+// ✅ CORRECT - Provider automatically generates filter options:
+class ItemProvider<T> {
+  void _refreshFilterOptions() {
+    // Extract categories from current items in state
+    final allCategories = <String, Set<String>>{};
+    for (final item in state.items) {
+      for (final entry in item.categories.entries) {
+        allCategories.putIfAbsent(entry.key, () => <String>{}).add(entry.value);
+      }
+    }
+    // Sort with locale-aware comparison
+    final collator = Collator();
+    final filterOptions = allCategories.map(...);
+  }
+}
+
+// ✅ CORRECT - UI gets filter options from helper:
+static Map<String, List<String>> getAvailableFilters<T>(
+  List<T> items,
+  String itemType,
+) {
+  // Directly extract from items, no API call needed
+  final filterOptions = <String, Set<String>>{};
+  for (final item in items) {
+    for (final category in item.categories.entries) {
+      filterOptions.putIfAbsent(category.key, () => <String>{}).add(category.value);
+    }
+  }
+  return filterOptions.map(...); // Sort and return
+}
+```
+
+**Benefits of current approach:**
+- ✅ No extra API calls needed
+- ✅ Filter options always in sync with displayed items
+- ✅ Single source of truth (items in provider state)
+- ✅ Automatic locale-aware sorting
+- ✅ Works for all item types generically
 
 ### Rating Context Filtering
 
@@ -511,6 +585,134 @@ print('Filtered items count: ${filteredItems.length}');
 - Group related strings together in `.arb` files
 - Add descriptive comments for translators
 - Test edge cases (long translations, special characters)
+
+## Locale-Aware Sorting
+
+### Overview
+
+The filtering system implements locale-aware string comparison to ensure proper alphabetical sorting of items and filter options, particularly for French names with accented characters.
+
+### Problem Solved
+
+**Before (Simple String Comparison):**
+```
+Americano
+Brewmance
+Cappuccino
+Latte
+Équilibre  ← sorted at the end!
+```
+
+**After (Locale-Aware Comparison):**
+```
+Americano
+Brewmance
+Cappuccino
+Équilibre  ← sorted correctly!
+Latte
+```
+
+### Implementation
+
+**Technology Used:**
+- `diacritic` package (^0.1.5)
+- `removeDiacritics()` function for accent normalization
+- Simple, maintainable, and comprehensive solution
+
+**Code Locations:**
+
+1. **Item List Sorting** (`ItemProvider.filteredItems`):
+```dart
+import 'package:diacritic/diacritic.dart';
+
+// Sort alphabetically by name with locale-aware comparison
+filtered.sort((a, b) => ItemState._compareLocaleAware(a.name, b.name));
+
+// Helper method
+static int _compareLocaleAware(String a, String b) {
+  return removeDiacritics(a).toLowerCase().compareTo(
+    removeDiacritics(b).toLowerCase()
+  );
+}
+```
+
+2. **Filter Options Sorting** (`ItemProvider._refreshFilterOptions`):
+```dart
+// Sort filter options with locale-aware comparison
+final filterOptions = allCategories.map(
+  (key, valueSet) {
+    final sortedList = valueSet.toList();
+    sortedList.sort((a, b) => ItemState._compareLocaleAware(a, b));
+    return MapEntry(key, sortedList);
+  },
+);
+```
+
+3. **UI Filter Dropdowns** (`ItemFilterHelper.getAvailableFilters`):
+```dart
+import 'package:diacritic/diacritic.dart';
+
+// Convert sets to sorted lists with locale-aware comparison
+return filterOptions.map(
+  (key, valueSet) {
+    final sortedList = valueSet.toList();
+    sortedList.sort((a, b) => _compareLocaleAware(a, b));
+    return MapEntry(key, sortedList);
+  },
+);
+
+// Helper method
+static int _compareLocaleAware(String a, String b) {
+  return removeDiacritics(a).toLowerCase().compareTo(
+    removeDiacritics(b).toLowerCase()
+  );
+}
+```
+
+### Accented Characters Handled
+
+The `diacritic` package handles ALL Unicode diacritics, including:
+- **é, è, ê, ë** (e with accents)
+- **à, â** (a with accents)
+- **ç** (c with cedilla)
+- **ô** (o with circumflex)
+- **û, ù** (u with accents)
+- **ï, î** (i with accents)
+- And many more from other languages (Spanish ñ, German ü, etc.)
+
+### Scope of Application
+
+Locale-aware sorting is applied to:
+- ✅ **Main item lists** (all tabs, all item types)
+- ✅ **Search results**
+- ✅ **Filter dropdown options** (Type, Origin, Producer, etc.)
+- ✅ **All alphabetically sorted content**
+
+### Performance Impact
+
+**Minimal Performance Cost:**
+- `removeDiacritics()` is a simple string transformation
+- No external dependencies or complex logic
+- Lightweight package with minimal overhead
+- No noticeable user-facing delay
+
+### Testing Considerations
+
+**When testing sorting:**
+1. Include items with accented characters in test data
+2. Verify correct alphabetical order (e.g., "É" comes after "E")
+3. Test with both French and English locale settings
+4. Verify filter dropdowns show properly sorted options
+
+**Test Data Examples:**
+```dart
+final testItems = [
+  'Americano',
+  'Équilibre',  // Should appear after 'E' items
+  'Brewmance',
+  'À la carte', // Should appear with 'A' items
+];
+```
 
 ## Success Metrics
 
