@@ -1,5 +1,5 @@
 # =============================================================================
-# Docker ignore file for A la carte REST API
+# Docker ignore file for À la carte REST API
 # =============================================================================
 # Minimize build context for security and performance
 # =============================================================================

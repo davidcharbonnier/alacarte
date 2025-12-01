@@ -1,5 +1,5 @@
 # =============================================================================
-# Production Docker Compose for A la carte REST API
+# Production Docker Compose for À la carte REST API
 # =============================================================================
 # Demonstrates usage patterns for migrations, seeding, and production deployment
 # =============================================================================
@@ -115,33 +115,32 @@ volumes:
 networks:
   alacarte-network:
     driver: bridge
-
 # =============================================================================
 # Usage Examples:
 # =============================================================================
-# 
+#
 # 1. Build the image:
 #    docker-compose -f docker-compose.prod.yml build
-# 
+#
 # 2. Start database and run migrations:
 #    docker-compose -f docker-compose.prod.yml --profile migrate up mysql migrate
-# 
+#
 # 3. Seed the database:
 #    docker-compose -f docker-compose.prod.yml --profile seed up seed
-# 
+#
 # 4. Start the API service:
 #    docker-compose -f docker-compose.prod.yml up api
-# 
+#
 # 5. Full deployment (database + API, migrations must be run separately):
 #    docker-compose -f docker-compose.prod.yml up -d mysql api
-# 
+#
 # 6. Complete setup with health monitoring:
 #    docker-compose -f docker-compose.prod.yml --profile migrate up -d mysql migrate
-#    docker-compose -f docker-compose.prod.yml --profile seed up seed  
+#    docker-compose -f docker-compose.prod.yml --profile seed up seed
 #    docker-compose -f docker-compose.prod.yml up -d api
 #    docker-compose -f docker-compose.prod.yml --profile monitoring up -d healthchecker
 #
 # 7. Tear down:
 #    docker-compose -f docker-compose.prod.yml down -v
-# 
+#
 # =============================================================================
