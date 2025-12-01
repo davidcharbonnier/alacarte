@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 
 /// Unified notification helper for consistent user feedback across the app
-/// 
-/// Provides three types of notifications following A la carte design standards:
+///
+/// Provides three types of notifications following À la carte design standards:
 /// - Success: Green background, check icon, 2 second duration
 /// - Error: Warning color background, dismissible, 3 second duration
 /// - Loading: Blue background, 30 second duration for long operations
-/// 
+///
 /// Usage:
 /// ```dart
 /// NotificationHelper.showSuccess(context, context.l10n.ratingCreated);
@@ -16,7 +16,7 @@ import 'constants.dart';
 /// ```
 class NotificationHelper {
   /// Show success notification
-  /// 
+  ///
   /// - Green background with check circle icon
   /// - White text with semi-bold weight
   /// - 2 second duration (quick positive feedback)
@@ -26,11 +26,7 @@ class NotificationHelper {
       SnackBar(
         content: Row(
           children: [
-            const Icon(
-              Icons.check_circle,
-              color: Colors.white,
-              size: 24,
-            ),
+            const Icon(Icons.check_circle, color: Colors.white, size: 24),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -47,15 +43,13 @@ class NotificationHelper {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(milliseconds: 2000),
         margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
   /// Show error notification
-  /// 
+  ///
   /// - Warning color background (from AppConstants)
   /// - White text
   /// - 3 second duration (longer for errors)
@@ -69,9 +63,7 @@ class NotificationHelper {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         action: SnackBarAction(
           label: 'Dismiss', // Note: Should be localized by caller if needed
           textColor: Colors.white,
@@ -84,7 +76,7 @@ class NotificationHelper {
   }
 
   /// Show loading notification
-  /// 
+  ///
   /// - Blue/Primary color background
   /// - 30 second duration (for long operations)
   /// - Should be manually dismissed when operation completes
@@ -118,15 +110,13 @@ class NotificationHelper {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 30),
         margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
   /// Convenience method to show error from Theme context
-  /// 
+  ///
   /// Uses Theme.of(context).colorScheme.error instead of AppConstants.warningColor
   /// Useful when AppConstants.warningColor is not desired
   static void showErrorFromTheme(BuildContext context, String message) {
@@ -137,9 +127,7 @@ class NotificationHelper {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
         margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         action: SnackBarAction(
           label: 'Dismiss',
           textColor: Colors.white,

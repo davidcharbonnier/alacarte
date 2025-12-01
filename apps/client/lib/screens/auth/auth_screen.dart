@@ -31,7 +31,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('A la carte'),
+        title: Text('À la carte'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: AppBarHelper.buildStandardActions(
           context,
@@ -53,7 +53,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Welcome to A la carte',
+              'Welcome to À la carte',
               style: Theme.of(context).textTheme.headlineMedium,
               textAlign: TextAlign.center,
             ),
@@ -61,7 +61,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             Text(
               'Your personal rating and preference hub',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               textAlign: TextAlign.center,
             ),
@@ -109,12 +111,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       'assets/images/google_logo.png',
                       height: 20,
                       width: 20,
-                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.login),
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.login),
                     ),
               label: Text(
-                authState.isLoading
-                    ? 'Signing in...'
-                    : 'Continue with Google',
+                authState.isLoading ? 'Signing in...' : 'Continue with Google',
               ),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -130,7 +131,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(

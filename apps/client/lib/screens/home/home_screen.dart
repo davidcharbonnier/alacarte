@@ -16,7 +16,7 @@ class HomeScreen extends ConsumerWidget {
   void _navigateToItemType(BuildContext context, String itemType) {
     GoRouter.of(context).go('${RouteNames.itemType}/$itemType');
   }
-  
+
   /// Count unique items that have ratings (personal or shared) for this user
   int _getUniqueItemCount(List<dynamic> ratings, String itemType) {
     final itemIds = ratings
@@ -30,51 +30,51 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Initialize the rating listener to enable automatic auth change reactions
     ref.read(ratingListenerProvider);
-    
+
     // Ensure data is loaded when accessing the home screen
     final cheeseItemState = ref.watch(cheeseItemProvider);
     final ginItemState = ref.watch(ginItemProvider);
     final wineItemState = ref.watch(wineItemProvider);
     final coffeeItemState = ref.watch(coffeeItemProvider);
-    
+
     // Load cheese data if not already loaded and not currently loading
     if (!cheeseItemState.hasLoadedOnce && !cheeseItemState.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(cheeseItemProvider.notifier).loadItems();
       });
     }
-    
+
     // Load gin data if not already loaded and not currently loading
     if (!ginItemState.hasLoadedOnce && !ginItemState.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(ginItemProvider.notifier).loadItems();
       });
     }
-    
+
     // Load wine data if not already loaded and not currently loading
     if (!wineItemState.hasLoadedOnce && !wineItemState.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(wineItemProvider.notifier).loadItems();
       });
     }
-    
+
     // Load coffee data if not already loaded and not currently loading
     if (!coffeeItemState.hasLoadedOnce && !coffeeItemState.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(coffeeItemProvider.notifier).loadItems();
       });
     }
-    
+
     final ratingState = ref.watch(ratingProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('A la carte'),
+        title: const Text('À la carte'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: AppBarHelper.buildStandardActions(
           context,
           ref,
-          showUserProfile: true
+          showUserProfile: true,
         ),
       ),
       body: RefreshIndicator(
@@ -89,7 +89,9 @@ class HomeScreen extends ConsumerWidget {
           padding: AppConstants.screenPadding,
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppConstants.maxContentWidth),
+              constraints: const BoxConstraints(
+                maxWidth: AppConstants.maxContentWidth,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -100,9 +102,9 @@ class HomeScreen extends ConsumerWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  
+
                   const SizedBox(height: AppConstants.spacingM),
-                  
+
                   // Item type cards
                   _buildItemTypeCard(
                     context,
@@ -113,9 +115,9 @@ class HomeScreen extends ConsumerWidget {
                     cheeseItemState.items.length,
                     _getUniqueItemCount(ratingState.ratings, 'cheese'),
                   ),
-                  
+
                   const SizedBox(height: AppConstants.spacingM),
-                  
+
                   _buildItemTypeCard(
                     context,
                     ItemTypeLocalizer.getLocalizedItemType(context, 'gin'),
@@ -125,9 +127,9 @@ class HomeScreen extends ConsumerWidget {
                     ginItemState.items.length,
                     _getUniqueItemCount(ratingState.ratings, 'gin'),
                   ),
-                  
+
                   const SizedBox(height: AppConstants.spacingM),
-                  
+
                   _buildItemTypeCard(
                     context,
                     ItemTypeLocalizer.getLocalizedItemType(context, 'wine'),
@@ -137,9 +139,9 @@ class HomeScreen extends ConsumerWidget {
                     wineItemState.items.length,
                     _getUniqueItemCount(ratingState.ratings, 'wine'),
                   ),
-                  
+
                   const SizedBox(height: AppConstants.spacingM),
-                  
+
                   _buildItemTypeCard(
                     context,
                     ItemTypeLocalizer.getLocalizedItemType(context, 'coffee'),
@@ -149,11 +151,16 @@ class HomeScreen extends ConsumerWidget {
                     coffeeItemState.items.length,
                     _getUniqueItemCount(ratingState.ratings, 'coffee'),
                   ),
-                  
+
                   const SizedBox(height: AppConstants.spacingM),
-                  
+
                   // Future item types (grayed out for now)
-                  _buildComingSoonCard(context, context.l10n.moreCategoriesTitle, Icons.add_box, Colors.grey),
+                  _buildComingSoonCard(
+                    context,
+                    context.l10n.moreCategoriesTitle,
+                    Icons.add_box,
+                    Colors.grey,
+                  ),
                 ],
               ),
             ),
@@ -187,15 +194,11 @@ class HomeScreen extends ConsumerWidget {
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppConstants.radiusL),
                 ),
-                child: Icon(
-                  icon,
-                  size: AppConstants.iconXL,
-                  color: color,
-                ),
+                child: Icon(icon, size: AppConstants.iconXL, color: color),
               ),
-              
+
               const SizedBox(width: AppConstants.spacingM),
-              
+
               // Info
               Expanded(
                 child: Column(
@@ -211,7 +214,9 @@ class HomeScreen extends ConsumerWidget {
                     Text(
                       context.l10n.itemsAvailable(totalItems),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: AppConstants.spacingXS),
@@ -225,11 +230,13 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              
+
               // Arrow
               Icon(
                 Icons.arrow_forward_ios,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ],
           ),
@@ -238,7 +245,12 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildComingSoonCard(BuildContext context, String displayName, IconData icon, Color color) {
+  Widget _buildComingSoonCard(
+    BuildContext context,
+    String displayName,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       child: Padding(
         padding: AppConstants.cardPadding,
@@ -250,11 +262,7 @@ class HomeScreen extends ConsumerWidget {
                 color: Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppConstants.radiusL),
               ),
-              child: Icon(
-                icon,
-                size: AppConstants.iconXL,
-                color: Colors.grey,
-              ),
+              child: Icon(icon, size: AppConstants.iconXL, color: Colors.grey),
             ),
             const SizedBox(width: AppConstants.spacingM),
             Expanded(
@@ -279,10 +287,7 @@ class HomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.lock_outline,
-              color: Colors.grey,
-            ),
+            Icon(Icons.lock_outline, color: Colors.grey),
           ],
         ),
       ),

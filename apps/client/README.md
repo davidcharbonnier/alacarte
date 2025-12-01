@@ -1,6 +1,6 @@
-# A la carte Client
+# À la carte Client
 
-Flutter application for the A la carte rating platform - mobile, web, and desktop.
+Flutter application for the À la carte rating platform - mobile, web, and desktop.
 
 ## Quick Start
 
