@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter/foundation.dart';
+import 'package:diacritic/diacritic.dart';
 import '../models/rateable_item.dart';
 import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
@@ -322,8 +323,13 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
       }
     }
     
+    // Sort filter options with locale-aware comparison for accented characters
     final filterOptions = allCategories.map(
-      (key, valueSet) => MapEntry(key, valueSet.toList()..sort()),
+      (key, valueSet) {
+        final sortedList = valueSet.toList();
+        sortedList.sort((a, b) => ItemState._compareLocaleAware(a, b));
+        return MapEntry(key, sortedList);
+      },
     );
 
     state = state.copyWith(filterOptions: filterOptions);
@@ -399,10 +405,19 @@ class ItemState<T extends RateableItem> {
       ).toList();
     }
 
-    // Sort alphabetically by name (A to Z, case-insensitive)
-    filtered.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    // Sort alphabetically by name with locale-aware comparison
+    // This ensures accented characters (é, à, ç, etc.) sort correctly
+    filtered.sort((a, b) => ItemState._compareLocaleAware(a.name, b.name));
 
     return filtered;
+  }
+
+  /// Locale-aware string comparison using diacritic package
+  /// Normalizes strings to treat accented characters as base letters
+  static int _compareLocaleAware(String a, String b) {
+    return removeDiacritics(a).toLowerCase().compareTo(
+      removeDiacritics(b).toLowerCase()
+    );
   }
 
   /// Check if any filters are active

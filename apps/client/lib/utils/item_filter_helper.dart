@@ -1,3 +1,4 @@
+import 'package:diacritic/diacritic.dart';
 import '../models/rateable_item.dart';
 import '../models/rating.dart';
 
@@ -79,9 +80,20 @@ class ItemFilterHelper {
       }
     }
     
-    // Convert sets to sorted lists
+    // Convert sets to sorted lists with locale-aware comparison
     return filterOptions.map(
-      (key, valueSet) => MapEntry(key, valueSet.toList()..sort()),
+      (key, valueSet) {
+        final sortedList = valueSet.toList();
+        sortedList.sort((a, b) => _compareLocaleAware(a, b));
+        return MapEntry(key, sortedList);
+      },
+    );
+  }
+  
+  /// Locale-aware string comparison using diacritic package
+  static int _compareLocaleAware(String a, String b) {
+    return removeDiacritics(a).toLowerCase().compareTo(
+      removeDiacritics(b).toLowerCase()
     );
   }
   
