@@ -1,4 +1,4 @@
-name: Release with Versio
+name: Generate version
 
 on:
   push:
@@ -14,12 +14,12 @@ permissions:
   pull-requests: write
 
 jobs:
-  release:
+  version:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Get versio
         uses: chaaz/versio-actions/install@v1.3
 
