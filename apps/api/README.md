@@ -1,6 +1,6 @@
-# A la carte API
+# À la carte API
 
-Go REST API for the A la carte rating platform.
+Go REST API for the À la carte rating platform.
 
 ## Quick Start
 
