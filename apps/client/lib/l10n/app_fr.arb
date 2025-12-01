@@ -472,7 +472,7 @@
   
   "tastingNotesLabel": "Notes de dégustation",
   "enterTastingNotes": "ex: chocolat, agrumes, floral",
-  "tastingNotesHelper": "Notes de saveur séparées par des virgules",
+  "tastingNotesHelper": "Notes de dégustation séparées par des virgules",
   
   "acidityLabel": "Acidité",
   "selectAcidity": "Sélectionner le niveau d'acidité",
