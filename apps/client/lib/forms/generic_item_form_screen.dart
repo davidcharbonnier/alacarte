@@ -509,6 +509,7 @@ class _GenericItemFormScreenState<T extends RateableItem>
           controller: controller,
           labelText: field.getLabel(context),
           hintText: field.getHint(context),
+          helperText: field.getHelperText(context),
           required: field.required,
           enabled: !_isLoading,
           prefixIcon: field.icon,

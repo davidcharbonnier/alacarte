@@ -1614,7 +1614,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get enterTastingNotes => 'ex: chocolat, agrumes, floral';
 
   @override
-  String get tastingNotesHelper => 'Notes de saveur séparées par des virgules';
+  String get tastingNotesHelper =>
+      'Notes de dégustation séparées par des virgules';
 
   @override
   String get acidityLabel => 'Acidité';

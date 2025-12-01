@@ -58,6 +58,7 @@ class ItemPropertyField extends StatelessWidget {
   final TextEditingController controller;
   final String labelText;
   final String? hintText;
+  final String? helperText;
   final String? errorText;
   final bool required;
   final bool enabled;
@@ -71,6 +72,7 @@ class ItemPropertyField extends StatelessWidget {
     required this.controller,
     required this.labelText,
     this.hintText,
+    this.helperText,
     this.errorText,
     this.required = false,
     this.enabled = true,
@@ -87,6 +89,7 @@ class ItemPropertyField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: required ? '$labelText *' : labelText,
         hintText: hintText,
+        helperText: helperText,
         errorText: errorText,
         border: const OutlineInputBorder(),
         enabled: enabled,
