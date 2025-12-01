@@ -1,12 +1,12 @@
 name: Cleanup Snapshot Artifacts
 
 on:
-  pull_request:
-    types: [closed]
-  
-  schedule:
-    - cron: '0 2 * * *'  # 2 AM UTC daily
-  
+  #pull_request:
+  #  types: [closed]
+  #
+  #schedule:
+  #  - cron: '0 2 * * *'  # 2 AM UTC daily
+
   workflow_dispatch:
 
 jobs:

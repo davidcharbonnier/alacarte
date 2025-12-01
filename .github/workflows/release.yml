@@ -152,10 +152,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  update-release:
+  create-release:
     needs: [build-api, build-client, build-admin]
     if: (needs.build-api.result == 'success' && needs.build-api.result != 'skipped') || (needs.build-client.result == 'success' && needs.build-client.result != 'skipped') || (needs.build-admin.result == 'success' && needs.build-admin.result != 'skipped')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -191,81 +193,45 @@ jobs:
           name: client-apk-${{ steps.tag_info.outputs.version }}
           path: ./artifacts
 
-      - name: Read existing release notes
-        id: read_release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ steps.tag_info.outputs.tag }}"
-          
-          # Get existing release body (created by versio)
-          EXISTING_BODY=$(gh release view "$TAG" --json body -q .body || echo "")
-          
-          # Save to file for easier handling
-          echo "$EXISTING_BODY" > existing_notes.md
-          
-          echo "📝 Existing release notes captured"
-
-      - name: Add deployment information
+      - name: Generate release notes
         run: |
           APP="${{ steps.tag_info.outputs.app }}"
           VERSION="${{ steps.tag_info.outputs.version }}"
           
-          # Start with existing versio generated notes
-          cat existing_notes.md > enhanced_notes.md
-          
-          echo "" >> enhanced_notes.md
-          echo "---" >> enhanced_notes.md
-          echo "" >> enhanced_notes.md
-          echo "## 🚀 Deployment Information" >> enhanced_notes.md
-          echo "" >> enhanced_notes.md
+          echo "## 🚀 Deployment Information" > release_notes.md
+          echo "" >> release_notes.md
           
           if [ "$APP" = "api" ]; then
-            echo "### 🐳 API Docker Image" >> enhanced_notes.md
-            echo "\`\`\`bash" >> enhanced_notes.md
-            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:$VERSION" >> enhanced_notes.md
-            echo "\`\`\`" >> enhanced_notes.md
-            echo "" >> enhanced_notes.md
-            echo "### 📝 Changelog" >> enhanced_notes.md
-            echo "See [API Changelog](./apps/api/CHANGELOG.md) for detailed changes." >> enhanced_notes.md
+            echo "### 🐳 Docker Image" >> release_notes.md
+            echo "\`\`\`bash" >> release_notes.md
+            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:$VERSION" >> release_notes.md
+            echo "\`\`\`" >> release_notes.md
+            echo "" >> release_notes.md
+            echo "### 📝 Changelog" >> release_notes.md
+            echo "See [API Changelog](./apps/api/CHANGELOG.md) for detailed changes." >> release_notes.md
             
           elif [ "$APP" = "client" ]; then
-            echo "### 📱 Client APK" >>> enhanced_notes.md
-            echo "Download the APK from the assets below." >> enhanced_notes.md
-            echo "" >> enhanced_notes.md
-            echo "### 📝 Changelog" >> enhanced_notes.md
-            echo "See [Client Changelog](./apps/client/CHANGELOG.md) for detailed changes." >> enhanced_notes.md
+            echo "### 📱 Android APK" >> release_notes.md
+            echo "Download the APK from the assets below." >> release_notes.md
+            echo "" >> release_notes.md
+            echo "### 📝 Changelog" >> release_notes.md
+            echo "See [Client Changelog](./apps/client/CHANGELOG.md) for detailed changes." >> release_notes.md
             
           elif [ "$APP" = "admin" ]; then
-            echo "### 🐳 Admin Docker Image" >> enhanced_notes.md
-            echo "\`\`\`bash" >> enhanced_notes.md
-            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:$VERSION" >> enhanced_notes.md
-            echo "\`\`\`" >> enhanced_notes.md
-            echo "" >> enhanced_notes.md
-            echo "### 📝 Changelog" >> enhanced_notes.md
-            echo "See [Admin Changelog](./apps/admin/CHANGELOG.md) for detailed changes." >> enhanced_notes.md
+            echo "### 🐳 Docker Image" >> release_notes.md
+            echo "\`\`\`bash" >> release_notes.md
+            echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:$VERSION" >> release_notes.md
+            echo "\`\`\`" >> release_notes.md
+            echo "" >> release_notes.md
+            echo "### 📝 Changelog" >> release_notes.md
+            echo "See [Admin Changelog](./apps/admin/CHANGELOG.md) for detailed changes." >> release_notes.md
           fi
 
-      - name: Update GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ steps.tag_info.outputs.tag }}"
-          TITLE="${{ steps.tag_info.outputs.title }}"
-          
-          # Update the release with enhanced notes and title
-          gh release edit "$TAG" --title "$TITLE" --notes-file enhanced_notes.md
-          
-          echo "✅ Release updated: $TITLE"
-
-      - name: Upload APK to Release
-        if: steps.tag_info.outputs.app == 'client'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${{ steps.tag_info.outputs.tag }}"
-          
-          # Upload APK as release asset
-          gh release upload "$TAG" ./artifacts/app-release.apk --clobber
-          
-          echo "✅ APK uploaded to release"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.tag_info.outputs.title }}
+          body_path: release_notes.md
+          files: ${{ steps.tag_info.outputs.app == 'client' && './artifacts/app-release.apk' || '' }}
+          draft: false
+          prerelease: false

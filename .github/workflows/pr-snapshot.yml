@@ -28,15 +28,15 @@ jobs:
         run: |
           # Use git to detect which packages have changes
           git fetch origin ${{ github.event.pull_request.base.ref }}
-          
+
           # Get list of changed files compared to base branch
           CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
-          
+
           echo "Changed files:"
           echo "$CHANGED_FILES"
-          
+
           HAS_CHANGES=false
-          
+
           # Check if API has changes (files in apps/api/)
           if echo "$CHANGED_FILES" | grep -q "^apps/api/"; then
             echo "api=true" >> $GITHUB_OUTPUT
@@ -46,7 +46,7 @@ jobs:
             echo "api=false" >> $GITHUB_OUTPUT
             echo "❌ API has no changes"
           fi
-          
+
           # Check if Client has changes (files in apps/client/)
           if echo "$CHANGED_FILES" | grep -q "^apps/client/"; then
             echo "client=true" >> $GITHUB_OUTPUT
@@ -56,7 +56,7 @@ jobs:
             echo "client=false" >> $GITHUB_OUTPUT
             echo "❌ Client has no changes"
           fi
-          
+
           # Check if Admin has changes (files in apps/admin/)
           if echo "$CHANGED_FILES" | grep -q "^apps/admin/"; then
             echo "admin=true" >> $GITHUB_OUTPUT
@@ -66,7 +66,7 @@ jobs:
             echo "admin=false" >> $GITHUB_OUTPUT
             echo "❌ Admin has no changes"
           fi
-          
+
           echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
 
   generate-version:
@@ -199,7 +199,8 @@ jobs:
           cache-to: type=gha,mode=max
 
   comment-pr:
-    needs: [detect-changes, generate-version, build-api, build-client, build-admin]
+    needs:
+      [detect-changes, generate-version, build-api, build-client, build-admin]
     # Only comment if version generation succeeded and at least one build ran
     if: |
       always() &&
