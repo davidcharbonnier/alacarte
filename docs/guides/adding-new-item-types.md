@@ -82,12 +82,22 @@ func (w *Wine) SetImageURL(url *string) {
 
 **File:** `apps/api/controllers/[itemType]Controller.go`
 
+**⚠️ Critical:** ALL body struct fields MUST have JSON tags matching the frontend's snake_case field names. Without JSON tags, fields won't bind correctly from the frontend payload.
+
+```go
+var body struct {
+    Name     string `json:"name"`      // ← Must have json tags!
+    Producer string `json:"producer"`  // ← Must match frontend exactly
+    Organic  bool   `json:"organic"`   // ← Critical for booleans!
+}
+```
+
 Implement 9 functions:
 1. **Public CRUD** (5 functions, ~10 min):
-   - `WineCreate` - POST with JSON binding
+   - `WineCreate` - POST with JSON binding (with json tags!)
    - `WineIndex` - GET all items
    - `WineDetails` - GET single item by ID
-   - `WineEdit` - PUT with updates
+   - `WineEdit` - PUT with updates (with json tags!)
    - `WineRemove` - DELETE by ID
 
 2. **Admin Endpoints** (4 functions, ~15 min):
@@ -96,7 +106,7 @@ Implement 9 functions:
    - `SeedWines` - Bulk import from remote URL
    - `ValidateWines` - Validate JSON without importing
 
-**Template:** Copy `ginController.go` and replace gin fields with wine fields
+**Template:** Copy `coffeeController.go` (has correct JSON tags) and replace coffee fields with wine fields
 
 #### Step 3: Register Routes (~8 min)
 
@@ -266,6 +276,8 @@ Thanks to October 2025 refactorings:
 
 **File:** `apps/client/lib/models/wine_item.dart`
 
+**⚠️ Important:** Do NOT add extension methods like `getUniqueProducers()`, `getUniqueOrigins()`, etc. These are deprecated and unused. See [Filtering System Documentation](/docs/features/filtering-system.md#deprecated-pattern---do-not-use) for details.
+
 ```dart
 class WineItem implements RateableItem {
   final int? id;
@@ -295,6 +307,8 @@ class WineItem implements RateableItem {
 #### Step 2: Create Service (~10 min)
 
 **File:** `apps/client/lib/services/item_service.dart` (add to end)
+
+**⚠️ Important:** Do NOT add filter option methods like `getWineProducers()`, `getWineOrigins()`, etc. These are deprecated. Filter options are automatically generated from items in the provider state. See [Filtering System Documentation](/docs/features/filtering-system.md#deprecated-pattern---do-not-use) for details.
 
 ```dart
 class WineItemService extends ItemService<WineItem> {

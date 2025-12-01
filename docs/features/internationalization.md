@@ -546,6 +546,222 @@ TextFormField(
 - **Memory Usage**: ARB files bundled with app (minimal impact)
 - **Language Switching**: Requires widget rebuild (expected Flutter behavior)
 - **No Network Calls**: All translations stored locally
+- **Locale-Aware Sorting**: Uses `diacritic` package for efficient accent normalization
+
+## Locale-Aware String Comparison
+
+### Overview
+
+To properly support French language with accented characters, the app implements locale-aware string comparison for all alphabetical sorting operations.
+
+### Problem with Standard Sorting
+
+**Standard Dart String Comparison:**
+```dart
+list.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+// Results in incorrect sorting for French:
+// Americano
+// Brewmance  
+// Latte
+// Équilibre  ← Accented characters sorted at the end!
+```
+
+**Issue:** Dart's default `compareTo` treats accented characters as separate from their base letters, sorting them after all non-accented characters.
+
+### Solution: Diacritic Package
+
+The app uses the `diacritic` package to normalize strings by removing accents before comparison:
+
+```dart
+import 'package:diacritic/diacritic.dart';
+
+// Sort with locale-aware comparison
+list.sort((a, b) => _compareLocaleAware(a, b));
+
+// Helper method
+static int _compareLocaleAware(String a, String b) {
+  return removeDiacritics(a).toLowerCase().compareTo(
+    removeDiacritics(b).toLowerCase()
+  );
+}
+
+// Results in correct French sorting:
+// Americano
+// Brewmance
+// Équilibre  ← Sorted correctly with 'E' items!
+// Latte
+```
+
+### How It Works
+
+**Diacritic Normalization:**
+- `removeDiacritics()` strips all accent marks from characters
+- Converts "Équilibre" → "Equilibre" for comparison
+- Then performs standard lowercase comparison
+- Simple and comprehensive approach
+
+**Accented Character Handling:**
+- **é, è, ê, ë** → Normalized to 'e', sorts with 'e'
+- **à, â** → Normalized to 'a', sorts with 'a'
+- **ç** → Normalized to 'c', sorts with 'c'
+- **ô** → Normalized to 'o', sorts with 'o'
+- **û, ù** → Normalized to 'u', sorts with 'u'
+- **ï, î** → Normalized to 'i', sorts with 'i'
+
+### Implementation Locations
+
+Locale-aware sorting is implemented in three key places:
+
+**1. Item Provider** (`lib/providers/item_provider.dart`):
+```dart
+import 'package:diacritic/diacritic.dart';
+
+// Main item list sorting
+List<T> get filteredItems {
+  // ... filtering logic ...
+  
+  filtered.sort((a, b) => ItemState._compareLocaleAware(a.name, b.name));
+  
+  return filtered;
+}
+
+// Helper method
+static int _compareLocaleAware(String a, String b) {
+  return removeDiacritics(a).toLowerCase().compareTo(
+    removeDiacritics(b).toLowerCase()
+  );
+}
+
+// Filter options sorting
+void _refreshFilterOptions() {
+  final filterOptions = allCategories.map(
+    (key, valueSet) {
+      final sortedList = valueSet.toList();
+      sortedList.sort((a, b) => ItemState._compareLocaleAware(a, b));
+      return MapEntry(key, sortedList);
+    },
+  );
+}
+```
+
+**2. Item Filter Helper** (`lib/utils/item_filter_helper.dart`):
+```dart
+import 'package:diacritic/diacritic.dart';
+
+static Map<String, List<String>> getAvailableFilters<T>(...) {
+  return filterOptions.map(
+    (key, valueSet) {
+      final sortedList = valueSet.toList();
+      sortedList.sort((a, b) => _compareLocaleAware(a, b));
+      return MapEntry(key, sortedList);
+    },
+  );
+}
+
+static int _compareLocaleAware(String a, String b) {
+  return removeDiacritics(a).toLowerCase().compareTo(
+    removeDiacritics(b).toLowerCase()
+  );
+}
+```
+
+### Scope of Application
+
+Locale-aware sorting applies to:
+- ✅ **All item lists** (cheese, gin, wine, coffee)
+- ✅ **Search results**
+- ✅ **Filter dropdown options**
+- ✅ **All user-facing alphabetically sorted content**
+
+### Performance Characteristics
+
+**Performance Impact:**
+- **Lightweight**: `removeDiacritics()` is a simple string transformation
+- **Fast**: Character-by-character mapping with minimal overhead
+- **Scalable**: Handles large lists efficiently
+- **No caching needed**: Function is pure and efficient
+
+**Memory Usage:**
+- Normalized strings are temporary and garbage collected
+- No persistent memory overhead
+- Safe for frequent sorting operations
+- Package size: ~10KB
+
+### Testing Locale-Aware Sorting
+
+**Test Data with Accents:**
+```dart
+final testItems = [
+  CoffeeItem(name: 'Americano'),
+  CoffeeItem(name: 'Équilibre'),      // Should sort with 'E'
+  CoffeeItem(name: 'Brewmance'),
+  CoffeeItem(name: 'À la carte'),     // Should sort with 'A'
+  CoffeeItem(name: 'Café Latte'),      // Should sort with 'C'
+];
+
+// After sorting with Collator:
+// À la carte
+// Americano
+// Brewmance
+// Café Latte
+// Équilibre
+```
+
+**What to Verify:**
+1. Items with accented characters appear in correct alphabetical position
+2. Filter dropdowns show options in proper French alphabetical order
+3. Search results maintain correct ordering
+4. Both uppercase and lowercase accented characters sort correctly
+
+### Adding Locale-Aware Sorting to New Code
+
+**When to Use:**
+- Any alphabetical sorting of user-visible strings
+- Sorting names, titles, categories, etc.
+- Filter options, dropdown lists, autocomplete
+
+**How to Implement:**
+```dart
+import 'package:diacritic/diacritic.dart';
+
+// Instead of:
+list.sort((a, b) => a.name.compareTo(b.name));
+
+// Use:
+list.sort((a, b) => removeDiacritics(a.name).toLowerCase().compareTo(
+  removeDiacritics(b.name).toLowerCase()
+));
+
+// Or create a helper method:
+static int _compareLocaleAware(String a, String b) {
+  return removeDiacritics(a).toLowerCase().compareTo(
+    removeDiacritics(b).toLowerCase()
+  );
+}
+
+list.sort((a, b) => _compareLocaleAware(a.name, b.name));
+```
+
+**Best Practices:**
+- Use `removeDiacritics()` before comparison
+- Always convert to lowercase for case-insensitive sorting
+- Create helper methods to avoid repetition
+- Test with accented characters in test data
+
+### Language Support
+
+**Currently Supported:**
+- **French**: Primary language with full accent support
+- **English**: Works correctly (no accents, but still uses Collator for consistency)
+
+**Future Languages:**
+The `Collator` approach automatically supports:
+- **Spanish**: ñ, á, é, í, ó, ú
+- **German**: ä, ö, ü, ß
+- **Portuguese**: ã, õ, ç
+- **Italian**: à, è, é, ì, ò, ù
+- Any other language with locale-specific sorting rules
 
 ## Best Practices
 

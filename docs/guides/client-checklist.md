@@ -38,6 +38,8 @@ Thanks to recent refactorings, these features **require ZERO code** for new item
 ### **1. Create Model** (~15 min)
 **File:** `lib/models/wine_item.dart`
 
+**⚠️ Important:** Do NOT add extension methods like `getUniqueColors()`, `getUniqueCountries()`, etc. These are deprecated. Filter options are automatically generated from items in the provider. See [Filtering System Documentation](/docs/features/filtering-system.md#deprecated-pattern---do-not-use).
+
 - [ ] File created
 - [ ] **Import added:** `import '../utils/localization_utils.dart';`
 - [ ] Implements `RateableItem` interface with ALL required getters:
@@ -79,7 +81,6 @@ Thanks to recent refactorings, these features **require ZERO code** for new item
     ];
   }
   ```
-- [ ] Extension methods for filtering created (getUniqueColors, etc.)
 - [ ] `copyWith()` accepts `Map<String, dynamic>` parameter (required by interface)
 
 **Template:** Copy `gin_item.dart`
@@ -94,6 +95,8 @@ Thanks to recent refactorings, these features **require ZERO code** for new item
 ### **2. Create Service** (~12 min)
 **File:** `lib/services/item_service.dart` (add to end of file)
 
+**⚠️ Important:** Do NOT add filter option methods like `getWineColors()`, `getWineCountries()`, etc. These are deprecated. Filter options are automatically generated in the provider. See [Filtering System Documentation](/docs/features/filtering-system.md#deprecated-pattern---do-not-use).
+
 - [ ] **Import added at TOP of file:** `import '../models/wine_item.dart';`
 - [ ] `WineItemService` class created
 - [ ] Extends `ItemService<WineItem>`
@@ -102,10 +105,6 @@ Thanks to recent refactorings, these features **require ZERO code** for new item
 - [ ] `getAllItems()` override with cache logic
 - [ ] `clearCache()` method
 - [ ] Static validation method: `_validateWineItem()`
-- [ ] Filter helper methods created:
-  - [ ] `getWineColors()`
-  - [ ] `getWineCountries()`
-  - [ ] `getWineRegions()` (or appropriate for your item)
 - [ ] Service provider registered at end
 
 **Template:** Copy `GinItemService` from same file
