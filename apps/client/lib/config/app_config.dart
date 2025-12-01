@@ -2,31 +2,37 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Application configuration settings
 class AppConfig {
-  static const String appName = 'A la carte';
-  
+  static const String appName = 'À la carte';
+
   // Environment-based configuration
   static String get appVersion {
     final version = dotenv.env['APP_VERSION'];
     if (version == null || version.isEmpty) {
-      throw Exception('APP_VERSION environment variable is required but not set');
+      throw Exception(
+        'APP_VERSION environment variable is required but not set',
+      );
     }
     return version;
   }
-  
+
   // API Configuration - requires environment variables
   static String get baseUrl {
     final url = dotenv.env['API_BASE_URL'];
     if (url == null || url.isEmpty) {
-      throw Exception('API_BASE_URL environment variable is required but not set');
+      throw Exception(
+        'API_BASE_URL environment variable is required but not set',
+      );
     }
     return url;
   }
-  
+
   // Google OAuth Configuration
   static String get googleWebClientId {
     final clientId = dotenv.env['GOOGLE_CLIENT_ID'];
     if (clientId == null || clientId.isEmpty) {
-      throw Exception('GOOGLE_CLIENT_ID environment variable is required but not set');
+      throw Exception(
+        'GOOGLE_CLIENT_ID environment variable is required but not set',
+      );
     }
     return clientId;
   }

@@ -9,10 +9,10 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
-  String get appTitle => 'A la carte';
+  String get appTitle => 'À la carte';
 
   @override
-  String get welcomeTitle => 'Bienvenue sur A la carte';
+  String get welcomeTitle => 'Bienvenue sur À la carte';
 
   @override
   String get welcomeSubtitle =>
@@ -63,7 +63,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Hors ligne - Vos listes de références peuvent ne pas être à jour';
 
   @override
-  String get connectedToAlacarte => 'Connecté à A la carte';
+  String get connectedToAlacarte => 'Connecté à À la carte';
 
   @override
   String get noInternetConnection => 'Connexion perdue - Mode hors ligne';
@@ -461,7 +461,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get descriptionLabel => 'Description';
 
   @override
-  String get initializingApp => 'Initialisation d\'A la carte...';
+  String get initializingApp => 'Initialisation d\'À la carte...';
 
   @override
   String get initializationTakingLonger =>
@@ -917,7 +917,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get privacyPolicyContent =>
-      'A la carte est conçu avec la confidentialité en priorité. Toutes vos évaluations sont privées par défaut. Vous choisissez exactement quelles évaluations partager et avec qui. Votre email et nom complet ne sont jamais montrés aux autres utilisateurs.';
+      'À la carte est conçu avec la confidentialité en priorité. Toutes vos évaluations sont privées par défaut. Vous choisissez exactement quelles évaluations partager et avec qui. Votre email et nom complet ne sont jamais montrés aux autres utilisateurs.';
 
   @override
   String get close => 'Fermer';
@@ -938,7 +938,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get deleteAccountConsequences =>
-      'Toutes vos évaluations, contenu partagé et informations de profil seront définitivement supprimés d\'A la carte.';
+      'Toutes vos évaluations, contenu partagé et informations de profil seront définitivement supprimés d\'À la carte.';
 
   @override
   String get accountDeleted => 'Compte supprimé avec succès';
@@ -1211,15 +1211,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noInternetConnectionDescription =>
-      'A la carte a besoin d\'une connexion internet pour synchroniser vos évaluations et préférences. Veuillez vérifier vos paramètres réseau et réessayer.';
+      'À la carte a besoin d\'une connexion internet pour synchroniser vos évaluations et préférences. Veuillez vérifier vos paramètres réseau et réessayer.';
 
   @override
   String get serverUnavailableDescription =>
-      'Le serveur d\'A la carte est temporairement indisponible. Cela pourrait être dû à une maintenance ou un problème temporaire. Nous continuons d\'essayer de nous reconnecter.';
+      'Le serveur d\'À la carte est temporairement indisponible. Cela pourrait être dû à une maintenance ou un problème temporaire. Nous continuons d\'essayer de nous reconnecter.';
 
   @override
   String get connectionRestoredDescription =>
-      'Connexion rétablie ! Vous pouvez maintenant utiliser toutes les fonctionnalités d\'A la carte.';
+      'Connexion rétablie ! Vous pouvez maintenant utiliser toutes les fonctionnalités d\'À la carte.';
 
   @override
   String get signInRequiresConnection =>
@@ -1259,7 +1259,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get completeYourProfile => 'Complétez Votre Profil';
 
   @override
-  String get welcomeToAlacarte => 'Bienvenue sur A la carte !';
+  String get welcomeToAlacarte => 'Bienvenue sur À la carte !';
 
   @override
   String hiUserSetupProfile(String firstName) {

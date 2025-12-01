@@ -101,13 +101,13 @@ abstract class AppLocalizations {
   /// The title of the application
   ///
   /// In en, this message translates to:
-  /// **'A la carte'**
+  /// **'À la carte'**
   String get appTitle;
 
   /// Main welcome message on home screen
   ///
   /// In en, this message translates to:
-  /// **'Welcome to A la carte'**
+  /// **'Welcome to À la carte'**
   String get welcomeTitle;
 
   /// Subtitle describing the app's purpose
@@ -197,7 +197,7 @@ abstract class AppLocalizations {
   /// Toast notification when connection is restored
   ///
   /// In en, this message translates to:
-  /// **'Connected to A la carte'**
+  /// **'Connected to À la carte'**
   String get connectedToAlacarte;
 
   /// Toast notification when connection is lost
@@ -839,7 +839,7 @@ abstract class AppLocalizations {
   /// Loading message during app initialization
   ///
   /// In en, this message translates to:
-  /// **'Initializing A la carte...'**
+  /// **'Initializing À la carte...'**
   String get initializingApp;
 
   /// Extended loading message when initialization is slow
@@ -1571,7 +1571,7 @@ abstract class AppLocalizations {
   /// Privacy policy content
   ///
   /// In en, this message translates to:
-  /// **'A la carte is designed with privacy first. All your ratings are private by default. You choose exactly which ratings to share and with whom. Your email and full name are never shown to other users.'**
+  /// **'À la carte is designed with privacy first. All your ratings are private by default. You choose exactly which ratings to share and with whom. Your email and full name are never shown to other users.'**
   String get privacyPolicyContent;
 
   /// Close button text
@@ -1607,7 +1607,7 @@ abstract class AppLocalizations {
   /// Delete account consequences description
   ///
   /// In en, this message translates to:
-  /// **'All your ratings, shared content, and profile information will be permanently removed from A la carte.'**
+  /// **'All your ratings, shared content, and profile information will be permanently removed from À la carte.'**
   String get deleteAccountConsequences;
 
   /// Account deletion success message
@@ -1991,19 +1991,19 @@ abstract class AppLocalizations {
   /// Description for no internet connection screen
   ///
   /// In en, this message translates to:
-  /// **'A la carte needs an internet connection to sync your ratings and preferences. Please check your network settings and try again.'**
+  /// **'À la carte needs an internet connection to sync your ratings and preferences. Please check your network settings and try again.'**
   String get noInternetConnectionDescription;
 
   /// Description for server unavailable screen
   ///
   /// In en, this message translates to:
-  /// **'A la carte server is temporarily unavailable. This might be due to maintenance or a temporary issue. We\'ll keep trying to reconnect.'**
+  /// **'À la carte server is temporarily unavailable. This might be due to maintenance or a temporary issue. We\'ll keep trying to reconnect.'**
   String get serverUnavailableDescription;
 
   /// Description for connection restored screen
   ///
   /// In en, this message translates to:
-  /// **'Connection restored! You can now use all features of A la carte.'**
+  /// **'Connection restored! You can now use all features of À la carte.'**
   String get connectionRestoredDescription;
 
   /// Error message when trying to sign in while offline
@@ -2075,7 +2075,7 @@ abstract class AppLocalizations {
   /// Welcome message on profile setup screen
   ///
   /// In en, this message translates to:
-  /// **'Welcome to A la carte!'**
+  /// **'Welcome to À la carte!'**
   String get welcomeToAlacarte;
 
   /// Personalized setup greeting

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-/// OAuth-enabled User model for A la carte authentication
+/// OAuth-enabled User model for À la carte authentication
 class User {
   final int? id;
   final String googleId;
@@ -40,7 +40,7 @@ class User {
         avatar: (json['avatar'] as String?) ?? '',
         discoverable: (json['discoverable'] as bool?) ?? true,
         profileCompleted: (json['profile_completed'] as bool?) ?? false,
-        lastLoginAt: json['last_login_at'] != null 
+        lastLoginAt: json['last_login_at'] != null
             ? DateTime.tryParse(json['last_login_at'] as String)
             : null,
         createdAt: json['CreatedAt'] != null
@@ -102,45 +102,47 @@ class User {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is User && 
-           other.id == id && 
-           other.email == email &&
-           other.displayName == displayName;
+    return other is User &&
+        other.id == id &&
+        other.email == email &&
+        other.displayName == displayName;
   }
 
   @override
   int get hashCode => Object.hash(id, email, displayName);
 
   @override
-  String toString() => 'User(id: $id, email: $email, displayName: $displayName)';
+  String toString() =>
+      'User(id: $id, email: $email, displayName: $displayName)';
 }
 
 /// Extension for User convenience methods
 extension UserExtension on User {
   /// UI display name (fallback to email if no display name)
   String get uiDisplayName => displayName.isNotEmpty ? displayName : email;
-  
+
   /// Check if user is new (no ID)
   bool get isNew => id == null;
-  
+
   /// Check if profile setup is complete (uses explicit flag)
   bool get hasCompletedSetup => profileCompleted;
-  
+
   /// Check if user needs profile setup (uses explicit flag)
   bool get needsProfileSetup => !profileCompleted;
-  
+
   /// Get first name from full name
   String get firstName {
     final parts = fullName.split(' ');
     return parts.isNotEmpty ? parts.first : '';
   }
-  
+
   /// Get initials from display name or full name
   String get initials {
     final name = displayName.isNotEmpty ? displayName : fullName;
     final parts = name.split(' ');
     if (parts.isEmpty) return '';
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'.toUpperCase();
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+        .toUpperCase();
   }
 }

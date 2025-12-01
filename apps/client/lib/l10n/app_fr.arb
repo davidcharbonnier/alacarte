@@ -1,7 +1,7 @@
 {
   "@@locale": "fr",
-  "appTitle": "A la carte",
-  "welcomeTitle": "Bienvenue sur A la carte",
+  "appTitle": "À la carte",
+  "welcomeTitle": "Bienvenue sur À la carte",
   "welcomeSubtitle": "Votre centre personnel d'évaluations et de préférences",
   "yourPreferenceLists": "Vos Listes de Préférences",
   "moreCategoriesTitle": "Plus de Catégories",
@@ -16,7 +16,7 @@
   "offline": "Hors ligne",
   "checkingConnection": "Vérification de la connexion",
   "offlineMessage": "Hors ligne - Vos listes de références peuvent ne pas être à jour",
-  "connectedToAlacarte": "Connecté à A la carte",
+  "connectedToAlacarte": "Connecté à À la carte",
   "noInternetConnection": "Connexion perdue - Mode hors ligne",
   "userSelection": "Sélection d'Utilisateur",
   "createUser": "Créer un Utilisateur",
@@ -127,7 +127,7 @@
   "originLabel": "Origine",
   "producerLabel": "Producteur",
   "descriptionLabel": "Description",
-  "initializingApp": "Initialisation d'A la carte...",
+  "initializingApp": "Initialisation d'À la carte...",
   "initializationTakingLonger": "Ceci prend plus de temps que prévu...",
   "profileDataCorrupted": "Données du profil corrompues. Veuillez sélectionner votre profil à nouveau.",
   "profileNotFoundOnServer": "Votre profil n'a pas été trouvé. Veuillez sélectionner un profil valide.",
@@ -252,13 +252,13 @@
   "appVersion": "Version de l'App",
   "privacyPolicy": "Politique de Confidentialité",
   "learnAboutPrivacy": "En savoir plus sur vos données et votre confidentialité",
-  "privacyPolicyContent": "A la carte est conçu avec la confidentialité en priorité. Toutes vos évaluations sont privées par défaut. Vous choisissez exactement quelles évaluations partager et avec qui. Votre email et nom complet ne sont jamais montrés aux autres utilisateurs.",
+  "privacyPolicyContent": "À la carte est conçu avec la confidentialité en priorité. Toutes vos évaluations sont privées par défaut. Vous choisissez exactement quelles évaluations partager et avec qui. Votre email et nom complet ne sont jamais montrés aux autres utilisateurs.",
   "close": "Fermer",
   "dangerZone": "Zone Dangereuse",
   "deleteAccount": "Supprimer le Compte",
   "deleteAccountDescription": "Supprimer définitivement votre compte et toutes les données",
   "deleteAccountWarning": "Cela supprimera définitivement votre compte et toutes vos données. Cette action ne peut pas être annulée.",
-  "deleteAccountConsequences": "Toutes vos évaluations, contenu partagé et informations de profil seront définitivement supprimés d'A la carte.",
+  "deleteAccountConsequences": "Toutes vos évaluations, contenu partagé et informations de profil seront définitivement supprimés d'À la carte.",
   "accountDeleted": "Compte supprimé avec succès",
   "errorDeletingAccount": "Erreur lors de la suppression du compte",
   "anonymousUser": "Utilisateur Anonyme",
@@ -322,13 +322,13 @@
   "noInternetConnectionTitle": "Pas de Connexion Internet",
   "serverUnavailableTitle": "Serveur Indisponible",
   "connectedTitle": "Connecté",
-  "noInternetConnectionDescription": "A la carte a besoin d'une connexion internet pour synchroniser vos évaluations et préférences. Veuillez vérifier vos paramètres réseau et réessayer.",
-  "serverUnavailableDescription": "Le serveur d'A la carte est temporairement indisponible. Cela pourrait être dû à une maintenance ou un problème temporaire. Nous continuons d'essayer de nous reconnecter.",
-  "connectionRestoredDescription": "Connexion rétablie ! Vous pouvez maintenant utiliser toutes les fonctionnalités d'A la carte.",
+  "noInternetConnectionDescription": "À la carte a besoin d'une connexion internet pour synchroniser vos évaluations et préférences. Veuillez vérifier vos paramètres réseau et réessayer.",
+  "serverUnavailableDescription": "Le serveur d'À la carte est temporairement indisponible. Cela pourrait être dû à une maintenance ou un problème temporaire. Nous continuons d'essayer de nous reconnecter.",
+  "connectionRestoredDescription": "Connexion rétablie ! Vous pouvez maintenant utiliser toutes les fonctionnalités d'À la carte.",
   "signInRequiresConnection": "Se connecter nécessite une connexion internet",
   "serverTemporarilyUnavailable": "Serveur temporairement indisponible. Veuillez réessayer.",
   "connectionFailedCheckNetwork": "Échec de connexion. Veuillez vérifier votre réseau et réessayer.",
-  
+
   "settingUpPreferenceHub": "Configuration de votre centre de préférences...",
   "verifyingAccount": "Vérification du compte...",
   "workingOffline": "Mode hors ligne...",
@@ -336,9 +336,9 @@
   "readyWelcomeBack": "Prêt ! Bon retour.",
   "signInRequired": "Connexion requise...",
   "preparingPreferences": "Préparation de vos préférences...",
-  
+
   "completeYourProfile": "Complétez Votre Profil",
-  "welcomeToAlacarte": "Bienvenue sur A la carte !",
+  "welcomeToAlacarte": "Bienvenue sur À la carte !",
   "hiUserSetupProfile": "Salut {firstName} ! Configurons votre profil.",
   "displayNameFieldHelper": "C'est ainsi que les autres utilisateurs vous verront lorsque vous partagez des évaluations",
   "displayNameRequired": "Le nom d'affichage est requis",
@@ -354,12 +354,12 @@
   "completeProfile": "Compléter le Profil",
   "yourPrivacyMatters": "Votre Confidentialité Compte",
   "privacyExplanation": "Toutes vos évaluations sont privées par défaut. Vous choisissez exactement quelles évaluations partager et avec qui. Votre email et nom complet ne sont jamais montrés aux autres utilisateurs - seulement votre nom d'affichage.",
-  
+
   "automaticLanguage": "Auto ({detectedLanguage})",
   "french": "Français",
   "english": "Anglais",
   "followsDeviceLanguage": "Suit la langue de l'appareil",
-  
+
   "gin": "Gin",
   "gins": "Gins",
   "profileLabel": "Profil",
@@ -382,7 +382,7 @@
   "loadingGins": "Chargement des gins...",
   "profileRequired": "Le profil est requis",
   "editItemTooltip": "Modifier l'article",
-  
+
   "wine": "Vin",
   "wines": "Vins",
   "colorLabel": "Couleur",
@@ -412,13 +412,13 @@
   "createWine": "Créer un Vin",
   "editWine": "Modifier le Vin",
   "addWine": "Ajouter un Vin",
-  
+
   "selectColor": "Sélectionner la couleur",
   "organicHelper": "Vin certifié biologique",
-  
+
   "yes": "Oui",
   "no": "Non",
-  
+
   "coffee": "Café",
   "coffees": "Cafés",
   "createCoffee": "Créer un café",
@@ -426,32 +426,32 @@
   "coffeeCreated": "Café créé avec succès !",
   "coffeeUpdated": "Café mis à jour avec succès !",
   "coffeeDeleted": "Café supprimé avec succès !",
-  
+
   "roasterLabel": "Torréfacteur",
   "roasterRequired": "Le torréfacteur est requis",
   "enterRoaster": "Entrez le nom du torréfacteur",
   "enterCoffeeName": "Entrez le nom du café",
-  
+
   "countryLabel": "Pays",
   "enterCountry": "ex: Brésil, Éthiopie, Colombie",
-  
+
   "regionLabel": "Région",
   "enterRegion": "ex: Yirgacheffe, Huila",
-  
+
   "farmLabel": "Ferme",
   "enterFarm": "ex: Finca El Paraíso",
-  
+
   "altitudeLabel": "Altitude",
   "enterAltitude": "ex: 1200-1600m",
   "altitudeHelper": "Altitude de culture en mètres",
-  
+
   "speciesLabel": "Espèce",
   "selectSpecies": "Sélectionner l'espèce",
-  
+
   "varietyLabel": "Variété",
   "enterVariety": "ex: Bourbon, Geisha, Caturra",
   "varietyHelper": "Variété/cultivar du plant de café",
-  
+
   "processingMethodLabel": "Méthode de traitement",
   "selectProcessingMethod": "Sélectionner la méthode",
   "processWashed": "Lavé",
@@ -460,44 +460,44 @@
   "processCarbonicMaceration": "Macération Carbonique",
   "processWetHulled": "Décortiqué Humide",
   "processPulpedNatural": "Nature Dépulpé",
-  
+
   "decaffeinatedLabel": "Décaféiné",
   "decaffeinatedHelper": "Cochez si c'est du café décaféiné",
-  
+
   "roastLevelLabel": "Niveau de torréfaction",
   "selectRoastLevel": "Sélectionner le niveau",
   "roastLight": "Pâle",
   "roastMedium": "Moyen",
   "roastDark": "Foncé",
-  
+
   "tastingNotesLabel": "Notes de dégustation",
   "enterTastingNotes": "ex: chocolat, agrumes, floral",
   "tastingNotesHelper": "Notes de dégustation séparées par des virgules",
-  
+
   "acidityLabel": "Acidité",
   "selectAcidity": "Sélectionner le niveau d'acidité",
-  
+
   "bodyLabel": "Corps",
   "selectBody": "Sélectionner le corps",
   "bodyLight": "Léger",
   "bodyMedium": "Moyen",
   "bodyFull": "Corsé",
-  
+
   "sweetnessLabel": "Douceur",
   "selectSweetness": "Sélectionner la douceur",
-  
+
   "intensityLow": "Faible",
   "intensityMedium": "Moyen",
   "intensityHigh": "Élevé",
-  
+
   "organicLabel": "Biologique",
   "organicHelper": "Cochez si certifié biologique",
-  
+
   "fairTradeLabel": "Commerce équitable",
   "fairTradeHelper": "Cochez si certifié commerce équitable",
-  
+
   "notSpecified": "Non spécifié",
-  
+
   "selectImageSource": "Sélectionner la source de l'image",
   "gallery": "Galerie",
   "camera": "Caméra",

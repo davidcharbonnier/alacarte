@@ -9,10 +9,10 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'A la carte';
+  String get appTitle => 'À la carte';
 
   @override
-  String get welcomeTitle => 'Welcome to A la carte';
+  String get welcomeTitle => 'Welcome to À la carte';
 
   @override
   String get welcomeSubtitle => 'Your personal rating and preference hub';
@@ -62,7 +62,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Offline - Your reference lists may not be up to date';
 
   @override
-  String get connectedToAlacarte => 'Connected to A la carte';
+  String get connectedToAlacarte => 'Connected to À la carte';
 
   @override
   String get noInternetConnection => 'Connection lost - Working offline';
@@ -454,7 +454,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get descriptionLabel => 'Description';
 
   @override
-  String get initializingApp => 'Initializing A la carte...';
+  String get initializingApp => 'Initializing À la carte...';
 
   @override
   String get initializationTakingLonger =>
@@ -898,7 +898,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPolicyContent =>
-      'A la carte is designed with privacy first. All your ratings are private by default. You choose exactly which ratings to share and with whom. Your email and full name are never shown to other users.';
+      'À la carte is designed with privacy first. All your ratings are private by default. You choose exactly which ratings to share and with whom. Your email and full name are never shown to other users.';
 
   @override
   String get close => 'Close';
@@ -919,7 +919,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountConsequences =>
-      'All your ratings, shared content, and profile information will be permanently removed from A la carte.';
+      'All your ratings, shared content, and profile information will be permanently removed from À la carte.';
 
   @override
   String get accountDeleted => 'Account deleted successfully';
@@ -1184,15 +1184,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noInternetConnectionDescription =>
-      'A la carte needs an internet connection to sync your ratings and preferences. Please check your network settings and try again.';
+      'À la carte needs an internet connection to sync your ratings and preferences. Please check your network settings and try again.';
 
   @override
   String get serverUnavailableDescription =>
-      'A la carte server is temporarily unavailable. This might be due to maintenance or a temporary issue. We\'ll keep trying to reconnect.';
+      'À la carte server is temporarily unavailable. This might be due to maintenance or a temporary issue. We\'ll keep trying to reconnect.';
 
   @override
   String get connectionRestoredDescription =>
-      'Connection restored! You can now use all features of A la carte.';
+      'Connection restored! You can now use all features of À la carte.';
 
   @override
   String get signInRequiresConnection =>
@@ -1231,7 +1231,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completeYourProfile => 'Complete Your Profile';
 
   @override
-  String get welcomeToAlacarte => 'Welcome to A la carte!';
+  String get welcomeToAlacarte => 'Welcome to À la carte!';
 
   @override
   String hiUserSetupProfile(String firstName) {
