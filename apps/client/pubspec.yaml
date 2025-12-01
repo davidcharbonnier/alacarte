@@ -64,6 +64,9 @@ dependencies:
   # Image picker
   image_picker: ^1.1.2
 
+  # Diacritics removal for locale-aware sorting
+  diacritic: ^0.1.5
+
   # JSON Handling
   json_annotation: ^4.9.0
   freezed_annotation: ^3.1.0
