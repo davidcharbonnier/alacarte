@@ -4,7 +4,7 @@ Complete guide for configuring Google OAuth specifically for Android development
 
 ## 🎯 Android OAuth Architecture
 
-A la carte uses a **hybrid OAuth approach** for Android:
+À la carte uses a **hybrid OAuth approach** for Android:
 - **Android Client**: For native Google sign-in UI experience
 - **Web Client ID as serverClientId**: For backend token validation compatibility
 - **Single Backend Validation**: Backend only needs to know about web client ID
@@ -45,7 +45,7 @@ keytool -list -v -alias your-release-alias -keystore path/to/your-release.keysto
 2. Click **"+ CREATE CREDENTIALS"** → **"OAuth 2.0 Client ID"**
 3. **Application type**: Select **"Android"**
 4. **Configuration**:
-   - **Name**: "A la carte Android App"
+   - **Name**: "À la carte Android App"
    - **Package name**: `com.alacarte.alc_client` (from your build.gradle.kts)
    - **SHA-1 certificate fingerprint**: Paste your debug SHA-1 from Step 1
 
@@ -240,4 +240,4 @@ The Android OAuth setup provides native authentication experience while maintain
 ---
 
 **Android + Google OAuth 2.0**  
-*Native mobile authentication for A la carte*
+*Native mobile authentication for À la carte*

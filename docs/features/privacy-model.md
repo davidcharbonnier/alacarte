@@ -3,7 +3,7 @@
 **Last Updated:** January 2025  
 **Status:** Production Ready
 
-The A la carte platform implements a **privacy-first architecture** where user data is private by default with explicit sharing controls.
+The À la carte platform implements a **privacy-first architecture** where user data is private by default with explicit sharing controls.
 
 ---
 

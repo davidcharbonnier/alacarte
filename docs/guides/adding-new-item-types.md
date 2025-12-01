@@ -4,7 +4,7 @@
 **Current Item Types:** Cheese, Gin, Wine, Coffee  
 **Total Time:** ~2 hours (Backend: 65 min | Client: 50 min | Admin: 5 min)
 
-This guide covers the complete process of adding a new item type (e.g., wine, beer, coffee) to the A la carte platform across all three applications.
+This guide covers the complete process of adding a new item type (e.g., wine, beer, coffee) to the À la carte platform across all three applications.
 
 ---
 

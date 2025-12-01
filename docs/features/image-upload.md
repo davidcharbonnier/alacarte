@@ -3,7 +3,7 @@
 **Last Updated:** October 2025  
 **Status:** Production Ready (Backend + Admin Display)
 
-The A la carte platform supports image uploads for all item types (cheese, gin, wine, etc.) using S3-compatible storage with automatic image processing and optimization.
+The À la carte platform supports image uploads for all item types (cheese, gin, wine, etc.) using S3-compatible storage with automatic image processing and optimization.
 
 ---
 
@@ -651,4 +651,4 @@ func processImageCustom(img image.Image, itemType string) (*bytes.Buffer, error)
 
 ---
 
-**Image upload system provides a solid foundation for visual content across the A la carte platform while maintaining security, performance, and scalability.**
+**Image upload system provides a solid foundation for visual content across the À la carte platform while maintaining security, performance, and scalability.**

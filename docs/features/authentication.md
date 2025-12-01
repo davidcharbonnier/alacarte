@@ -3,7 +3,7 @@
 **Last Updated:** January 2025  
 **Status:** Production Ready
 
-The A la carte platform uses **Google OAuth 2.0** with **JWT tokens** for secure, cross-platform authentication.
+The À la carte platform uses **Google OAuth 2.0** with **JWT tokens** for secure, cross-platform authentication.
 
 ---
 

@@ -1,10 +1,10 @@
 # Google OAuth Setup Guide
 
-Complete guide for setting up Google OAuth authentication for A la carte across all platforms.
+Complete guide for setting up Google OAuth authentication for À la carte across all platforms.
 
 ## 🎯 Overview
 
-A la carte uses Google OAuth 2.0 for authentication across web and mobile platforms. The architecture uses:
+À la carte uses Google OAuth 2.0 for authentication across web and mobile platforms. The architecture uses:
 - **Frontend platforms** (Web, Android) authenticate with Google
 - **Backend API** validates Google tokens and issues application JWT tokens
 - **Single OAuth flow** with cross-platform compatibility
@@ -22,7 +22,7 @@ A la carte uses Google OAuth 2.0 for authentication across web and mobile platfo
 1. Navigate to **APIs & Services** → **OAuth consent screen**
 2. Choose **External** user type (for public app)
 3. **App Information:**
-   - **App name**: A la carte
+   - **App name**: À la carte
    - **User support email**: your-email@example.com
    - **App logo**: Upload your app icon
    - **App domain**: Your production domain
@@ -42,7 +42,7 @@ A la carte uses Google OAuth 2.0 for authentication across web and mobile platfo
 #### **Web Application Client**
 1. Click **Create Credentials** → **OAuth 2.0 Client ID**
 2. **Application type**: Web application
-3. **Name**: "A la carte Web App"
+3. **Name**: "À la carte Web App"
 4. **Authorized JavaScript origins**:
    ```
    http://localhost:3000                    # Development
@@ -58,7 +58,7 @@ A la carte uses Google OAuth 2.0 for authentication across web and mobile platfo
 #### **Android Application Client**
 1. Click **Create Credentials** → **OAuth 2.0 Client ID**
 2. **Application type**: Android
-3. **Name**: "A la carte Android App"
+3. **Name**: "À la carte Android App"
 4. **Package name**: `com.alacarte.alc_client`
 5. **SHA-1 certificate fingerprint**: 
    ```bash

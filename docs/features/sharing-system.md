@@ -84,10 +84,10 @@ PUT /rating/:id/share
 
 ## 🎉 Achievement Unlocked!
 
-The **core collaborative feature** of A la carte is now working! Users can:
+The **core collaborative feature** of À la carte is now working! Users can:
 - ✅ Create personal ratings
 - ✅ Share ratings with other users  
 - ✅ View shared ratings from others
 - ✅ Build collaborative reference lists
 
-This transforms A la carte from a personal rating app into a **social reference platform** where users can discover and benefit from each other's taste experiences!
+This transforms À la carte from a personal rating app into a **social reference platform** where users can discover and benefit from each other's taste experiences!

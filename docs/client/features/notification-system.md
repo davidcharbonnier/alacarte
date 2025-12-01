@@ -5,7 +5,7 @@
 
 ## Overview
 
-The A la carte app features a unified notification system that provides consistent, professional user feedback across all features. This document covers the notification design standards, implementation patterns, and localization requirements.
+The À la carte app features a unified notification system that provides consistent, professional user feedback across all features. This document covers the notification design standards, implementation patterns, and localization requirements.
 
 ## Notification Design Standards
 
@@ -424,4 +424,4 @@ NotificationHelper.showError(context, context.l10n.operationError);
 - **Parameter handling**: Proper pluralization and interpolation
 - **Maintainability**: Centralized message management
 
-This notification system provides a professional, consistent user experience that enhances the overall quality and polish of the A la carte application.
+This notification system provides a professional, consistent user experience that enhances the overall quality and polish of the À la carte application.

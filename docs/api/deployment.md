@@ -2,7 +2,7 @@
 
 ## Container Architecture
 
-The A la carte REST API uses a **multi-stage Docker build** for maximum security and minimal image size:
+The À la carte REST API uses a **multi-stage Docker build** for maximum security and minimal image size:
 
 - **Build Stage**: Full Go toolchain (golang:1.23.7-alpine) for compilation
 - **Runtime Stage**: Google's distroless static image (no shell, package managers, or unnecessary binaries)
@@ -57,7 +57,7 @@ docker-compose -f docker-compose.prod.yml up -d api
 
 set -e
 
-echo "🚀 Deploying A la carte REST API..."
+echo "🚀 Deploying À la carte REST API..."
 
 # Build image
 docker-compose -f docker-compose.prod.yml build

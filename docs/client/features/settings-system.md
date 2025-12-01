@@ -1,6 +1,6 @@
 # Settings System Architecture
 
-A la carte features a comprehensive, modular settings system with dedicated privacy controls and reusable UI components.
+À la carte features a comprehensive, modular settings system with dedicated privacy controls and reusable UI components.
 
 ## 🏗️ Architecture Overview
 
@@ -23,7 +23,7 @@ Settings Entry Points:
 
 ### **Settings Widget Library**
 
-A la carte includes a comprehensive widget library for consistent settings UI:
+À la carte includes a comprehensive widget library for consistent settings UI:
 
 ```
 lib/widgets/settings/

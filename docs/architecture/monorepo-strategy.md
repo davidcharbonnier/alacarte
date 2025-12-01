@@ -1,8 +1,8 @@
-# A la carte Monorepo Strategy
+# À la carte Monorepo Strategy
 
 ## 🎯 Overview
 
-This document defines the versioning strategy, tooling, and release management approach for the A la carte monorepo.
+This document defines the versioning strategy, tooling, and release management approach for the À la carte monorepo.
 
 **Last Updated:** October 2025  
 **Status:** Active - Using release-please with Conventional Commits

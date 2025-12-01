@@ -1,8 +1,8 @@
-# Contributing to A la carte
+# Contributing to À la carte
 
 ## 🎯 Overview
 
-This guide covers the development workflow, changeset management, and contribution guidelines for the A la carte monorepo.
+This guide covers the development workflow, changeset management, and contribution guidelines for the À la carte monorepo.
 
 ## 🔄 Development Workflow
 

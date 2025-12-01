@@ -134,5 +134,5 @@ The security improvements maintain all functionality while protecting sensitive 
 
 ---
 
-**Security First - A la carte REST API**  
+**Security First - À la carte REST API**  
 *Secure OAuth implementation with zero information disclosure*

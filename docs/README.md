@@ -1,6 +1,6 @@
-# A la carte Documentation
+# À la carte Documentation
 
-Welcome to the centralized documentation for the A la carte platform.
+Welcome to the centralized documentation for the À la carte platform.
 
 ## 🎯 Quick Navigation
 

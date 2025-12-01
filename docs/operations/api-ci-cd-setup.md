@@ -1,6 +1,6 @@
 # GitVersion CI/CD Setup Guide
 
-This document explains the GitVersion-powered CI/CD pipeline for the A la carte REST API.
+This document explains the GitVersion-powered CI/CD pipeline for the À la carte REST API.
 
 ## 🔧 Required GitHub Secrets
 

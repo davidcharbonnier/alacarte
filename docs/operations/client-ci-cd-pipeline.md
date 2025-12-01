@@ -2,7 +2,7 @@
 
 ## Overview
 
-The A la carte Android app uses GitHub Actions for automated builds and releases. The pipeline supports both pre-release builds for testing and production releases for distribution.
+The À la carte Android app uses GitHub Actions for automated builds and releases. The pipeline supports both pre-release builds for testing and production releases for distribution.
 
 ## 🏗️ Pipeline Architecture
 

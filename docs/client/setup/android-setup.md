@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers the complete setup process for building and running the A la carte Flutter app on Android devices. The setup includes configuration for local development with network API access, Android-specific permissions, and troubleshooting common build issues.
+This guide covers the complete setup process for building and running the À la carte Flutter app on Android devices. The setup includes configuration for local development with network API access, Android-specific permissions, and troubleshooting common build issues.
 
 ## Prerequisites
 
@@ -91,7 +91,7 @@ android.nonTransitiveRClass=false
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     
-    <!-- Required permissions for A la carte app -->
+    <!-- Required permissions for À la carte app -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
@@ -426,4 +426,4 @@ cd android
 ./gradlew --status
 ```
 
-This guide provides complete coverage for setting up Android development for the A la carte Flutter app, including all the configurations and solutions developed during our build session.
+This guide provides complete coverage for setting up Android development for the À la carte Flutter app, including all the configurations and solutions developed during our build session.

@@ -1,6 +1,6 @@
 # API Endpoints Reference
 
-Complete REST API endpoint documentation for the A la carte platform.
+Complete REST API endpoint documentation for the À la carte platform.
 
 **Base URL:** `http://localhost:8080` (development)
 
