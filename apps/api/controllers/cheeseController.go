@@ -12,11 +12,11 @@ import (
 
 func CheeseCreate(c *gin.Context) {
 	var body struct {
-		Name        string
-		Type        string
-		Origin      string
-		Producer    string
-		Description string
+		Name        string `json:"name"`
+		Type        string `json:"type"`
+		Origin      string `json:"origin"`
+		Producer    string `json:"producer"`
+		Description string `json:"description"`
 	}
 	c.Bind(&body)
 
@@ -64,11 +64,11 @@ func CheeseEdit(c *gin.Context) {
 	id := c.Param("id")
 
 	var body struct {
-		Name        string
-		Type        string
-		Origin      string
-		Producer    string
-		Description string
+		Name        string `json:"name"`
+		Type        string `json:"type"`
+		Origin      string `json:"origin"`
+		Producer    string `json:"producer"`
+		Description string `json:"description"`
 	}
 	c.Bind(&body)
 

@@ -12,17 +12,17 @@ import (
 
 func WineCreate(c *gin.Context) {
 	var body struct {
-		Name        string
-		Producer    string
-		Country     string
-		Region      string
-		Color       string
-		Grape       string
-		Alcohol     float64
-		Description string
-		Designation string
-		Sugar       float64
-		Organic     bool
+		Name        string  `json:"name"`
+		Producer    string  `json:"producer"`
+		Country     string  `json:"country"`
+		Region      string  `json:"region"`
+		Color       string  `json:"color"`
+		Grape       string  `json:"grape"`
+		Alcohol     float64 `json:"alcohol"`
+		Description string  `json:"description"`
+		Designation string  `json:"designation"`
+		Sugar       float64 `json:"sugar"`
+		Organic     bool    `json:"organic"`
 	}
 	c.Bind(&body)
 
@@ -83,17 +83,17 @@ func WineEdit(c *gin.Context) {
 	id := c.Param("id")
 
 	var body struct {
-		Name        string
-		Producer    string
-		Country     string
-		Region      string
-		Color       string
-		Grape       string
-		Alcohol     float64
-		Description string
-		Designation string
-		Sugar       float64
-		Organic     bool
+		Name        string  `json:"name"`
+		Producer    string  `json:"producer"`
+		Country     string  `json:"country"`
+		Region      string  `json:"region"`
+		Color       string  `json:"color"`
+		Grape       string  `json:"grape"`
+		Alcohol     float64 `json:"alcohol"`
+		Description string  `json:"description"`
+		Designation string  `json:"designation"`
+		Sugar       float64 `json:"sugar"`
+		Organic     bool    `json:"organic"`
 	}
 	c.Bind(&body)
 
