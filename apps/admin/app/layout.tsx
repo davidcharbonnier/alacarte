@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "A la carte Admin Panel",
-  description: "Administrative interface for A la carte platform",
+  title: "À la carte Admin Panel",
+  description: "Administrative interface for À la carte platform",
 };
 
 export default function RootLayout({

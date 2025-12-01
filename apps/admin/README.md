@@ -1,6 +1,6 @@
-# A la carte Admin Panel
+# À la carte Admin Panel
 
-Next.js admin panel for managing the A la carte platform.
+Next.js admin panel for managing the À la carte platform.
 
 ## Prerequisites
 

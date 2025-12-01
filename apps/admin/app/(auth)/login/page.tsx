@@ -66,10 +66,10 @@ function LoginForm() {
           <AlertDescription>{errorInfo.description}</AlertDescription>
         </Alert>
       )}
-      
+
       <Card>
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">A la carte Admin</CardTitle>
+          <CardTitle className="text-2xl text-center">À la carte Admin</CardTitle>
           <CardDescription className="text-center">
             Sign in with your Google account to continue
           </CardDescription>
@@ -93,7 +93,7 @@ export default function LoginPage() {
     <Suspense fallback={
       <Card>
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">A la carte Admin</CardTitle>
+          <CardTitle className="text-2xl text-center">À la carte Admin</CardTitle>
           <CardDescription className="text-center">
             Sign in with your Google account to continue
           </CardDescription>

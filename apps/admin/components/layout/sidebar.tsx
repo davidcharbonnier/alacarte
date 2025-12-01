@@ -41,9 +41,9 @@ export function Sidebar() {
 
   const renderNavItem = (item: any) => {
     const Icon = getIcon(item.iconName);
-    const isActive = pathname === item.href || 
+    const isActive = pathname === item.href ||
       (item.href !== '/' && pathname?.startsWith(item.href));
-    
+
     // Get color for item types
     const itemColor = item.type === 'itemType' ? getItemTypeColor(item.itemType) : null;
 
@@ -71,8 +71,8 @@ export function Sidebar() {
               backgroundColor: isActive ? `${itemColor.hex}25` : `${itemColor.hex}15`,
             }}
           >
-            <Icon 
-              className="w-5 h-5" 
+            <Icon
+              className="w-5 h-5"
               style={{ color: itemColor.hex }}
             />
           </div>
@@ -83,12 +83,12 @@ export function Sidebar() {
             isActive && 'scale-110'
           )} />
         )}
-        
+
         {item.name}
-        
+
         {/* Active indicator */}
         {isActive && item.type === 'itemType' && itemColor && (
-          <div 
+          <div
             className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
             style={{ backgroundColor: itemColor.hex }}
           />
@@ -102,16 +102,16 @@ export function Sidebar() {
       {/* Header */}
       <div className="flex items-center justify-center h-16 px-4 border-b border-sidebar-border bg-sidebar">
         <Shield className="w-6 h-6 mr-2 text-primary" />
-        <span className="text-lg font-semibold">A la carte Admin</span>
+        <span className="text-lg font-semibold">À la carte Admin</span>
       </div>
-      
+
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {/* Dashboard */}
         <div className="space-y-1">
           {staticItems.map(renderNavItem)}
         </div>
-        
+
         {/* Item Types Section */}
         <div className="pt-4 pb-2">
           <div className="px-4 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider mb-2">
@@ -121,7 +121,7 @@ export function Sidebar() {
             {itemTypeItems.map(renderNavItem)}
           </div>
         </div>
-        
+
         {/* Bottom Items */}
         <div className="pt-4 border-t border-sidebar-border mt-4">
           {bottomItems.map(renderNavItem)}
