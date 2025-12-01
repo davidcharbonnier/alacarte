@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get A la carte running in 5 minutes.
+Get À la carte running in 5 minutes.
 
 ## Prerequisites
 

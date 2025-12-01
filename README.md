@@ -1,4 +1,4 @@
-# A la carte - Monorepo
+# À la carte - Monorepo
 
 Multi-platform rating and sharing system for consumables (cheese, gin, wine, beer, coffee, etc.)
 

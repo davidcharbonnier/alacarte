@@ -2,7 +2,7 @@
 
 ## Overview
 
-The A la carte app features a sophisticated, mobile-friendly filtering system that enables users to efficiently search and filter items across different contexts. The system is built with a generic architecture that supports any item type while providing context-aware filtering options.
+The À la carte app features a sophisticated, mobile-friendly filtering system that enables users to efficiently search and filter items across different contexts. The system is built with a generic architecture that supports any item type while providing context-aware filtering options.
 
 ## Architecture
 
@@ -748,5 +748,5 @@ final testItems = [
 
 ---
 
-**Built with Flutter & Riverpod for A la carte**
+**Built with Flutter & Riverpod for À la carte**
 *Last updated: September 2025*

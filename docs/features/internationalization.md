@@ -1,7 +1,7 @@
-# Internationalization (i18n) Setup for A la carte
+# Internationalization (i18n) Setup for À la carte
 
 ## Overview
-A la carte supports French (primary) and English (fallback) languages using Flutter's built-in internationalization system. The application is fully translated across all screens, widgets, and user interactions.
+À la carte supports French (primary) and English (fallback) languages using Flutter's built-in internationalization system. The application is fully translated across all screens, widgets, and user interactions.
 
 ## Current Status: 100% Translated
 
@@ -64,7 +64,7 @@ l10n.yaml                       # Localization configuration
 #### **1. LocalizationExtension (localization_utils.dart)**
 ```dart
 // Easy access to translations in any widget
-Text(context.l10n.welcomeTitle)  // "Bienvenue sur A la carte"
+Text(context.l10n.welcomeTitle)  // "Bienvenue sur À la carte"
 
 // Check current language
 if (context.isFrench) { /* French-specific logic */ }
@@ -111,12 +111,12 @@ final isFrench = ref.read(localeProvider).languageCode == 'fr';
 
 ### **🚀 App Initialization Translations**
 
-A la carte includes specialized translations for the async initialization system:
+À la carte includes specialized translations for the async initialization system:
 
 #### **Initialization Messages**
 ```dart
 // Loading states
-context.l10n.initializingApp              // "Initialisation d'A la carte..."
+context.l10n.initializingApp              // "Initialisation d'À la carte..."
 context.l10n.initializationTakingLonger   // "Ceci prend plus de temps que prévu..."
 
 // Error recovery messages
@@ -147,7 +147,7 @@ ErrorNotificationBanner(
 ### **Basic Text Translation**
 ```dart
 // Before
-Text('Welcome to A la carte')
+Text('Welcome to À la carte')
 
 // After
 Text(context.l10n.welcomeTitle)

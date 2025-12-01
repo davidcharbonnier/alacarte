@@ -21,7 +21,7 @@
 
 ## Overview
 
-The A la carte backend authentication system has evolved from a simple profile-based model to a secure Google OAuth implementation with JWT token protection. This transformation provides:
+The À la carte backend authentication system has evolved from a simple profile-based model to a secure Google OAuth implementation with JWT token protection. This transformation provides:
 
 - **Secure API endpoints** - All routes protected with JWT authentication
 - **Google OAuth integration** - Exchange Google tokens for application JWT tokens

@@ -23,7 +23,7 @@
 
 ## Privacy Philosophy
 
-A la carte implements a **privacy-first rating system** designed around the core principle that personal taste preferences should remain private by default, with explicit user control over sharing.
+À la carte implements a **privacy-first rating system** designed around the core principle that personal taste preferences should remain private by default, with explicit user control over sharing.
 
 ### Core Privacy Principles
 
@@ -235,7 +235,7 @@ class UserDiscoveryService {
 
 ## Privacy Settings Screen (Updated September 2025)
 
-A la carte features a comprehensive privacy management screen that provides users with complete control over their rating sharing and personal information visibility.
+À la carte features a comprehensive privacy management screen that provides users with complete control over their rating sharing and personal information visibility.
 
 ### **🔒 Privacy Dashboard Features (Production Ready)**
 

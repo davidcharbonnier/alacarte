@@ -21,7 +21,7 @@
 
 ## Overview
 
-A la carte's authentication system has evolved from a profile-based selection model to a modern Google OAuth implementation with JWT token security. This transformation provides:
+À la carte's authentication system has evolved from a profile-based selection model to a modern Google OAuth implementation with JWT token security. This transformation provides:
 
 - **Secure API access** - All endpoints protected with JWT tokens
 - **Cross-platform sync** - Same user data accessible on web, mobile, desktop
@@ -1181,7 +1181,7 @@ class AuthPerformance {
 
 ---
 
-**This authentication system provides a secure, scalable foundation for A la carte while maintaining the app's focus on personal taste preference management.**
+**This authentication system provides a secure, scalable foundation for À la carte while maintaining the app's focus on personal taste preference management.**
 
 **Next Steps:**
 1. Implement OAuth providers for target platforms

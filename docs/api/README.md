@@ -1,6 +1,6 @@
 # API Documentation
 
-Complete REST API documentation for the A la carte platform.
+Complete REST API documentation for the À la carte platform.
 
 ## 📚 Documentation Index
 

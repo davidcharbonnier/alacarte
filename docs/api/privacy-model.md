@@ -22,7 +22,7 @@
 
 ## Privacy Architecture
 
-The A la carte backend implements a **privacy-first rating system** where personal ratings remain private by default, with explicit sharing controls and selective user discovery.
+The À la carte backend implements a **privacy-first rating system** where personal ratings remain private by default, with explicit sharing controls and selective user discovery.
 
 ### Core Privacy Principles
 

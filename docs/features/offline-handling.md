@@ -2,13 +2,13 @@
 
 **Production-Ready Fullscreen Offline Experience - September 2025**
 
-A la carte features a sophisticated offline handling system that provides clear communication and seamless recovery when connectivity issues occur. The system follows a fullscreen approach where users receive professional messaging when the app cannot function properly due to connectivity issues.
+À la carte features a sophisticated offline handling system that provides clear communication and seamless recovery when connectivity issues occur. The system follows a fullscreen approach where users receive professional messaging when the app cannot function properly due to connectivity issues.
 
 ## 🏗️ Architecture Overview
 
 ### **Design Philosophy**
 
-A la carte's offline handling is built on the principle of **clear binary states**:
+À la carte's offline handling is built on the principle of **clear binary states**:
 - **App works fully** (online) - All features available
 - **App explains why it can't work** (offline) - Professional fullscreen messaging
 
@@ -26,7 +26,7 @@ enum ConnectivityState {
 
 **State Transitions:**
 - `networkOffline` ↔ `online` - Platform connectivity changes
-- `online` ↔ `serverOffline` - A la carte server availability changes
+- `online` ↔ `serverOffline` - À la carte server availability changes
 - Direct jumps possible when both network and server status change
 
 ## 🔧 Technical Implementation
@@ -54,7 +54,7 @@ abstract class ApiService {
 
 **Key Features:**
 - **Platform-native detection** - Uses `connectivity_plus` for instant network change notifications
-- **API-specific validation** - Health checks validate A la carte server specifically  
+- **API-specific validation** - Health checks validate À la carte server specifically  
 - **Reactive timeout detection** - Only checks connectivity when API calls actually fail
 - **Periodic server monitoring** - 30-second health checks when server unreachable but network available
 
@@ -242,25 +242,25 @@ All offline screen content is fully localized with natural language for both sup
 #### **English Messages**
 ```dart
 "noInternetConnectionTitle": "No Internet Connection"
-"noInternetConnectionDescription": "A la carte needs an internet connection to sync your ratings and preferences. Please check your network settings and try again."
+"noInternetConnectionDescription": "À la carte needs an internet connection to sync your ratings and preferences. Please check your network settings and try again."
 
 "serverUnavailableTitle": "Server Unavailable"  
-"serverUnavailableDescription": "A la carte server is temporarily unavailable. This might be due to maintenance or a temporary issue. We'll keep trying to reconnect."
+"serverUnavailableDescription": "À la carte server is temporarily unavailable. This might be due to maintenance or a temporary issue. We'll keep trying to reconnect."
 
 "connectedTitle": "Connected"
-"connectionRestoredDescription": "Connection restored! You can now use all features of A la carte."
+"connectionRestoredDescription": "Connection restored! You can now use all features of À la carte."
 ```
 
 #### **French Messages**
 ```dart
 "noInternetConnectionTitle": "Pas de Connexion Internet"
-"noInternetConnectionDescription": "A la carte a besoin d'une connexion internet pour synchroniser vos évaluations et préférences. Veuillez vérifier vos paramètres réseau et réessayer."
+"noInternetConnectionDescription": "À la carte a besoin d'une connexion internet pour synchroniser vos évaluations et préférences. Veuillez vérifier vos paramètres réseau et réessayer."
 
 "serverUnavailableTitle": "Serveur Indisponible"
-"serverUnavailableDescription": "Le serveur d'A la carte est temporairement indisponible. Cela pourrait être dû à une maintenance ou un problème temporaire. Nous continuons d'essayer de nous reconnecter."
+"serverUnavailableDescription": "Le serveur d'À la carte est temporairement indisponible. Cela pourrait être dû à une maintenance ou un problème temporaire. Nous continuons d'essayer de nous reconnecter."
 
 "connectedTitle": "Connecté"  
-"connectionRestoredDescription": "Connexion rétablie ! Vous pouvez maintenant utiliser toutes les fonctionnalités d'A la carte."
+"connectionRestoredDescription": "Connexion rétablie ! Vous pouvez maintenant utiliser toutes les fonctionnalités d'À la carte."
 ```
 
 ### **Localization Implementation**
@@ -299,7 +299,7 @@ The offline system provides detailed logging to help developers understand conne
 🎧 Testing API reachability: http://localhost:8080/api/health
 📊 API health check response: 200
 ✅ API server reachable - going online
-🟢 🌐 Connected to A la carte - app fully functional
+🟢 🌐 Connected to À la carte - app fully functional
 ```
 
 #### **Connectivity Change Logging**
@@ -384,7 +384,7 @@ The offline system provides detailed logging to help developers understand conne
 🟠 ☁️ Server unreachable - showing server unavailable screen
 📊 API health check response: 200  
 📡 Connectivity state changed: serverOffline → online
-🟢 🌐 Connected to A la carte - app fully functional
+🟢 🌐 Connected to À la carte - app fully functional
 🔄 Connectivity restored - revalidating user authentication
 ✅ User revalidation successful
 ```
@@ -446,7 +446,7 @@ Instead of fullscreen blocking, could implement:
 - **Local editing** with sync when online
 - **Conflict resolution** for offline changes
 
-However, the current fullscreen approach provides the clearest user experience for A la carte's collaborative nature.
+However, the current fullscreen approach provides the clearest user experience for À la carte's collaborative nature.
 
 ## 📋 Best Practices
 

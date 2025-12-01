@@ -2,7 +2,7 @@
 
 ## Overview
 
-The A la carte app uses Go Router with a sophisticated authentication-aware routing system that provides stable navigation while preventing unwanted redirects during state updates. This document covers the router architecture, navigation patterns, and best practices for maintaining stable routing behavior.
+The À la carte app uses Go Router with a sophisticated authentication-aware routing system that provides stable navigation while preventing unwanted redirects during state updates. This document covers the router architecture, navigation patterns, and best practices for maintaining stable routing behavior.
 
 ## Router Architecture
 

@@ -2,7 +2,7 @@
   "name": "alacarte",
   "version": "1.0.0",
   "private": true,
-  "description": "A la carte - Multi-platform rating and sharing system for consumables",
+  "description": "À la carte - Multi-platform rating and sharing system for consumables",
   "scripts": {
     "prepare": "husky"
   },

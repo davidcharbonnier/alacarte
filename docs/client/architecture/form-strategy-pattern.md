@@ -8,7 +8,7 @@
 
 ## 🎯 Overview
 
-A la carte uses the **Strategy Pattern** for item forms, allowing unlimited item types to be added with minimal code changes. The generic form contains **zero item-type conditionals** - all type-specific logic is encapsulated in strategy classes.
+À la carte uses the **Strategy Pattern** for item forms, allowing unlimited item types to be added with minimal code changes. The generic form contains **zero item-type conditionals** - all type-specific logic is encapsulated in strategy classes.
 
 ---
 

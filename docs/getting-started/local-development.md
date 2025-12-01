@@ -1,6 +1,6 @@
 # Local Development Setup
 
-This guide explains how to run all A la carte applications locally.
+This guide explains how to run all À la carte applications locally.
 
 ## Prerequisites
 

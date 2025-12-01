@@ -7,7 +7,7 @@
 
 ## Overview
 
-The A la carte rating system enables users to create, edit, share, and manage ratings for items across multiple categories. The implementation focuses on personal reference lists enhanced by collaborative sharing between users.
+The À la carte rating system enables users to create, edit, share, and manage ratings for items across multiple categories. The implementation focuses on personal reference lists enhanced by collaborative sharing between users.
 
 ## Core Features Implemented
 
