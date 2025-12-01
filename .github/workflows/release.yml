@@ -154,7 +154,7 @@ jobs:
 
   create-release:
     needs: [build-api, build-client, build-admin]
-    if: (needs.build-api.result == 'success' && needs.build-api.result != 'skipped') || (needs.build-client.result == 'success' && needs.build-client.result != 'skipped') || (needs.build-admin.result == 'success' && needs.build-admin.result != 'skipped')
+    if: always() && (needs.build-api.result == 'success' || needs.build-client.result == 'success' || needs.build-admin.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: write
