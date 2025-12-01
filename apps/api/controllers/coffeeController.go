@@ -12,24 +12,24 @@ import (
 
 func CoffeeCreate(c *gin.Context) {
 	var body struct {
-		Name             string
-		Roaster          string
-		Country          string
-		Region           string
-		Farm             string
-		Altitude         string
-		Species          models.CoffeeSpecies
-		Variety          string
-		ProcessingMethod models.CoffeeProcessingMethod
-		Decaffeinated    bool
-		RoastLevel       models.CoffeeRoastLevel
-		TastingNotes     models.StringArray
-		Acidity          models.CoffeeIntensityLevel
-		Body             models.CoffeeIntensityLevel
-		Sweetness        models.CoffeeIntensityLevel
-		Organic          bool
-		FairTrade        bool
-		Description      string
+		Name             string                         `json:"name"`
+		Roaster          string                         `json:"roaster"`
+		Country          string                         `json:"country"`
+		Region           string                         `json:"region"`
+		Farm             string                         `json:"farm"`
+		Altitude         string                         `json:"altitude"`
+		Species          models.CoffeeSpecies           `json:"species"`
+		Variety          string                         `json:"variety"`
+		ProcessingMethod models.CoffeeProcessingMethod  `json:"processing_method"`
+		Decaffeinated    bool                           `json:"decaffeinated"`
+		RoastLevel       models.CoffeeRoastLevel        `json:"roast_level"`
+		TastingNotes     models.StringArray             `json:"tasting_notes"`
+		Acidity          models.CoffeeIntensityLevel    `json:"acidity"`
+		Body             models.CoffeeIntensityLevel    `json:"body"`
+		Sweetness        models.CoffeeIntensityLevel    `json:"sweetness"`
+		Organic          bool                           `json:"organic"`
+		FairTrade        bool                           `json:"fair_trade"`
+		Description      string                         `json:"description"`
 	}
 	c.Bind(&body)
 
@@ -90,24 +90,24 @@ func CoffeeEdit(c *gin.Context) {
 	id := c.Param("id")
 
 	var body struct {
-		Name             string
-		Roaster          string
-		Country          string
-		Region           string
-		Farm             string
-		Altitude         string
-		Species          models.CoffeeSpecies
-		Variety          string
-		ProcessingMethod models.CoffeeProcessingMethod
-		Decaffeinated    bool
-		RoastLevel       models.CoffeeRoastLevel
-		TastingNotes     models.StringArray
-		Acidity          models.CoffeeIntensityLevel
-		Body             models.CoffeeIntensityLevel
-		Sweetness        models.CoffeeIntensityLevel
-		Organic          bool
-		FairTrade        bool
-		Description      string
+		Name             string                         `json:"name"`
+		Roaster          string                         `json:"roaster"`
+		Country          string                         `json:"country"`
+		Region           string                         `json:"region"`
+		Farm             string                         `json:"farm"`
+		Altitude         string                         `json:"altitude"`
+		Species          models.CoffeeSpecies           `json:"species"`
+		Variety          string                         `json:"variety"`
+		ProcessingMethod models.CoffeeProcessingMethod  `json:"processing_method"`
+		Decaffeinated    bool                           `json:"decaffeinated"`
+		RoastLevel       models.CoffeeRoastLevel        `json:"roast_level"`
+		TastingNotes     models.StringArray             `json:"tasting_notes"`
+		Acidity          models.CoffeeIntensityLevel    `json:"acidity"`
+		Body             models.CoffeeIntensityLevel    `json:"body"`
+		Sweetness        models.CoffeeIntensityLevel    `json:"sweetness"`
+		Organic          bool                           `json:"organic"`
+		FairTrade        bool                           `json:"fair_trade"`
+		Description      string                         `json:"description"`
 	}
 	c.Bind(&body)
 

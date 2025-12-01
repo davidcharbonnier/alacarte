@@ -12,11 +12,11 @@ import (
 
 func GinCreate(c *gin.Context) {
 	var body struct {
-		Name        string
-		Producer    string
-		Origin      string
-		Profile     string
-		Description string
+		Name        string `json:"name"`
+		Producer    string `json:"producer"`
+		Origin      string `json:"origin"`
+		Profile     string `json:"profile"`
+		Description string `json:"description"`
 	}
 	c.Bind(&body)
 
@@ -64,11 +64,11 @@ func GinEdit(c *gin.Context) {
 	id := c.Param("id")
 
 	var body struct {
-		Name        string
-		Producer    string
-		Origin      string
-		Profile     string
-		Description string
+		Name        string `json:"name"`
+		Producer    string `json:"producer"`
+		Origin      string `json:"origin"`
+		Profile     string `json:"profile"`
+		Description string `json:"description"`
 	}
 	c.Bind(&body)
 
