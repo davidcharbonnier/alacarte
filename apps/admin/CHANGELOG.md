@@ -1,81 +1,149 @@
-# @alacarte/admin
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+ul {
+  margin: 0;
+  padding: 0;
+}
 
-## [0.6.0](https://github.com/davidcharbonnier/alacarte/compare/v0.5.0...v0.6.0) (2025-10-22)
+html {
+  margin: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+}
 
+.release {
+  border-top: 2px solid lightgray;
+  margin-bottom: 20px;
+}
 
-### Features
+.release-head {
+  font-size: 150%;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
 
-* **admin:** Implement coffee item type ([654a3c2](https://github.com/davidcharbonnier/alacarte/commit/654a3c284ff6d3e3de741effbd2ee71936fa5fe8))
+.dep {
+  margin-left: 10px;
+  margin-bottom: 10px;
+}
 
+.pr {
+  margin-left: 10px;
+  margin-bottom: 10px;
+}
 
-### Bug Fixes
+.pr-head {
+  font-size: 120%;
+  margin-bottom: 10px;
+}
 
-* **admin:** Update cheese model ([0313e9b](https://github.com/davidcharbonnier/alacarte/commit/0313e9b47dadb6bb83160f864f1b87fcfe7b167c))
-* **admin:** Update gin model handling ([185ecc0](https://github.com/davidcharbonnier/alacarte/commit/185ecc0447944d705908de8c9029e1c1aba88df7))
+.commit {
+  margin-left: 10px;
+  margin-bottom: 20px;
+}
 
-## [0.5.0](https://github.com/davidcharbonnier/alacarte/compare/v0.4.0...v0.5.0) (2025-10-21)
+.commit:first-child {
+  margin-top: 15px;
+}
 
+.commit-head {
+  margin-bottom: 10px;
+}
 
-### Features
+.msg {
+  margin-top: 10px;
+  margin-left: 26px;
+}
 
-* **admin:** Implement item image display on admin panel ([51817d7](https://github.com/davidcharbonnier/alacarte/commit/51817d756dd31c7c5121f637a73653419f16c0d7))
-* **admin:** Update image API endpoints ([dca755c](https://github.com/davidcharbonnier/alacarte/commit/dca755cebdcaf76b3fe2ace4d272aa17f3383cf0))
+.caret {
+  cursor: pointer;
+  -webkit-user-select: none; /* Safari 3.1+ */
+  -moz-user-select: none; /* Firefox 2+ */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none;
+}
 
-## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/v0.3.1...v0.4.0) (2025-10-18)
+.caret::before {
+  content: "\229E";
+  font-size: 14pt;
+  color: #aaa;
+  display: inline-block;
+  vertical-align: bottom;
+  text-align: bottom;
+  margin-right: 6px;
+  width: 20px;
+}
 
+.caret-down::before {
+  content: "\229F";
+  font-size: 14pt;
+  color: #aaa;
+  display: inline-block;
+  vertical-align: bottom;
+  text-align: bottom;
+  margin-right: 6px;
+  width: 20px;
 
-### Features
+  /*
+  -ms-transform: rotate(90deg); /* IE 9
+  -webkit-transform: rotate(90deg); /* Safari
+  transform: rotate(90deg);
+  */
+}
 
-* **admin:** Redesign admin panel by creating a design system and dark theme support ([bf5a70a](https://github.com/davidcharbonnier/alacarte/commit/bf5a70a06c485d6a8070d15835fbf7350625e475))
+.nested {
+  display: none;
+}
 
-## [0.4.0](https://github.com/davidcharbonnier/alacarte/compare/admin-v0.3.1...admin-v0.4.0) (2025-10-17)
+.active {
+  display: block;
+}
+</style>
+<script>
+</script>
+</head>
+<body>
 
+<h1>Changelog</h1>
+<p>The latest release was 2025-12-02.</p>
 
-### Features
+<!-- ### VERSIO BEGIN CONTENT ### -->
+<!-- ### VERSIO CONTENT 2025-12-02 ### -->
+<div class="release">
+  <div class="release-head"><span class="caret caret-down"></span>Release 1.1.0 : 2025-12-02</div>
+  <div class="nested active">
+    
+    
+    <div class="pr">
+      <div class="pr-head"><span class="caret"></span>Commits (minor)</div>
+      <div class="nested">
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/a6ad0cd5ef55f58809733a88677577c1f9fe67bc">a6ad0cd</a> (minor): feat(admin): Fix name of the platform</div>
+          <pre class="msg nested">feat(admin): Fix name of the platform</pre>
+        </div>
+        
+      </div>
+    </div>
+    
+  </div>
+</div>
 
-* add wine item type to admin and improve seeding screen to support file upload and display of nullable fields in both lists and details pages ([a529cc1](https://github.com/davidcharbonnier/alacarte/commit/a529cc1e6f7ff5586f35173bfa0d38b3b8cd2d56))
-* migrate wine color to enum type, add support for checkboxes and dropdown in forms and fix some issues for wine display ([0116dc4](https://github.com/davidcharbonnier/alacarte/commit/0116dc468c5a71727855834f4958cf77bebc49a2))
+<!-- ### VERSIO END CONTENT ### -->
 
+<script>
+var toggler = document.getElementsByClassName("caret");
+var i;
 
-### Bug Fixes
+for (i = 0; i < toggler.length; i++) {
+  toggler[i].addEventListener("click", function() {
+    this.parentElement.parentElement.querySelector(".nested").classList.toggle("active");
+    this.classList.toggle("caret-down");
+  });
+}
+</script>
 
-* add missing field type on admin panel ([2ad612e](https://github.com/davidcharbonnier/alacarte/commit/2ad612e2a885bd73d39ccb0be370a5bcaef9ec19))
-* add package-lock.json and fix docker permissions ([bf48593](https://github.com/davidcharbonnier/alacarte/commit/bf485934b2da10c7b943d55c58553b388a633f1c))
-
-## 0.3.1
-
-### Patch Changes
-
-- [#13](https://github.com/davidcharbonnier/alacarte/pull/13) [`e67c9ee`](https://github.com/davidcharbonnier/alacarte/commit/e67c9ee46c1cd8d71d8e15380ca8d8aa93182023) Thanks [@davidcharbonnier](https://github.com/davidcharbonnier)! - Fixing CI workflow for releasing
-
-## 0.3.0
-
-### Minor Changes
-
-- [#11](https://github.com/davidcharbonnier/alacarte/pull/11) [`934b3d2`](https://github.com/davidcharbonnier/alacarte/commit/934b3d2ccefa1f3bcaf7b7545e4d6ee5d9db06ad) Thanks [@davidcharbonnier](https://github.com/davidcharbonnier)! - Add wine item type
-
-## 0.2.4
-
-## 0.2.3
-
-### Patch Changes
-
-- [`89621b4`](https://github.com/davidcharbonnier/alacarte/commit/89621b42d651d8139954004cf27065d482e93039) - Fixed release workflow detection to trigger on Version PR merge
-
-## 0.2.2
-
-### Patch Changes
-
-- [`68a01bf`](https://github.com/davidcharbonnier/alacarte/commit/68a01bf99f3aafedfef53bd8e34d5ecee449301e) - Fixed release workflow detection logic
-
-## 0.2.1
-
-### Patch Changes
-
-- [`7b8b305`](https://github.com/davidcharbonnier/alacarte/commit/7b8b3056c8a890a2be3b07e2ef3b83e522a26500) - Fix release workflow
-
-## 0.2.0
-
-### Minor Changes
-
-- [`3bcd723`](https://github.com/davidcharbonnier/alacarte/commit/3bcd723f82deff365cbb2b9cd3a89e85f43d4c1b) - Migrated to monorepo structure with Changesets and Turborepo for better version management and CI/CD
+</body>
+</html>

@@ -107,9 +107,39 @@ html {
 <body>
 
 <h1>Changelog</h1>
-<p>The latest release was 2025-12-01.</p>
+<p>The latest release was 2025-12-02.</p>
 
 <!-- ### VERSIO BEGIN CONTENT ### -->
+<!-- ### VERSIO CONTENT 2025-12-02 ### -->
+<div class="release">
+  <div class="release-head"><span class="caret caret-down"></span>Release 1.2.0 : 2025-12-02</div>
+  <div class="nested active">
+    
+    
+    <div class="pr">
+      <div class="pr-head"><span class="caret"></span>Commits (minor)</div>
+      <div class="nested">
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/96230286b71b07e7641522fbbd4b26e6f4e0e9c0">9623028</a> (minor): feat(client): Fix name of the platform</div>
+          <pre class="msg nested">feat(client): Fix name of the platform</pre>
+        </div>
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/5da249eefe1497fa516b1e666020a1588c2ff69d">5da249e</a> (minor): feat(client): Support alphabetical sorting of accentuated strings</div>
+          <pre class="msg nested">feat(client): Support alphabetical sorting of accentuated strings</pre>
+        </div>
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/6341a9d3ccf83da230a134a6ca5eac1fc422d88e">6341a9d</a> (patch): fix(client): Update helper text for tasting notes for coffee item</div>
+          <pre class="msg nested">fix(client): Update helper text for tasting notes for coffee item</pre>
+        </div>
+        
+      </div>
+    </div>
+    
+  </div>
+</div>
 <!-- ### VERSIO CONTENT 2025-12-01 ### -->
 <div class="release">
   <div class="release-head"><span class="caret caret-down"></span>Release 1.1.0 : 2025-12-01</div>
