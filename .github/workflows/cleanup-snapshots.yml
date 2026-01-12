@@ -15,25 +15,25 @@ jobs:
     outputs:
       stable_versions: ${{ steps.get-versions.outputs.stable_versions }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Get versio
-        uses: chaaz/versio-actions/install@v1.3
-      - name: Fetch history
-        run: git fetch --unshallow
-      - name: Get stable versions from versio
-        id: get-versions
-        run: |
-          # Get all current versions (these represent our stable releases)
-          API_VERSION=$(versio get -n api -v)
-          CLIENT_VERSION=$(versio get -n client -v)
-          ADMIN_VERSION=$(versio get -n admin -v)
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Get versio
+      uses: chaaz/versio-actions/install@v1.3
+    - name: Fetch history
+      run: git fetch --unshallow
+    - name: Get stable versions from versio
+      id: get-versions
+      run: |
+        # Get all current versions (these represent our stable releases)
+        API_VERSION=$(versio get -n api -v)
+        CLIENT_VERSION=$(versio get -n client -v)
+        ADMIN_VERSION=$(versio get -n admin -v)
 
-          # Combine all stable versions
-          STABLE_VERSIONS="${API_VERSION},${CLIENT_VERSION},${ADMIN_VERSION}"
+        # Combine all stable versions
+        STABLE_VERSIONS="${API_VERSION},${CLIENT_VERSION},${ADMIN_VERSION}"
 
-          echo "stable_versions=${STABLE_VERSIONS}" >> $GITHUB_OUTPUT
-          echo "Stable versions: ${STABLE_VERSIONS}"
+        echo "stable_versions=${STABLE_VERSIONS}" >> $GITHUB_OUTPUT
+        echo "Stable versions: ${STABLE_VERSIONS}"
 
   cleanup-docker-tags:
     needs: determine-versions
@@ -43,83 +43,83 @@ jobs:
         app: [api, admin]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Install regctl
-        run: |
-          curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 \
-            -o regctl
-          chmod +x regctl
-          sudo mv regctl /usr/local/bin/
+    - name: Install regctl
+      run: |
+        curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 \
+          -o regctl
+        chmod +x regctl
+        sudo mv regctl /usr/local/bin/
 
-      - name: Cleanup Docker tags
-        env:
-          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          STABLE_VERSIONS: ${{ needs.determine-versions.outputs.stable_versions }}
-        run: |
-          echo "$DOCKER_TOKEN" | regctl registry login docker.io -u "$DOCKER_USER" --pass-stdin
+    - name: Cleanup Docker tags
+      env:
+        DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        STABLE_VERSIONS: ${{ needs.determine-versions.outputs.stable_versions }}
+      run: |
+        echo "$DOCKER_TOKEN" | regctl registry login docker.io -u "$DOCKER_USER" --pass-stdin
 
-          REPO="$DOCKER_USER/alacarte-${{ matrix.app }}"
-          ALL_TAGS=$(regctl tag ls "$REPO")
+        REPO="$DOCKER_USER/alacarte-${{ matrix.app }}"
+        ALL_TAGS=$(regctl tag ls "$REPO")
 
-          echo "All tags for $REPO: $ALL_TAGS"
-          echo "Stable versions: $STABLE_VERSIONS"
+        echo "All tags for $REPO: $ALL_TAGS"
+        echo "Stable versions: $STABLE_VERSIONS"
 
-          # Find the highest stable version for this app
-          APP_STABLE_VERSION=""
-          IFS=',' read -ra VERSIONS <<< "$STABLE_VERSIONS"
-          for version in "${VERSIONS[@]}"; do
-            if [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              if [[ -z "$APP_STABLE_VERSION" ]] || [[ "$version" > "$APP_STABLE_VERSION" ]]; then
-                APP_STABLE_VERSION="$version"
-              fi
+        # Find the highest stable version for this app
+        APP_STABLE_VERSION=""
+        IFS=',' read -ra VERSIONS <<< "$STABLE_VERSIONS"
+        for version in "${VERSIONS[@]}"; do
+          if [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            if [[ -z "$APP_STABLE_VERSION" ]] || [[ "$version" > "$APP_STABLE_VERSION" ]]; then
+              APP_STABLE_VERSION="$version"
             fi
-          done
+          fi
+        done
 
-          echo "Highest stable version for ${{ matrix.app }}: $APP_STABLE_VERSION"
+        echo "Highest stable version for ${{ matrix.app }}: $APP_STABLE_VERSION"
 
-          # Extract major.minor from stable version (e.g., 1.2.3 -> 1.2)
-          if [[ $APP_STABLE_VERSION =~ ^([0-9]+\.[0-9]+)\.[0-9]+$ ]]; then
-            STABLE_MINOR="${BASH_REMATCH[1]}"
-            echo "Keeping snapshots in minor version: $STABLE_MINOR"
-          else
-            echo "No valid stable version found, keeping all snapshots"
-            STABLE_MINOR=""
+        # Extract major.minor from stable version (e.g., 1.2.3 -> 1.2)
+        if [[ $APP_STABLE_VERSION =~ ^([0-9]+\.[0-9]+)\.[0-9]+$ ]]; then
+          STABLE_MINOR="${BASH_REMATCH[1]}"
+          echo "Keeping snapshots in minor version: $STABLE_MINOR"
+        else
+          echo "No valid stable version found, keeping all snapshots"
+          STABLE_MINOR=""
+        fi
+
+        for tag in $ALL_TAGS; do
+          # Keep stable tags (no -pr- suffix)
+          if [[ ! $tag =~ -pr- ]]; then
+            echo "Keeping stable tag: $REPO:$tag"
+            continue
           fi
 
-          for tag in $ALL_TAGS; do
-            # Keep stable tags (no -pr- suffix)
-            if [[ ! $tag =~ -pr- ]]; then
-              echo "Keeping stable tag: $REPO:$tag"
-              continue
-            fi
+          # For snapshot tags, check version
+          if [[ $tag =~ ^([0-9]+\.[0-9]+\.[0-9]+)-pr- ]]; then
+            SNAPSHOT_VERSION="${BASH_REMATCH[1]}"
+            SNAPSHOT_MINOR=$(echo "$SNAPSHOT_VERSION" | cut -d. -f1-2)
 
-            # For snapshot tags, check version
-            if [[ $tag =~ ^([0-9]+\.[0-9]+\.[0-9]+)-pr- ]]; then
-              SNAPSHOT_VERSION="${BASH_REMATCH[1]}"
-              SNAPSHOT_MINOR=$(echo "$SNAPSHOT_VERSION" | cut -d. -f1-2)
-
-              # Keep if in same minor version OR higher than stable version
-              if [[ "$SNAPSHOT_MINOR" == "$STABLE_MINOR" ]] || [[ "$SNAPSHOT_VERSION" > "$APP_STABLE_VERSION" ]]; then
-                echo "Keeping snapshot: $REPO:$tag (version $SNAPSHOT_VERSION >= stable $APP_STABLE_VERSION)"
-              else
-                echo "Deleting old snapshot: $REPO:$tag (version $SNAPSHOT_VERSION < stable $APP_STABLE_VERSION)"
-                regctl tag rm "$REPO:$tag"
-              fi
+            # Keep if in same minor version OR higher than stable version
+            if [[ "$SNAPSHOT_MINOR" == "$STABLE_MINOR" ]] || [[ "$SNAPSHOT_VERSION" > "$APP_STABLE_VERSION" ]]; then
+              echo "Keeping snapshot: $REPO:$tag (version $SNAPSHOT_VERSION >= stable $APP_STABLE_VERSION)"
             else
-              echo "Keeping snapshot (unparseable version): $REPO:$tag"
+              echo "Deleting old snapshot: $REPO:$tag (version $SNAPSHOT_VERSION < stable $APP_STABLE_VERSION)"
+              regctl tag rm "$REPO:$tag"
             fi
-          done
+          else
+            echo "Keeping snapshot (unparseable version): $REPO:$tag"
+          fi
+        done
 
   verify-cleanup:
     needs: [cleanup-docker-tags]
     runs-on: ubuntu-latest
     steps:
-      - name: Verify cleanup succeeded
-        run: |
-          echo "✅ Docker cleanup completed successfully"
-          echo ""
-          echo "Cleanup executed:"
-          echo "1. ✅ Docker Hub tags (parallel)"
-          echo "2. ⏭️ GitHub cleanup skipped (keeping all history)"
+    - name: Verify cleanup succeeded
+      run: |
+        echo "✅ Docker cleanup completed successfully"
+        echo ""
+        echo "Cleanup executed:"
+        echo "1. ✅ Docker Hub tags (parallel)"
+        echo "2. ⏭️ GitHub cleanup skipped (keeping all history)"
