@@ -3,7 +3,7 @@ name: Generate version
 on:
   push:
     branches:
-      - master
+    - master
 
 env:
   GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
@@ -17,15 +17,15 @@ jobs:
   version:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Get versio
-        uses: chaaz/versio-actions/install@v1.3
+    - name: Get versio
+      uses: chaaz/versio-actions/install@v1.3
 
-      - name: Fetch history
-        run: git fetch --unshallow
+    - name: Fetch history
+      run: git fetch --unshallow
 
-      - name: Run Versio Release
-        run: |
-          versio --vcs-level=max release --lock-tags
+    - name: Run Versio Release
+      run: |
+        versio --vcs-level=max release
