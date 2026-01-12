@@ -2,7 +2,9 @@
 
 ## 🎯 Overview
 
-This guide covers the development workflow, changeset management, and contribution guidelines for the À la carte monorepo.
+This guide covers the development workflow, commit conventions, and contribution guidelines for the À la carte monorepo.
+
+Our monorepo uses automated versioning powered by **versio** and **conventional commits**. There's no manual versioning or changesets required - version bumps happen automatically based on your commit messages.
 
 ## 🔄 Development Workflow
 
@@ -17,6 +19,7 @@ git checkout -b fix/bug-description
 ```
 
 **Branch Naming Convention:**
+
 - `feat/` - New features
 - `fix/` - Bug fixes
 - `refactor/` - Code refactoring
@@ -32,248 +35,146 @@ git checkout -b fix/bug-description
 
 ### 3. Commit Your Changes
 
+⚠️ **IMPORTANT:** All commits MUST follow the [conventional commit format](#commit-message-convention) with a required scope.
+
 ```bash
 git add .
-git commit -m "feat: add wine support to API"
+git commit -m "feat(api): add wine filtering endpoint"
 ```
 
-**Commit Message Convention (optional but recommended):**
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `refactor:` - Code refactoring
-- `docs:` - Documentation
-- `chore:` - Maintenance
+**Commit hooks will automatically validate your message format.** Invalid commits will be rejected.
 
-### 4. Create a Changeset
-
-**⚠️ REQUIRED:** Every PR that changes code must include a changeset.
+### 4. Push and Create a Pull Request
 
 ```bash
-npx changeset
+git push origin your-branch-name
 ```
 
-**The CLI will prompt you:**
-1. **Which packages changed?** → Select the apps you modified
-2. **What type of change?** → Select major, minor, or patch
-3. **Summary** → Describe what changed
+Open a PR on GitHub. CI will automatically build snapshot versions for testing.
 
-**Example interaction:**
+## 📝 Commit Message Convention
+
+We use **conventional commits** with **required scopes** to enable automated versioning.
+
+### Format
+
+```
+<type>(<scope>): <subject>
+```
+
+### Commit Types
+
+- `feat` - New feature (triggers minor version bump)
+- `fix` - Bug fix (triggers patch version bump)
+- `docs` - Documentation changes (no version bump)
+- `chore` - Maintenance tasks (no version bump)
+- `refactor` - Code refactoring (no version bump)
+- `style` - Code style changes (no version bump)
+- `test` - Adding or updating tests (no version bump)
+- `build` - Build system changes (no version bump)
+- `ci` - CI configuration changes (no version bump)
+- `perf` - Performance improvements (no version bump)
+
+### Required Scopes
+
+Every commit MUST include one of these scopes:
+
+- `api` - Backend API changes
+- `client` - Flutter app changes
+- `admin` - Admin panel changes
+- `deps` - Dependency updates
+- `ci` - CI/CD workflow changes
+- `docs` - Documentation updates
+- `release` - Release-related changes
+
+### Breaking Changes
+
+To indicate a breaking change, add a `BREAKING CHANGE:` footer:
+
 ```bash
-$ npx changeset
-🦋  Which packages would you like to include?
-◉ @alacarte/api
-◉ @alacarte/client
-◯ @alacarte/admin
+feat(api): redesign authentication system
 
-🦋  Which packages should have a major bump?
-◯ @alacarte/api
-◯ @alacarte/client
-
-🦋  Which packages should have a minor bump?
-◉ @alacarte/api
-◉ @alacarte/client
-
-🦋  Please enter a summary for this change:
-Added wine item type support with terroir fields
+BREAKING CHANGE: OAuth flow now requires additional redirect_uri parameter
 ```
 
-This creates a file in `.changeset/` with a random name:
+Breaking changes trigger major version bumps.
 
-```markdown
----
-"@alacarte/api": minor
-"@alacarte/client": minor
----
+### Examples
 
-Added wine item type support with terroir fields
-```
+✅ **Good commit messages:**
 
-**Commit the changeset:**
 ```bash
-git add .changeset/
-git commit -m "docs: add changeset"
-git push
+feat(api): add wine filtering endpoint
+fix(client): resolve authentication timeout issue
+docs(admin): update deployment guide
+chore(deps): bump dependencies
+refactor(api): restructure user controller
 ```
 
-## 📋 Changeset Best Practices
+❌ **Invalid commit messages:**
 
-### When to Select Single App
-
-Select **one app only** when the change is isolated:
-
-✅ **Good Examples:**
-- Bug fix in client authentication (select: client)
-- API performance optimization (select: api)
-- Admin UI styling fix (select: admin)
-- Refactoring isolated to one app (select: that app)
-- Dependency update for one app (select: that app)
-
-**Example changeset:**
-```markdown
----
-"@alacarte/client": patch
----
-
-Fixed authentication timeout issue in offline mode
-```
-
-### When to Select Multiple Apps
-
-Select **multiple apps** when the change spans across them:
-
-✅ **Good Examples:**
-- New API endpoint + client UI to use it (select: api, client)
-- API response format change + admin update (select: api, admin)
-- New feature across all apps (select: api, client, admin)
-- Breaking API change + all clients (select: api, client, admin)
-
-**Example changeset:**
-```markdown
----
-"@alacarte/api": minor
-"@alacarte/client": minor
-"@alacarte/admin": minor
----
-
-Added wine item type support across all applications
-```
-
-### Choosing Version Bump Type
-
-Follow [Semantic Versioning](https://semver.org/):
-
-**Major (x.0.0) - Breaking Changes**
-- API endpoint removed or changed incompatibly
-- Database schema change requiring migration
-- Client feature removal
-- Any change that breaks backward compatibility
-
-**Minor (0.x.0) - New Features**
-- New API endpoints (backward compatible)
-- New client features
-- New admin capabilities
-- Enhancements that don't break existing functionality
-
-**Patch (0.0.x) - Bug Fixes & Improvements**
-- Bug fixes
-- Performance improvements
-- Refactoring
-- Documentation updates
-- Dependency updates
-
-### Common Scenarios
-
-#### Scenario 1: Client-Only Bug Fix
 ```bash
-# Changes made to: apps/client/lib/services/auth_service.dart
-npx changeset
-# Select: client only
-# Type: patch
-# Summary: "Fixed token refresh logic"
+# Missing scope
+feat: add wine filtering endpoint
+
+# Invalid scope
+feat(server): add wine filtering endpoint
+
+# Not sentence case
+feat(api): Add wine filtering endpoint
 ```
 
-#### Scenario 2: New Feature Across API + Client
+## 🚀 Versioning & Releases
+
+Versioning is **fully automated** based on your commit messages.
+
+### How It Works
+
+1. **Commits determine version bumps:**
+   - `feat(scope)` → minor bump (0.1.0 → 0.2.0)
+   - `fix(scope)` → patch bump (0.1.0 → 0.1.1)
+   - `BREAKING CHANGE:` → major bump (0.1.0 → 1.0.0)
+   - Other types → no version change
+
+2. **Independent versioning:**
+   - Each app (api, client, admin) is versioned independently
+   - Only apps with relevant commits get version bumps
+   - Apps without changes keep their current version
+
+3. **Automatic tag creation:**
+   - When PRs are merged to master, versio creates Git tags
+   - Tags follow format: `api-v1.2.3`, `client-v1.2.3`, `admin-v1.2.3`
+
+4. **Release automation:**
+   - Tags trigger GitHub Actions workflows
+   - Docker images are built and pushed
+   - GitHub releases are created automatically
+
+### Example Workflow
+
 ```bash
-# Changes made to:
-# - apps/api/controllers/wine_controller.go
-# - apps/client/lib/screens/wine_rating_screen.dart
-npx changeset
-# Select: api, client
-# Type: minor
-# Summary: "Added wine rating functionality"
+# January 10 - Merge PR with feat(api): add wine filtering endpoint
+# Result:
+# - api-v1.1.0 (minor bump from feat)
+# - client-v1.0.0 (no change)
+# - admin-v1.0.0 (no change)
+
+# January 12 - Merge PR with fix(client): fix authentication bug
+# Result:
+# - api-v1.1.0 (no change)
+# - client-v1.0.1 (patch bump from fix)
+# - admin-v1.0.0 (no change)
 ```
-
-#### Scenario 3: API Breaking Change
-```bash
-# Changes made to: apps/api/models/rating.go (removed field)
-npx changeset
-# Select: api, client, admin (all consumers of the API)
-# Type: major
-# Summary: "Removed deprecated 'legacy_score' field from rating model"
-```
-
-#### Scenario 4: Documentation Only
-```markdown
-# If ONLY documentation changed (no code changes)
-# NO CHANGESET NEEDED
-# Just commit and push
-git commit -m "docs: update authentication guide"
-```
-
-## 🔍 PR Review Checklist
-
-### Before Requesting Review
-
-- [ ] All tests pass locally
-- [ ] Code follows existing patterns and style
-- [ ] Documentation updated if needed
-- [ ] **Changeset created and committed**
-- [ ] Commit messages are clear
-
-### For Reviewers
-
-- [ ] **Changeset exists** (required for code changes)
-- [ ] **Correct apps selected** in changeset
-  - Changed API? → API selected
-  - Changed Client? → Client selected
-  - Changed Admin? → Admin selected
-- [ ] **Correct version bump type**
-  - Breaking change? → major
-  - New feature? → minor
-  - Bug fix? → patch
-- [ ] **Clear summary** in changeset
-  - Will make sense in CHANGELOG
-  - Describes what changed, not how
-
-### Common Review Issues
-
-❌ **Missing Changeset**
-```
-Comment: "Please add a changeset with `npx changeset`"
-```
-
-❌ **Wrong Apps Selected**
-```
-PR changes: API + Client
-Changeset: Only API selected
-
-Comment: "Changeset should include both API and Client"
-```
-
-❌ **Wrong Version Type**
-```
-PR: Removes API endpoint (breaking change)
-Changeset: minor bump
-
-Comment: "This is a breaking change, should be major bump"
-```
-
-## 🚀 After PR Merge
-
-### What Happens Automatically
-
-1. **Changeset consumed:** PR merge triggers Changesets bot
-2. **Versions bumped:** Updates `package.json` in affected apps
-3. **CHANGELOG updated:** Adds entry to each app's CHANGELOG.md
-4. **Release created:** Creates GitHub release with notes
-5. **Deployment triggered:** CI/CD deploys updated apps
-
-### What to Do
-
-**Nothing!** The automation handles everything.
-
-**If something goes wrong:**
-- Check GitHub Actions workflow runs
-- Check Changesets bot PR (if versions.yml workflow)
-- Report issues in #engineering channel (if applicable)
 
 ## 📦 Snapshot Builds
 
 Every PR commit automatically creates snapshot versions for testing:
 
-**Version Format:** `2.1.0-pr-123.abc1234`
+**Version Format:** `{version}-pr-{pr_number}.{commit_sha}`
+**Example:** `1.1.0-pr-123.abc1234`
 
 **What Gets Built:**
+
 - ✅ Only apps that changed (detected automatically)
 - ✅ Docker images for API and Admin
 - ✅ APK artifact for Client
@@ -306,16 +207,11 @@ git checkout -b fix/critical-auth-bug
 # Make minimal changes to fix the bug
 # ... edit code ...
 
-# Create changeset (patch version)
-npx changeset
-# Select: affected app(s) only
-# Type: patch
-# Summary: "Fixed critical authentication bug"
-
-# Commit and push
+# Commit with conventional format
 git add .
-git commit -m "fix: critical authentication bug"
-git push
+git commit -m "fix(client): resolve critical authentication bug"
+
+git push origin fix/critical-auth-bug
 
 # Open PR with "HOTFIX" in title
 # Example: "HOTFIX: Fix critical authentication bug"
@@ -326,9 +222,10 @@ git push
 ### Regular Bug Fixes
 
 For non-urgent bugs, follow normal workflow:
+
 - Create feature branch
 - Fix bug
-- Add changeset (patch)
+- Commit with `fix(scope)` format
 - Normal PR review process
 
 ## 🎨 Code Style Guidelines
@@ -367,6 +264,7 @@ For non-urgent bugs, follow normal workflow:
 ### When to Update Documentation
 
 Update docs when you:
+
 - Add a new feature
 - Change existing behavior
 - Add a new API endpoint
@@ -391,6 +289,24 @@ Update docs when you:
 - Keep it concise and actionable
 - Link to related documentation
 
+## 🔍 PR Review Checklist
+
+### Before Requesting Review
+
+- [ ] All tests pass locally
+- [ ] Code follows existing patterns and style
+- [ ] Documentation updated if needed
+- [ ] **Commit messages follow conventional format with required scopes**
+- [ ] **Breaking changes clearly documented in commit body**
+
+### For Reviewers
+
+- [ ] **Commit messages follow conventional format**
+- [ ] **Appropriate scope used** (api, client, admin, etc.)
+- [ ] **Correct commit type** (feat for features, fix for bugs)
+- [ ] **Breaking changes properly indicated**
+- [ ] **Clear subject line** in sentence case
+
 ## ❓ Getting Help
 
 ### Resources
@@ -401,35 +317,27 @@ Update docs when you:
 
 ### Common Questions
 
-**Q: I forgot to create a changeset, what do I do?**
-A: Create it after the fact:
+**Q: What happened to changesets?**
+A: We've moved to automated versioning with versio. No manual changesets needed!
+
+**Q: My commit was rejected - what do I do?**
+A: Fix the commit message to follow the conventional format with required scope:
+
 ```bash
-git checkout your-branch
-npx changeset
-git add .changeset/
-git commit -m "docs: add changeset"
-git push
+git commit -m "feat(api): add wine filtering endpoint"
 ```
 
-**Q: I selected the wrong apps in my changeset, how do I fix it?**
-A: Delete the changeset file and recreate it:
+**Q: Do I need to bump versions manually?**
+A: No, versio handles all versioning automatically based on your commits.
+
+**Q: How do I indicate a breaking change?**
+A: Add a `BREAKING CHANGE:` footer to your commit:
+
 ```bash
-rm .changeset/your-changeset-file.md
-npx changeset
-# Select correct apps
-git add .changeset/
-git commit -m "docs: fix changeset"
-git push
+feat(api): redesign authentication system
+
+BREAKING CHANGE: OAuth flow now requires additional redirect_uri parameter
 ```
-
-**Q: Do I need a changeset for documentation-only changes?**
-A: No, only code changes require changesets.
-
-**Q: Should I bump the version in package.json manually?**
-A: No, Changesets handles this automatically after PR merge.
-
-**Q: Can I create multiple changesets in one PR?**
-A: Yes, but usually one changeset per PR is sufficient. Multiple changesets are useful if you have multiple independent changes in one PR.
 
 ---
 
