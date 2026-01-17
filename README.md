@@ -20,12 +20,16 @@ alacarte/
 ### Prerequisites
 - Node.js >= 18.0.0
 - Go >= 1.21
-- Flutter SDK >= 3.16
+- Flutter SDK >= 3.27
 - Docker & Docker Compose
 
 ### Installation
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd alacarte
+
 # Install monorepo tooling (includes commit hooks)
 npm install
 
@@ -38,14 +42,14 @@ cd apps/admin && npm install
 ### Development
 
 ```bash
-# Run backend services (API + MySQL + Admin)
-docker-compose up
+# Start backend services (API + MySQL + MinIO + Admin)
+docker-compose up -d
 
 # Run Flutter client (separate terminal)
-cd apps/client && flutter run
+cd apps/client && flutter run -d chrome
 ```
 
-See [Local Development Guide](./docs/local-development.md) for detailed setup instructions.
+See [Getting Started Guide](./docs/getting-started/) for detailed setup instructions.
 
 ## 🔄 Versioning & Releases
 

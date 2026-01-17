@@ -5,7 +5,7 @@ Get À la carte running in 5 minutes.
 ## Prerequisites
 
 - [Prerequisites installed](prerequisites.md)
-- MySQL running (or use Docker Compose)
+- Docker & Docker Compose installed and running
 
 ## 1. Clone Repository
 
@@ -14,68 +14,95 @@ git clone <repository-url>
 cd alacarte
 ```
 
-## 2. Install Dependencies
+## 2. Configure Environment
 
+### API Configuration
 ```bash
-# Monorepo tooling
-npm install
+# Copy the production template to .env
+cp apps/api/.env.prod.template apps/api/.env
 
-# API dependencies
-cd apps/api && go mod download && cd ../..
-
-# Client dependencies
-cd apps/client && flutter pub get && cd ../..
-
-# Admin dependencies
-cd apps/admin && npm install && cd ../..
+# Edit apps/api/.env with your configuration:
+# - Database credentials
+# - JWT secret
+# - Google OAuth credentials
 ```
 
-## 3. Configure Environment
-
+### Admin Configuration
 ```bash
-# API configuration
-cp apps/api/.env.example apps/api/.env
-# Edit apps/api/.env with your MySQL credentials
+# Copy the example file to .env.local
+cp apps/admin/.env.example apps/admin/.env.local
 
-# Client configuration
-cp apps/client/.env.example apps/client/.env
-# Edit apps/client/.env with API URL and OAuth client ID
-
-# Admin configuration
-cp apps/admin/.env.example apps/admin/.env
-# Edit apps/admin/.env with API URL and NextAuth secrets
+# Edit apps/admin/.env.local with your configuration:
+# - API_URL (http://localhost:8080)
+# - NEXT_PUBLIC_API_URL (http://localhost:8080)
+# - Google OAuth credentials
+# - NextAuth configuration
 ```
 
-## 4. Start Backend Services
+### Client Configuration
+```bash
+# Create .env file in apps/client/
+# The client may not have a .env.example file, so create from scratch:
+# - API_BASE_URL=http://localhost:8080
+# - GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+## 3. Start Backend Services
 
 ```bash
-# Using Docker Compose (recommended)
+# Start all services using Docker Compose
 docker-compose up -d
 
-# Or manually:
-cd apps/api
-RUN_SEEDING=true go run main.go
+# This will start:
+# - API on port 8080
+# - MySQL on port 3306
+# - MinIO on ports 9000/9001
+# - Admin panel on port 3000
 ```
 
-## 5. Start Client
+## 4. Start Client Application
 
 ```bash
+# Navigate to client directory
 cd apps/client
-flutter run -d linux  # or -d chrome for web
+
+# Install dependencies
+flutter pub get
+
+# Run the application
+# For web:
+flutter run -d chrome
+
+# For desktop (Linux):
+# flutter run -d linux
+
+# For mobile:
+# flutter run -d android
+# flutter run -d ios
 ```
 
-## 6. Start Admin Panel
+## 5. Verify Services
+
+Check that all services are running:
 
 ```bash
-cd apps/admin
-npm run dev
+# Check Docker containers
+docker-compose ps
+
+# Check API health
+curl http://localhost:8080/health
+
+# Check Admin panel
+curl -I http://localhost:3000
 ```
 
 ## Access Points
 
 - **API:** http://localhost:8080
-- **Client:** http://localhost:3000 (or as shown in Flutter console)
-- **Admin:** http://localhost:3001
+- **Admin Panel:** http://localhost:3000
+- **Client Web:** http://localhost:3001 (when running Flutter web)
+- **MinIO Console:** http://localhost:9001 (for file storage management)
+- **MySQL:** localhost:3306 (username: root, password: password)
 
 ## Next Steps
 

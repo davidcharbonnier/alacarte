@@ -10,10 +10,7 @@ Welcome to the centralized documentation for the À la carte platform.
 - [Local Development](getting-started/local-development.md) - Complete development setup
 
 ### Architecture
-- [Overview](architecture/overview.md) - System architecture and design principles
 - ⭐ [Monorepo Strategy](architecture/monorepo-strategy.md) - release-please, conventional commits, and release management
-- [Tech Stack](architecture/tech-stack.md) - Technologies used across the platform
-- [Design Resources](architecture/design-resources.md) - Logo and branding assets
 
 ### Features (Cross-App)
 - [Authentication](features/authentication.md) - Google OAuth, JWT, and user management
@@ -21,6 +18,7 @@ Welcome to the centralized documentation for the À la carte platform.
 - [Rating System](features/rating-system.md) - Polymorphic rating system
 - [Sharing System](features/sharing-system.md) - Rating sharing and permissions
 - [Filtering System](features/filtering-system.md) - Search and filtering
+- [Image Upload](features/image-upload.md) - File storage and image handling
 - [Offline Handling](features/offline-handling.md) - Connectivity management
 - [Internationalization](features/internationalization.md) - French/English localization
 
@@ -35,18 +33,34 @@ Welcome to the centralized documentation for the À la carte platform.
 
 #### API (Backend)
 - [API Overview](api/README.md) - REST API documentation
+- [Authentication System](api/authentication-system.md) - OAuth and JWT implementation
 - [Endpoints](api/endpoints.md) - API reference
 - [Deployment](api/deployment.md) - Docker and Cloud Run
 - [Security](api/security.md) - Security improvements
+- [Privacy Model](api/privacy-model.md) - API privacy implementation
 
 #### Client (Frontend)
-- [Client Overview](client/README.md) - Flutter app documentation
-- Setup: [Android](client/setup/android-setup.md) | [OAuth](client/setup/android-oauth-setup.md)
-- Architecture: [Router](client/architecture/router-architecture.md) | [Form Strategy](client/architecture/form-strategy-pattern.md)
-- Features: [Notifications](client/features/notification-system.md) | [Settings](client/features/settings-system.md)
+- [Authentication System](client/authentication-system.md) - OAuth and token management
+- [Privacy Model](client/privacy-model.md) - Client privacy implementation
+- [Cache Management](client/cache-management.md) - Data caching strategies
+
+##### Setup
+- [Android Setup](client/setup/android-setup.md) - Android development setup
+- [Android OAuth Setup](client/setup/android-oauth-setup.md) - Android OAuth configuration
+- [Google OAuth Setup](client/setup/google-oauth-setup.md) - Cross-platform OAuth
+
+##### Architecture
+- [Router Architecture](client/architecture/router-architecture.md) - Navigation and routing
+- [Form Strategy Pattern](client/architecture/form-strategy-pattern.md) - Form handling patterns
+- [Strategy Pattern Refactoring](client/architecture/strategy-pattern-refactoring-summary.md) - Refactoring summary
+
+##### Features
+- [Notification System](client/features/notification-system.md) - Push notifications
+- [Settings System](client/features/settings-system.md) - User preferences
 
 #### Admin (Panel)
-- [Admin Overview](admin/README.md) - Admin panel documentation
+- [Authentication System](admin/authentication-system.md) - Admin OAuth and session management
+- [Design System](admin/design-system.md) - UI components and styling
 - [Deployment](admin/deployment.md) - Deployment guide
 - [Backend Requirements](admin/backend-requirements.md) - API requirements
 - [Phased Implementation](admin/phased-implementation.md) - Development phases
@@ -77,12 +91,15 @@ This documentation is organized by **purpose** rather than by app:
 - Understand privacy → [Privacy Model](features/privacy-model.md)
 - Add a new feature → Check [Features](features/) for existing patterns
 - Understand releases → [Monorepo Strategy](architecture/monorepo-strategy.md)
+- Set up image upload → [Image Upload](features/image-upload.md)
+- Implement caching → [Cache Management](client/cache-management.md)
 
 **I'm a...**
 - Backend developer → Start with [API Overview](api/README.md)
-- Frontend developer → Start with [Client Overview](client/README.md)
+- Frontend developer → Start with [Client Authentication](client/authentication-system.md)
 - DevOps engineer → Start with [Operations](operations/)
 - New team member → Start with [Getting Started](getting-started/)
+- Admin panel developer → Start with [Admin Authentication](admin/authentication-system.md)
 
 ## 🤝 Contributing
 

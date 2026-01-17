@@ -1,63 +1,55 @@
 # Prerequisites
 
-## System Requirements
+Before you can run the À la carte project locally, you'll need to install the following tools:
 
-### Required Tools
-- **Node.js:** >= 18.0.0
-- **Go:** >= 1.21
-- **Flutter SDK:** >= 3.27
-- **Docker & Docker Compose:** Latest stable
-- **MySQL:** 8.0+ (or via Docker)
+## Required Software
 
-### Development Tools
-- **VS Code** or your preferred IDE
-- **Postman** or curl for API testing
-- **Git** for version control
-
-### Cloud Accounts (for deployment)
-- Google Cloud account (for Cloud Run, Cloud SQL)
-- Docker Hub account (for container registry)
-- GitHub account (for CI/CD)
-
-### Google OAuth Setup
-- Google Cloud Console project
-- OAuth 2.0 credentials (Web + Android clients)
-- See [Authentication](/docs/features/authentication.md) for complete setup
-
-## Installation
-
-### Node.js & npm
-```bash
-# Install via nvm (recommended)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-nvm install 18
-nvm use 18
-```
+### Node.js
+- **Version:** >= 18.x
+- **Installation:** [Download Node.js](https://nodejs.org/)
+- **Verification:** `node --version`
 
 ### Go
-```bash
-# Download from https://golang.org/dl/
-# Or via package manager:
-brew install go  # macOS
-sudo apt install golang-go  # Linux
-```
+- **Version:** >= 1.21
+- **Installation:** [Download Go](https://golang.org/dl/)
+- **Verification:** `go version`
 
-### Flutter
-```bash
-# Download from https://docs.flutter.dev/get-started/install
-# Add to PATH and run:
-flutter doctor
-```
+### Flutter SDK
+- **Version:** >= 3.27
+- **Installation:** [Install Flutter](https://docs.flutter.dev/get-started/install)
+- **Verification:** `flutter --version`
 
-### Docker
-```bash
-# Install Docker Desktop
-# Download from https://www.docker.com/products/docker-desktop
+### Docker & Docker Compose
+- **Docker:** [Install Docker](https://docs.docker.com/get-docker/)
+- **Docker Compose:** [Install Docker Compose](https://docs.docker.com/compose/install/)
+- **Verification:** `docker --version` and `docker compose version`
 
-# Verify installation
-docker --version
-docker-compose --version
-```
+### MySQL
+- **Version:** 8.0+
+- **Note:** Docker Compose will run MySQL in a container, so no local installation is required
+
+## Google OAuth Setup
+
+The project uses Google OAuth 2.0 for authentication. You'll need to:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URIs:
+   - `http://localhost:3000/api/auth/callback/google` (Admin)
+   - `http://localhost:3001/api/auth/callback/google` (Client web)
+6. Save the Client ID and Client Secret for later use
+
+## Environment Variables
+
+Each application has its own environment configuration:
+
+- **Admin:** Copy `.env.example` to `.env.local` and configure variables
+- **API:** Copy `.env.prod.template` to `.env` and configure variables
+- **Client:** Copy `.env` from `.env.example` (if available) or create from scratch
+
+See the quick-start guide for detailed setup instructions.
 
 ## Next Steps
 
