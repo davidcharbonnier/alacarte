@@ -1,5 +1,7 @@
 # Authentication System
 
+> **See also:** Full backend authentication implementation is in [/docs/api/authentication-system.md](/docs/api/authentication-system.md).
+
 **Last Updated:** January 2025  
 **Status:** Production Ready
 
@@ -30,45 +32,7 @@ The À la carte platform uses **Google OAuth 2.0** with **JWT tokens** for secur
 
 ## 🔧 Backend Implementation
 
-### Database Schema
-
-```go
-type User struct {
-    gorm.Model
-    GoogleID     string `gorm:"unique"`      // Google OAuth subject
-    Email        string `gorm:"unique"`      // Verified email
-    FullName     string                      // From Google profile
-    DisplayName  string `gorm:"unique"`      // User-chosen name
-    Avatar       string                      // Profile photo URL
-    Discoverable bool   `gorm:"default:true"` // Privacy setting
-    IsAdmin      bool   `gorm:"default:false"` // Admin role
-    LastLoginAt  time.Time
-}
-```
-
-### API Endpoints
-
-**Authentication:**
-- `POST /auth/google` - Exchange Google OAuth code for JWT token
-
-**Profile Setup:**
-- `POST /profile/complete` - Set display name and privacy (requires partial auth)
-- `GET /profile/check-display-name` - Check name availability
-
-**User Management:**
-- `GET /api/user/me` - Get current user (requires auth)
-- `PATCH /api/user/me` - Update profile (requires auth)
-- `DELETE /api/user/account` - Delete account (requires auth)
-
-### Middleware
-
-```go
-// Require JWT authentication
-api.Use(utils.RequireAuth())
-
-// Require admin role
-admin.Use(utils.RequireAuth(), utils.RequireAdmin())
-```
+> **See also:** Full backend authentication implementation – [/docs/api/authentication-system.md](/docs/api/authentication-system.md).
 
 ### Environment Variables
 
@@ -84,6 +48,8 @@ INITIAL_ADMIN_EMAIL=admin@example.com
 ---
 
 ## 📱 Frontend Implementation
+
+> **See also:** Full client authentication implementation – [/docs/client/authentication-system.md](/docs/client/authentication-system.md).
 
 ### Google Sign-In Integration
 

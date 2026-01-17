@@ -1,18 +1,18 @@
 # Privacy Model Documentation - Backend
 
 ## Table of Contents
-- [Privacy Architecture](#privacy-architecture)
-- [Database Schema](#database-schema)
-- [Rating Visibility System](#rating-visibility-system)
-- [User Discovery Implementation](#user-discovery-implementation)
-- [API Endpoints](#api-endpoints)
-- [Privacy Controls](#privacy-controls)
-- [Privacy Settings API](#privacy-settings-api)
-- [Bulk Privacy Operations](#bulk-privacy-operations)
-- [Sharing Logic](#sharing-logic)
-- [Community Statistics](#community-statistics)
-- [Data Migration](#data-migration)
-- [Security & Performance](#security--performance)
+- [Privacy Architecture](/docs/api/privacy-model.md#privacy-architecture)
+- [Database Schema](/docs/api/privacy-model.md#database-schema)
+- [Rating Visibility System](/docs/api/privacy-model.md#rating-visibility-system)
+- [User Discovery Implementation](/docs/api/privacy-model.md#user-discovery-implementation)
+- [API Endpoints](/docs/api/privacy-model.md#api-endpoints)
+- [Privacy Controls](/docs/api/privacy-model.md#privacy-controls)
+- [Privacy Settings API](/docs/api/privacy-model.md#privacy-settings-api)
+- [Bulk Privacy Operations](/docs/api/privacy-model.md#bulk-privacy-operations)
+- [Sharing Logic](/docs/api/privacy-model.md#sharing-logic)
+- [Community Statistics](/docs/api/privacy-model.md#community-statistics)
+- [Data Migration](/docs/api/privacy-model.md#data-migration)
+- [Security & Performance](/docs/api/privacy-model.md#security--performance)
 
 ---
 **Last Updated:** September 2025  

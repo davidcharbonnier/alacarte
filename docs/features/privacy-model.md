@@ -1,5 +1,7 @@
 # Privacy Model
 
+> **See also:** Full backend privacy implementation is in [/docs/api/privacy-model.md](/docs/api/privacy-model.md).
+
 **Last Updated:** January 2025  
 **Status:** Production Ready
 
@@ -85,68 +87,7 @@ sharing_relationships (
 
 ## 📡 Backend Implementation
 
-### Rating Visibility Logic
-
-```go
-// Three visibility levels
-func GetUserVisibleRatings(userID int, itemType string, itemID int) []Rating {
-    var ratings []Rating
-    
-    DB.Where("item_type = ? AND item_id = ?", itemType, itemID).
-       Where("user_id = ? OR id IN (?)",
-           userID,  // 1. Ratings authored by user
-           DB.Model(&RatingViewer{}).
-              Select("rating_id").
-              Where("user_id = ?", userID),  // 2. Ratings shared with user
-       ).
-       Preload("User").
-       Find(&ratings)
-    
-    return ratings
-}
-
-// Community statistics (anonymous)
-func GetCommunityStats(itemType string, itemID int) CommunityStats {
-    var stats CommunityStats
-    
-    DB.Model(&Rating{}).
-       Where("item_type = ? AND item_id = ?", itemType, itemID).
-       Select("COUNT(*) as total_ratings, AVG(grade) as average_rating").
-       Scan(&stats)
-    
-    return stats  // No individual attribution
-}
-```
-
-### Privacy Endpoints
-
-```go
-// Get users available for sharing (respects discoverable flag)
-GET /api/users/shareable
-// Returns only users with discoverable = true AND completed profile
-
-// Share rating with specific users (batch support)
-PUT /api/rating/:id/share
-Body: { "user_ids": [2, 3, 4] }
-// Adds users to rating viewers
-
-// Unshare rating from specific users (batch support)
-PUT /api/rating/:id/hide
-Body: { "user_ids": [2, 3] }  // Batch: remove multiple users
-Body: { "user_id": 2 }        // Legacy: remove single user
-// Removes users from rating viewers
-
-// Bulk privacy actions
-PUT /api/rating/bulk/private
-// Makes all user's ratings private (removes all viewers)
-
-PUT /api/rating/bulk/unshare/:userId
-// Removes specific user from all of author's shares
-```
-
-**See:** [API Privacy Implementation](/docs/api/privacy-model.md) for backend details
-
----
+The detailed backend privacy implementation—including rating visibility logic, privacy endpoints, and related details—is documented in the API privacy model documentation: [/docs/api/privacy-model.md](/docs/api/privacy-model.md).
 
 ## 📱 Frontend Implementation
 

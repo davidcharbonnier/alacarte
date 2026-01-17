@@ -11,11 +11,11 @@ The admin panel has a comprehensive design system that matches the Flutter clien
 
 ## Table of Contents
 
-1. [Design Tokens](#design-tokens)
-2. [Color System](#color-system)
-3. [Component Enhancements](#component-enhancements)
-4. [Dark Mode Support](#dark-mode-support)
-5. [Usage Guidelines](#usage-guidelines)
+1. [Design Tokens](/docs/admin/design-system.md#design-tokens)
+2. [Color System](/docs/admin/design-system.md#color-system)
+3. [Component Enhancements](/docs/admin/design-system.md#component-enhancements)
+4. [Dark Mode Support](/docs/admin/design-system.md#dark-mode-support)
+5. [Usage Guidelines](/docs/admin/design-system.md#usage-guidelines)
 
 ---
 

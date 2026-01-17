@@ -1,17 +1,17 @@
 # Authentication System Documentation - Backend
 
 ## Table of Contents
-- [Overview](#overview)
-- [Architecture Migration](#architecture-migration)
-- [Google OAuth Integration](#google-oauth-integration)
-- [JWT Token Management](#jwt-token-management)
-- [Database Schema](#database-schema)
-- [API Endpoints](#api-endpoints)
-- [Security Implementation](#security-implementation)
-- [Middleware & Guards](#middleware--guards)
-- [Migration Strategy](#migration-strategy)
-- [Testing & Development](#testing--development)
-- [Deployment Considerations](#deployment-considerations)
+- [Overview](/docs/api/authentication-system.md#overview)
+- [Architecture Migration](/docs/api/authentication-system.md#architecture-migration)
+- [Google OAuth Integration](/docs/api/authentication-system.md#google-oauth-integration)
+- [JWT Token Management](/docs/api/authentication-system.md#jwt-token-management)
+- [Database Schema](/docs/api/authentication-system.md#database-schema)
+- [API Endpoints](/docs/api/authentication-system.md#api-endpoints)
+- [Security Implementation](/docs/api/authentication-system.md#security-implementation)
+- [Middleware & Guards](/docs/api/authentication-system.md#middleware--guards)
+- [Migration Strategy](/docs/api/authentication-system.md#migration-strategy)
+- [Testing & Development](/docs/api/authentication-system.md#testing--development)
+- [Deployment Considerations](/docs/api/authentication-system.md#deployment-considerations)
 
 ---
 **Last Updated:** January 2025  

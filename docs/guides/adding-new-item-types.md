@@ -37,6 +37,8 @@ This guide covers the complete process of adding a new item type (e.g., wine, be
 
 ### Phase 1: Backend Implementation (~65 min)
 
+> **See also:** Backend authentication and privacy implementations are documented in [/docs/api/authentication-system.md](/docs/api/authentication-system.md) and [/docs/api/privacy-model.md](/docs/api/privacy-model.md).
+
 The backend uses GORM's polymorphic associations to support multiple item types with a single Rating table.
 
 #### Step 1: Create Model (~5 min)

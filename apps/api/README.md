@@ -2,6 +2,10 @@
 
 Go REST API for the À la carte rating platform.
 
+## 🎯 Purpose of This README
+
+This README provides **quick start instructions and common tasks** for the API. For comprehensive API documentation, see the [API Documentation](/docs/api/README.md).
+
 ## Quick Start
 
 ```bash
@@ -57,19 +61,24 @@ curl -H "Authorization: Bearer YOUR_JWT" \
   http://localhost:8080/api/cheese/all
 ```
 
-## 📚 Full Documentation
+## 📚 Documentation Structure
 
-Complete API documentation available at [/docs/api/](/docs/api/)
-
-### API-Specific Docs
-- [API Endpoints](/docs/api/endpoints.md) - Complete API reference
-- [Deployment Guide](/docs/api/deployment.md) - Docker and Cloud Run deployment
-- [Security Improvements](/docs/api/security.md) - Security best practices
+### API Documentation
+For complete API documentation:
+- **[API Documentation](/docs/api/README.md)** - Primary API reference
+- **[API Endpoints Reference](/docs/api/endpoints.md)** - Complete endpoint documentation
+- **[Deployment Guide](/docs/api/deployment.md)** - Docker and Cloud Run deployment
+- **[Security Best Practices](/docs/api/security.md)** - Security improvements
 
 ### Cross-App Features
-- [Authentication System](/docs/features/authentication.md) - OAuth and JWT
-- [Privacy Model](/docs/features/privacy-model.md) - Privacy architecture
-- [Rating System](/docs/features/rating-system.md) - Polymorphic ratings
+For features that span multiple applications:
+- **[Authentication System](/docs/features/authentication.md)** - OAuth and JWT across all apps
+- **[Privacy Model](/docs/features/privacy-model.md)** - Privacy-first architecture
+- **[Rating System](/docs/features/rating-system.md)** - Polymorphic rating system
+
+### Implementation Guides
+- **[Adding New Item Types](/docs/guides/adding-new-item-types.md)** - Complete platform guide
+- **[Backend Checklist](/docs/guides/backend-checklist.md)** - Quick reference checklist
 
 ## Technology Stack
 
@@ -88,10 +97,11 @@ apps/api/
 ├── middleware/      # Authentication, CORS, etc.
 ├── utils/           # Database, JWT, helpers
 ├── scripts/         # Development utilities
-├── docs/            # (moved to /docs/api/)
 ├── main.go          # Application entry point
 └── .env             # Environment configuration
 ```
+
+**Note:** API documentation has been moved to `/docs/api/` for centralized documentation management.
 
 ## Environment Variables
 

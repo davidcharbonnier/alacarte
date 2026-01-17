@@ -1,22 +1,24 @@
 # Authentication System Documentation - Frontend
 
+> **See also:** Backend authentication implementation – [/docs/api/authentication-system.md](/docs/api/authentication-system.md).
+
 ## Table of Contents
-- [Overview](#overview)
-- [Architecture Migration](#architecture-migration)
-- [Google OAuth Implementation](#google-oauth-implementation)
-- [JWT Token Management](#jwt-token-management)
-- [Cross-Platform Support](#cross-platform-support)
-- [State Management](#state-management)
-- [User Experience](#user-experience)
-- [Migration Strategy](#migration-strategy)
-- [Testing & Development](#testing--development)
-- [Troubleshooting](#troubleshooting)
+- [Overview](/docs/client/authentication-system.md#/docs/client/authentication-system.md#/docs/client/authentication-system.md#overview)
+- [Architecture Migration](/docs/client/authentication-system.md#/docs/client/authentication-system.md#/docs/client/authentication-system.md##architecture-migration)
+- [Google OAuth Implementation](/docs/client/authentication-system.md#/docs/client/authentication-system.md##google-oauth-implementation)
+- [JWT Token Management](/docs/client/authentication-system.md#/docs/client/authentication-system.md##jwt-token-management)
+- [Cross-Platform Support](/docs/client/authentication-system.md#/docs/client/authentication-system.md##cross-platform-support)
+- [State Management](/docs/client/authentication-system.md#/docs/client/authentication-system.md##state-management)
+- [User Experience](/docs/client/authentication-system.md#/docs/client/authentication-system.md##user-experience)
+- [Migration Strategy](/docs/client/authentication-system.md#/docs/client/authentication-system.md##migration-strategy)
+- [Testing & Development](/docs/client/authentication-system.md#/docs/client/authentication-system.md##testing--development)
+- [Troubleshooting](/docs/client/authentication-system.md#/docs/client/authentication-system.md##troubleshooting)
 
 ---
 **Last Updated:** January 2025  
 **Related Documentation:**
-- [Privacy Model](privacy-model.md)
-- [Rating System](rating-system.md)
+- [Privacy Model](/docs/client/authentication-system.md#/docs/client/authentication-system.md#privacy-model.md)
+- [Rating System](/docs/client/authentication-system.md#/docs/client/authentication-system.md#rating-system.md)
 ---
 
 ## Overview
