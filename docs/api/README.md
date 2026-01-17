@@ -2,34 +2,44 @@
 
 Complete REST API documentation for the À la carte platform.
 
-## 📚 Documentation Index
+## 🎯 Purpose of This Documentation
 
-### Core Documentation
-- [API Overview](../api/README.md) - Quick start and common tasks (see apps/api/)
-- [API Endpoints](endpoints.md) - Complete API reference
-- [Deployment Guide](deployment.md) - Docker and Cloud Run deployment
-- [Security Best Practices](security.md) - Security improvements and guidelines
+This documentation serves as the **primary reference for API developers** working with the À la carte backend. For cross-app feature documentation, see the [Features documentation](/docs/features/).
 
-### Implementation Details
-- [Authentication System](authentication-system.md) - OAuth and JWT implementation
-- [Privacy Model](privacy-model.md) - Privacy architecture and queries
+## 📚 Documentation Structure
+
+### Quick Start & Reference
+- **[API Quick Start](/apps/api/README.md)** - Getting started with the API
+- **[API Endpoints Reference](endpoints.md)** - Complete endpoint documentation
+
+### Deployment & Operations
+- **[Deployment Guide](deployment.md)** - Docker and Cloud Run deployment
+- **[Security Best Practices](security.md)** - Security improvements and guidelines
+
+### Implementation Guides
+- **[Adding New Item Types](/docs/guides/adding-new-item-types.md#phase-1-backend-implementation-65-min)** - Backend implementation guide
+- **[Backend Checklist](/docs/guides/backend-checklist.md)** - Quick reference checklist
+
+## 🔗 Related Documentation
 
 ### Cross-App Features
-- [Authentication](/docs/features/authentication.md) - Overview across all apps
-- [Privacy Model](/docs/features/privacy-model.md) - Privacy-first architecture
-- [Rating System](/docs/features/rating-system.md) - Polymorphic rating system
+For feature documentation that spans multiple applications (API, Client, Admin):
+- **[Authentication System](/docs/features/authentication.md)** - OAuth and JWT across all apps
+- **[Privacy Model](/docs/features/privacy-model.md)** - Privacy-first architecture
+- **[Rating System](/docs/features/rating-system.md)** - Polymorphic rating system
 
-### Guides
-- [Adding New Item Types](/docs/guides/adding-new-item-types.md#phase-1-backend-implementation-65-min) - Backend section
-- [Backend Checklist](/docs/guides/backend-checklist.md) - Quick reference
+### App-Specific Documentation
+- **[API Implementation Details](/apps/api/README.md)** - Detailed API setup and usage
+- **[Client Documentation](/docs/client/)** - Flutter client documentation
+- **[Admin Documentation](/docs/admin/)** - Next.js admin panel documentation
 
 ## 🚀 Quick Links
 
 **Common Tasks:**
-- [Running migrations](#) - Automatic on startup
-- [Seeding data](#) - See API README
-- [Testing endpoints](#) - See API README
-- [Deployment](#) - See deployment.md
+- [Running migrations](/apps/api/README.md#running-migrations) - Automatic on startup
+- [Seeding data](/apps/api/README.md#seeding-data) - Development data setup
+- [Testing endpoints](/apps/api/README.md#testing-endpoints) - API testing examples
+- [Deployment](deployment.md) - Production deployment guide
 
 **API Reference:**
 - [Authentication endpoints](endpoints.md#authentication)

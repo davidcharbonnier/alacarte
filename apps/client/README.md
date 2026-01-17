@@ -1,5 +1,7 @@
 # À la carte Client
 
+> **See also:** Full client documentation is available at [/docs/client/README.md](/docs/client/README.md).
+
 Flutter application for the À la carte rating platform - mobile, web, and desktop.
 
 ## Quick Start

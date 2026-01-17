@@ -1,17 +1,17 @@
 # Privacy Model Documentation - Frontend
 
 ## Table of Contents
-- [Privacy Philosophy](#privacy-philosophy)
-- [Rating Visibility Models](#rating-visibility-models)
-- [Display Name System](#display-name-system)
-- [User Discovery Architecture](#user-discovery-architecture)
-- [Sharing System Implementation](#sharing-system-implementation)
-- [Privacy Controls](#privacy-controls)
-- [Privacy Settings Screen](#privacy-settings-screen)
-- [User Experience Flows](#user-experience-flows)
-- [Frontend Architecture](#frontend-architecture)
-- [Testing & Validation](#testing--validation)
-- [Migration from Profile System](#migration-from-profile-system)
+- [Privacy Philosophy](/docs/client/privacy-model.md#privacy-philosophy)
+- [Rating Visibility Models](/docs/client/privacy-model.md#rating-visibility-models)
+- [Display Name System](/docs/client/privacy-model.md#display-name-system)
+- [User Discovery Architecture](/docs/client/privacy-model.md#user-discovery-architecture)
+- [Sharing System Implementation](/docs/client/privacy-model.md#sharing-system-implementation)
+- [Privacy Controls](/docs/client/privacy-model.md#privacy-controls)
+- [Privacy Settings Screen](/docs/client/privacy-model.md#privacy-settings-screen)
+- [User Experience Flows](/docs/client/privacy-model.md#user-experience-flows)
+- [Frontend Architecture](/docs/client/privacy-model.md#frontend-architecture)
+- [Testing & Validation](/docs/client/privacy-model.md#testing--validation)
+- [Migration from Profile System](/docs/client/privacy-model.md#migration-from-profile-system)
 
 ---
 **Last Updated:** September 2025  

@@ -35,7 +35,7 @@ git checkout -b fix/bug-description
 
 ### 3. Commit Your Changes
 
-⚠️ **IMPORTANT:** All commits MUST follow the [conventional commit format](#commit-message-convention) with a required scope.
+⚠️ **IMPORTANT:** All commits MUST follow the [conventional commit format](/docs/guides/contributing.md#commit-message-convention) with a required scope.
 
 ```bash
 git add .

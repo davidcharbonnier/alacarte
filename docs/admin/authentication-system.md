@@ -6,13 +6,13 @@
 ---
 
 ## Table of Contents
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Admin Role Verification](#admin-role-verification)
-- [Error Handling](#error-handling)
-- [Security Features](#security-features)
-- [Deployment](#deployment)
-- [Troubleshooting](#troubleshooting)
+- [Overview](/docs/admin/authentication-system.md#overview)
+- [Architecture](/docs/admin/authentication-system.md#architecture)
+- [Admin Role Verification](/docs/admin/authentication-system.md#admin-role-verification)
+- [Error Handling](/docs/admin/authentication-system.md#error-handling)
+- [Security Features](/docs/admin/authentication-system.md#security-features)
+- [Deployment](/docs/admin/authentication-system.md#deployment)
+- [Troubleshooting](/docs/admin/authentication-system.md#troubleshooting)
 
 ---
 

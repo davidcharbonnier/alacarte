@@ -1,5 +1,7 @@
 # Rating System Implementation
 
+> **See also:** API rating endpoints are documented in [/docs/api/endpoints.md](/docs/api/endpoints.md).
+
 **Last Updated**: January 2025  
 **Status**: Production-Ready - All Core Features Complete
 

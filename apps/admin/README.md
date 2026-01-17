@@ -1,5 +1,7 @@
 # À la carte Admin Panel
 
+> **See also:** Full admin documentation is available at [/docs/admin/README.md](/docs/admin/README.md).
+
 Next.js admin panel for managing the À la carte platform.
 
 ## Prerequisites
