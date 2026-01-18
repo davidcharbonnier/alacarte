@@ -10,11 +10,68 @@ Complete REST API endpoint documentation for the À la carte platform.
 
 All protected endpoints require a JWT token in the `Authorization` header:
 
+### Health Check
+
+```http
+GET /health
+```
+
+Returns `200 OK` indicating the service is healthy.
+
+---
+
 ```bash
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
 ### OAuth
+
+---
+
+## 🔐 Google OAuth Exchange
+
+```http
+POST /auth/google
+Content-Type: application/json
+
+{
+  "id_token": "google-id-token",
+  "access_token": "google-access-token"
+}
+```
+
+## 👤 Profile Management
+
+### Complete Profile
+
+```http
+POST /profile/complete
+Authorization: Bearer JWT_TOKEN
+Content-Type: application/json
+
+{
+  "display_name": "John",
+  "discoverable": true
+}
+```
+
+### Check Display Name Availability
+
+```http
+GET /profile/check-display-name?name=John
+Authorization: Bearer JWT_TOKEN
+```
+
+---
+
+## 🔐 Authentication
+
+### Check Admin Status
+
+```http
+GET /api/auth/check-admin
+Authorization: Bearer JWT_TOKEN
+```
 
 #### Exchange Google Token for Backend JWT
 
@@ -85,10 +142,13 @@ Returns users with `discoverable = true` and completed profiles.
 
 ## 🧀 Item Endpoints
 
+Supported item types: `cheese`, `gin`, `wine`, `coffee`
+
 Item endpoints follow the same pattern for all item types:
 - `/api/cheese` - Cheese operations
 - `/api/gin` - Gin operations  
 - `/api/wine` - Wine operations
+- `/api/coffee` - Coffee operations
 
 ### Get All Items
 
