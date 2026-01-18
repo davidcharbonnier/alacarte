@@ -826,9 +826,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get unratedFilter => 'Non évalué';
 
   @override
-  String get withPictureFilter => 'Avec Image';
-
-  @override
   String get allFilterOption => 'Tous';
 
   @override
@@ -1695,4 +1692,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noImage => 'Aucune image';
+
+  @override
+  String get withPictureFilter => 'Avec image';
 }

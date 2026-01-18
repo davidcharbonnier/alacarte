@@ -2583,5 +2583,10 @@
   "noImage": "No image",
   "@noImage": {
     "description": "Placeholder text when no image is available"
+  },
+
+  "withPictureFilter": "With Picture",
+  "@withPictureFilter": {
+    "description": "Filter chip for items that have a picture"
   }
 }
