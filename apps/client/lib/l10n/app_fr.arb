@@ -507,5 +507,7 @@
   "imageLabel": "Image",
   "changeImage": "Modifier l'image",
   "addImage": "Ajouter une image",
-  "noImage": "Aucune image"
+  "noImage": "Aucune image",
+  
+  "withPictureFilter": "Avec image"
 }
