@@ -107,9 +107,29 @@ html {
 <body>
 
 <h1>Changelog</h1>
-<p>The latest release was 2025-12-02.</p>
+<p>The latest release was 2026-01-18.</p>
 
 <!-- ### VERSIO BEGIN CONTENT ### -->
+<!-- ### VERSIO CONTENT 2026-01-18 ### -->
+<div class="release">
+  <div class="release-head"><span class="caret caret-down"></span>Release 1.1.0 : 2026-01-18</div>
+  <div class="nested active">
+    
+    
+    <div class="pr">
+      <div class="pr-head"><span class="caret"></span>Commits (none)</div>
+      <div class="nested">
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/9b297aaf60c49bd0b73cdd054643e0c60b04b6f4">9b297aa</a> (none): chore(docs): deduplicate docs and update navigation</div>
+          <pre class="msg nested">chore(docs): deduplicate docs and update navigation</pre>
+        </div>
+        
+      </div>
+    </div>
+    
+  </div>
+</div>
 <!-- ### VERSIO CONTENT 2025-12-02 ### -->
 <div class="release">
   <div class="release-head"><span class="caret caret-down"></span>Release 1.1.0 : 2025-12-02</div>
