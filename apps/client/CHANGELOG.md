@@ -112,6 +112,44 @@ html {
 <!-- ### VERSIO BEGIN CONTENT ### -->
 <!-- ### VERSIO CONTENT 2026-01-18 ### -->
 <div class="release">
+  <div class="release-head"><span class="caret caret-down"></span>Release 1.3.0 : 2026-01-18</div>
+  <div class="nested active">
+    
+    
+    <div class="pr">
+      <div class="pr-head"><span class="caret"></span>Commits (minor)</div>
+      <div class="nested">
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/2b016af6e77160e05f0ea151a2f486b5125bb382">2b016af</a> (patch): fix(client): Fixing lsp issues</div>
+          <pre class="msg nested">fix(client): Fixing lsp issues</pre>
+        </div>
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/89da210b9744630071af2bd6fd404a23d4104089">89da210</a> (minor): feat(client): Add missing localization for picture filter</div>
+          <pre class="msg nested">feat(client): Add missing localization for picture filter</pre>
+        </div>
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/3bf67798d4c36c34332a7b8f8e40ab753a2be53b">3bf6779</a> (minor): feat(client): Add picture filter support to item search and filtering</div>
+          <pre class="msg nested">feat(client): Add picture filter support to item search and filtering
+
+- Add setPictureFilter() method to ItemProvider for client-side filtering
+- Add picture filter chip UI to ItemSearchAndFilter widget
+- Add localization strings for 'With Picture' filter in English and French
+- Integrate picture filter with existing rating filter system
+- Add comprehensive unit tests for picture filtering logic
+- Add integration tests for picture filter UI functionality
+- Update tasks.md to mark all implementation tasks as complete</pre>
+        </div>
+        
+      </div>
+    </div>
+    
+  </div>
+</div>
+<!-- ### VERSIO CONTENT 2026-01-18 ### -->
+<div class="release">
   <div class="release-head"><span class="caret caret-down"></span>Release 1.2.0 : 2026-01-18</div>
   <div class="nested active">
     
