@@ -293,10 +293,13 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             const SizedBox(width: AppConstants.spacingM),
             Consumer(
               builder: (context, ref, child) {
-                final user = ref.watch(authProvider.select((state) => state.user));
+                final user = ref.watch(
+                  authProvider.select((state) => state.user),
+                );
                 return Switch(
                   value: user?.discoverable ?? false,
-                  onChanged: (value) => _updateDiscoverableSetting(context, ref, value),
+                  onChanged: (value) =>
+                      _updateDiscoverableSetting(context, ref, value),
                 );
               },
             ),
@@ -392,7 +395,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         : sharedRatings
               .where((r) => r.itemType == _selectedItemTypeFilter)
               .toList();
-    
+
     // Sort ratings alphabetically by item display title (A to Z, case-insensitive)
     filteredRatings.sort((a, b) {
       final titleA = _getLocalizedRatingDisplayTitle(context, a);
@@ -566,13 +569,14 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       final itemIds = entry.value.toList();
 
       // Use ItemProviderHelper - works for any item type!
-      return ItemProviderHelper.loadSpecificItems(ref, itemType, itemIds)
-          .then((_) {
-            // Track loaded items after successful load
-            _loadedItemIds.putIfAbsent(itemType, () => <int>{}).addAll(itemIds);
-          });
+      return ItemProviderHelper.loadSpecificItems(ref, itemType, itemIds).then((
+        _,
+      ) {
+        // Track loaded items after successful load
+        _loadedItemIds.putIfAbsent(itemType, () => <int>{}).addAll(itemIds);
+      });
     });
-    
+
     // Wait for all types to load in parallel
     await Future.wait(futures);
   }
@@ -588,22 +592,22 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     // Try to get item from cache using helper (works for any item type)
     final items = ItemProviderHelper.getItems(ref, rating.itemType);
     final item = items.where((i) => i.id == rating.itemId).firstOrNull;
-    
+
     if (item != null) {
       // Use generic displayTitle from RateableItem interface
       return item.displayTitle;
     }
-    
+
     // Fallback with localized item type
     final localizedType = ItemTypeLocalizer.getLocalizedItemType(
       context,
       rating.itemType,
     );
-    
+
     if (_isLoadingItemData && _isItemDataMissing(rating)) {
       return '$localizedType #${rating.itemId} (${context.l10n.loading})';
     }
-    
+
     return '$localizedType #${rating.itemId}';
   }
 
@@ -620,11 +624,11 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     // Optimistic UI update first to avoid navigation glitches
     final currentUser = ref.read(authProvider).user;
     if (currentUser == null) return;
-    
+
     try {
       // Call the API to update the setting
       await ref.read(authProvider.notifier).updateDiscoverable(value);
-      
+
       // Success feedback
       if (context.mounted) {
         NotificationHelper.showSuccess(
@@ -637,7 +641,10 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     } catch (e) {
       // Error feedback
       if (context.mounted) {
-        NotificationHelper.showError(context, context.l10n.errorUpdatingSettings);
+        NotificationHelper.showError(
+          context,
+          context.l10n.errorUpdatingSettings,
+        );
       }
     }
   }
@@ -812,7 +819,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
           final viewerId = viewer['ID'] ?? viewer['id'];
           final authorId = rating.authorId;
 
-          if (viewerId != null && authorId != null && viewerId != authorId) {
+          if (viewerId != null && viewerId != authorId) {
             final id = viewerId is int
                 ? viewerId
                 : int.tryParse(viewerId.toString());
@@ -863,7 +870,10 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
         );
         if (!shareSuccess) {
           if (context.mounted) {
-            NotificationHelper.showError(context, context.l10n.shareRatingError);
+            NotificationHelper.showError(
+              context,
+              context.l10n.shareRatingError,
+            );
           }
           return;
         }
@@ -926,19 +936,23 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       // Show loading state
       // ignore: unnecessary_null_comparison
       if (context.mounted) {
-        NotificationHelper.showLoading(context, context.l10n.makingRatingsPrivate);
+        NotificationHelper.showLoading(
+          context,
+          context.l10n.makingRatingsPrivate,
+        );
       }
 
-      await ref
-          .read(ratingProvider.notifier)
-          .makeAllRatingsPrivate();
+      await ref.read(ratingProvider.notifier).makeAllRatingsPrivate();
 
       // ignore: unnecessary_null_comparison
       if (context.mounted) {
         // Clear any existing snackbars
         ScaffoldMessenger.of(context).clearSnackBars();
 
-        NotificationHelper.showSuccess(context, context.l10n.allRatingsMadePrivate);
+        NotificationHelper.showSuccess(
+          context,
+          context.l10n.allRatingsMadePrivate,
+        );
 
         // Trigger a refresh of the screen data
         await _loadMissingItemData();
@@ -946,7 +960,10 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
-        NotificationHelper.showError(context, context.l10n.errorMakingRatingsPrivate);
+        NotificationHelper.showError(
+          context,
+          context.l10n.errorMakingRatingsPrivate,
+        );
       }
     }
   }
@@ -984,7 +1001,10 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
 
     try {
       // Show loading state
-      NotificationHelper.showLoading(context, context.l10n.removingUserFromShares(userName));
+      NotificationHelper.showLoading(
+        context,
+        context.l10n.removingUserFromShares(userName),
+      );
 
       final result = await ref
           .read(ratingProvider.notifier)
@@ -1007,7 +1027,10 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).clearSnackBars();
-        NotificationHelper.showError(context, context.l10n.errorRemovingUserFromShares);
+        NotificationHelper.showError(
+          context,
+          context.l10n.errorRemovingUserFromShares,
+        );
       }
     }
   }
@@ -1076,7 +1099,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             final viewerId = viewer['ID'] ?? viewer['id'];
             final authorId = rating.authorId;
 
-            if (viewerId != null && authorId != null && viewerId != authorId) {
+            if (viewerId != null && viewerId != authorId) {
               final displayName =
                   viewer['display_name'] as String? ??
                   context.l10n.anonymousUser;
@@ -1104,7 +1127,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
             final viewerId = viewer['ID'] ?? viewer['id'];
             final authorId = rating.authorId;
 
-            if (viewerId != null && authorId != null && viewerId != authorId) {
+            if (viewerId != null && viewerId != authorId) {
               final userId = viewerId.toString();
               final displayName =
                   viewer['display_name'] as String? ??
@@ -1125,14 +1148,14 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     }
 
     final recipientsList = recipients.values.toList();
-    
+
     // Sort alphabetically by name (A to Z, case-insensitive)
     recipientsList.sort((a, b) {
       final nameA = (a['name'] as String?) ?? '';
       final nameB = (b['name'] as String?) ?? '';
       return nameA.toLowerCase().compareTo(nameB.toLowerCase());
     });
-    
+
     return recipientsList;
   }
 

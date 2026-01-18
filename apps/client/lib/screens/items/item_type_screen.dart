@@ -23,7 +23,9 @@ import '../../widgets/items/item_image.dart';
 import '../../utils/item_filter_helper.dart';
 
 /// Provider to remember the last active tab for each item type
-final itemTypeTabProvider = StateProvider.family<int, String>((ref, itemType) => 0);
+final itemTypeTabProvider = StateProvider.family<int, String>(
+  (ref, itemType) => 0,
+);
 
 /// Dedicated screen for a specific item type (cheese, gin, wine, etc.)
 class ItemTypeScreen extends ConsumerStatefulWidget {
@@ -38,29 +40,30 @@ class ItemTypeScreen extends ConsumerStatefulWidget {
 class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // Cache the last loaded item IDs to prevent infinite provider refreshes
   List<int>? _lastLoadedItemIds;
 
   @override
   void initState() {
     super.initState();
-    
+
     // Restore last active tab from provider
     final lastTab = ref.read(itemTypeTabProvider(widget.itemType));
-    
+
     // Start with last active tab (defaults to "All Items" if never set)
     _tabController = TabController(
-      length: 2, 
-      vsync: this, 
+      length: 2,
+      vsync: this,
       initialIndex: lastTab.clamp(0, 1), // Ensure valid tab index
     );
 
     // Listen to tab changes to save state and update FAB visibility
     _tabController.addListener(() {
       // Save current tab to provider
-      ref.read(itemTypeTabProvider(widget.itemType).notifier).state = _tabController.index;
-      
+      ref.read(itemTypeTabProvider(widget.itemType).notifier).state =
+          _tabController.index;
+
       _onTabChanged(); // Clear tab-specific filters
       setState(() {
         // Rebuild to update FAB visibility
@@ -91,7 +94,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
   void _onTabChanged() {
     // Clear tab-specific filters when switching tabs
-    final activeFilters = ItemProviderHelper.getActiveFilters(ref, widget.itemType);
+    final activeFilters = ItemProviderHelper.getActiveFilters(
+      ref,
+      widget.itemType,
+    );
     final hasTabSpecificFilters =
         activeFilters.containsKey('rating_source') ||
         activeFilters.containsKey('rating_status');
@@ -129,7 +135,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   @override
   Widget build(BuildContext context) {
     // Generic loading state using helper
-    final isLoading = ItemProviderHelper.isLoading(ref, widget.itemType) ||
+    final isLoading =
+        ItemProviderHelper.isLoading(ref, widget.itemType) ||
         ref.watch(ratingProvider).isLoading;
 
     return Scaffold(
@@ -186,7 +193,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton(
               onPressed: _navigateToAddItem,
-              tooltip: ItemTypeLocalizer.getAddItemText(context, widget.itemType),
+              tooltip: ItemTypeLocalizer.getAddItemText(
+                context,
+                widget.itemType,
+              ),
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
               // ignore: sort_child_properties_last
@@ -217,8 +227,14 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   }
 
   int _getTabSpecificFilteredCount() {
-    final filteredItems = ItemProviderHelper.getFilteredItems(ref, widget.itemType);
-    final activeFilters = ItemProviderHelper.getActiveFilters(ref, widget.itemType);
+    final filteredItems = ItemProviderHelper.getFilteredItems(
+      ref,
+      widget.itemType,
+    );
+    final activeFilters = ItemProviderHelper.getActiveFilters(
+      ref,
+      widget.itemType,
+    );
     final ratingState = ref.read(ratingProvider);
     final currentUserId = ref.read(authProvider).user?.id;
     final userRatings = ratingState.ratings;
@@ -249,8 +265,11 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       // Apply rating source filters if any (My Ratings vs Recommendations)
       if (activeFilters.containsKey('rating_source')) {
         final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
-        final searchQuery = ItemProviderHelper.getSearchQuery(ref, widget.itemType);
-        
+        final searchQuery = ItemProviderHelper.getSearchQuery(
+          ref,
+          widget.itemType,
+        );
+
         // For recommendations filter, we need to start with all items that have ratings
         if (ratingSourceFilter == 'recommendations') {
           final allRatedItemIds = userRatings
@@ -266,7 +285,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           // Apply search query if present
           if (searchQuery.isNotEmpty) {
             allRatedItems = allRatedItems
-                .where((item) => item.searchableText.contains(searchQuery.toLowerCase()))
+                .where(
+                  (item) =>
+                      item.searchableText.contains(searchQuery.toLowerCase()),
+                )
                 .toList();
           }
 
@@ -278,7 +300,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                     // ignore: unnecessary_null_aware_assignment
                     (item) =>
                         item.categories[entry.key]?.toLowerCase() ==
-                        entry.value?.toLowerCase(),
+                        entry.value.toLowerCase(),
                   )
                   .toList();
             }
@@ -289,7 +311,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           // For personal filter, start with items the user has rated
           final personalRatedItemIds = userRatings
               .where(
-                (r) => r.itemType == widget.itemType && r.authorId == currentUserId,
+                (r) =>
+                    r.itemType == widget.itemType &&
+                    r.authorId == currentUserId,
               )
               .map((r) => r.itemId)
               .toSet();
@@ -302,7 +326,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           // Apply search query if present
           if (searchQuery.isNotEmpty) {
             personalRatedItems = personalRatedItems
-                .where((item) => item.searchableText.contains(searchQuery.toLowerCase()))
+                .where(
+                  (item) =>
+                      item.searchableText.contains(searchQuery.toLowerCase()),
+                )
                 .toList();
           }
 
@@ -314,7 +341,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                     // ignore: unnecessary_null_aware_assignment
                     (item) =>
                         item.categories[entry.key]?.toLowerCase() ==
-                        entry.value?.toLowerCase(),
+                        entry.value.toLowerCase(),
                   )
                   .toList();
             }
@@ -414,8 +441,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
               Text(
                 ItemTypeLocalizer.getLocalizedItemType(context, 'gin'),
                 style: TextStyle(
-                  fontWeight:
-                      widget.itemType == 'gin' ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: widget.itemType == 'gin'
+                      ? FontWeight.bold
+                      : FontWeight.normal,
                   color: widget.itemType == 'gin' ? Colors.teal : null,
                 ),
               ),
@@ -428,15 +456,20 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             children: [
               Icon(
                 Icons.wine_bar,
-                color: widget.itemType == 'wine' ? const Color(0xFF8E24AA) : null,
+                color: widget.itemType == 'wine'
+                    ? const Color(0xFF8E24AA)
+                    : null,
               ),
               const SizedBox(width: AppConstants.spacingS),
               Text(
                 ItemTypeLocalizer.getLocalizedItemType(context, 'wine'),
                 style: TextStyle(
-                  fontWeight:
-                      widget.itemType == 'wine' ? FontWeight.bold : FontWeight.normal,
-                  color: widget.itemType == 'wine' ? const Color(0xFF8E24AA) : null,
+                  fontWeight: widget.itemType == 'wine'
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                  color: widget.itemType == 'wine'
+                      ? const Color(0xFF8E24AA)
+                      : null,
                 ),
               ),
             ],
@@ -454,8 +487,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
               Text(
                 ItemTypeLocalizer.getLocalizedItemType(context, 'coffee'),
                 style: TextStyle(
-                  fontWeight:
-                      widget.itemType == 'coffee' ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: widget.itemType == 'coffee'
+                      ? FontWeight.bold
+                      : FontWeight.normal,
                   color: widget.itemType == 'coffee' ? Colors.brown : null,
                 ),
               ),
@@ -484,9 +518,15 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       return _buildComingSoonTab();
     }
 
-    final filteredItems = ItemProviderHelper.getFilteredItems(ref, widget.itemType);
+    final filteredItems = ItemProviderHelper.getFilteredItems(
+      ref,
+      widget.itemType,
+    );
     final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
-    final activeFilters = ItemProviderHelper.getActiveFilters(ref, widget.itemType);
+    final activeFilters = ItemProviderHelper.getActiveFilters(
+      ref,
+      widget.itemType,
+    );
     final ratingState = ref.watch(ratingProvider);
     final currentUserId = ref.read(authProvider).user?.id;
 
@@ -506,12 +546,13 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
     // Load community stats in batch for all visible items (HTTP/2 multiplexing!)
     final itemIds = itemsToShow.map((item) => item.id!).toList();
-    
+
     // Only update if the item IDs actually changed (prevent infinite loop)
-    final itemIdsChanged = _lastLoadedItemIds == null ||
+    final itemIdsChanged =
+        _lastLoadedItemIds == null ||
         itemIds.length != _lastLoadedItemIds!.length ||
         !_listEquals(itemIds, _lastLoadedItemIds!);
-    
+
     if (itemIdsChanged) {
       // Update the cached list only when it actually changes
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -522,15 +563,12 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         }
       });
     }
-    
+
     // Use cached IDs for provider to prevent recreation on every build
     final idsToLoad = _lastLoadedItemIds ?? itemIds;
     final batchStatsAsync = ref.watch(
       communityStatsProvider(
-        CommunityStatsParams(
-          itemType: widget.itemType,
-          itemIds: idsToLoad,
-        ),
+        CommunityStatsParams(itemType: widget.itemType, itemIds: idsToLoad),
       ),
     );
 
@@ -539,10 +577,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         // Clear all caches for fresh data
         final apiService = ref.read(apiServiceProvider);
         apiService.clearCommunityStatsCache(); // Clear all stats cache
-        
+
         final ratingService = ref.read(ratingServiceProvider);
         ratingService.clearCache(); // Clear all ratings cache
-        
+
         await ItemProviderHelper.refreshItems(ref, widget.itemType);
         ref.read(ratingProvider.notifier).refreshRatings();
         // Invalidate batch stats to force refresh
@@ -551,24 +589,24 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       child: isLoading
           ? const Center(child: CircularProgressIndicator())
           : allItems.isEmpty
-              ? _buildEmptyItemsState()
-              : itemsToShow.isEmpty && activeFilters.isNotEmpty
-                  ? _buildNoFilterResultsState()
-                  : batchStatsAsync.when(
-                      data: (statsMap) => _buildItemsList(
-                        itemsToShow,
-                        ratingState.ratings,
-                        statsMap: statsMap,
-                        showAll: true,
-                      ),
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (e, s) => _buildItemsList(
-                        itemsToShow,
-                        ratingState.ratings,
-                        statsMap: {}, // Empty map on error - placeholders will show
-                        showAll: true,
-                      ),
-                    ),
+          ? _buildEmptyItemsState()
+          : itemsToShow.isEmpty && activeFilters.isNotEmpty
+          ? _buildNoFilterResultsState()
+          : batchStatsAsync.when(
+              data: (statsMap) => _buildItemsList(
+                itemsToShow,
+                ratingState.ratings,
+                statsMap: statsMap,
+                showAll: true,
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, s) => _buildItemsList(
+                itemsToShow,
+                ratingState.ratings,
+                statsMap: {}, // Empty map on error - placeholders will show
+                showAll: true,
+              ),
+            ),
     );
   }
 
@@ -577,9 +615,15 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       return _buildComingSoonTab();
     }
 
-    final filteredItems = ItemProviderHelper.getFilteredItems(ref, widget.itemType);
+    final filteredItems = ItemProviderHelper.getFilteredItems(
+      ref,
+      widget.itemType,
+    );
     final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
-    final activeFilters = ItemProviderHelper.getActiveFilters(ref, widget.itemType);
+    final activeFilters = ItemProviderHelper.getActiveFilters(
+      ref,
+      widget.itemType,
+    );
     final searchQuery = ItemProviderHelper.getSearchQuery(ref, widget.itemType);
     final ratingState = ref.watch(ratingProvider);
     final currentUserId = ref.read(authProvider).user?.id;
@@ -605,13 +649,17 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             .toSet();
 
         // Start with all items that have any ratings, then apply search/category filters
-        var allRatedItems =
-            allItems.where((item) => allRatedItemIds.contains(item.id)).toList();
+        var allRatedItems = allItems
+            .where((item) => allRatedItemIds.contains(item.id))
+            .toList();
 
         // Apply search query if present
         if (searchQuery.isNotEmpty) {
           allRatedItems = allRatedItems
-              .where((item) => item.searchableText.contains(searchQuery.toLowerCase()))
+              .where(
+                (item) =>
+                    item.searchableText.contains(searchQuery.toLowerCase()),
+              )
               .toList();
         }
 
@@ -623,7 +671,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                   // ignore: unnecessary_null_aware_assignment
                   (item) =>
                       item.categories[entry.key]?.toLowerCase() ==
-                      entry.value?.toLowerCase(),
+                      entry.value.toLowerCase(),
                 )
                 .toList();
           }
@@ -633,18 +681,25 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       } else if (ratingSourceFilter == 'personal') {
         // For personal filter, start with items the user has rated
         final personalRatedItemIds = userRatings
-            .where((r) => r.itemType == widget.itemType && r.authorId == currentUserId)
+            .where(
+              (r) =>
+                  r.itemType == widget.itemType && r.authorId == currentUserId,
+            )
             .map((r) => r.itemId)
             .toSet();
 
         // Start with all items that user has rated, then apply search/category filters
-        var personalRatedItems =
-            allItems.where((item) => personalRatedItemIds.contains(item.id)).toList();
+        var personalRatedItems = allItems
+            .where((item) => personalRatedItemIds.contains(item.id))
+            .toList();
 
         // Apply search query if present
         if (searchQuery.isNotEmpty) {
           personalRatedItems = personalRatedItems
-              .where((item) => item.searchableText.contains(searchQuery.toLowerCase()))
+              .where(
+                (item) =>
+                    item.searchableText.contains(searchQuery.toLowerCase()),
+              )
               .toList();
         }
 
@@ -656,7 +711,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                   // ignore: unnecessary_null_aware_assignment
                   (item) =>
                       item.categories[entry.key]?.toLowerCase() ==
-                      entry.value?.toLowerCase(),
+                      entry.value.toLowerCase(),
                 )
                 .toList();
           }
@@ -694,8 +749,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
               : ListView(
                   padding: const EdgeInsets.all(AppConstants.spacingM),
                   children: filteredBaseItems.map((item) {
-                    final myRating =
-                        personalRatings.where((r) => r.itemId == item.id).firstOrNull;
+                    final myRating = personalRatings
+                        .where((r) => r.itemId == item.id)
+                        .firstOrNull;
                     return _buildItemCard(item, myRating, [], false);
                   }).toList(),
                 ),
@@ -713,7 +769,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                   children: filteredBaseItems.map((item) {
                     final myRating = userRatings
                         .where(
-                          (r) => r.authorId == currentUserId && r.itemId == item.id,
+                          (r) =>
+                              r.authorId == currentUserId &&
+                              r.itemId == item.id,
                         )
                         .firstOrNull;
                     final itemRecommendations = userRatings
@@ -758,14 +816,16 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
     // Get items that match the current filters AND have ratings
     final personalItemIds = personalRatings.map((r) => r.itemId).toSet();
-    final personalItems =
-        filteredBaseItems.where((item) => personalItemIds.contains(item.id)).toList();
+    final personalItems = filteredBaseItems
+        .where((item) => personalItemIds.contains(item.id))
+        .toList();
 
     // Get items for shared ratings (items user hasn't rated themselves)
     final sharedItemIds = sharedRatings.map((r) => r.itemId).toSet();
     final sharedOnlyItemIds = sharedItemIds.difference(personalItemIds);
-    final sharedOnlyItems =
-        filteredBaseItems.where((item) => sharedOnlyItemIds.contains(item.id)).toList();
+    final sharedOnlyItems = filteredBaseItems
+        .where((item) => sharedOnlyItemIds.contains(item.id))
+        .toList();
 
     final totalItems = personalItems.length + sharedOnlyItems.length;
 
@@ -775,17 +835,19 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       },
       child: totalItems == 0
           ? (activeFilters.isNotEmpty
-              ? _buildNoFilterResultsState()
-              : _buildEmptyMyListState())
+                ? _buildNoFilterResultsState()
+                : _buildEmptyMyListState())
           : ListView(
               padding: const EdgeInsets.all(AppConstants.spacingM),
               children: [
                 // Items with personal ratings
                 ...personalItems.map((item) {
-                  final myRating =
-                      personalRatings.where((r) => r.itemId == item.id).firstOrNull;
-                  final itemSharedRatings =
-                      sharedRatings.where((r) => r.itemId == item.id).toList();
+                  final myRating = personalRatings
+                      .where((r) => r.itemId == item.id)
+                      .firstOrNull;
+                  final itemSharedRatings = sharedRatings
+                      .where((r) => r.itemId == item.id)
+                      .toList();
                   return _buildItemCard(
                     item,
                     myRating,
@@ -796,8 +858,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
                 // Items with only shared ratings (recommendations)
                 ...sharedOnlyItems.map((item) {
-                  final itemSharedRatings =
-                      sharedRatings.where((r) => r.itemId == item.id).toList();
+                  final itemSharedRatings = sharedRatings
+                      .where((r) => r.itemId == item.id)
+                      .toList();
                   return _buildItemCard(item, null, itemSharedRatings, false);
                 }),
               ],
@@ -818,23 +881,25 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                 Icon(
                   Icons.search_off,
                   size: 80,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
                 const SizedBox(height: AppConstants.spacingL),
                 Text(
                   context.l10n.noResultsFound,
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: AppConstants.spacingM),
                 Text(
                   context.l10n.adjustSearchFilters,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
                 const SizedBox(height: AppConstants.spacingL),
                 OutlinedButton(
@@ -871,8 +936,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             .where((r) => r.itemId == item.id && r.itemType == widget.itemType)
             .toList();
         final currentUserId = ref.watch(authProvider).user?.id;
-        final myRating =
-            itemRatings.where((r) => r.authorId == currentUserId).firstOrNull;
+        final myRating = itemRatings
+            .where((r) => r.authorId == currentUserId)
+            .firstOrNull;
         final sharedRatings = itemRatings
             .where(
               (r) =>
@@ -940,15 +1006,17 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                         Expanded(
                           child: Text(
                             item.displayTitle,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ),
                         const SizedBox(width: AppConstants.spacingS),
                         // Inline rating badges
                         if (showCommunityData)
-                          _buildCommunityRatingsSummary(item.id!, statsMap: statsMap)
+                          _buildCommunityRatingsSummary(
+                            item.id!,
+                            statsMap: statsMap,
+                          )
                         else
                           ..._buildCompactRatingBadges(
                             myRating,
@@ -961,11 +1029,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                     Text(
                       item.displaySubtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.7),
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
                   ],
                 ),
@@ -977,11 +1044,14 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     );
   }
 
-  Widget _buildCommunityRatingsSummary(int itemId, {Map<int, Map<String, dynamic>>? statsMap}) {
+  Widget _buildCommunityRatingsSummary(
+    int itemId, {
+    Map<int, Map<String, dynamic>>? statsMap,
+  }) {
     // If we have preloaded stats from batch request, use them directly
     if (statsMap != null) {
       final stats = statsMap[itemId];
-      
+
       if (stats == null) {
         // Stats not available for this item - show placeholder
         return _buildStatsBadge(
@@ -991,10 +1061,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           isError: false,
         );
       }
-      
+
       final totalRatings = (stats['total_ratings'] as int?) ?? 0;
       final averageRating = ((stats['average_rating'] as num?) ?? 0).toDouble();
-      
+
       if (totalRatings == 0) {
         return _buildStatsBadge(
           icon: Icons.people_outline,
@@ -1003,7 +1073,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           isError: false,
         );
       }
-      
+
       return _buildStatsBadge(
         icon: Icons.people,
         text: '${averageRating.toStringAsFixed(1)} ($totalRatings)',
@@ -1011,7 +1081,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         isError: false,
       );
     }
-    
+
     // Fallback: No batch stats provided - this shouldn't happen in "All Items" tab
     // but keeping for safety
     return _buildStatsBadge(
@@ -1021,7 +1091,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       isError: false,
     );
   }
-  
+
   Widget _buildStatsBadge({
     required IconData icon,
     required String text,
@@ -1034,20 +1104,18 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         vertical: AppConstants.spacingXS,
       ),
       decoration: BoxDecoration(
-        color: isError ? Colors.grey.withValues(alpha: 0.1) : color.withValues(alpha: 0.1),
+        color: isError
+            ? Colors.grey.withValues(alpha: 0.1)
+            : color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppConstants.radiusS),
-        border: isError ? null : Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
+        border: isError
+            ? null
+            : Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: AppConstants.iconS,
-            color: color,
-          ),
+          Icon(icon, size: AppConstants.iconS, color: color),
           const SizedBox(width: AppConstants.spacingXS),
           Text(
             text,
@@ -1132,17 +1200,18 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           Icon(
             Icons.construction,
             size: 80,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.3),
           ),
           const SizedBox(height: AppConstants.spacingL),
           Text(
             context.l10n.comingSoon(
               ItemTypeLocalizer.getLocalizedItemType(context, widget.itemType),
             ),
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -1162,22 +1231,29 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                 Icon(
                   ItemTypeHelper.getItemTypeIcon(widget.itemType),
                   size: 80,
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: AppConstants.spacingL),
                 Text(
                   context.l10n.noItemsAvailable(
-                    ItemTypeLocalizer.getLocalizedItemType(context, widget.itemType),
+                    ItemTypeLocalizer.getLocalizedItemType(
+                      context,
+                      widget.itemType,
+                    ),
                   ),
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: AppConstants.spacingM),
                 Text(
                   context.l10n.addFirstItem(
-                    ItemTypeLocalizer.getLocalizedItemType(context, widget.itemType),
+                    ItemTypeLocalizer.getLocalizedItemType(
+                      context,
+                      widget.itemType,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppConstants.spacingXL),
@@ -1218,18 +1294,26 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                 Icon(
                   Icons.bookmark_border,
                   size: 80,
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: AppConstants.spacingL),
                 Text(
                   context.l10n.yourListEmpty(
-                    ItemTypeLocalizer.getLocalizedItemType(context, widget.itemType),
+                    ItemTypeLocalizer.getLocalizedItemType(
+                      context,
+                      widget.itemType,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppConstants.spacingM),
                 Text(
                   context.l10n.rateItemsToBuild(
-                    ItemTypeLocalizer.getLocalizedItemType(context, widget.itemType),
+                    ItemTypeLocalizer.getLocalizedItemType(
+                      context,
+                      widget.itemType,
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppConstants.spacingXL),
@@ -1255,7 +1339,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
   Widget _buildSearchAndFilter() {
     final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
-    final activeFilters = ItemProviderHelper.getActiveFilters(ref, widget.itemType);
+    final activeFilters = ItemProviderHelper.getActiveFilters(
+      ref,
+      widget.itemType,
+    );
     final searchQuery = ItemProviderHelper.getSearchQuery(ref, widget.itemType);
 
     // Get available filter options for this item type
@@ -1270,7 +1357,12 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         ItemProviderHelper.updateSearchQuery(ref, widget.itemType, query);
       },
       onFilterChanged: (categoryKey, value) {
-        ItemProviderHelper.setCategoryFilter(ref, widget.itemType, categoryKey, value);
+        ItemProviderHelper.setCategoryFilter(
+          ref,
+          widget.itemType,
+          categoryKey,
+          value,
+        );
       },
       onClearFilters: () {
         ItemProviderHelper.clearFilters(ref, widget.itemType);
@@ -1283,7 +1375,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       isPersonalListTab: _tabController.index == 1, // Pass current tab context
     );
   }
-  
+
   // Helper to compare lists
   bool _listEquals(List<int> a, List<int> b) {
     if (a.length != b.length) return false;

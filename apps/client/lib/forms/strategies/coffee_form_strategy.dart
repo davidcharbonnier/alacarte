@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../models/coffee_item.dart';
 import '../../providers/item_provider.dart';
@@ -76,7 +75,10 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
         labelBuilder: (context) => context.l10n.speciesLabel,
         hintBuilder: (context) => context.l10n.selectSpecies,
         options: [
-          DropdownOption(value: '', labelBuilder: (context) => context.l10n.notSpecified),
+          DropdownOption(
+            value: '',
+            labelBuilder: (context) => context.l10n.notSpecified,
+          ),
           DropdownOption(value: 'Arabica', labelBuilder: (_) => 'Arabica'),
           DropdownOption(value: 'Robusta', labelBuilder: (_) => 'Robusta'),
           DropdownOption(value: 'Libérica', labelBuilder: (_) => 'Libérica'),
@@ -102,14 +104,35 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
         labelBuilder: (context) => context.l10n.processingMethodLabel,
         hintBuilder: (context) => context.l10n.selectProcessingMethod,
         options: [
-          DropdownOption(value: '', labelBuilder: (context) => context.l10n.notSpecified),
-          DropdownOption(value: 'Lavé', labelBuilder: (context) => context.l10n.processWashed),
-          DropdownOption(value: 'Nature', labelBuilder: (context) => context.l10n.processNatural),
+          DropdownOption(
+            value: '',
+            labelBuilder: (context) => context.l10n.notSpecified,
+          ),
+          DropdownOption(
+            value: 'Lavé',
+            labelBuilder: (context) => context.l10n.processWashed,
+          ),
+          DropdownOption(
+            value: 'Nature',
+            labelBuilder: (context) => context.l10n.processNatural,
+          ),
           DropdownOption(value: 'Honey', labelBuilder: (_) => 'Honey'),
-          DropdownOption(value: 'Anaérobie', labelBuilder: (context) => context.l10n.processAnaerobic),
-          DropdownOption(value: 'Macération Carbonique', labelBuilder: (context) => context.l10n.processCarbonicMaceration),
-          DropdownOption(value: 'Décortiqué Humide', labelBuilder: (context) => context.l10n.processWetHulled),
-          DropdownOption(value: 'Nature Dépulpé', labelBuilder: (context) => context.l10n.processPulpedNatural),
+          DropdownOption(
+            value: 'Anaérobie',
+            labelBuilder: (context) => context.l10n.processAnaerobic,
+          ),
+          DropdownOption(
+            value: 'Macération Carbonique',
+            labelBuilder: (context) => context.l10n.processCarbonicMaceration,
+          ),
+          DropdownOption(
+            value: 'Décortiqué Humide',
+            labelBuilder: (context) => context.l10n.processWetHulled,
+          ),
+          DropdownOption(
+            value: 'Nature Dépulpé',
+            labelBuilder: (context) => context.l10n.processPulpedNatural,
+          ),
         ],
         icon: Icons.settings,
         required: false,
@@ -128,10 +151,22 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
         labelBuilder: (context) => context.l10n.roastLevelLabel,
         hintBuilder: (context) => context.l10n.selectRoastLevel,
         options: [
-          DropdownOption(value: '', labelBuilder: (context) => context.l10n.notSpecified),
-          DropdownOption(value: 'Pâle', labelBuilder: (context) => context.l10n.roastLight),
-          DropdownOption(value: 'Moyen', labelBuilder: (context) => context.l10n.roastMedium),
-          DropdownOption(value: 'Foncé', labelBuilder: (context) => context.l10n.roastDark),
+          DropdownOption(
+            value: '',
+            labelBuilder: (context) => context.l10n.notSpecified,
+          ),
+          DropdownOption(
+            value: 'Pâle',
+            labelBuilder: (context) => context.l10n.roastLight,
+          ),
+          DropdownOption(
+            value: 'Moyen',
+            labelBuilder: (context) => context.l10n.roastMedium,
+          ),
+          DropdownOption(
+            value: 'Foncé',
+            labelBuilder: (context) => context.l10n.roastDark,
+          ),
         ],
         icon: Icons.whatshot,
         required: false,
@@ -153,10 +188,22 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
         labelBuilder: (context) => context.l10n.acidityLabel,
         hintBuilder: (context) => context.l10n.selectAcidity,
         options: [
-          DropdownOption(value: '', labelBuilder: (context) => context.l10n.notSpecified),
-          DropdownOption(value: 'Faible', labelBuilder: (context) => context.l10n.intensityLow),
-          DropdownOption(value: 'Moyen', labelBuilder: (context) => context.l10n.intensityMedium),
-          DropdownOption(value: 'Élevé', labelBuilder: (context) => context.l10n.intensityHigh),
+          DropdownOption(
+            value: '',
+            labelBuilder: (context) => context.l10n.notSpecified,
+          ),
+          DropdownOption(
+            value: 'Faible',
+            labelBuilder: (context) => context.l10n.intensityLow,
+          ),
+          DropdownOption(
+            value: 'Moyen',
+            labelBuilder: (context) => context.l10n.intensityMedium,
+          ),
+          DropdownOption(
+            value: 'Élevé',
+            labelBuilder: (context) => context.l10n.intensityHigh,
+          ),
         ],
         icon: Icons.water_drop,
         required: false,
@@ -168,10 +215,22 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
         labelBuilder: (context) => context.l10n.bodyLabel,
         hintBuilder: (context) => context.l10n.selectBody,
         options: [
-          DropdownOption(value: '', labelBuilder: (context) => context.l10n.notSpecified),
-          DropdownOption(value: 'Faible', labelBuilder: (context) => context.l10n.bodyLight),
-          DropdownOption(value: 'Moyen', labelBuilder: (context) => context.l10n.bodyMedium),
-          DropdownOption(value: 'Élevé', labelBuilder: (context) => context.l10n.bodyFull),
+          DropdownOption(
+            value: '',
+            labelBuilder: (context) => context.l10n.notSpecified,
+          ),
+          DropdownOption(
+            value: 'Faible',
+            labelBuilder: (context) => context.l10n.bodyLight,
+          ),
+          DropdownOption(
+            value: 'Moyen',
+            labelBuilder: (context) => context.l10n.bodyMedium,
+          ),
+          DropdownOption(
+            value: 'Élevé',
+            labelBuilder: (context) => context.l10n.bodyFull,
+          ),
         ],
         icon: Icons.fitness_center,
         required: false,
@@ -183,10 +242,22 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
         labelBuilder: (context) => context.l10n.sweetnessLabel,
         hintBuilder: (context) => context.l10n.selectSweetness,
         options: [
-          DropdownOption(value: '', labelBuilder: (context) => context.l10n.notSpecified),
-          DropdownOption(value: 'Faible', labelBuilder: (context) => context.l10n.intensityLow),
-          DropdownOption(value: 'Moyen', labelBuilder: (context) => context.l10n.intensityMedium),
-          DropdownOption(value: 'Élevé', labelBuilder: (context) => context.l10n.intensityHigh),
+          DropdownOption(
+            value: '',
+            labelBuilder: (context) => context.l10n.notSpecified,
+          ),
+          DropdownOption(
+            value: 'Faible',
+            labelBuilder: (context) => context.l10n.intensityLow,
+          ),
+          DropdownOption(
+            value: 'Moyen',
+            labelBuilder: (context) => context.l10n.intensityMedium,
+          ),
+          DropdownOption(
+            value: 'Élevé',
+            labelBuilder: (context) => context.l10n.intensityHigh,
+          ),
         ],
         icon: Icons.cake,
         required: false,
@@ -231,8 +302,12 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
       'altitude': TextEditingController(text: initialItem?.altitude ?? ''),
       'species': TextEditingController(text: initialItem?.species ?? ''),
       'variety': TextEditingController(text: initialItem?.variety ?? ''),
-      'processing_method': TextEditingController(text: initialItem?.processingMethod ?? ''),
-      'decaffeinated': TextEditingController(text: initialItem?.decaffeinated == true ? 'true' : 'false'),
+      'processing_method': TextEditingController(
+        text: initialItem?.processingMethod ?? '',
+      ),
+      'decaffeinated': TextEditingController(
+        text: initialItem?.decaffeinated == true ? 'true' : 'false',
+      ),
       'roast_level': TextEditingController(text: initialItem?.roastLevel ?? ''),
       'tasting_notes': TextEditingController(
         text: initialItem?.tastingNotes?.join(', ') ?? '',
@@ -240,9 +315,15 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
       'acidity': TextEditingController(text: initialItem?.acidity ?? ''),
       'body': TextEditingController(text: initialItem?.body ?? ''),
       'sweetness': TextEditingController(text: initialItem?.sweetness ?? ''),
-      'organic': TextEditingController(text: initialItem?.organic == true ? 'true' : 'false'),
-      'fair_trade': TextEditingController(text: initialItem?.fairTrade == true ? 'true' : 'false'),
-      'description': TextEditingController(text: initialItem?.description ?? ''),
+      'organic': TextEditingController(
+        text: initialItem?.organic == true ? 'true' : 'false',
+      ),
+      'fair_trade': TextEditingController(
+        text: initialItem?.fairTrade == true ? 'true' : 'false',
+      ),
+      'description': TextEditingController(
+        text: initialItem?.description ?? '',
+      ),
     };
   }
 
@@ -311,7 +392,7 @@ class CoffeeFormStrategy extends ItemFormStrategy<CoffeeItem> {
 
   @override
   StateNotifierProvider<ItemProvider<CoffeeItem>, ItemState<CoffeeItem>>
-      getProvider() {
+  getProvider() {
     return coffeeItemProvider;
   }
 

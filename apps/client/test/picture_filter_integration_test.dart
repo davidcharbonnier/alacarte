@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:alc_client/widgets/common/item_search_filter.dart';
-import 'package:alc_client/utils/localization_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:alc_client/flutter_gen/gen_l10n/app_localizations.dart';
@@ -39,19 +38,8 @@ void main() {
     testWidgets('should display picture filter chip', (
       WidgetTester tester,
     ) async {
-      // Arrange
-      String? capturedFilterKey;
-      String? capturedFilterValue;
-
       // Act
-      await tester.pumpWidget(
-        createTestWidget(
-          onFilterChanged: (key, value) {
-            capturedFilterKey = key;
-            capturedFilterValue = value;
-          },
-        ),
-      );
+      await tester.pumpWidget(createTestWidget(onFilterChanged: (_, __) {}));
 
       // Wait for localization to load
       await tester.pumpAndSettle();
@@ -141,17 +129,10 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      String? capturedFilterKey;
-      String? capturedFilterValue;
-      bool clearFiltersCalled = false;
-
       await tester.pumpWidget(
         createTestWidget(
           activeFilters: {'has_picture': 'true'},
-          onFilterChanged: (key, value) {
-            capturedFilterKey = key;
-            capturedFilterValue = value;
-          },
+          onFilterChanged: (_, __) {},
         ),
       );
 
@@ -162,10 +143,7 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           activeFilters: {}, // Cleared filters
-          onFilterChanged: (key, value) {
-            capturedFilterKey = key;
-            capturedFilterValue = value;
-          },
+          onFilterChanged: (_, __) {},
         ),
       );
 

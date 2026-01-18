@@ -11,7 +11,8 @@ import '../../utils/localization_utils.dart';
 /// Dialog for sharing/unsharing a rating with users
 class ShareRatingDialog extends ConsumerStatefulWidget {
   final Rating rating;
-  final Function(List<int> shareWithUserIds, List<int> removeFromUserIds) onShare;
+  final Function(List<int> shareWithUserIds, List<int> removeFromUserIds)
+  onShare;
   final List<int>? currentlySharedWith; // Pre-selected users
 
   const ShareRatingDialog({
@@ -52,24 +53,28 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
     try {
       final apiService = ref.read(apiServiceProvider);
       final response = await apiService.getShareableUsers();
-      
+
       response.when(
         success: (data, _) {
           // The backend returns {"previous_connections": [], "discoverable": []}
           // Handle potential null values safely
           final previousConnectionsData = data['previous_connections'] as List?;
           final discoverableData = data['discoverable'] as List?;
-          
+
           final previousConnections = (previousConnectionsData ?? [])
-              .map((userData) => User.fromJson(userData as Map<String, dynamic>))
+              .map(
+                (userData) => User.fromJson(userData as Map<String, dynamic>),
+              )
               .toList();
           final discoverableUsers = (discoverableData ?? [])
-              .map((userData) => User.fromJson(userData as Map<String, dynamic>))
+              .map(
+                (userData) => User.fromJson(userData as Map<String, dynamic>),
+              )
               .toList();
-          
+
           // Combine both lists
           _allUsers = [...previousConnections, ...discoverableUsers];
-          
+
           // Sort alphabetically by display name (A to Z, case-insensitive)
           _allUsers.sort((a, b) {
             final nameA = a.displayName.isNotEmpty ? a.displayName : a.fullName;
@@ -95,7 +100,7 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
 
   void _toggleUserSelection(int? userId) {
     if (userId == null) return;
-    
+
     setState(() {
       if (_selectedUserIds.contains(userId)) {
         _selectedUserIds.remove(userId);
@@ -108,15 +113,15 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
   bool get _hasChanges {
     // Compare current selection with initial state
     if (_selectedUserIds.length != _initiallySharedWith.length) return true;
-    
+
     for (final userId in _selectedUserIds) {
       if (!_initiallySharedWith.contains(userId)) return true;
     }
-    
+
     for (final userId in _initiallySharedWith) {
       if (!_selectedUserIds.contains(userId)) return true;
     }
-    
+
     return false;
   }
 
@@ -132,12 +137,12 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
       final shareWithUserIds = _selectedUserIds
           .where((userId) => !_initiallySharedWith.contains(userId))
           .toList();
-      
+
       // Calculate which users to remove (previously selected but now unselected)
       final removeFromUserIds = _initiallySharedWith
           .where((userId) => !_selectedUserIds.contains(userId))
           .toList();
-      
+
       widget.onShare(shareWithUserIds, removeFromUserIds);
     }
     Navigator.of(context).pop();
@@ -147,10 +152,7 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       child: Container(
-        constraints: const BoxConstraints(
-          maxWidth: 500,
-          maxHeight: 600,
-        ),
+        constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -180,24 +182,28 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
                 ],
               ),
             ),
-            
+
             const Divider(height: 1),
-            
+
             // Instructions
             Padding(
               padding: AppConstants.cardPadding,
               child: Text(
                 context.l10n.selectUsersToShare,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ),
-            
+
             // Make Private button (if currently shared with anyone)
             if (_initiallySharedWith.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.spacingM),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.spacingM,
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -206,22 +212,22 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
                     label: Text(context.l10n.makePrivate),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Theme.of(context).colorScheme.error,
-                      side: BorderSide(color: Theme.of(context).colorScheme.error),
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ),
                 ),
               ),
-            
+
             if (_initiallySharedWith.isNotEmpty)
               const SizedBox(height: AppConstants.spacingM),
-            
+
             // User list
-            Expanded(
-              child: _buildUserList(),
-            ),
-            
+            Expanded(child: _buildUserList()),
+
             const Divider(height: 1),
-            
+
             // Action buttons
             Padding(
               padding: AppConstants.cardPadding,
@@ -235,7 +241,11 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
                   const SizedBox(width: AppConstants.spacingS),
                   ElevatedButton(
                     onPressed: _hasChanges ? _saveChanges : null,
-                    child: Text(_hasChanges ? context.l10n.saveChanges : context.l10n.noChanges),
+                    child: Text(
+                      _hasChanges
+                          ? context.l10n.saveChanges
+                          : context.l10n.noChanges,
+                    ),
                   ),
                 ],
               ),
@@ -302,7 +312,9 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
               Icon(
                 Icons.person_off,
                 size: AppConstants.iconXL,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               const SizedBox(height: AppConstants.spacingM),
               Text(
@@ -322,15 +334,15 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
       itemBuilder: (context, index) {
         final user = _allUsers[index];
         final userId = user.id;
-        
+
         // Skip users with null or invalid IDs
         // ignore: unnecessary_null_comparison
         if (userId == null) {
           return const SizedBox.shrink();
         }
-        
+
         final isSelected = _selectedUserIds.contains(userId);
-        
+
         // ignore: sort_child_properties_last
         return Card(
           margin: const EdgeInsets.only(bottom: AppConstants.spacingS),
@@ -339,11 +351,11 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
             onChanged: (value) => _toggleUserSelection(userId),
             title: Text(
               user.displayName.isNotEmpty ? user.displayName : user.fullName,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
-            subtitle: kDebugMode 
+            subtitle: kDebugMode
                 ? Text('ID: $userId') // Debug info only in development
                 : null, // No sensitive info in production
             secondary: _buildUserAvatar(user, isSelected),
@@ -355,41 +367,45 @@ class _ShareRatingDialogState extends ConsumerState<ShareRatingDialog> {
 
   Widget _buildUserAvatar(User user, bool isSelected) {
     final avatarUrl = user.avatar;
-    final userName = user.displayName.isNotEmpty ? user.displayName : user.fullName;
-    
-    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+    final userName = user.displayName.isNotEmpty
+        ? user.displayName
+        : user.fullName;
+
+    if (avatarUrl.isNotEmpty) {
       return CircleAvatar(
         backgroundImage: NetworkImage(avatarUrl),
-        backgroundColor: isSelected 
-          ? AppConstants.primaryColor.withValues(alpha: 0.1)
-          : Theme.of(context).colorScheme.surfaceContainerHighest,
+        backgroundColor: isSelected
+            ? AppConstants.primaryColor.withValues(alpha: 0.1)
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
         onBackgroundImageError: (exception, stackTrace) {
           // Fallback will be handled by child
         },
-        child: avatarUrl.isEmpty ? Text(
-          userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-          style: TextStyle(
-            color: isSelected 
-              ? AppConstants.primaryColor 
-              : Theme.of(context).colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
-          ),
-        ) : null,
+        child: avatarUrl.isEmpty
+            ? Text(
+                userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                style: TextStyle(
+                  color: isSelected
+                      ? AppConstants.primaryColor
+                      : Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            : null,
         // Add selection indicator overlay
         foregroundColor: isSelected ? AppConstants.primaryColor : null,
       );
     } else {
       // Fallback to initials with selection state
       return CircleAvatar(
-        backgroundColor: isSelected 
-          ? AppConstants.primaryColor 
-          : Theme.of(context).colorScheme.outline,
+        backgroundColor: isSelected
+            ? AppConstants.primaryColor
+            : Theme.of(context).colorScheme.outline,
         child: Text(
           userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
           style: TextStyle(
-            color: isSelected 
-              ? Colors.white 
-              : Theme.of(context).colorScheme.onSurface,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),

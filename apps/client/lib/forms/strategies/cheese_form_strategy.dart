@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../models/cheese_item.dart';
 import '../../providers/item_provider.dart';
@@ -101,7 +100,7 @@ class CheeseFormStrategy extends ItemFormStrategy<CheeseItem> {
 
   @override
   StateNotifierProvider<ItemProvider<CheeseItem>, ItemState<CheeseItem>>
-      getProvider() {
+  getProvider() {
     return cheeseItemProvider;
   }
 

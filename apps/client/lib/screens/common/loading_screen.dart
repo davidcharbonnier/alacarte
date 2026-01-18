@@ -16,7 +16,9 @@ class LoadingScreen extends ConsumerWidget {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppConstants.maxContentWidth),
+            constraints: const BoxConstraints(
+              maxWidth: AppConstants.maxContentWidth,
+            ),
             child: Padding(
               padding: AppConstants.screenPadding,
               child: Column(
@@ -26,10 +28,14 @@ class LoadingScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(AppConstants.spacingXL),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.2),
                         width: 2,
                       ),
                     ),
@@ -57,7 +63,9 @@ class LoadingScreen extends ConsumerWidget {
                   Text(
                     context.l10n.welcomeSubtitle,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -87,9 +95,11 @@ class LoadingScreen extends ConsumerWidget {
                           // Progress hint
                           Text(
                             context.l10n.settingUpPreferenceHub,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
+                                ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -150,19 +160,17 @@ class LoadingScreen extends ConsumerWidget {
       statusIcon = Icons.dashboard_customize;
     } else {
       // Default loading state for any other messages
-      statusColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8);
+      statusColor = Theme.of(
+        context,
+      ).colorScheme.onSurface.withValues(alpha: 0.8);
       statusIcon = Icons.hourglass_empty;
     }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (statusIcon != null) ...[
-          Icon(
-            statusIcon,
-            size: AppConstants.iconS,
-            color: statusColor,
-          ),
+        ...[
+          Icon(statusIcon, size: AppConstants.iconS, color: statusColor),
           const SizedBox(width: AppConstants.spacingS),
         ],
         Flexible(
