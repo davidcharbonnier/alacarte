@@ -347,3 +347,41 @@ func RequireAuth() gin.HandlerFunc {
 ---
 
 **This authentication system provides a secure, scalable backend foundation that integrates seamlessly with Google OAuth while maintaining the flexibility to add additional authentication methods in the future.**
+
+### Additional Authentication Routes
+
+- **POST `/auth/refresh`** – Accepts a valid refresh token and returns a new JWT.
+  - Request body: `{ "refresh_token": "<token>" }`
+  - Response: `{ "token": "<new-jwt>", "expires_in": 3600 }`
+  - Errors: `401 Unauthorized` if the refresh token is missing or invalid.
+
+- **POST `/auth/logout`** – Revokes the current refresh token (or clears client‑side storage).
+  - No request body required; the JWT is taken from the `Authorization` header.
+  - Response: `{ "message": "Logged out" }`.
+
+### Profile Management Routes (partial auth)
+
+- **POST `/profile/complete`** – Completes a user's profile (display name, discoverable flag, etc.).
+  - Guarded by `RequirePartialAuth` (user must be authenticated but profile may be incomplete).
+
+- **GET `/profile/check-display-name`** – Checks whether a desired display name is already taken.
+  - Also guarded by `RequirePartialAuth`.
+
+### Middleware & Guards (updated imports)
+
+```go
+// middleware/auth.go
+package middleware
+
+import (
+    "net/http"
+    "strings"
+    "github.com/gin-gonic/gin"
+    "github.com/davidcharbonnier/alacarte-api/models"
+    "github.com/davidcharbonnier/alacarte-api/utils"
+)
+```
+
+- `RequireAuth` now uses the correct import path and ensures the user has completed their profile (`user.HasCompletedSetup()`).
+- New guard `RequirePartialAuth` validates the JWT but does **not** require a completed profile, allowing the profile‑completion endpoints to be accessed.
+

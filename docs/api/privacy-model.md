@@ -56,29 +56,30 @@ import (
 )
 
 type User struct {
-    gorm.Model
-    
-    // Authentication fields
-    GoogleID    string `gorm:"uniqueIndex;not null" json:"google_id"`
-    Email       string `gorm:"uniqueIndex;not null" json:"email"`
-    FullName    string `gorm:"not null" json:"full_name"`
-    Avatar      string `json:"avatar"`
-    
-    // Privacy fields
-    DisplayName  string `gorm:"uniqueIndex" json:"display_name"`
-    Discoverable bool   `gorm:"default:true" json:"discoverable"`
-    
-    // Relationships
-    Ratings           []Rating `gorm:"foreignKey:UserID" json:"ratings,omitempty"`
-    SharedRatings     []Rating `gorm:"many2many:rating_viewers;" json:"shared_ratings,omitempty"`
-    
-    // Timestamps
-    LastLoginAt time.Time `json:"last_login_at"`
+	gorm.Model
+	
+	// Authentication fields
+	GoogleID    string `gorm:"uniqueIndex;not null" json:"google_id"`
+	Email       string `gorm:"uniqueIndex;not null" json:"email"`
+	FullName    string `gorm:"not null" json:"full_name"`
+	Avatar      string `json:"avatar"`
+	
+	// Privacy fields
+	DisplayName      string `gorm:"uniqueIndex" json:"display_name"`
+	Discoverable     bool   `gorm:"default:true" json:"discoverable"`
+	ProfileCompleted bool   `gorm:"default:false" json:"profile_completed"`
+	IsAdmin          bool   `gorm:"default:false" json:"is_admin"`
+	
+	// Relationships
+	Ratings []Rating `gorm:"foreignKey:UserID" json:"ratings,omitempty"`
+	
+	// Timestamps
+	LastLoginAt time.Time `json:"last_login_at"`
 }
 
 // Privacy methods
 func (u *User) HasCompletedSetup() bool {
-    return u.DisplayName != ""
+    return u.DisplayName != "" && u.ProfileCompleted
 }
 
 func (u *User) CanBeDiscoveredBy(requesterID uint) bool {
@@ -86,6 +87,20 @@ func (u *User) CanBeDiscoveredBy(requesterID uint) bool {
         return false // Users can't discover themselves
     }
     return u.Discoverable
+}
+
+// Generate a privacy‑friendly display name from the full name
+func (u *User) GenerateDisplayName() string {
+    if u.FullName == "" {
+        return ""
+    }
+    parts := strings.Fields(u.FullName)
+    if len(parts) == 1 {
+        return parts[0]
+    }
+    firstName := parts[0]
+    lastInitial := strings.ToUpper(string(parts[len(parts)-1][0]))
+    return fmt.Sprintf("%s %s.", firstName, lastInitial)
 }
 ```
 
@@ -147,82 +162,34 @@ package controllers
 import (
     "net/http"
     "strconv"
+    "github.com/davidcharbonnier/alacarte-api/models"
+    "github.com/davidcharbonnier/alacarte-api/utils"
     "github.com/gin-gonic/gin"
-    "github.com/davidcharbonnier/rest-api/models"
-    "github.com/davidcharbonnier/rest-api/utils"
 )
 
-// Get user's complete reference list (own + shared ratings)
+// Get user's reference list (own + shared ratings)
 func RatingByViewer(c *gin.Context) {
-    userID, err := strconv.Atoi(c.Param("id"))
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-        return
-    }
-    
-    // Ensure user can only access their own reference list
-    currentUserID := getCurrentUserID(c)
-    if uint(userID) != currentUserID {
-        c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-        return
-    }
-    
-    itemType := c.DefaultQuery("type", "%")
-    
-    var ratings []models.Rating
-    err = utils.GetUserReferenceList(utils.DB, currentUserID, itemType).Find(&ratings).Error
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get ratings"})
-        return
-    }
-    
-    c.JSON(http.StatusOK, ratings)
+    // implementation matches GET /api/rating/viewer/:id
 }
 
 // Share rating with specific users
 func RatingShare(c *gin.Context) {
-    ratingID, err := strconv.Atoi(c.Param("id"))
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid rating ID"})
-        return
-    }
-    
-    var body struct {
-        UserIDs []int `json:"user_ids" binding:"required"`
-    }
-    
-    if err := c.ShouldBindJSON(&body); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-        return
-    }
-    
-    // Get rating and verify ownership
-    var rating models.Rating
-    if err := utils.DB.Preload("Viewers").First(&rating, ratingID).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Rating not found"})
-        return
-    }
-    
-    currentUserID := getCurrentUserID(c)
-    if uint(rating.UserID) != currentUserID {
-        c.JSON(http.StatusForbidden, gin.H{"error": "You can only share your own ratings"})
-        return
-    }
-    
-    // Get users to share with
-    var usersToAdd []models.User
-    if err := utils.DB.Where("id IN ?", body.UserIDs).Find(&usersToAdd).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get users"})
-        return
-    }
-    
-    // Add new viewers (GORM handles duplicates)
-    if err := utils.DB.Model(&rating).Association("Viewers").Append(&usersToAdd); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to share rating"})
-        return
-    }
-    
-    c.JSON(http.StatusOK, gin.H{"message": "Rating shared successfully"})
+    // implementation matches PUT /api/rating/:id/share
+}
+
+// Hide rating from specific users (legacy)
+func RatingHide(c *gin.Context) {
+    // implementation matches PUT /api/rating/:id/hide
+}
+
+// Bulk make all ratings private
+func BulkMakeRatingsPrivate(c *gin.Context) {
+    // implementation matches PUT /api/rating/bulk/private
+}
+
+// Bulk remove a user from all shared ratings
+func BulkRemoveUserFromShares(c *gin.Context) {
+    // implementation matches PUT /api/rating/bulk/unshare/:userId
 }
 ```
 
