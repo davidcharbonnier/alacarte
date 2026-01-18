@@ -69,9 +69,10 @@ If backend unreachable → Throw "ServiceUnavailable" → Redirect to /login?err
 - GORM to JavaScript data transformation for session user data
 
 **`middleware.ts`** - Route protection
-- Checks session existence
-- Redirects unauthenticated users to /login
-- Admin check performed during login (not in middleware)
+- Uses NextAuth `auth` wrapper to protect routes
+- Redirects unauthenticated users to `/login`
+- Allows access to the login page for unauthenticated users
+- Admin verification is performed in the JWT callback of `auth.ts`; backend API routes can additionally use the `RequireAdmin` middleware from `utils/auth.go` for extra protection.
 
 **`lib/api/client.ts`** - API client
 - Adds backend JWT to all requests
@@ -187,7 +188,15 @@ const errorInfo = getErrorMessage(error);
 
 ---
 
+## Error Handling (continued)
+
+### API Client Error Handling
+
+The `apiClient` in `lib/api/client.ts` automatically redirects the user to the sign‑in page when a 401 response is received from the backend, ensuring a seamless re‑authentication flow.
+
 ## Security Features
+
+- **JWT Validation** – Backend validates every API request using the `RequireAuth` middleware, ensuring tokens are checked on each call.
 
 ### Built-in Security
 
