@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../models/wine_item.dart';
 import '../../models/wine_color.dart';
@@ -130,7 +129,9 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
       'producer': TextEditingController(text: initialItem?.producer ?? ''),
       'region': TextEditingController(text: initialItem?.region ?? ''),
       'grape': TextEditingController(text: initialItem?.grape ?? ''),
-      'designation': TextEditingController(text: initialItem?.designation ?? ''),
+      'designation': TextEditingController(
+        text: initialItem?.designation ?? '',
+      ),
       'alcohol': TextEditingController(
         text: initialItem?.alcohol != null && initialItem!.alcohol! > 0
             ? initialItem.alcohol.toString()
@@ -187,7 +188,7 @@ class WineFormStrategy extends ItemFormStrategy<WineItem> {
 
   @override
   StateNotifierProvider<ItemProvider<WineItem>, ItemState<WineItem>>
-      getProvider() {
+  getProvider() {
     return wineItemProvider;
   }
 

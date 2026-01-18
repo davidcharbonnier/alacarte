@@ -41,10 +41,7 @@ class AuthService {
   bool _initialized = false;
 
   // Scopes required for authentication
-  static const List<String> _requiredScopes = [
-    'email',
-    'profile',
-  ];
+  static const List<String> _requiredScopes = ['email', 'profile'];
 
   AuthService(this._apiService) {
     _ensureInitialized();
@@ -75,8 +72,9 @@ class AuthService {
 
       // Step 1: Authenticate user (get idToken)
       if (kDebugMode) print('🔐 Starting Google authentication...');
-      final GoogleSignInAccount? account = await GoogleSignIn.instance.authenticate();
-      
+      final GoogleSignInAccount? account = await GoogleSignIn.instance
+          .authenticate();
+
       if (account == null) {
         // User cancelled sign-in
         if (kDebugMode) print('❌ User cancelled sign-in');
@@ -86,17 +84,18 @@ class AuthService {
       // Step 2: Get authentication tokens (idToken)
       if (kDebugMode) print('🔑 Getting authentication tokens...');
       final GoogleSignInAuthentication auth = await account.authentication;
-      
+
       if (auth.idToken == null) {
         return const AuthResult.error('Failed to get Google ID token');
       }
 
       // Step 3: Get authorization (accessToken) for required scopes
       if (kDebugMode) print('🔓 Requesting authorization for scopes...');
-      final GoogleSignInClientAuthorization? authorization = 
-          await account.authorizationClient.authorizeScopes(_requiredScopes);
-      
-      if (authorization == null || authorization.accessToken == null) {
+      final GoogleSignInClientAuthorization? authorization = await account
+          .authorizationClient
+          .authorizeScopes(_requiredScopes);
+
+      if (authorization == null) {
         return const AuthResult.error('Failed to get authorization tokens');
       }
 
@@ -104,10 +103,10 @@ class AuthService {
 
       // Exchange Google tokens for our JWT token
       final response = await _apiService.googleOAuthExchange(
-        auth.idToken!, 
-        authorization.accessToken!,
+        auth.idToken!,
+        authorization.accessToken,
       );
-      
+
       if (response is ApiSuccess<Map<String, dynamic>>) {
         final data = response.data;
         final user = User.fromJson(data['user'] as Map<String, dynamic>);
