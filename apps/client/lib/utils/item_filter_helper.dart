@@ -13,7 +13,26 @@ class ItemFilterHelper {
     bool isPersonalListTab,
   ) {
     var filtered = items;
-    
+
+    // Apply picture filter first (works on all tabs)
+    final pictureFilter = filters['has_picture'];
+    if (pictureFilter != null) {
+      final hasPictureFilter = pictureFilter.toLowerCase() == 'true';
+      filtered = filtered.where((item) {
+        // Check if item has imageUrl field and it's not null/empty
+        try {
+          final itemJson = item.toJson();
+          final imageUrl = itemJson['image_url'] as String?;
+          return hasPictureFilter
+              ? imageUrl != null && imageUrl.isNotEmpty
+              : imageUrl == null || imageUrl.isEmpty;
+        } catch (e) {
+          // If we can't determine, exclude from filter
+          return !hasPictureFilter;
+        }
+      }).toList();
+    }
+
     if (isPersonalListTab) {
       // Personal list tab: filter by rating source
       final ratingSourceFilter = filters['rating_source'];
@@ -25,19 +44,29 @@ class ItemFilterHelper {
                 .where((r) => r.authorId == currentUserId)
                 .map((r) => r.itemId)
                 .toSet();
-            
-            filtered = filtered.where((item) => personalRatedIds.contains(item.id)).toList();
+
+            filtered = filtered
+                .where((item) => personalRatedIds.contains(item.id))
+                .toList();
             break;
-            
+
           case 'recommendations':
             // Items that others have recommended to the user (shared with them)
-            final otherUsersRatings = userRatings.where((r) => r.authorId != currentUserId).toList();
-            
-            final visibleRecommendations = otherUsersRatings.where((r) => r.isVisibleToUser(currentUserId)).toList();
-            
-            final recommendedItemIds = visibleRecommendations.map((r) => r.itemId).toSet();
-            
-            filtered = filtered.where((item) => recommendedItemIds.contains(item.id)).toList();
+            final otherUsersRatings = userRatings
+                .where((r) => r.authorId != currentUserId)
+                .toList();
+
+            final visibleRecommendations = otherUsersRatings
+                .where((r) => r.isVisibleToUser(currentUserId))
+                .toList();
+
+            final recommendedItemIds = visibleRecommendations
+                .map((r) => r.itemId)
+                .toSet();
+
+            filtered = filtered
+                .where((item) => recommendedItemIds.contains(item.id))
+                .toList();
             break;
         }
       }
@@ -51,52 +80,56 @@ class ItemFilterHelper {
             // Note: This would need community rating data to work properly
             // For now, filter by items that current user has interacted with
             final ratedItemIds = userRatings.map((r) => r.itemId).toSet();
-            filtered = filtered.where((item) => ratedItemIds.contains(item.id)).toList();
+            filtered = filtered
+                .where((item) => ratedItemIds.contains(item.id))
+                .toList();
             break;
-            
+
           case 'no_ratings':
             // Items with no ratings from current user (approximation)
             final ratedItemIds = userRatings.map((r) => r.itemId).toSet();
-            filtered = filtered.where((item) => !ratedItemIds.contains(item.id)).toList();
+            filtered = filtered
+                .where((item) => !ratedItemIds.contains(item.id))
+                .toList();
             break;
         }
       }
     }
-    
+
     return filtered;
   }
-  
+
   /// Get available filter options for an item type
   static Map<String, List<String>> getAvailableFilters<T extends RateableItem>(
     List<T> items,
     String itemType,
   ) {
     final filterOptions = <String, Set<String>>{};
-    
+
     // Extract all unique values for each category
     for (final item in items) {
       for (final category in item.categories.entries) {
-        filterOptions.putIfAbsent(category.key, () => <String>{}).add(category.value);
+        filterOptions
+            .putIfAbsent(category.key, () => <String>{})
+            .add(category.value);
       }
     }
-    
+
     // Convert sets to sorted lists with locale-aware comparison
-    return filterOptions.map(
-      (key, valueSet) {
-        final sortedList = valueSet.toList();
-        sortedList.sort((a, b) => _compareLocaleAware(a, b));
-        return MapEntry(key, sortedList);
-      },
-    );
+    return filterOptions.map((key, valueSet) {
+      final sortedList = valueSet.toList();
+      sortedList.sort((a, b) => _compareLocaleAware(a, b));
+      return MapEntry(key, sortedList);
+    });
   }
-  
+
   /// Locale-aware string comparison using diacritic package
   static int _compareLocaleAware(String a, String b) {
-    return removeDiacritics(a).toLowerCase().compareTo(
-      removeDiacritics(b).toLowerCase()
-    );
+    return removeDiacritics(
+      a,
+    ).toLowerCase().compareTo(removeDiacritics(b).toLowerCase());
   }
-  
+
   /// Get localized search hint for item type
   static String getSearchHint(String itemType) {
     switch (itemType.toLowerCase()) {
