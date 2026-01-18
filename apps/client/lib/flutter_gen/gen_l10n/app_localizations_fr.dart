@@ -826,6 +826,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get unratedFilter => 'Non évalué';
 
   @override
+  String get withPictureFilter => 'Avec Image';
+
+  @override
   String get allFilterOption => 'Tous';
 
   @override

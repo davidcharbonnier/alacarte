@@ -125,7 +125,9 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
             },
             icon: const Icon(Icons.clear),
             iconSize: AppConstants.iconM,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
 
         // Filter toggle button (only show if filters are available)
@@ -235,6 +237,16 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
   }
 
   List<Widget> _buildRatingFilters() {
+    final pictureFilterChip = FilterChip(
+      label: Text(context.l10n.withPictureFilter),
+      selected: widget.activeFilters['has_picture'] == 'true',
+      onSelected: (selected) {
+        widget.onFilterChanged('has_picture', selected ? 'true' : null);
+      },
+      selectedColor: AppConstants.primaryColor.withValues(alpha: 0.2),
+      checkmarkColor: AppConstants.primaryColor,
+    );
+
     if (widget.isPersonalListTab) {
       // Personal list tab: filter by rating source
       return [
@@ -262,6 +274,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
           selectedColor: AppConstants.primaryColor.withValues(alpha: 0.2),
           checkmarkColor: AppConstants.primaryColor,
         ),
+        pictureFilterChip,
       ];
     } else {
       // All items tab: filter by rating existence
@@ -290,6 +303,7 @@ class _ItemSearchAndFilterState extends ConsumerState<ItemSearchAndFilter> {
           selectedColor: AppConstants.primaryColor.withValues(alpha: 0.2),
           checkmarkColor: AppConstants.primaryColor,
         ),
+        pictureFilterChip,
       ];
     }
   }
@@ -425,18 +439,14 @@ class _FilterSelectionDialog extends StatelessWidget {
                     // "All" option
                     ListTile(
                       title: Text(context.l10n.allFilterOption),
-                      leading: Radio<String?>(
-                        value: null,
-                      ),
+                      leading: Radio<String?>(value: null),
                     ),
 
                     // Individual options
                     ...options.map(
                       (option) => ListTile(
                         title: Text(option),
-                        leading: Radio<String?>(
-                          value: option,
-                        ),
+                        leading: Radio<String?>(value: option),
                       ),
                     ),
                   ],

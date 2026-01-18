@@ -1406,6 +1406,12 @@ abstract class AppLocalizations {
   /// **'Unrated'**
   String get unratedFilter;
 
+  /// Filter chip for items that have a picture
+  ///
+  /// In en, this message translates to:
+  /// **'With Picture'**
+  String get withPictureFilter;
+
   /// Option to show all items in filter dialogs
   ///
   /// In en, this message translates to:

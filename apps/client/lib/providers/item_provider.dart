@@ -13,7 +13,7 @@ import '../services/item_service.dart';
 /// Generic provider for managing any type of rateable item
 class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   final ItemService<T> _itemService;
-  
+
   ItemProvider(this._itemService) : super(ItemState<T>()) {
     // Don't auto-load data in constructor - let consumers trigger loading
     // Temporarily disable filter options loading to reduce API calls
@@ -26,16 +26,16 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
     if (state.isLoading) {
       return;
     }
-    
+
     // If already loaded and items exist, skip loading (use cache)
     if (state.hasLoadedOnce && state.items.isNotEmpty) {
       return;
     }
-    
+
     state = state.copyWith(isLoading: true, error: null);
-    
+
     final response = await _itemService.getAllItems();
-    
+
     response.when(
       success: (items, _) {
         state = state.copyWith(
@@ -43,14 +43,15 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
           isLoading: false,
           hasLoadedOnce: true,
         );
-        
+
         // Load filter options after items are loaded - use current items instead of making more API calls
         _refreshFilterOptions();
       },
       error: (message, statusCode, errorCode, details) {
         state = state.copyWith(
           isLoading: false,
-          hasLoadedOnce: true, // Mark as loaded even on error to prevent infinite retries
+          hasLoadedOnce:
+              true, // Mark as loaded even on error to prevent infinite retries
           error: message,
         );
       },
@@ -63,17 +64,17 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   /// Load specific items by their IDs (for filling cache gaps)
   Future<void> loadSpecificItems(List<int> itemIds) async {
     if (itemIds.isEmpty) return;
-    
+
     try {
       for (final itemId in itemIds) {
         // Skip if already loaded
         if (state.items.any((item) => item.id == itemId)) {
           continue;
         }
-        
+
         // Load individual item
         final response = await _itemService.getItemById(itemId);
-        
+
         response.when(
           success: (item, _) {
             // Add to items list if not already present
@@ -97,7 +98,7 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   /// Refresh item data (bypasses loading guard)
   Future<void> refreshItems() async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     // Clear both data and image cache before refreshing
     if (_itemService is CheeseItemService) {
       await (_itemService as CheeseItemService).clearCache();
@@ -108,9 +109,9 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
     } else if (_itemService is CoffeeItemService) {
       await (_itemService as CoffeeItemService).clearCache();
     }
-    
+
     final response = await _itemService.getAllItems();
-    
+
     response.when(
       success: (items, _) {
         state = state.copyWith(
@@ -120,10 +121,7 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
         );
       },
       error: (message, statusCode, errorCode, details) {
-        state = state.copyWith(
-          isLoading: false,
-          error: message,
-        );
+        state = state.copyWith(isLoading: false, error: message);
       },
       loading: () {
         // Keep loading state
@@ -159,7 +157,7 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
         } else if (_itemService is CoffeeItemService) {
           await (_itemService as CoffeeItemService).clearCache();
         }
-        
+
         final updatedItems = [...state.items, createdItem];
         state = state.copyWith(
           items: updatedItems,
@@ -170,10 +168,7 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
         return createdItem.id;
       },
       error: (message, statusCode, errorCode, details) {
-        state = state.copyWith(
-          isLoading: false,
-          error: message,
-        );
+        state = state.copyWith(isLoading: false, error: message);
         return null;
       },
       loading: () => null,
@@ -198,11 +193,11 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
         } else if (_itemService is CoffeeItemService) {
           await (_itemService as CoffeeItemService).clearCache();
         }
-        
+
         final updatedItems = state.items
             .map((i) => i.id == updatedItem.id ? updatedItem : i)
             .toList();
-        
+
         state = state.copyWith(
           items: updatedItems,
           selectedItem: updatedItem,
@@ -212,10 +207,7 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
         return true;
       },
       error: (message, statusCode, errorCode, details) {
-        state = state.copyWith(
-          isLoading: false,
-          error: message,
-        );
+        state = state.copyWith(isLoading: false, error: message);
         return false;
       },
       loading: () => false,
@@ -231,9 +223,9 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
     // ignore: avoid_types_as_parameter_names, non_constant_identifier_names
     return response.when(
       success: (_, __) {
-      final updatedItems = state.items.where((i) => i.id != itemId).toList();
-      
-      T? newSelectedItem = state.selectedItem;
+        final updatedItems = state.items.where((i) => i.id != itemId).toList();
+
+        T? newSelectedItem = state.selectedItem;
         if (state.selectedItem?.id == itemId) {
           newSelectedItem = null;
         }
@@ -247,10 +239,7 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
         return true;
       },
       error: (message, statusCode, errorCode, details) {
-        state = state.copyWith(
-          isLoading: false,
-          error: message,
-        );
+        state = state.copyWith(isLoading: false, error: message);
         return false;
       },
       loading: () => false,
@@ -273,6 +262,17 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
     state = state.copyWith(categoryFilters: updatedFilters);
   }
 
+  /// Set picture filter
+  void setPictureFilter(bool? hasPicture) {
+    final updatedFilters = Map<String, String>.from(state.categoryFilters);
+    if (hasPicture != null) {
+      updatedFilters['has_picture'] = hasPicture.toString();
+    } else {
+      updatedFilters.remove('has_picture');
+    }
+    state = state.copyWith(categoryFilters: updatedFilters);
+  }
+
   /// Set rating-based filter (context-aware)
   void setRatingFilter(String? filterType, {bool isPersonalTab = false}) {
     if (isPersonalTab) {
@@ -286,16 +286,13 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   void clearTabSpecificFilters() {
     final updatedFilters = Map<String, String>.from(state.categoryFilters);
     updatedFilters.remove('rating_source'); // Personal tab specific
-    updatedFilters.remove('rating_status');  // All items tab specific
+    updatedFilters.remove('rating_status'); // All items tab specific
     state = state.copyWith(categoryFilters: updatedFilters);
   }
-  
+
   /// Clear all filters
   void clearFilters() {
-    state = state.copyWith(
-      searchQuery: '',
-      categoryFilters: {},
-    );
+    state = state.copyWith(searchQuery: '', categoryFilters: {});
   }
 
   /// Clear error state
@@ -304,7 +301,7 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   }
 
   /// Invalidate a specific item from cache
-  /// 
+  ///
   /// Removes the item from provider state, forcing it to be refetched
   /// from the API next time it's needed. Used for granular cache invalidation.
   void invalidateItem(int itemId) {
@@ -316,21 +313,19 @@ class ItemProvider<T extends RateableItem> extends StateNotifier<ItemState<T>> {
   void _refreshFilterOptions() {
     // Extract categories from current items
     final allCategories = <String, Set<String>>{};
-    
+
     for (final item in state.items) {
       for (final entry in item.categories.entries) {
         allCategories.putIfAbsent(entry.key, () => <String>{}).add(entry.value);
       }
     }
-    
+
     // Sort filter options with locale-aware comparison for accented characters
-    final filterOptions = allCategories.map(
-      (key, valueSet) {
-        final sortedList = valueSet.toList();
-        sortedList.sort((a, b) => ItemState._compareLocaleAware(a, b));
-        return MapEntry(key, sortedList);
-      },
-    );
+    final filterOptions = allCategories.map((key, valueSet) {
+      final sortedList = valueSet.toList();
+      sortedList.sort((a, b) => ItemState._compareLocaleAware(a, b));
+      return MapEntry(key, sortedList);
+    });
 
     state = state.copyWith(filterOptions: filterOptions);
   }
@@ -343,7 +338,7 @@ class ItemState<T extends RateableItem> {
   final bool isLoading;
   final bool hasLoadedOnce; // Track if we've ever loaded data
   final String? error;
-  
+
   // Search and filtering
   final String searchQuery;
   final Map<String, String> categoryFilters;
@@ -388,9 +383,12 @@ class ItemState<T extends RateableItem> {
 
     // Apply search query (name only)
     if (searchQuery.isNotEmpty) {
-      filtered = filtered.where((item) =>
-        item.name.toLowerCase().contains(searchQuery.toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where(
+            (item) =>
+                item.name.toLowerCase().contains(searchQuery.toLowerCase()),
+          )
+          .toList();
     }
 
     // Apply category filters
@@ -399,10 +397,33 @@ class ItemState<T extends RateableItem> {
         // Special handling for rating-based filters (requires external rating data)
         continue;
       }
-      
-      filtered = filtered.where((item) =>
-        item.categories[entry.key]?.toLowerCase() == entry.value.toLowerCase()
-      ).toList();
+
+      if (entry.key == 'has_picture') {
+        // Special handling for picture filter
+        final hasPictureFilter = entry.value.toLowerCase() == 'true';
+        filtered = filtered.where((item) {
+          // Check if item has imageUrl field and it's not null/empty
+          try {
+            final itemJson = item.toJson();
+            final imageUrl = itemJson['image_url'] as String?;
+            return hasPictureFilter
+                ? imageUrl != null && imageUrl.isNotEmpty
+                : imageUrl == null || imageUrl.isEmpty;
+          } catch (e) {
+            // If we can't determine, exclude from filter
+            return !hasPictureFilter;
+          }
+        }).toList();
+        continue;
+      }
+
+      filtered = filtered
+          .where(
+            (item) =>
+                item.categories[entry.key]?.toLowerCase() ==
+                entry.value.toLowerCase(),
+          )
+          .toList();
     }
 
     // Sort alphabetically by name with locale-aware comparison
@@ -415,23 +436,24 @@ class ItemState<T extends RateableItem> {
   /// Locale-aware string comparison using diacritic package
   /// Normalizes strings to treat accented characters as base letters
   static int _compareLocaleAware(String a, String b) {
-    return removeDiacritics(a).toLowerCase().compareTo(
-      removeDiacritics(b).toLowerCase()
-    );
+    return removeDiacritics(
+      a,
+    ).toLowerCase().compareTo(removeDiacritics(b).toLowerCase());
   }
 
   /// Check if any filters are active
-  bool get hasActiveFilters => 
-    searchQuery.isNotEmpty || categoryFilters.isNotEmpty;
+  bool get hasActiveFilters =>
+      searchQuery.isNotEmpty || categoryFilters.isNotEmpty;
 
   /// Get count of filtered results
   int get filteredCount => filteredItems.length;
 }
 
 /// Specific provider for Cheese items
-final cheeseItemProvider = StateNotifierProvider<CheeseItemProvider, ItemState<CheeseItem>>(
-  (ref) => CheeseItemProvider(ref.read(cheeseItemServiceProvider)),
-);
+final cheeseItemProvider =
+    StateNotifierProvider<CheeseItemProvider, ItemState<CheeseItem>>(
+      (ref) => CheeseItemProvider(ref.read(cheeseItemServiceProvider)),
+    );
 
 /// Concrete implementation for Cheese provider
 class CheeseItemProvider extends ItemProvider<CheeseItem> {
@@ -440,7 +462,9 @@ class CheeseItemProvider extends ItemProvider<CheeseItem> {
   /// Cheese-specific filtering methods
   void setTypeFilter(String? type) => setCategoryFilter('type', type);
   void setOriginFilter(String? origin) => setCategoryFilter('origin', origin);
-  void setProducerFilter(String? producer) => setCategoryFilter('producer', producer);
+  void setProducerFilter(String? producer) =>
+      setCategoryFilter('producer', producer);
+  void setPictureFilter(bool? hasPicture) => super.setPictureFilter(hasPicture);
 }
 
 /// Computed provider for filtered cheese items
@@ -456,18 +480,22 @@ final hasCheeseItemDataProvider = Provider<bool>((ref) {
 });
 
 /// Specific provider for Gin items
-final ginItemProvider = StateNotifierProvider<GinItemProvider, ItemState<GinItem>>(
-  (ref) => GinItemProvider(ref.read(ginItemServiceProvider)),
-);
+final ginItemProvider =
+    StateNotifierProvider<GinItemProvider, ItemState<GinItem>>(
+      (ref) => GinItemProvider(ref.read(ginItemServiceProvider)),
+    );
 
 /// Concrete implementation for Gin provider
 class GinItemProvider extends ItemProvider<GinItem> {
   GinItemProvider(super.ginService);
 
   /// Gin-specific filtering methods
-  void setProducerFilter(String? producer) => setCategoryFilter('producer', producer);
+  void setProducerFilter(String? producer) =>
+      setCategoryFilter('producer', producer);
   void setOriginFilter(String? origin) => setCategoryFilter('origin', origin);
-  void setProfileFilter(String? profile) => setCategoryFilter('profile', profile);
+  void setProfileFilter(String? profile) =>
+      setCategoryFilter('profile', profile);
+  void setPictureFilter(bool? hasPicture) => super.setPictureFilter(hasPicture);
 }
 
 /// Computed provider for filtered gin items
@@ -483,9 +511,10 @@ final hasGinItemDataProvider = Provider<bool>((ref) {
 });
 
 /// Specific provider for Wine items
-final wineItemProvider = StateNotifierProvider<WineItemProvider, ItemState<WineItem>>(
-  (ref) => WineItemProvider(ref.read(wineItemServiceProvider)),
-);
+final wineItemProvider =
+    StateNotifierProvider<WineItemProvider, ItemState<WineItem>>(
+      (ref) => WineItemProvider(ref.read(wineItemServiceProvider)),
+    );
 
 /// Concrete implementation for Wine provider
 class WineItemProvider extends ItemProvider<WineItem> {
@@ -493,9 +522,12 @@ class WineItemProvider extends ItemProvider<WineItem> {
 
   /// Wine-specific filtering methods
   void setColorFilter(String? color) => setCategoryFilter('color', color);
-  void setCountryFilter(String? country) => setCategoryFilter('country', country);
+  void setCountryFilter(String? country) =>
+      setCategoryFilter('country', country);
   void setRegionFilter(String? region) => setCategoryFilter('region', region);
-  void setProducerFilter(String? producer) => setCategoryFilter('producer', producer);
+  void setProducerFilter(String? producer) =>
+      setCategoryFilter('producer', producer);
+  void setPictureFilter(bool? hasPicture) => super.setPictureFilter(hasPicture);
 }
 
 /// Computed provider for filtered wine items
@@ -511,20 +543,26 @@ final hasWineItemDataProvider = Provider<bool>((ref) {
 });
 
 /// Specific provider for Coffee items
-final coffeeItemProvider = StateNotifierProvider<CoffeeItemProvider, ItemState<CoffeeItem>>(
-  (ref) => CoffeeItemProvider(ref.read(coffeeItemServiceProvider)),
-);
+final coffeeItemProvider =
+    StateNotifierProvider<CoffeeItemProvider, ItemState<CoffeeItem>>(
+      (ref) => CoffeeItemProvider(ref.read(coffeeItemServiceProvider)),
+    );
 
 /// Concrete implementation for Coffee provider
 class CoffeeItemProvider extends ItemProvider<CoffeeItem> {
   CoffeeItemProvider(super.coffeeService);
 
   /// Coffee-specific filtering methods
-  void setRoasterFilter(String? roaster) => setCategoryFilter('roaster', roaster);
-  void setCountryFilter(String? country) => setCategoryFilter('country', country);
+  void setRoasterFilter(String? roaster) =>
+      setCategoryFilter('roaster', roaster);
+  void setCountryFilter(String? country) =>
+      setCategoryFilter('country', country);
   void setRegionFilter(String? region) => setCategoryFilter('region', region);
-  void setProcessingMethodFilter(String? processingMethod) => setCategoryFilter('processing_method', processingMethod);
-  void setRoastLevelFilter(String? roastLevel) => setCategoryFilter('roast_level', roastLevel);
+  void setProcessingMethodFilter(String? processingMethod) =>
+      setCategoryFilter('processing_method', processingMethod);
+  void setRoastLevelFilter(String? roastLevel) =>
+      setCategoryFilter('roast_level', roastLevel);
+  void setPictureFilter(bool? hasPicture) => super.setPictureFilter(hasPicture);
 }
 
 /// Computed provider for filtered coffee items
