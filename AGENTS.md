@@ -61,6 +61,8 @@ Project rebuild and reload when file changes
 
 ### Client (Flutter)
 
+**MANDATORY COMMAND TO RUN BEFORE ANY BUILD OR TEST:** `flutter gen-l10n` (in `apps/client`)
+
 - **Build:** `flutter build` (in `apps/client`)
 - **Test:** `flutter test` (in `apps/client`)
 
