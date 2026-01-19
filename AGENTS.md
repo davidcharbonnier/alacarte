@@ -1,14 +1,17 @@
 <!-- OPENSPEC:START -->
+
 # OpenSpec Instructions
 
 These instructions are for AI assistants working in this project.
 
 Always open `@/openspec/AGENTS.md` when the request:
+
 - Mentions planning or proposals (words like proposal, spec, change, plan)
 - Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
 - Sounds ambiguous and you need the authoritative spec before coding
 
 Use `@/openspec/AGENTS.md` to learn:
+
 - How to create and apply change proposals
 - Spec format and conventions
 - Project structure and guidelines
@@ -40,6 +43,31 @@ The project uses a monorepo structure with three main applications:
 - `apps/api` - Go REST API
 - `apps/client` - Flutter mobile/web client
 - `apps/admin` - Next.js admin panel
+
+## Development Commands
+
+### Run the web stack (API and admin)
+
+- **Run** `docker compose up -d` (in project root)
+
+API will be reachable at http://localhost:8080 and admin at http://localhost:3000
+
+Project rebuild and reload when file changes
+
+### API (Go)
+
+- **Build:** `go build ./...` (in `apps/api`)
+- **Test:** `go test ./...` (in `apps/api`)
+
+### Client (Flutter)
+
+- **Build:** `flutter build` (in `apps/client`)
+- **Test:** `flutter test` (in `apps/client`)
+
+### Admin (Next.js)
+
+- **Build:** `npm run build` (in `apps/admin`)
+- **Test:** `npm test` (in `apps/admin`)
 
 ## Critical Development Guidelines
 
