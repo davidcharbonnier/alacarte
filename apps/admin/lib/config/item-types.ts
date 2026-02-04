@@ -462,6 +462,82 @@ export const itemTypesConfig: ItemTypeRegistry = {
       validate: '/admin/coffee/validate',
     },
   },
+  
+  'chili-sauce': {
+    name: 'chili-sauce',
+    labels: {
+      singular: 'Chili Sauce',
+      plural: 'Chili Sauces',
+    },
+    icon: 'Flame',
+    color: itemTypeColors['chili-sauce'].hex,
+    
+    fields: [
+      {
+        key: 'name',
+        label: 'Name',
+        type: 'text',
+        required: true,
+        maxLength: 255,
+        placeholder: 'e.g., Sriracha Hot Sauce',
+      },
+      {
+        key: 'brand',
+        label: 'Brand',
+        type: 'text',
+        required: true,
+        maxLength: 255,
+        placeholder: 'e.g., Huy Fong Foods',
+      },
+      {
+        key: 'spice_level',
+        label: 'Spice Level',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'Mild', label: 'Mild' },
+          { value: 'Medium', label: 'Medium' },
+          { value: 'Hot', label: 'Hot' },
+          { value: 'Extra Hot', label: 'Extra Hot' },
+          { value: 'Extreme', label: 'Extreme' },
+        ],
+        helperText: 'Spice intensity level',
+      },
+      {
+        key: 'chilis',
+        label: 'Chilis',
+        type: 'text',
+        required: false,
+        maxLength: 500,
+        placeholder: 'e.g., Jalapeño, Garlic, Habanero',
+        helperText: 'Comma-separated list of chili types used',
+      },
+      {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        required: false,
+        maxLength: 1000,
+        placeholder: 'Optional description...',
+      },
+    ],
+    
+    table: {
+      columns: ['name', 'brand', 'spice_level', 'chilis'],
+      searchableFields: ['name', 'brand', 'spice_level', 'chilis', 'description'],
+      defaultSort: 'name',
+      sortOrder: 'asc',
+    },
+    
+    apiEndpoints: {
+      list: '/api/chili-sauce/all',
+      detail: (id: number) => `/api/chili-sauce/${id}`,
+      deleteImpact: (id: number) => `/admin/chili-sauce/${id}/delete-impact`,
+      delete: (id: number) => `/admin/chili-sauce/${id}`,
+      seed: '/admin/chili-sauce/seed',
+      validate: '/admin/chili-sauce/validate',
+    },
+  },
 };
 
 /**

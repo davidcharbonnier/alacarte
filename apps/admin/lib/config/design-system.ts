@@ -36,6 +36,12 @@ export const itemTypeColors = {
     hsl: 'hsl(16, 25%, 38%)',
     className: 'text-[#795548] bg-[#795548]/10',
   },
+  'chili-sauce': {
+    hex: '#F44336',        // Red (distinctive chili color)
+    rgb: 'rgb(244, 67, 54)',
+    hsl: 'hsl(4, 91%, 58%)',
+    className: 'text-[#F44336] bg-[#F44336]/10',
+  },
 } as const;
 
 /**

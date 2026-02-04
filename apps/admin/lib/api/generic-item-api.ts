@@ -15,9 +15,14 @@ function transformItem(backendItem: any): any {
   if (backendItem.UpdatedAt) transformed.updated_at = backendItem.UpdatedAt;
   if (backendItem.DeletedAt) transformed.deleted_at = backendItem.DeletedAt;
   
-  // Copy all other fields as-is (they're already lowercase in Go)
+  // Handle image URL field (standardized to image_url across all item types)
+  if (backendItem.image_url !== undefined && backendItem.image_url !== null) {
+    transformed.image_url = backendItem.image_url;
+  }
+  
+  // Copy all other fields as-is
   Object.keys(backendItem).forEach(key => {
-    if (!['ID', 'CreatedAt', 'UpdatedAt', 'DeletedAt'].includes(key)) {
+    if (!['ID', 'CreatedAt', 'UpdatedAt', 'DeletedAt', 'image_url'].includes(key)) {
       transformed[key] = backendItem[key];
     }
   });
