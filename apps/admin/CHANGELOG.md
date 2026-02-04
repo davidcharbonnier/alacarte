@@ -107,9 +107,29 @@ html {
 <body>
 
 <h1>Changelog</h1>
-<p>The latest release was 2026-01-18.</p>
+<p>The latest release was 2026-02-04.</p>
 
 <!-- ### VERSIO BEGIN CONTENT ### -->
+<!-- ### VERSIO CONTENT 2026-02-04 ### -->
+<div class="release">
+  <div class="release-head"><span class="caret caret-down"></span>Release 1.2.0 : 2026-02-04</div>
+  <div class="nested active">
+    
+    
+    <div class="pr">
+      <div class="pr-head"><span class="caret"></span>Commits (minor)</div>
+      <div class="nested">
+        
+        <div class="commit">
+          <div class="commit-head"><span class="caret"></span>Commit <a href="https://github.com/davidcharbonnier/alacarte/commit/771507233d828fabbea181b3ac38f9006de79ba9">7715072</a> (minor): feat(admin): add chili sauce itemtype</div>
+          <pre class="msg nested">feat(admin): add chili sauce itemtype</pre>
+        </div>
+        
+      </div>
+    </div>
+    
+  </div>
+</div>
 <!-- ### VERSIO CONTENT 2026-01-18 ### -->
 <div class="release">
   <div class="release-head"><span class="caret caret-down"></span>Release 1.1.0 : 2026-01-18</div>
