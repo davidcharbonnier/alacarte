@@ -18,6 +18,7 @@ var (
 	_ ItemWithImage = (*models.Gin)(nil)
 	_ ItemWithImage = (*models.Wine)(nil)
 	_ ItemWithImage = (*models.Coffee)(nil)
+	_ ItemWithImage = (*models.ChiliSauce)(nil)
 )
 
 // GetItemByType fetches an item by type and ID
@@ -35,6 +36,8 @@ func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
 		model = &models.Wine{}
 	case "coffee":
 		model = &models.Coffee{}
+	case "chili-sauce":
+		model = &models.ChiliSauce{}
 	default:
 		return nil, fmt.Errorf("invalid item type: %s", itemType)
 	}
@@ -56,10 +59,11 @@ func SaveItem(item ItemWithImage) error {
 // ValidateItemType checks if item type is supported
 func ValidateItemType(itemType string) bool {
 	validTypes := map[string]bool{
-		"cheese": true,
-		"gin":    true,
-		"wine":   true,
-		"coffee": true,
+		"cheese":      true,
+		"gin":         true,
+		"wine":        true,
+		"coffee":      true,
+		"chili-sauce": true,
 	}
 	return validTypes[itemType]
 }

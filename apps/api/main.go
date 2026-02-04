@@ -171,6 +171,25 @@ func main() {
 			})
 		}
 
+		// chili-sauce
+		chiliSauce := api.Group("/chili-sauce")
+		{
+			chiliSauce.POST("/new", controllers.ChiliSauceCreate)
+			chiliSauce.GET("/all", controllers.ChiliSauceIndex)
+			chiliSauce.GET("/:id", controllers.ChiliSauceDetails)
+			chiliSauce.PUT("/:id", controllers.ChiliSauceEdit)
+			chiliSauce.DELETE("/:id", controllers.ChiliSauceRemove)
+			// Image management
+			chiliSauce.POST("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "chili-sauce"})
+				controllers.UploadItemImage(c)
+			})
+			chiliSauce.DELETE("/:id/image", func(c *gin.Context) {
+				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "chili-sauce"})
+				controllers.DeleteItemImage(c)
+			})
+		}
+
 		// rating
 		rating := api.Group("/rating")
 		{
@@ -233,6 +252,15 @@ func main() {
 			coffeeAdmin.DELETE("/:id", controllers.DeleteCoffee)
 			coffeeAdmin.POST("/seed", controllers.SeedCoffees)
 			coffeeAdmin.POST("/validate", controllers.ValidateCoffees)
+		}
+
+		// Chili Sauce admin
+		chiliSauceAdmin := admin.Group("/chili-sauce")
+		{
+			chiliSauceAdmin.GET("/:id/delete-impact", controllers.GetChiliSauceDeleteImpact)
+			chiliSauceAdmin.DELETE("/:id", controllers.DeleteChiliSauce)
+			chiliSauceAdmin.POST("/seed", controllers.SeedChiliSauces)
+			chiliSauceAdmin.POST("/validate", controllers.ValidateChiliSauces)
 		}
 
 		// User admin
