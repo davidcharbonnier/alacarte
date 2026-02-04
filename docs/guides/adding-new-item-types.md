@@ -1,7 +1,7 @@
 # Adding New Item Types - Complete Platform Guide
 
 **Last Updated:** January 2025  
-**Current Item Types:** Cheese, Gin, Wine, Coffee  
+**Current Item Types:** Cheese, Gin, Wine, Coffee, Chili Sauce  
 **Total Time:** ~2 hours (Backend: 65 min | Client: 50 min | Admin: 5 min)
 
 This guide covers the complete process of adding a new item type (e.g., wine, beer, coffee) to the À la carte platform across all three applications.
@@ -699,6 +699,46 @@ Thanks to the generic architecture and October 2025 refactorings:
 - [Backend Checklist](backend-checklist.md) - Detailed backend steps
 - [Client Checklist](client-checklist.md) - Detailed frontend steps
 - [Admin Checklist](admin-checklist.md) - Detailed admin steps
+
+### Chili Sauce Example (Enum Fields)
+
+For item types with enum/select fields like **Spice Level**, follow this pattern:
+
+**Backend Model:**
+```go
+type ChiliSauce struct {
+    gorm.Model
+    Name        string   `gorm:"uniqueIndex:idx_chili_name_brand" json:"name"`
+    Brand       string   `gorm:"uniqueIndex:idx_chili_name_brand" json:"brand"`
+    SpiceLevel  string   `gorm:"not null" json:"spice_level"`  // Mild, Medium, Hot, Extra Hot, Extreme
+    Chilis      string   `json:"chilis"`  // e.g., "Habanero, Ghost Pepper"
+    Description string   `json:"description"`
+    ImageURL    *string  `json:"image_url,omitempty"`
+    Ratings     []Rating `gorm:"polymorphic:Item;"`
+}
+```
+
+**Frontend Form Strategy (Select Field):**
+```dart
+FormFieldConfig.select(
+  key: 'spice_level',
+  labelBuilder: (context) => context.l10n.spiceLevelLabel,
+  required: true,
+  options: [
+    SelectOption(value: 'Mild', labelBuilder: (context) => context.l10n.spiceLevelMild),
+    SelectOption(value: 'Medium', labelBuilder: (context) => context.l10n.spiceLevelMedium),
+    SelectOption(value: 'Hot', labelBuilder: (context) => context.l10n.spiceLevelHot),
+    SelectOption(value: 'Extra Hot', labelBuilder: (context) => context.l10n.spiceLevelExtraHot),
+    SelectOption(value: 'Extreme', labelBuilder: (context) => context.l10n.spiceLevelExtreme),
+  ],
+),
+```
+
+**Key Points:**
+- Use `FormFieldConfig.select()` for enum fields
+- Provide localized labels for each option
+- Store the value (e.g., "Hot") not the label
+- Add validation in the strategy's `validate()` method
 
 ### Related Documentation
 - [Form Strategy Pattern](/docs/client/architecture/form-strategy-pattern.md) - Strategy Pattern explained
