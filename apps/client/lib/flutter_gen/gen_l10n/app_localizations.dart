@@ -2923,6 +2923,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'With Picture'**
   String get withPictureFilter;
+
+  /// Chili Sauce category name
+  ///
+  /// In en, this message translates to:
+  /// **'Chili Sauce'**
+  String get chiliSauce;
+
+  /// Create chili sauce screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Create Chili Sauce'**
+  String get createChiliSauce;
+
+  /// Edit chili sauce screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Chili Sauce'**
+  String get editChiliSauce;
+
+  /// Brand field label
+  ///
+  /// In en, this message translates to:
+  /// **'Brand'**
+  String get brandLabel;
+
+  /// Spice level field label
+  ///
+  /// In en, this message translates to:
+  /// **'Spice Level'**
+  String get spiceLevelLabel;
+
+  /// Chilis field label
+  ///
+  /// In en, this message translates to:
+  /// **'Chilis'**
+  String get chilisLabel;
+
+  /// Mild spice level
+  ///
+  /// In en, this message translates to:
+  /// **'Mild'**
+  String get spiceLevelMild;
+
+  /// Medium spice level
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get spiceLevelMedium;
+
+  /// Hot spice level
+  ///
+  /// In en, this message translates to:
+  /// **'Hot'**
+  String get spiceLevelHot;
+
+  /// Extra Hot spice level
+  ///
+  /// In en, this message translates to:
+  /// **'Extra Hot'**
+  String get spiceLevelExtraHot;
+
+  /// Extreme spice level
+  ///
+  /// In en, this message translates to:
+  /// **'Extreme'**
+  String get spiceLevelExtreme;
+
+  /// Hint text for chili sauce name field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter chili sauce name'**
+  String get enterChiliSauceName;
+
+  /// Placeholder for brand field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter brand'**
+  String get enterBrand;
+
+  /// Dropdown placeholder for spice level selection
+  ///
+  /// In en, this message translates to:
+  /// **'Select spice level...'**
+  String get selectSpiceLevel;
+
+  /// Placeholder for chilis field
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Habanero, Ghost Pepper, Jalapeño'**
+  String get enterChilis;
+
+  /// Success message after creating chili sauce
+  ///
+  /// In en, this message translates to:
+  /// **'Chili Sauce created successfully!'**
+  String get chiliSauceCreated;
+
+  /// Success message after updating chili sauce
+  ///
+  /// In en, this message translates to:
+  /// **'Chili Sauce updated successfully!'**
+  String get chiliSauceUpdated;
+
+  /// Error message when chili sauce creation fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create Chili Sauce. Please try again.'**
+  String get couldNotCreateChiliSauce;
+
+  /// Error message when chili sauce update fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update Chili Sauce. Please try again.'**
+  String get couldNotUpdateChiliSauce;
+
+  /// Validation message for required chili sauce name
+  ///
+  /// In en, this message translates to:
+  /// **'Chili Sauce name is required'**
+  String get chiliSauceNameRequired;
+
+  /// Validation message for chili sauce name minimum length
+  ///
+  /// In en, this message translates to:
+  /// **'Chili Sauce name must be at least 2 characters'**
+  String get chiliSauceNameTooShort;
+
+  /// Validation message for chili sauce name maximum length
+  ///
+  /// In en, this message translates to:
+  /// **'Chili Sauce name must be less than 100 characters'**
+  String get chiliSauceNameTooLong;
+
+  /// Validation message for required spice level
+  ///
+  /// In en, this message translates to:
+  /// **'Spice level is required'**
+  String get spiceLevelRequired;
+
+  /// Tab title for all chili sauces
+  ///
+  /// In en, this message translates to:
+  /// **'All Chili Sauces'**
+  String get allChiliSauces;
+
+  /// Tab title for user's personal chili sauce list
+  ///
+  /// In en, this message translates to:
+  /// **'My Chili Sauce List'**
+  String get myChiliSauceList;
+
+  /// Add chili sauce floating action button
+  ///
+  /// In en, this message translates to:
+  /// **'Add Chili Sauce'**
+  String get addChiliSauce;
+
+  /// Empty state when no chili sauces exist
+  ///
+  /// In en, this message translates to:
+  /// **'No Chili Sauces Available'**
+  String get noChiliSaucesAvailable;
+
+  /// Instructions for empty state
+  ///
+  /// In en, this message translates to:
+  /// **'Add the first Chili Sauce to start building your reference list'**
+  String get addFirstChiliSauce;
+
+  /// Add first chili sauce button
+  ///
+  /// In en, this message translates to:
+  /// **'Add First Chili Sauce'**
+  String get addFirstChiliSauceButton;
+
+  /// Reference list header
+  ///
+  /// In en, this message translates to:
+  /// **'Your Chili Sauce Reference List'**
+  String get yourChiliSauceReferenceList;
+
+  /// Reference list subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'{count} chili sauces with your ratings and recommendations'**
+  String chiliSaucesWithRatings(int count);
+
+  /// Empty personal list title
+  ///
+  /// In en, this message translates to:
+  /// **'Your Chili Sauce List is Empty'**
+  String get yourChiliSauceListEmpty;
+
+  /// Empty list instructions
+  ///
+  /// In en, this message translates to:
+  /// **'Rate Chili Sauces to build your reference list'**
+  String get rateChiliSaucesToBuild;
+
+  /// Explore chili sauces button
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Chili Sauces'**
+  String get exploreChiliSauces;
+
+  /// Filter by brand menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by brand'**
+  String get filterByBrand;
+
+  /// Filter by spice level menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by spice level'**
+  String get filterBySpiceLevel;
+
+  /// Filter by chilis menu item
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by chilis'**
+  String get filterByChilis;
+
+  /// Message when no chili sauces match filters
+  ///
+  /// In en, this message translates to:
+  /// **'No chili sauces found'**
+  String get noChiliSaucesFound;
+
+  /// Loading message for chili sauces
+  ///
+  /// In en, this message translates to:
+  /// **'Loading chili sauces...'**
+  String get loadingChiliSauces;
+
+  /// Hint text for chili sauce search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search chili sauces by name...'**
+  String get searchChiliSaucesByName;
+
+  /// Tab label for all items list
+  ///
+  /// In en, this message translates to:
+  /// **'All items'**
+  String get allItemsTab;
+
+  /// Tab label for my personal items list
+  ///
+  /// In en, this message translates to:
+  /// **'My items'**
+  String get myItemsTab;
 }
 
 class _AppLocalizationsDelegate

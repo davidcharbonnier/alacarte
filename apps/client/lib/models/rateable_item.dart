@@ -65,6 +65,8 @@ class ItemTypeHelper {
         return 'Wine';
       case 'coffee':
         return 'Coffee';
+      case 'chili-sauce':
+        return 'Chili Sauce';
       default:
         return itemType.capitalized;
     }
@@ -83,6 +85,8 @@ class ItemTypeHelper {
         return Icons.sports_bar;
       case 'coffee':
         return Icons.local_cafe;
+      case 'chili-sauce':
+        return Icons.local_fire_department;
       default:
         return Icons.category;
     }
@@ -101,6 +105,8 @@ class ItemTypeHelper {
         return Colors.amber;
       case 'coffee':
         return Colors.brown;
+      case 'chili-sauce':
+        return Colors.red;
       default:
         return Colors.grey;
     }
@@ -108,7 +114,7 @@ class ItemTypeHelper {
   
   /// Check if item type is supported
   static bool isItemTypeSupported(String itemType) {
-    const supportedTypes = ['cheese', 'gin', 'wine', 'coffee']; // Add more as they're implemented
+    const supportedTypes = ['cheese', 'gin', 'wine', 'coffee', 'chili-sauce']; // Add more as they're implemented
     return supportedTypes.contains(itemType.toLowerCase());
   }
 }

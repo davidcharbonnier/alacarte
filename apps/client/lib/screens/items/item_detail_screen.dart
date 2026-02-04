@@ -140,14 +140,12 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
       GoRouter.of(context).go('${RouteNames.wineEdit}/${widget.itemId}');
     } else if (widget.itemType == 'coffee') {
       GoRouter.of(context).go('${RouteNames.coffeeEdit}/${widget.itemId}');
+    } else if (widget.itemType == 'chili-sauce') {
+      GoRouter.of(context).go('${RouteNames.chiliSauceEdit}/${widget.itemId}');
     } else {
+      // TODO: Handle other item types
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Editing ${widget.itemType} items is not yet supported',
-          ),
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-        ),
+        const SnackBar(content: Text('Edit not yet supported for this item type')),
       );
     }
   }

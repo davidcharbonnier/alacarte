@@ -36,6 +36,7 @@ class HomeScreen extends ConsumerWidget {
     final ginItemState = ref.watch(ginItemProvider);
     final wineItemState = ref.watch(wineItemProvider);
     final coffeeItemState = ref.watch(coffeeItemProvider);
+    final chiliSauceItemState = ref.watch(chiliSauceItemProvider);
 
     // Load cheese data if not already loaded and not currently loading
     if (!cheeseItemState.hasLoadedOnce && !cheeseItemState.isLoading) {
@@ -65,6 +66,13 @@ class HomeScreen extends ConsumerWidget {
       });
     }
 
+    // Load chili-sauce data if not already loaded and not currently loading
+    if (!chiliSauceItemState.hasLoadedOnce && !chiliSauceItemState.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(chiliSauceItemProvider.notifier).loadItems();
+      });
+    }
+
     final ratingState = ref.watch(ratingProvider);
 
     return Scaffold(
@@ -83,6 +91,7 @@ class HomeScreen extends ConsumerWidget {
           ref.read(ginItemProvider.notifier).refreshItems();
           ref.read(wineItemProvider.notifier).refreshItems();
           ref.read(coffeeItemProvider.notifier).refreshItems();
+          ref.read(chiliSauceItemProvider.notifier).refreshItems();
           ref.read(ratingProvider.notifier).refreshRatings();
         },
         child: SingleChildScrollView(
@@ -150,6 +159,18 @@ class HomeScreen extends ConsumerWidget {
                     Colors.brown,
                     coffeeItemState.items.length,
                     _getUniqueItemCount(ratingState.ratings, 'coffee'),
+                  ),
+
+                  const SizedBox(height: AppConstants.spacingM),
+
+                  _buildItemTypeCard(
+                    context,
+                    ItemTypeLocalizer.getLocalizedItemType(context, 'chili-sauce'),
+                    'chili-sauce',
+                    Icons.whatshot,
+                    Colors.red,
+                    chiliSauceItemState.items.length,
+                    _getUniqueItemCount(ratingState.ratings, 'chili-sauce'),
                   ),
 
                   const SizedBox(height: AppConstants.spacingM),

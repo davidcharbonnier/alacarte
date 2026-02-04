@@ -18,6 +18,7 @@ import '../screens/cheese/cheese_form_screens.dart';
 import '../screens/gin/gin_form_screens.dart';
 import '../screens/wine/wine_form_screens.dart';
 import '../screens/coffee/coffee_form_screens.dart';
+import '../screens/chili_sauce/chili_sauce_form_screens.dart';
 
 /// Provider for the GoRouter configuration with OAuth authentication
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -232,6 +233,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             return _buildPlaceholderScreen('Invalid Coffee ID');
           }
           return CoffeeEditScreen(coffeeId: coffeeId);
+        },
+      ),
+
+      // Chili Sauce-specific routes
+      GoRoute(
+        path: RoutePaths.chiliSauceCreate,
+        name: RouteNames.chiliSauceCreate,
+        builder: (context, state) => const ChiliSauceCreateScreen(),
+      ),
+
+      GoRoute(
+        path: RoutePaths.chiliSauceEdit,
+        name: RouteNames.chiliSauceEdit,
+        builder: (context, state) {
+          final chiliSauceIdParam = state.pathParameters[RouteParams.chiliSauceId];
+          final chiliSauceId = int.tryParse(chiliSauceIdParam ?? '');
+          if (chiliSauceId == null) {
+            return _buildPlaceholderScreen('Invalid Chili Sauce ID');
+          }
+          return ChiliSauceEditScreen(chiliSauceId: chiliSauceId);
         },
       ),
 
