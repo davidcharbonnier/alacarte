@@ -4,6 +4,7 @@ import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
 import '../models/wine_item.dart';
 import '../models/coffee_item.dart';
+import '../models/chili_sauce_item.dart';
 import '../models/api_response.dart';
 import '../providers/item_provider.dart';
 import '../services/item_service.dart';
@@ -21,6 +22,8 @@ class ItemProviderHelper {
         return ref.watch(wineItemProvider).items.cast<RateableItem>();
       case 'coffee':
         return ref.watch(coffeeItemProvider).items.cast<RateableItem>();
+      case 'chili-sauce':
+        return ref.watch(chiliSauceItemProvider).items.cast<RateableItem>();
       default:
         return [];
     }
@@ -37,6 +40,8 @@ class ItemProviderHelper {
         return ref.watch(wineItemProvider).filteredItems.cast<RateableItem>();
       case 'coffee':
         return ref.watch(coffeeItemProvider).filteredItems.cast<RateableItem>();
+      case 'chili-sauce':
+        return ref.watch(chiliSauceItemProvider).filteredItems.cast<RateableItem>();
       default:
         return [];
     }
@@ -53,6 +58,8 @@ class ItemProviderHelper {
         return ref.watch(wineItemProvider).isLoading;
       case 'coffee':
         return ref.watch(coffeeItemProvider).isLoading;
+      case 'chili-sauce':
+        return ref.watch(chiliSauceItemProvider).isLoading;
       default:
         return false;
     }
@@ -69,6 +76,8 @@ class ItemProviderHelper {
         return ref.watch(wineItemProvider).hasLoadedOnce;
       case 'coffee':
         return ref.watch(coffeeItemProvider).hasLoadedOnce;
+      case 'chili-sauce':
+        return ref.watch(chiliSauceItemProvider).hasLoadedOnce;
       default:
         return false;
     }
@@ -85,6 +94,8 @@ class ItemProviderHelper {
         return ref.watch(wineItemProvider).error;
       case 'coffee':
         return ref.watch(coffeeItemProvider).error;
+      case 'chili-sauce':
+        return ref.watch(chiliSauceItemProvider).error;
       default:
         return null;
     }
@@ -101,6 +112,8 @@ class ItemProviderHelper {
         return ref.watch(wineItemProvider).searchQuery;
       case 'coffee':
         return ref.watch(coffeeItemProvider).searchQuery;
+      case 'chili-sauce':
+        return ref.watch(chiliSauceItemProvider).searchQuery;
       default:
         return '';
     }
@@ -117,6 +130,8 @@ class ItemProviderHelper {
         return ref.watch(wineItemProvider).categoryFilters;
       case 'coffee':
         return ref.watch(coffeeItemProvider).categoryFilters;
+      case 'chili-sauce':
+        return ref.watch(chiliSauceItemProvider).categoryFilters;
       default:
         return {};
     }
@@ -133,6 +148,8 @@ class ItemProviderHelper {
         return ref.watch(wineItemProvider).filterOptions;
       case 'coffee':
         return ref.watch(coffeeItemProvider).filterOptions;
+      case 'chili-sauce':
+        return ref.watch(chiliSauceItemProvider).filterOptions;
       default:
         return {};
     }
@@ -153,6 +170,9 @@ class ItemProviderHelper {
       case 'coffee':
         ref.read(coffeeItemProvider.notifier).loadItems();
         break;
+      case 'chili-sauce':
+        ref.read(chiliSauceItemProvider.notifier).loadItems();
+        break;
     }
   }
 
@@ -170,6 +190,9 @@ class ItemProviderHelper {
         break;
       case 'coffee':
         await ref.read(coffeeItemProvider.notifier).refreshItems();
+        break;
+      case 'chili-sauce':
+        await ref.read(chiliSauceItemProvider.notifier).refreshItems();
         break;
     }
   }
@@ -189,6 +212,9 @@ class ItemProviderHelper {
       case 'coffee':
         ref.read(coffeeItemProvider.notifier).clearFilters();
         break;
+      case 'chili-sauce':
+        ref.read(chiliSauceItemProvider.notifier).clearFilters();
+        break;
     }
   }
 
@@ -207,6 +233,9 @@ class ItemProviderHelper {
       case 'coffee':
         ref.read(coffeeItemProvider.notifier).clearTabSpecificFilters();
         break;
+      case 'chili-sauce':
+        ref.read(chiliSauceItemProvider.notifier).clearTabSpecificFilters();
+        break;
     }
   }
 
@@ -224,6 +253,9 @@ class ItemProviderHelper {
         break;
       case 'coffee':
         ref.read(coffeeItemProvider.notifier).updateSearchQuery(query);
+        break;
+      case 'chili-sauce':
+        ref.read(chiliSauceItemProvider.notifier).updateSearchQuery(query);
         break;
     }
   }
@@ -247,6 +279,9 @@ class ItemProviderHelper {
         break;
       case 'coffee':
         ref.read(coffeeItemProvider.notifier).setCategoryFilter(key, value);
+        break;
+      case 'chili-sauce':
+        ref.read(chiliSauceItemProvider.notifier).setCategoryFilter(key, value);
         break;
     }
   }
@@ -293,6 +328,13 @@ class ItemProviderHelper {
           return response.data;
         }
         return null;
+      case 'chili-sauce':
+        final service = ref.read(chiliSauceItemServiceProvider);
+        final response = await service.getItemById(itemId);
+        if (response is ApiSuccess<ChiliSauceItem>) {
+          return response.data;
+        }
+        return null;
       default:
         return null;
     }
@@ -317,6 +359,9 @@ class ItemProviderHelper {
       case 'coffee':
         await ref.read(coffeeItemProvider.notifier).loadSpecificItems(itemIds);
         break;
+      case 'chili-sauce':
+        await ref.read(chiliSauceItemProvider.notifier).loadSpecificItems(itemIds);
+        break;
       default:
         // Unknown item type - skip loading
         break;
@@ -340,6 +385,9 @@ class ItemProviderHelper {
         break;
       case 'coffee':
         ref.read(coffeeItemProvider.notifier).invalidateItem(itemId);
+        break;
+      case 'chili-sauce':
+        ref.read(chiliSauceItemProvider.notifier).invalidateItem(itemId);
         break;
     }
   }

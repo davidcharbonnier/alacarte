@@ -7,6 +7,7 @@ import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
 import '../models/wine_item.dart';
 import '../models/coffee_item.dart';
+import '../models/chili_sauce_item.dart';
 import '../models/api_response.dart';
 import '../services/item_service.dart';
 
@@ -574,5 +575,35 @@ final filteredCoffeeItemsProvider = Provider<List<CoffeeItem>>((ref) {
 /// Computed provider for checking if coffee data exists
 final hasCoffeeItemDataProvider = Provider<bool>((ref) {
   final itemState = ref.watch(coffeeItemProvider);
+  return itemState.items.isNotEmpty;
+});
+
+/// Specific provider for Chili Sauce items
+final chiliSauceItemProvider =
+    StateNotifierProvider<ChiliSauceItemProvider, ItemState<ChiliSauceItem>>(
+      (ref) => ChiliSauceItemProvider(ref.read(chiliSauceItemServiceProvider)),
+    );
+
+/// Concrete implementation for Chili Sauce provider
+class ChiliSauceItemProvider extends ItemProvider<ChiliSauceItem> {
+  ChiliSauceItemProvider(super.chiliSauceService);
+
+  /// Chili Sauce-specific filtering methods
+  void setBrandFilter(String? brand) => setCategoryFilter('brand', brand);
+  void setSpiceLevelFilter(String? spiceLevel) =>
+      setCategoryFilter('spiceLevel', spiceLevel);
+  void setChilisFilter(String? chilis) => setCategoryFilter('chilis', chilis);
+  void setPictureFilter(bool? hasPicture) => super.setPictureFilter(hasPicture);
+}
+
+/// Computed provider for filtered chili sauce items
+final filteredChiliSauceItemsProvider = Provider<List<ChiliSauceItem>>((ref) {
+  final itemState = ref.watch(chiliSauceItemProvider);
+  return itemState.filteredItems;
+});
+
+/// Computed provider for checking if chili sauce data exists
+final hasChiliSauceItemDataProvider = Provider<bool>((ref) {
+  final itemState = ref.watch(chiliSauceItemProvider);
   return itemState.items.isNotEmpty;
 });

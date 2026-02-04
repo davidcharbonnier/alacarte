@@ -4,6 +4,7 @@ import '../../models/cheese_item.dart';
 import '../../models/gin_item.dart';
 import '../../models/wine_item.dart';
 import '../../models/coffee_item.dart';
+import '../../models/chili_sauce_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../items/item_image.dart';
@@ -16,7 +17,7 @@ class ItemDetailHeader extends StatelessWidget {
   const ItemDetailHeader({super.key, required this.item, this.onEditPressed});
 
   /// Get the badge text based on item type
-  String _getBadgeText() {
+  String _getBadgeText(BuildContext context) {
     switch (item.itemType) {
       case 'cheese':
         return item.categories['type'] ?? 'Unknown';
@@ -26,6 +27,11 @@ class ItemDetailHeader extends StatelessWidget {
         return item.categories['color'] ?? 'Unknown';
       case 'coffee':
         return item.categories['roast_level'] ?? 'Unknown';
+      case 'chili-sauce':
+        if (item is ChiliSauceItem) {
+          return (item as ChiliSauceItem).spiceLevel.getLocalizedDisplayName(context);
+        }
+        return 'Unknown';
       default:
         return item.categories['type'] ?? 'Unknown';
     }
@@ -43,6 +49,8 @@ class ItemDetailHeader extends StatelessWidget {
       imageUrl = (item as WineItem).imageUrl;
     } else if (item is CoffeeItem) {
       imageUrl = (item as CoffeeItem).imageUrl;
+    } else if (item is ChiliSauceItem) {
+      imageUrl = (item as ChiliSauceItem).imageUrl;
     }
 
     return Card(
@@ -75,7 +83,7 @@ class ItemDetailHeader extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    _getBadgeText(),
+                    _getBadgeText(context),
                     style: TextStyle(
                       color: AppConstants.primaryColor,
                       fontWeight: FontWeight.w600,
@@ -113,6 +121,8 @@ class ItemDetailHeader extends StatelessWidget {
                 return (item as WineItem).getLocalizedDetailFields(context);
               } else if (item is CoffeeItem) {
                 return (item as CoffeeItem).getLocalizedDetailFields(context);
+              } else if (item is ChiliSauceItem) {
+                return (item as ChiliSauceItem).getLocalizedDetailFields(context);
               }
               return item.detailFields;
             }())
@@ -155,6 +165,8 @@ class ItemDetailHeader extends StatelessWidget {
                 return (item as WineItem).getLocalizedDetailFields(context);
               } else if (item is CoffeeItem) {
                 return (item as CoffeeItem).getLocalizedDetailFields(context);
+              } else if (item is ChiliSauceItem) {
+                return (item as ChiliSauceItem).getLocalizedDetailFields(context);
               }
               return item.detailFields;
             }())

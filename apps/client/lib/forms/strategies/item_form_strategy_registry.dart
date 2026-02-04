@@ -4,6 +4,7 @@ import 'cheese_form_strategy.dart';
 import 'gin_form_strategy.dart';
 import 'wine_form_strategy.dart';
 import 'coffee_form_strategy.dart';
+import 'chili_sauce_form_strategy.dart';
 
 /// Central registry for all item form strategies
 /// 
@@ -21,6 +22,7 @@ class ItemFormStrategyRegistry {
     'gin': GinFormStrategy(),
     'wine': WineFormStrategy(),
     'coffee': CoffeeFormStrategy(),
+    'chili-sauce': ChiliSauceFormStrategy(),
     // Future item types:
     // 'beer': BeerFormStrategy(),
   };

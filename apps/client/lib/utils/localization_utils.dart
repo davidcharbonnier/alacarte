@@ -31,6 +31,8 @@ class ItemTypeLocalizer {
         return l10n.wine;
       case 'coffee':
         return l10n.coffee;
+      case 'chili-sauce':
+        return l10n.chiliSauce;
       default:
         // Fallback to capitalized item type if no translation exists
         return itemType.isNotEmpty

@@ -509,5 +509,221 @@
   "addImage": "Ajouter une image",
   "noImage": "Aucune image",
   
-  "withPictureFilter": "Avec image"
+  "withPictureFilter": "Avec image",
+
+  "chiliSauce": "Sauce pimentée",
+  "@chiliSauce": {
+    "description": "Chili Sauce category name"
+  },
+
+  "createChiliSauce": "Créer une sauce pimentée",
+  "@createChiliSauce": {
+    "description": "Create chili sauce screen title"
+  },
+
+  "editChiliSauce": "Modifier la sauce pimentée",
+  "@editChiliSauce": {
+    "description": "Edit chili sauce screen title"
+  },
+
+  "brandLabel": "Marque",
+  "@brandLabel": {
+    "description": "Brand field label"
+  },
+
+  "spiceLevelLabel": "Niveau de piquant",
+  "@spiceLevelLabel": {
+    "description": "Spice level field label"
+  },
+
+  "chilisLabel": "Piments",
+  "@chilisLabel": {
+    "description": "Chilis field label"
+  },
+
+  "spiceLevelMild": "Doux",
+  "@spiceLevelMild": {
+    "description": "Mild spice level"
+  },
+
+  "spiceLevelMedium": "Moyen",
+  "@spiceLevelMedium": {
+    "description": "Medium spice level"
+  },
+
+  "spiceLevelHot": "Piquant",
+  "@spiceLevelHot": {
+    "description": "Hot spice level"
+  },
+
+  "spiceLevelExtraHot": "Très Piquant",
+  "@spiceLevelExtraHot": {
+    "description": "Extra Hot spice level"
+  },
+
+  "spiceLevelExtreme": "Extrême",
+  "@spiceLevelExtreme": {
+    "description": "Extreme spice level"
+  },
+
+  "enterChiliSauceName": "Entrer le nom de la sauce pimentée",
+  "@enterChiliSauceName": {
+    "description": "Hint text for chili sauce name field"
+  },
+
+  "enterBrand": "Entrer la marque",
+  "@enterBrand": {
+    "description": "Placeholder for brand field"
+  },
+
+  "selectSpiceLevel": "Sélectionner le niveau de piquant...",
+  "@selectSpiceLevel": {
+    "description": "Dropdown placeholder for spice level selection"
+  },
+
+  "enterChilis": "ex: Habanero, Piment Fantôme, Jalapeño",
+  "@enterChilis": {
+    "description": "Placeholder for chilis field"
+  },
+
+  "chiliSauceCreated": "sauce pimentée créée avec succès !",
+  "@chiliSauceCreated": {
+    "description": "Success message after creating chili sauce"
+  },
+
+  "chiliSauceUpdated": "sauce pimentée mise à jour avec succès !",
+  "@chiliSauceUpdated": {
+    "description": "Success message after updating chili sauce"
+  },
+
+  "couldNotCreateChiliSauce": "Impossible de créer la sauce pimentée. Veuillez réessayer.",
+  "@couldNotCreateChiliSauce": {
+    "description": "Error message when chili sauce creation fails"
+  },
+
+  "couldNotUpdateChiliSauce": "Impossible de mettre à jour la sauce pimentée. Veuillez réessayer.",
+  "@couldNotUpdateChiliSauce": {
+    "description": "Error message when chili sauce update fails"
+  },
+
+  "chiliSauceNameRequired": "Le nom de la sauce pimentée est requis",
+  "@chiliSauceNameRequired": {
+    "description": "Validation message for required chili sauce name"
+  },
+
+  "chiliSauceNameTooShort": "Le nom de la sauce pimentée doit contenir au moins 2 caractères",
+  "@chiliSauceNameTooShort": {
+    "description": "Validation message for chili sauce name minimum length"
+  },
+
+  "chiliSauceNameTooLong": "Le nom de la sauce pimentée doit contenir moins de 100 caractères",
+  "@chiliSauceNameTooLong": {
+    "description": "Validation message for chili sauce name maximum length"
+  },
+
+  "spiceLevelRequired": "Le niveau de piquant est requis",
+  "@spiceLevelRequired": {
+    "description": "Validation message for required spice level"
+  },
+
+  "allChiliSauces": "Toutes les sauces pimentées",
+  "@allChiliSauces": {
+    "description": "Tab title for all chili sauces"
+  },
+
+  "myChiliSauceList": "Ma liste de sauces pimentées",
+  "@myChiliSauceList": {
+    "description": "Tab title for user's personal chili sauce list"
+  },
+
+  "addChiliSauce": "Ajouter une sauce pimentée",
+  "@addChiliSauce": {
+    "description": "Add chili sauce floating action button"
+  },
+
+  "noChiliSaucesAvailable": "Aucune sauce pimentée disponible",
+  "@noChiliSaucesAvailable": {
+    "description": "Empty state when no chili sauces exist"
+  },
+
+  "addFirstChiliSauce": "Ajoutez la première sauce pimentée pour commencer à construire votre liste de référence",
+  "@addFirstChiliSauce": {
+    "description": "Instructions for empty state"
+  },
+
+  "addFirstChiliSauceButton": "Ajouter la première sauce pimentée",
+  "@addFirstChiliSauceButton": {
+    "description": "Add first chili sauce button"
+  },
+
+  "yourChiliSauceReferenceList": "Votre liste de référence de sauces pimentées",
+  "@yourChiliSauceReferenceList": {
+    "description": "Reference list header"
+  },
+
+  "chiliSaucesWithRatings": "{count} sauces pimentées avec vos évaluations et recommandations",
+  "@chiliSaucesWithRatings": {
+    "description": "Reference list subtitle",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "yourChiliSauceListEmpty": "Votre Liste de Sauces Piquantes est Vide",
+  "@yourChiliSauceListEmpty": {
+    "description": "Empty personal list title"
+  },
+
+  "rateChiliSaucesToBuild": "Évaluez des sauces piquantes pour construire votre liste de référence",
+  "@rateChiliSaucesToBuild": {
+    "description": "Empty list instructions"
+  },
+
+  "exploreChiliSauces": "Explorer les Sauces Piquantes",
+  "@exploreChiliSauces": {
+    "description": "Explore chili sauces button"
+  },
+
+  "filterByBrand": "Filtrer par marque",
+  "@filterByBrand": {
+    "description": "Filter by brand menu item"
+  },
+
+  "filterBySpiceLevel": "Filtrer par niveau de piquant",
+  "@filterBySpiceLevel": {
+    "description": "Filter by spice level menu item"
+  },
+
+  "filterByChilis": "Filtrer par piments",
+  "@filterByChilis": {
+    "description": "Filter by chilis menu item"
+  },
+
+  "noChiliSaucesFound": "Aucune sauce piquante trouvée",
+  "@noChiliSaucesFound": {
+    "description": "Message when no chili sauces match filters"
+  },
+
+  "loadingChiliSauces": "Chargement des sauces piquantes...",
+  "@loadingChiliSauces": {
+    "description": "Loading message for chili sauces"
+  },
+
+  "searchChiliSaucesByName": "Rechercher des sauces piquantes par nom...",
+  "@searchChiliSaucesByName": {
+    "description": "Hint text for chili sauce search field"
+  },
+
+  "allItemsTab": "Tous les éléments",
+  "@allItemsTab": {
+    "description": "Tab label for all items list"
+  },
+
+  "myItemsTab": "Mes éléments",
+  "@myItemsTab": {
+    "description": "Tab label for my personal items list"
+  }
 }

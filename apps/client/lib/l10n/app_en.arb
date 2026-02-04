@@ -2588,5 +2588,221 @@
   "withPictureFilter": "With Picture",
   "@withPictureFilter": {
     "description": "Filter chip for items that have a picture"
+  },
+
+  "chiliSauce": "Chili Sauce",
+  "@chiliSauce": {
+    "description": "Chili Sauce category name"
+  },
+
+  "createChiliSauce": "Create Chili Sauce",
+  "@createChiliSauce": {
+    "description": "Create chili sauce screen title"
+  },
+
+  "editChiliSauce": "Edit Chili Sauce",
+  "@editChiliSauce": {
+    "description": "Edit chili sauce screen title"
+  },
+
+  "brandLabel": "Brand",
+  "@brandLabel": {
+    "description": "Brand field label"
+  },
+
+  "spiceLevelLabel": "Spice Level",
+  "@spiceLevelLabel": {
+    "description": "Spice level field label"
+  },
+
+  "chilisLabel": "Chilis",
+  "@chilisLabel": {
+    "description": "Chilis field label"
+  },
+
+  "spiceLevelMild": "Mild",
+  "@spiceLevelMild": {
+    "description": "Mild spice level"
+  },
+
+  "spiceLevelMedium": "Medium",
+  "@spiceLevelMedium": {
+    "description": "Medium spice level"
+  },
+
+  "spiceLevelHot": "Hot",
+  "@spiceLevelHot": {
+    "description": "Hot spice level"
+  },
+
+  "spiceLevelExtraHot": "Extra Hot",
+  "@spiceLevelExtraHot": {
+    "description": "Extra Hot spice level"
+  },
+
+  "spiceLevelExtreme": "Extreme",
+  "@spiceLevelExtreme": {
+    "description": "Extreme spice level"
+  },
+
+  "enterChiliSauceName": "Enter chili sauce name",
+  "@enterChiliSauceName": {
+    "description": "Hint text for chili sauce name field"
+  },
+
+  "enterBrand": "Enter brand",
+  "@enterBrand": {
+    "description": "Placeholder for brand field"
+  },
+
+  "selectSpiceLevel": "Select spice level...",
+  "@selectSpiceLevel": {
+    "description": "Dropdown placeholder for spice level selection"
+  },
+
+  "enterChilis": "e.g. Habanero, Ghost Pepper, Jalapeño",
+  "@enterChilis": {
+    "description": "Placeholder for chilis field"
+  },
+
+  "chiliSauceCreated": "Chili Sauce created successfully!",
+  "@chiliSauceCreated": {
+    "description": "Success message after creating chili sauce"
+  },
+
+  "chiliSauceUpdated": "Chili Sauce updated successfully!",
+  "@chiliSauceUpdated": {
+    "description": "Success message after updating chili sauce"
+  },
+
+  "couldNotCreateChiliSauce": "Could not create Chili Sauce. Please try again.",
+  "@couldNotCreateChiliSauce": {
+    "description": "Error message when chili sauce creation fails"
+  },
+
+  "couldNotUpdateChiliSauce": "Could not update Chili Sauce. Please try again.",
+  "@couldNotUpdateChiliSauce": {
+    "description": "Error message when chili sauce update fails"
+  },
+
+  "chiliSauceNameRequired": "Chili Sauce name is required",
+  "@chiliSauceNameRequired": {
+    "description": "Validation message for required chili sauce name"
+  },
+
+  "chiliSauceNameTooShort": "Chili Sauce name must be at least 2 characters",
+  "@chiliSauceNameTooShort": {
+    "description": "Validation message for chili sauce name minimum length"
+  },
+
+  "chiliSauceNameTooLong": "Chili Sauce name must be less than 100 characters",
+  "@chiliSauceNameTooLong": {
+    "description": "Validation message for chili sauce name maximum length"
+  },
+
+  "spiceLevelRequired": "Spice level is required",
+  "@spiceLevelRequired": {
+    "description": "Validation message for required spice level"
+  },
+
+  "allChiliSauces": "All Chili Sauces",
+  "@allChiliSauces": {
+    "description": "Tab title for all chili sauces"
+  },
+
+  "myChiliSauceList": "My Chili Sauce List",
+  "@myChiliSauceList": {
+    "description": "Tab title for user's personal chili sauce list"
+  },
+
+  "addChiliSauce": "Add Chili Sauce",
+  "@addChiliSauce": {
+    "description": "Add chili sauce floating action button"
+  },
+
+  "noChiliSaucesAvailable": "No Chili Sauces Available",
+  "@noChiliSaucesAvailable": {
+    "description": "Empty state when no chili sauces exist"
+  },
+
+  "addFirstChiliSauce": "Add the first Chili Sauce to start building your reference list",
+  "@addFirstChiliSauce": {
+    "description": "Instructions for empty state"
+  },
+
+  "addFirstChiliSauceButton": "Add First Chili Sauce",
+  "@addFirstChiliSauceButton": {
+    "description": "Add first chili sauce button"
+  },
+
+  "yourChiliSauceReferenceList": "Your Chili Sauce Reference List",
+  "@yourChiliSauceReferenceList": {
+    "description": "Reference list header"
+  },
+
+  "chiliSaucesWithRatings": "{count} chili sauces with your ratings and recommendations",
+  "@chiliSaucesWithRatings": {
+    "description": "Reference list subtitle",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+
+  "yourChiliSauceListEmpty": "Your Chili Sauce List is Empty",
+  "@yourChiliSauceListEmpty": {
+    "description": "Empty personal list title"
+  },
+
+  "rateChiliSaucesToBuild": "Rate Chili Sauces to build your reference list",
+  "@rateChiliSaucesToBuild": {
+    "description": "Empty list instructions"
+  },
+
+  "exploreChiliSauces": "Explore Chili Sauces",
+  "@exploreChiliSauces": {
+    "description": "Explore chili sauces button"
+  },
+
+  "filterByBrand": "Filter by brand",
+  "@filterByBrand": {
+    "description": "Filter by brand menu item"
+  },
+
+  "filterBySpiceLevel": "Filter by spice level",
+  "@filterBySpiceLevel": {
+    "description": "Filter by spice level menu item"
+  },
+
+  "filterByChilis": "Filter by chilis",
+  "@filterByChilis": {
+    "description": "Filter by chilis menu item"
+  },
+
+  "noChiliSaucesFound": "No chili sauces found",
+  "@noChiliSaucesFound": {
+    "description": "Message when no chili sauces match filters"
+  },
+
+  "loadingChiliSauces": "Loading chili sauces...",
+  "@loadingChiliSauces": {
+    "description": "Loading message for chili sauces"
+  },
+
+  "searchChiliSaucesByName": "Search chili sauces by name...",
+  "@searchChiliSaucesByName": {
+    "description": "Hint text for chili sauce search field"
+  },
+
+  "allItemsTab": "All items",
+  "@allItemsTab": {
+    "description": "Tab label for all items list"
+  },
+
+  "myItemsTab": "My items",
+  "@myItemsTab": {
+    "description": "Tab label for my personal items list"
   }
 }

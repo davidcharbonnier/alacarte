@@ -6,6 +6,7 @@ import '../models/cheese_item.dart';
 import '../models/gin_item.dart';
 import '../models/wine_item.dart';
 import '../models/coffee_item.dart';
+import '../models/chili_sauce_item.dart';
 import '../models/api_response.dart';
 import '../services/api_service.dart';
 
@@ -689,5 +690,193 @@ final coffeeItemServiceProvider = Provider<CoffeeItemService>(
   (ref) {
     // Return singleton instance to preserve cache across provider reads
     return CoffeeItemService._instance;
+  },
+);
+
+/// Concrete implementation for Chili Sauce items
+class ChiliSauceItemService extends ItemService<ChiliSauceItem> {
+  // Singleton pattern to preserve cache across provider recreations
+  static final ChiliSauceItemService _instance = ChiliSauceItemService._internal();
+
+  factory ChiliSauceItemService() => _instance;
+
+  ChiliSauceItemService._internal();
+
+  // Cache for avoiding duplicate API calls
+  ApiResponse<List<ChiliSauceItem>>? _cachedResponse;
+  DateTime? _cacheTime;
+  static const Duration _cacheExpiry = Duration(minutes: 5);
+
+  @override
+  String get itemTypeEndpoint => '/api/chili-sauce';
+
+  @override
+  ChiliSauceItem Function(dynamic) get fromJson =>
+      (dynamic json) => ChiliSauceItem.fromJson(json as Map<String, dynamic>);
+
+  @override
+  List<String> Function(ChiliSauceItem) get validateItem => _validateChiliSauceItem;
+
+  @override
+  Future<ApiResponse<List<ChiliSauceItem>>> getAllItems() async {
+    // Check if we have valid cached data
+    if (_cachedResponse != null && _cacheTime != null) {
+      final age = DateTime.now().difference(_cacheTime!);
+      if (age < _cacheExpiry) {
+        return _cachedResponse!;
+      }
+    }
+
+    // Make API call and cache result
+    final response = await handleListResponse<ChiliSauceItem>(get('$itemTypeEndpoint/all'), fromJson);
+
+    // Cache successful responses
+    if (response is ApiSuccess<List<ChiliSauceItem>>) {
+      _cachedResponse = response;
+      _cacheTime = DateTime.now();
+    }
+
+    return response;
+  }
+
+  /// Clear cache (useful for testing or after data changes)
+  Future<void> clearCache() async {
+    _cachedResponse = null;
+    _cacheTime = null;
+    // Also clear image cache and wait for completion
+    try {
+      await CachedNetworkImage.evictFromCache('');
+    } catch (e) {
+      if (kDebugMode) print('Failed to clear image cache: $e');
+    }
+  }
+
+  static List<String> _validateChiliSauceItem(ChiliSauceItem chiliSauce) {
+    final errors = <String>[];
+
+    if (chiliSauce.name.trim().isEmpty) {
+      errors.add('Name is required');
+    }
+
+    if (chiliSauce.brand != null && chiliSauce.brand!.trim().isEmpty) {
+      errors.add('Brand cannot be empty if provided');
+    }
+
+    if (chiliSauce.description != null && chiliSauce.description!.trim().isEmpty) {
+      errors.add('Description cannot be empty if provided');
+    }
+
+    return errors;
+  }
+
+  /// Get unique chili sauce brands for filtering
+  Future<ApiResponse<List<String>>> getChiliSauceBrands() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (chiliSauces, _) {
+        final brands = ChiliSauceItemExtension.getUniqueBrands(chiliSauces);
+        return ApiResponseHelper.success(brands);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Get unique chili types for filtering
+  Future<ApiResponse<List<String>>> getChiliSauceChilis() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (chiliSauces, _) {
+        final chilis = ChiliSauceItemExtension.getUniqueChilis(chiliSauces);
+        return ApiResponseHelper.success(chilis);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Get unique spice levels for filtering
+  Future<ApiResponse<List<String>>> getChiliSauceSpiceLevels() async {
+    final response = await getAllItems();
+    return response.when(
+      success: (chiliSauces, _) {
+        final spiceLevels = ChiliSauceItemExtension.getUniqueSpiceLevels(chiliSauces);
+        return ApiResponseHelper.success(spiceLevels);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<String>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<String>>(),
+    );
+  }
+
+  /// Search chili sauces by query
+  Future<ApiResponse<List<ChiliSauceItem>>> searchItems(String query) async {
+    final response = await getAllItems();
+    return response.when(
+      success: (chiliSauces, _) {
+        final filteredChiliSauces = chiliSauces
+            .where(
+              (chiliSauce) => chiliSauce.searchableText.contains(query.toLowerCase()),
+            )
+            .toList();
+        return ApiResponseHelper.success(filteredChiliSauces);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<ChiliSauceItem>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<ChiliSauceItem>>(),
+    );
+  }
+
+  /// Filter chili sauces by category
+  Future<ApiResponse<List<ChiliSauceItem>>> filterByCategory(
+    String categoryKey,
+    String categoryValue,
+  ) async {
+    final response = await getAllItems();
+    return response.when(
+      success: (chiliSauces, _) {
+        final filteredChiliSauces = chiliSauces
+            .where(
+              (chiliSauce) =>
+                  chiliSauce.categories[categoryKey]?.toLowerCase() ==
+                  categoryValue.toLowerCase(),
+            )
+            .toList();
+        return ApiResponseHelper.success(filteredChiliSauces);
+      },
+      error: (message, statusCode, errorCode, details) =>
+          ApiResponseHelper.error<List<ChiliSauceItem>>(
+            message,
+            statusCode: statusCode,
+            errorCode: errorCode,
+          ),
+      loading: () => ApiResponseHelper.loading<List<ChiliSauceItem>>(),
+    );
+  }
+}
+
+/// Provider for ChiliSauceItemService (cached to preserve service-level cache)
+final chiliSauceItemServiceProvider = Provider<ChiliSauceItemService>(
+  (ref) {
+    // Return singleton instance to preserve cache across provider reads
+    return ChiliSauceItemService._instance;
   },
 );

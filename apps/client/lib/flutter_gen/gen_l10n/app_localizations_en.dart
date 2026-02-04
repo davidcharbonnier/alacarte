@@ -1665,4 +1665,138 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get withPictureFilter => 'With Picture';
+
+  @override
+  String get chiliSauce => 'Chili Sauce';
+
+  @override
+  String get createChiliSauce => 'Create Chili Sauce';
+
+  @override
+  String get editChiliSauce => 'Edit Chili Sauce';
+
+  @override
+  String get brandLabel => 'Brand';
+
+  @override
+  String get spiceLevelLabel => 'Spice Level';
+
+  @override
+  String get chilisLabel => 'Chilis';
+
+  @override
+  String get spiceLevelMild => 'Mild';
+
+  @override
+  String get spiceLevelMedium => 'Medium';
+
+  @override
+  String get spiceLevelHot => 'Hot';
+
+  @override
+  String get spiceLevelExtraHot => 'Extra Hot';
+
+  @override
+  String get spiceLevelExtreme => 'Extreme';
+
+  @override
+  String get enterChiliSauceName => 'Enter chili sauce name';
+
+  @override
+  String get enterBrand => 'Enter brand';
+
+  @override
+  String get selectSpiceLevel => 'Select spice level...';
+
+  @override
+  String get enterChilis => 'e.g. Habanero, Ghost Pepper, Jalapeño';
+
+  @override
+  String get chiliSauceCreated => 'Chili Sauce created successfully!';
+
+  @override
+  String get chiliSauceUpdated => 'Chili Sauce updated successfully!';
+
+  @override
+  String get couldNotCreateChiliSauce =>
+      'Could not create Chili Sauce. Please try again.';
+
+  @override
+  String get couldNotUpdateChiliSauce =>
+      'Could not update Chili Sauce. Please try again.';
+
+  @override
+  String get chiliSauceNameRequired => 'Chili Sauce name is required';
+
+  @override
+  String get chiliSauceNameTooShort =>
+      'Chili Sauce name must be at least 2 characters';
+
+  @override
+  String get chiliSauceNameTooLong =>
+      'Chili Sauce name must be less than 100 characters';
+
+  @override
+  String get spiceLevelRequired => 'Spice level is required';
+
+  @override
+  String get allChiliSauces => 'All Chili Sauces';
+
+  @override
+  String get myChiliSauceList => 'My Chili Sauce List';
+
+  @override
+  String get addChiliSauce => 'Add Chili Sauce';
+
+  @override
+  String get noChiliSaucesAvailable => 'No Chili Sauces Available';
+
+  @override
+  String get addFirstChiliSauce =>
+      'Add the first Chili Sauce to start building your reference list';
+
+  @override
+  String get addFirstChiliSauceButton => 'Add First Chili Sauce';
+
+  @override
+  String get yourChiliSauceReferenceList => 'Your Chili Sauce Reference List';
+
+  @override
+  String chiliSaucesWithRatings(int count) {
+    return '$count chili sauces with your ratings and recommendations';
+  }
+
+  @override
+  String get yourChiliSauceListEmpty => 'Your Chili Sauce List is Empty';
+
+  @override
+  String get rateChiliSaucesToBuild =>
+      'Rate Chili Sauces to build your reference list';
+
+  @override
+  String get exploreChiliSauces => 'Explore Chili Sauces';
+
+  @override
+  String get filterByBrand => 'Filter by brand';
+
+  @override
+  String get filterBySpiceLevel => 'Filter by spice level';
+
+  @override
+  String get filterByChilis => 'Filter by chilis';
+
+  @override
+  String get noChiliSaucesFound => 'No chili sauces found';
+
+  @override
+  String get loadingChiliSauces => 'Loading chili sauces...';
+
+  @override
+  String get searchChiliSaucesByName => 'Search chili sauces by name...';
+
+  @override
+  String get allItemsTab => 'All items';
+
+  @override
+  String get myItemsTab => 'My items';
 }

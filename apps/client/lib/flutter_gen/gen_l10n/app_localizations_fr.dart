@@ -1695,4 +1695,141 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get withPictureFilter => 'Avec image';
+
+  @override
+  String get chiliSauce => 'Sauce pimentée';
+
+  @override
+  String get createChiliSauce => 'Créer une sauce pimentée';
+
+  @override
+  String get editChiliSauce => 'Modifier la sauce pimentée';
+
+  @override
+  String get brandLabel => 'Marque';
+
+  @override
+  String get spiceLevelLabel => 'Niveau de piquant';
+
+  @override
+  String get chilisLabel => 'Piments';
+
+  @override
+  String get spiceLevelMild => 'Doux';
+
+  @override
+  String get spiceLevelMedium => 'Moyen';
+
+  @override
+  String get spiceLevelHot => 'Piquant';
+
+  @override
+  String get spiceLevelExtraHot => 'Très Piquant';
+
+  @override
+  String get spiceLevelExtreme => 'Extrême';
+
+  @override
+  String get enterChiliSauceName => 'Entrer le nom de la sauce pimentée';
+
+  @override
+  String get enterBrand => 'Entrer la marque';
+
+  @override
+  String get selectSpiceLevel => 'Sélectionner le niveau de piquant...';
+
+  @override
+  String get enterChilis => 'ex: Habanero, Piment Fantôme, Jalapeño';
+
+  @override
+  String get chiliSauceCreated => 'sauce pimentée créée avec succès !';
+
+  @override
+  String get chiliSauceUpdated => 'sauce pimentée mise à jour avec succès !';
+
+  @override
+  String get couldNotCreateChiliSauce =>
+      'Impossible de créer la sauce pimentée. Veuillez réessayer.';
+
+  @override
+  String get couldNotUpdateChiliSauce =>
+      'Impossible de mettre à jour la sauce pimentée. Veuillez réessayer.';
+
+  @override
+  String get chiliSauceNameRequired => 'Le nom de la sauce pimentée est requis';
+
+  @override
+  String get chiliSauceNameTooShort =>
+      'Le nom de la sauce pimentée doit contenir au moins 2 caractères';
+
+  @override
+  String get chiliSauceNameTooLong =>
+      'Le nom de la sauce pimentée doit contenir moins de 100 caractères';
+
+  @override
+  String get spiceLevelRequired => 'Le niveau de piquant est requis';
+
+  @override
+  String get allChiliSauces => 'Toutes les sauces pimentées';
+
+  @override
+  String get myChiliSauceList => 'Ma liste de sauces pimentées';
+
+  @override
+  String get addChiliSauce => 'Ajouter une sauce pimentée';
+
+  @override
+  String get noChiliSaucesAvailable => 'Aucune sauce pimentée disponible';
+
+  @override
+  String get addFirstChiliSauce =>
+      'Ajoutez la première sauce pimentée pour commencer à construire votre liste de référence';
+
+  @override
+  String get addFirstChiliSauceButton => 'Ajouter la première sauce pimentée';
+
+  @override
+  String get yourChiliSauceReferenceList =>
+      'Votre liste de référence de sauces pimentées';
+
+  @override
+  String chiliSaucesWithRatings(int count) {
+    return '$count sauces pimentées avec vos évaluations et recommandations';
+  }
+
+  @override
+  String get yourChiliSauceListEmpty =>
+      'Votre Liste de Sauces Piquantes est Vide';
+
+  @override
+  String get rateChiliSaucesToBuild =>
+      'Évaluez des sauces piquantes pour construire votre liste de référence';
+
+  @override
+  String get exploreChiliSauces => 'Explorer les Sauces Piquantes';
+
+  @override
+  String get filterByBrand => 'Filtrer par marque';
+
+  @override
+  String get filterBySpiceLevel => 'Filtrer par niveau de piquant';
+
+  @override
+  String get filterByChilis => 'Filtrer par piments';
+
+  @override
+  String get noChiliSaucesFound => 'Aucune sauce piquante trouvée';
+
+  @override
+  String get loadingChiliSauces => 'Chargement des sauces piquantes...';
+
+  @override
+  String get searchChiliSaucesByName =>
+      'Rechercher des sauces piquantes par nom...';
+
+  @override
+  String get allItemsTab => 'Tous les éléments';
+
+  @override
+  String get myItemsTab => 'Mes éléments';
 }
