@@ -37,6 +37,8 @@ Chili sauce is a popular consumable category that users want to rate and share. 
 - Image upload works for chili sauces
 - Search and filtering work across all chili sauce attributes
 - French and English localization complete
+- Chili sauce appears on home screen with item count
+- Chili sauce appears in item type switcher dropdown
 - All tests pass
 
 ## Scope
