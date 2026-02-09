@@ -28,8 +28,9 @@ context: |
 rules:
   tasks:
     - All commits MUST follow conventional commit format with required scopes (api, client, admin, deps, ci, docs, release).
-    - Branch naming: feat/, fix/, refactor/, docs/, chore/.
+    - "Branch naming: feat/, fix/, refactor/, docs/, chore/."
     - Follow existing patterns and keep code DRY.
     - Add comments only for complex logic.
+    - Group tasks by expertise (backend, frontend, devops)
   specs:
     - Update documentation in `docs/` when adding features or changing behavior.
