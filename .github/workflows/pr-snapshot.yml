@@ -240,12 +240,11 @@ jobs:
   comment-pr:
     needs: [detect-changes, generate-version, build-api, build-client, build-admin]
     if: |
-      always() &&
       needs.detect-changes.outputs.has_code_changes == 'true' &&
       needs.generate-version.result == 'success' &&
-      (needs.build-api.result == 'success' || needs.build-api.result == 'failure' ||
-       needs.build-client.result == 'success' || needs.build-client.result == 'failure' ||
-       needs.build-admin.result == 'success' || needs.build-admin.result == 'failure')
+      needs.build-api.result == 'success' &&
+      needs.build-client.result == 'success' &&
+      needs.build-admin.result == 'success'
     runs-on: ubuntu-latest
     steps:
     - name: Find and update existing comment
