@@ -7,113 +7,143 @@ on:
     - master
 
 env:
-  GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GITHUB_USER: ${{ github.actor }}
 
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      api: ${{ steps.changes.outputs.api }}
-      client: ${{ steps.changes.outputs.client }}
-      admin: ${{ steps.changes.outputs.admin }}
-      has_changes: ${{ steps.changes.outputs.has_changes }}
+      has_code_changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Detect changed apps using git
+    - name: Detect code changes (exclude .md files)
       id: changes
       run: |
-        # Use git to detect which packages have changes
+        # Fetch the base branch
         git fetch origin ${{ github.event.pull_request.base.ref }}
 
-        # Get list of changed files compared to base branch
-        CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD)
+        # Get list of changed files compared to base branch, excluding .md files
+        CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep -v '\.md$')
 
-        echo "Changed files:"
+        echo "Changed files (excluding .md):"
         echo "$CHANGED_FILES"
 
-        HAS_CHANGES=false
-
-        # Check if API has changes (files in apps/api/)
-        if echo "$CHANGED_FILES" | grep -q "^apps/api/"; then
-          echo "api=true" >> $GITHUB_OUTPUT
-          echo "✅ API has changes"
-          HAS_CHANGES=true
+        # Check if any code files changed
+        if [ -n "$CHANGED_FILES" ]; then
+          echo "has_code_changes=true" >> $GITHUB_OUTPUT
+          echo "✅ Code changes detected"
         else
-          echo "api=false" >> $GITHUB_OUTPUT
-          echo "❌ API has no changes"
+          echo "has_code_changes=false" >> $GITHUB_OUTPUT
+          echo "❌ Only documentation changes, skipping build"
         fi
 
-        # Check if Client has changes (files in apps/client/)
-        if echo "$CHANGED_FILES" | grep -q "^apps/client/"; then
-          echo "client=true" >> $GITHUB_OUTPUT
-          echo "✅ Client has changes"
-          HAS_CHANGES=true
-        else
-          echo "client=false" >> $GITHUB_OUTPUT
-          echo "❌ Client has no changes"
-        fi
-
-        # Check if Admin has changes (files in apps/admin/)
-        if echo "$CHANGED_FILES" | grep -q "^apps/admin/"; then
-          echo "admin=true" >> $GITHUB_OUTPUT
-          echo "✅ Admin has changes"
-          HAS_CHANGES=true
-        else
-          echo "admin=false" >> $GITHUB_OUTPUT
-          echo "❌ Admin has no changes"
-        fi
-
-        echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
+  skip-workflow:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_code_changes == 'false'
+    runs-on: ubuntu-latest
+    steps:
+    - name: No code changes
+      run: echo "Only .md files changed, skipping workflow"
 
   generate-version:
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_changes == 'true'
+    if: needs.detect-changes.outputs.has_code_changes == 'true'
     runs-on: ubuntu-latest
     outputs:
       snapshot_version: ${{ steps.version.outputs.snapshot }}
     steps:
     - uses: actions/checkout@v4
-    - name: Get versio
-      uses: chaaz/versio-actions/install@v1.3
     - name: Fetch history
       run: git fetch --unshallow
-    - name: Generate snapshot version using versio
+    - name: Generate snapshot version
       id: version
       run: |
-        # Use versio to simulate next versions and create snapshot versions
         PR_NUMBER=${{ github.event.pull_request.number }}
-        COMMIT_SHA=${GITHUB_SHA:0:7}
-
-        # Get next versions that versio would assign
-        NEXT_API_VERSION=$(versio --vcs-level=local plan --id 3 --template=builtin:json | jq -r '.release.version' || versio get -n api -v)
-        NEXT_CLIENT_VERSION=$(versio --vcs-level=local plan --id 1 --template=builtin:json | jq -r '.release.version' || versio get -n client -v)
-        NEXT_ADMIN_VERSION=$(versio --vcs-level=local plan --id 2 --template=builtin:json | jq -r '.release.version' || versio get -n admin -v)
-
-        # Use the highest next version as base for snapshot
-        BASE_VERSION=$(printf "%s\n%s\n%s" "$NEXT_API_VERSION" "$NEXT_CLIENT_VERSION" "$NEXT_ADMIN_VERSION" | sort -V | tail -1)
-
-        # Generate snapshot version in format: 0.7.0-pr-123.abc1234 (next version + pr suffix)
-        SNAPSHOT="${BASE_VERSION}-pr-${PR_NUMBER}.${COMMIT_SHA}"
+        
+        # Calculate increment based on commits in this PR
+        INCREMENT=$(git rev-list --count origin/${{ github.event.pull_request.base.ref }}...HEAD)
+        
+        # Use a base version that will work for all apps (use the latest tag as reference)
+        # For snapshot builds, we use a simple format: pr-{number}.{increment}
+        SNAPSHOT="pr-${PR_NUMBER}.${INCREMENT}"
+        
         echo "snapshot=${SNAPSHOT}" >> $GITHUB_OUTPUT
-        echo "Generated version: ${SNAPSHOT} (based on next versions: api=${NEXT_API_VERSION}, client=${NEXT_CLIENT_VERSION}, admin=${NEXT_ADMIN_VERSION})"
+        echo "Generated version: ${SNAPSHOT} (PR #${PR_NUMBER}, increment ${INCREMENT})"
+
+  test-api:
+    needs: [detect-changes, generate-version]
+    if: needs.detect-changes.outputs.has_code_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+        cache: true
+        cache-dependency-path: apps/api/go.sum
+    - name: Run tests
+      working-directory: ./apps/api
+      run: go test ./...
+
+  test-client:
+    needs: [detect-changes, generate-version]
+    if: needs.detect-changes.outputs.has_code_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: "3.35.4"
+        channel: "stable"
+    - name: Install dependencies
+      working-directory: ./apps/client
+      run: flutter pub get
+    - name: Generate localizations
+      working-directory: ./apps/client
+      run: flutter gen-l10n
+    - name: Run tests
+      working-directory: ./apps/client
+      run: flutter test
+
+  test-admin:
+    needs: [detect-changes, generate-version]
+    if: needs.detect-changes.outputs.has_code_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: apps/admin/package-lock.json
+    - name: Install dependencies
+      working-directory: ./apps/admin
+      run: npm ci
+    - name: Run tests
+      working-directory: ./apps/admin
+      run: npm test
 
   build-api:
-    needs: [detect-changes, generate-version]
-    if: needs.detect-changes.outputs.api == 'true'
+    needs: [detect-changes, generate-version, test-api]
+    if: needs.detect-changes.outputs.has_code_changes == 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    - name: Login to Docker Hub
+    - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and push API
       uses: docker/build-push-action@v5
       with:
@@ -121,14 +151,14 @@ jobs:
         file: ./apps/api/Dockerfile
         push: true
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ needs.generate-version.outputs.snapshot_version }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:pr-${{ github.event.pull_request.number }}-latest
+          ghcr.io/${{ github.repository }}/api:${{ needs.generate-version.outputs.snapshot_version }}
+          ghcr.io/${{ github.repository }}/api:pr-${{ github.event.pull_request.number }}-latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
   build-client:
-    needs: [detect-changes, generate-version]
-    if: needs.detect-changes.outputs.client == 'true'
+    needs: [detect-changes, generate-version, test-client]
+    if: needs.detect-changes.outputs.has_code_changes == 'true'
     runs-on: ubuntu-latest
     environment: dev
     steps:
@@ -170,19 +200,20 @@ jobs:
         retention-days: 30
 
   build-admin:
-    needs: [detect-changes, generate-version]
-    if: needs.detect-changes.outputs.admin == 'true'
+    needs: [detect-changes, generate-version, test-admin]
+    if: needs.detect-changes.outputs.has_code_changes == 'true'
     runs-on: ubuntu-latest
     environment: dev
     steps:
     - uses: actions/checkout@v4
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    - name: Login to Docker Hub
+    - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and push Admin
       uses: docker/build-push-action@v5
       with:
@@ -193,16 +224,16 @@ jobs:
         build-args: |
           NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ needs.generate-version.outputs.snapshot_version }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:pr-${{ github.event.pull_request.number }}-latest
+          ghcr.io/${{ github.repository }}/admin:${{ needs.generate-version.outputs.snapshot_version }}
+          ghcr.io/${{ github.repository }}/admin:pr-${{ github.event.pull_request.number }}-latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
   comment-pr:
     needs: [detect-changes, generate-version, build-api, build-client, build-admin]
-    # Only comment if version generation succeeded and at least one build ran
     if: |
       always() &&
+      needs.detect-changes.outputs.has_code_changes == 'true' &&
       needs.generate-version.result == 'success' &&
       (needs.build-api.result == 'success' || needs.build-api.result == 'failure' ||
        needs.build-client.result == 'success' || needs.build-client.result == 'failure' ||
@@ -217,35 +248,45 @@ jobs:
           const prNumber = ${{ github.event.pull_request.number }};
           const sha = '${{ github.sha }}'.substring(0, 7);
           const runId = '${{ github.run_id }}';
+          const repo = '${{ github.repository }}';
 
           let comment = `## 📦 Snapshot Build Available\n\n`;
           comment += `**Version:** \`${version}\`\n`;
           comment += `**Commit:** ${sha}\n`;
-          comment += `**Build:** [View Details](https://github.com/${{ github.repository }}/actions/runs/${runId})\n\n`;
+          comment += `**Build:** [View Details](https://github.com/${repo}/actions/runs/${runId})\n\n`;
           comment += `### Build Status\n\n`;
 
           // API build status
           if ('${{ needs.build-api.result }}' === 'success') {
-            comment += `✅ **API:** \`${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${version}\`\n`;
-            comment += `   - Convenience: \`${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:pr-${prNumber}-latest\`\n\n`;
+            comment += `✅ **API:** \`ghcr.io/${repo}/api:${version}\`\n`;
+            comment += `   - Convenience: \`ghcr.io/${repo}/api:pr-${prNumber}-latest\`\n\n`;
           } else if ('${{ needs.build-api.result }}' === 'failure') {
             comment += `❌ **API:** Build failed\n\n`;
           }
 
           // Client build status
           if ('${{ needs.build-client.result }}' === 'success') {
-            comment += `✅ **Client APK:** [Download from artifacts](https://github.com/${{ github.repository }}/actions/runs/${runId})\n\n`;
+            comment += `✅ **Client APK:** [Download from artifacts](https://github.com/${repo}/actions/runs/${runId})\n\n`;
           } else if ('${{ needs.build-client.result }}' === 'failure') {
             comment += `❌ **Client:** Build failed\n\n`;
           }
 
           // Admin build status
           if ('${{ needs.build-admin.result }}' === 'success') {
-            comment += `✅ **Admin:** \`${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${version}\`\n`;
-            comment += `   - Convenience: \`${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:pr-${prNumber}-latest\`\n\n`;
+            comment += `✅ **Admin:** \`ghcr.io/${repo}/admin:${version}\`\n`;
+            comment += `   - Convenience: \`ghcr.io/${repo}/admin:pr-${prNumber}-latest\`\n\n`;
           } else if ('${{ needs.build-admin.result }}' === 'failure') {
             comment += `❌ **Admin:** Build failed\n\n`;
           }
+
+          // Pull commands
+          comment += `### Pull Commands\n\n`;
+          comment += '```bash\n';
+          comment += `# API\n`;
+          comment += `docker pull ghcr.io/${repo}/api:${version}\n`;
+          comment += `\n# Admin\n`;
+          comment += `docker pull ghcr.io/${repo}/admin:${version}\n`;
+          comment += '```\n';
 
           // Find existing comment
           const comments = await github.rest.issues.listComments({

@@ -6,26 +6,77 @@ on:
     - master
 
 env:
-  GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-  GITHUB_USER: ${{ github.actor }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  version:
+  release-api:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Get versio
-      uses: chaaz/versio-actions/install@v1.3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: apps/api/package-lock.json
 
-    - name: Fetch history
-      run: git fetch --unshallow
+    - name: Install dependencies
+      working-directory: ./apps/api
+      run: npm ci
 
-    - name: Run Versio Release
-      run: |
-        versio --vcs-level=max release
+    - name: Run semantic-release
+      working-directory: ./apps/api
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: npx semantic-release
+
+  release-client:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: apps/client/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./apps/client
+      run: npm ci
+
+    - name: Run semantic-release
+      working-directory: ./apps/client
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: npx semantic-release
+
+  release-admin:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: apps/admin/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./apps/admin
+      run: npm ci
+
+    - name: Run semantic-release
+      working-directory: ./apps/admin
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: npx semantic-release
