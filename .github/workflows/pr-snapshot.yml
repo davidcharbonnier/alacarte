@@ -159,8 +159,8 @@ jobs:
         file: ./apps/api/Dockerfile
         push: true
         tags: |
-          ghcr.io/${{ github.repository }}/api:${{ needs.generate-version.outputs.snapshot_version }}
-          ghcr.io/${{ github.repository }}/api:pr-${{ github.event.pull_request.number }}-latest
+          ghcr.io/${{ github.repository }}-api:${{ needs.generate-version.outputs.snapshot_version }}
+          ghcr.io/${{ github.repository }}-api:pr-${{ github.event.pull_request.number }}-latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -232,8 +232,8 @@ jobs:
         build-args: |
           NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
         tags: |
-          ghcr.io/${{ github.repository }}/admin:${{ needs.generate-version.outputs.snapshot_version }}
-          ghcr.io/${{ github.repository }}/admin:pr-${{ github.event.pull_request.number }}-latest
+          ghcr.io/${{ github.repository }}-admin:${{ needs.generate-version.outputs.snapshot_version }}
+          ghcr.io/${{ github.repository }}-admin:pr-${{ github.event.pull_request.number }}-latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -265,8 +265,8 @@ jobs:
 
           // API build status
           if ('${{ needs.build-api.result }}' === 'success') {
-            comment += `✅ **API:** \`ghcr.io/${repo}/api:${version}\`\n`;
-            comment += `   - Convenience: \`ghcr.io/${repo}/api:pr-${prNumber}-latest\`\n\n`;
+            comment += `✅ **API:** \`ghcr.io/${repo}-api:${version}\`\n`;
+            comment += `   - Convenience: \`ghcr.io/${repo}-api:pr-${prNumber}-latest\`\n\n`;
           } else if ('${{ needs.build-api.result }}' === 'failure') {
             comment += `❌ **API:** Build failed\n\n`;
           }
@@ -280,8 +280,8 @@ jobs:
 
           // Admin build status
           if ('${{ needs.build-admin.result }}' === 'success') {
-            comment += `✅ **Admin:** \`ghcr.io/${repo}/admin:${version}\`\n`;
-            comment += `   - Convenience: \`ghcr.io/${repo}/admin:pr-${prNumber}-latest\`\n\n`;
+            comment += `✅ **Admin:** \`ghcr.io/${repo}-admin:${version}\`\n`;
+            comment += `   - Convenience: \`ghcr.io/${repo}-admin:pr-${prNumber}-latest\`\n\n`;
           } else if ('${{ needs.build-admin.result }}' === 'failure') {
             comment += `❌ **Admin:** Build failed\n\n`;
           }
@@ -290,9 +290,9 @@ jobs:
           comment += `### Pull Commands\n\n`;
           comment += '```bash\n';
           comment += `# API\n`;
-          comment += `docker pull ghcr.io/${repo}/api:${version}\n`;
+          comment += `docker pull ghcr.io/${repo}-api:${version}\n`;
           comment += `\n# Admin\n`;
-          comment += `docker pull ghcr.io/${repo}/admin:${version}\n`;
+          comment += `docker pull ghcr.io/${repo}-admin:${version}\n`;
           comment += '```\n';
 
           // Find existing comment

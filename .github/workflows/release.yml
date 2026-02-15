@@ -41,8 +41,8 @@ jobs:
         file: ./apps/api/Dockerfile
         push: true
         tags: |
-          ghcr.io/${{ github.repository }}/api:${{ steps.version.outputs.version }}
-          ghcr.io/${{ github.repository }}/api:latest
+          ghcr.io/${{ github.repository }}-api:${{ steps.version.outputs.version }}
+          ghcr.io/${{ github.repository }}-api:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -149,8 +149,8 @@ jobs:
         build-args: |
           NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
         tags: |
-          ghcr.io/${{ github.repository }}/admin:${{ steps.version.outputs.version }}
-          ghcr.io/${{ github.repository }}/admin:latest
+          ghcr.io/${{ github.repository }}-admin:${{ steps.version.outputs.version }}
+          ghcr.io/${{ github.repository }}-admin:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -213,7 +213,7 @@ jobs:
         if [ "$APP" = "api" ]; then
           echo "### 🐳 Docker Image" >> release_notes.md
           echo "\`\`\`bash" >> release_notes.md
-          echo "docker pull ghcr.io/$REPO/api:$VERSION" >> release_notes.md
+          echo "docker pull ghcr.io/${REPO}-api:${VERSION}" >> release_notes.md
           echo "\`\`\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "### 📝 Changelog" >> release_notes.md
@@ -237,7 +237,7 @@ jobs:
         elif [ "$APP" = "admin" ]; then
           echo "### 🐳 Docker Image" >> release_notes.md
           echo "\`\`\`bash" >> release_notes.md
-          echo "docker pull ghcr.io/$REPO/admin:$VERSION" >> release_notes.md
+          echo "docker pull ghcr.io/${REPO}-admin:${VERSION}" >> release_notes.md
           echo "\`\`\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "### 📝 Changelog" >> release_notes.md
