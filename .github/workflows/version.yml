@@ -27,7 +27,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: ./apps/api
-      run: npm ci
+      run: npm ci --ignore-scripts
 
     - name: Run semantic-release
       working-directory: ./apps/api
@@ -50,7 +50,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: ./apps/client
-      run: npm ci
+      run: npm ci --ignore-scripts
 
     - name: Run semantic-release
       working-directory: ./apps/client
@@ -73,7 +73,7 @@ jobs:
 
     - name: Install dependencies
       working-directory: ./apps/admin
-      run: npm ci
+      run: npm ci --ignore-scripts
 
     - name: Run semantic-release
       working-directory: ./apps/admin
