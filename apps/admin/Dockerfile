@@ -3,7 +3,7 @@
 # ============================================
 # Base stage - Common dependencies
 # ============================================
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 WORKDIR /app
 
 # Install libc6-compat for Alpine compatibility
@@ -18,7 +18,7 @@ FROM base AS deps
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # ============================================
 # Development stage - Hot reload enabled
@@ -67,7 +67,7 @@ RUN npm run build
 # ============================================
 # Production stage - Minimal runtime image
 # ============================================
-FROM node:18-alpine AS prod
+FROM node:20-alpine AS prod
 
 WORKDIR /app
 
