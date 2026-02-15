@@ -10,8 +10,8 @@
 - **Client:** Flutter SDK (>=3.27), Riverpod, Google Sign-In (google_sign_in package), Cross-platform OAuth (Web, Android, Desktop)
 - **Admin:** Next.js, TypeScript (strict, no `any`), NextAuth.js for Google OAuth integration
 - **Infrastructure:** Google Cloud Run, Cloud SQL (MySQL), Docker & Docker Compose
-- **CI/CD:** GitHub Actions, Docker Hub, Snapshot builds for PRs (Docker images for API/Admin, APK for Client)
-- **Release Automation:** Conventional Commits, versio, Github Actions
+- **CI/CD:** GitHub Actions, GHCR (GitHub Container Registry), Snapshot builds for PRs (Docker images for API/Admin, APK for Client)
+- **Release Automation:** Conventional Commits, semantic-release, GitHub Actions
 - **Monorepo Tools:** commitlint, husky Git hooks
 
 ## Monorepo Structure
@@ -57,14 +57,17 @@ All commits MUST follow conventional commit format with required scopes as defin
 
 ### Automated Versioning
 
-The project uses automated versioning with versio. Version bumps happen automatically based on commit types:
+The project uses automated versioning with semantic-release. Version bumps happen automatically based on commit types when pushing to master:
 
 - `feat(scope)` → minor bump (0.1.0 → 0.2.0)
 - `fix(scope)` → patch bump (0.1.0 → 0.1.1)
 - `BREAKING CHANGE:` → major bump (0.1.0 → 1.0.0)
 - Other types → no version change
 
-Each app (api, client, admin) is versioned independently.
+Each app (api, client, admin) is versioned independently with tags:
+- `api-v1.0.0` - API releases
+- `client-v1.0.0` - Client releases
+- `admin-v1.0.0` - Admin releases
 
 ### Code Style Guidelines
 
@@ -143,9 +146,9 @@ The project focuses on consumables with entities likely including:
 ## External Dependencies
 
 - GitHub Actions for CI/CD
-- Docker Hub for Docker images
+- GHCR (GitHub Container Registry) for Docker images
 - Google Cloud Run for deployment
 - Cloud SQL (MySQL) for database
-- versio for automated versioning
+- semantic-release for automated versioning
 - commitlint/husky for Git hooks
 - Docker Compose for local development

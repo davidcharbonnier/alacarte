@@ -8,21 +8,9 @@ This document explains the CI/CD workflows and required configuration.
 
 Navigate to: `Settings` → `Secrets and variables` → `Actions` → `Secrets`
 
-1. **`DOCKERHUB_USERNAME`**
-   - Your Docker Hub username
-   - Example: `davidcharbonnier`
-
-2. **`DOCKERHUB_TOKEN`**
-   - Docker Hub Access Token with **Read, Write, Delete** permissions
-   - How to create:
-     1. Go to [Docker Hub Security](https://hub.docker.com/settings/security)
-     2. Click "New Access Token"
-     3. Name: `alacarte-github-actions`
-     4. Permissions: **Read, Write, Delete** (Delete is required for cleanup)
-     5. Copy the token immediately (shown only once)
-
-3. **`GITHUB_TOKEN`**
+1. **`GITHUB_TOKEN`**
    - ✅ Automatically provided by GitHub Actions (no setup needed)
+   - Requires `contents: write` permissions for releases
 
 ### Environment Variables
 
@@ -31,14 +19,18 @@ Navigate to: `Settings` → `Environments`
 #### Create `dev` Environment
 
 Variables:
-- **`NEXT_PUBLIC_API_URL`**: Your development API URL
+- **`CLIENT_API_BASE_URL`**: Client development API URL
   - Example: `https://alacarte-api-dev-123456.run.app`
+- **`CLIENT_GOOGLE_CLIENT_ID`**: Client Google OAuth Client ID
+- **`ADMIN_NEXT_PUBLIC_API_URL`**: Admin development API URL
+  - Example: `https://alacarte-api-prod-123456.run.app`
 
 #### Create `prod` Environment
 
 Variables:
-- **`NEXT_PUBLIC_API_URL`**: Your production API URL
-  - Example: `https://alacarte-api-prod-123456.run.app`
+- **`CLIENT_API_BASE_URL`**: Client production API URL
+- **`CLIENT_GOOGLE_CLIENT_ID`**: Client Google OAuth Client ID
+- **`ADMIN_NEXT_PUBLIC_API_URL`**: Admin production API URL
 
 ## 🔄 Workflows Overview
 
@@ -49,79 +41,64 @@ Variables:
 **Environment:** Uses `dev` environment for Admin builds
 
 **What it does:**
-- Detects which apps changed (API, Client, Admin) using path filters
-- Generates snapshot version: `v0.1.0-pr-123.abc1234` (format: current-version-pr-number.commit-sha)
-- Builds only changed apps in parallel:
-  - **API:** Docker image with linux/amd64
-  - **Admin:** Docker image with Next.js production build, dev API URL
+- Detects code changes excluding `.md` files (documentation-only changes skip build)
+- Generates snapshot version: `pr-{number}.{increment}` (e.g., `pr-123.5`)
+- Runs tests in parallel for all apps:
+  - **API:** `go test ./...`
+  - **Client:** `flutter gen-l10n && flutter test`
+  - **Admin:** `npm test`
+- Builds all apps in parallel (when any app has code changes):
+  - **API:** Docker image with linux/amd64 (GHCR)
+  - **Admin:** Docker image with Next.js production build (GHCR)
   - **Client:** Flutter APK (debug build with dev configuration)
-- Pushes Docker images with two tags:
-  - Unique: `{app}:v0.1.0-pr-123.abc1234`
-  - Convenience: `{app}:pr-123-latest`
+- Pushes Docker images to GHCR:
+  - Unique: `ghcr.io/{owner}/{repo}/{app}:pr-{number}.{increment}`
+  - Convenience: `ghcr.io/{owner}/{repo}/{app}:pr-{number}-latest`
 - Uploads Client APK as GitHub Actions artifact
 - Comments on PR with available images and manual deployment instructions
 
 **Key Features:**
-- Change detection: Only builds affected apps
+- Change detection: Excludes .md files, builds all apps when any app changes
+- Tests run before builds (fails fast on test failures)
 - Flutter 3.35.4 with Java 17 for Android builds
 - Docker BuildKit caching for faster builds
 - Parallel execution for speed
 
 **Outputs:**
-- Docker images: `davidcharbonnier/alacarte-{app}:{snapshot-version}`
-- Convenience tags: `davidcharbonnier/alacarte-{app}:pr-{number}-latest`
+- Docker images: `ghcr.io/{owner}/{repo}/{app}:pr-{number}.{increment}`
+- Convenience tags: `ghcr.io/{owner}/{repo}/{app}:pr-{number}-latest`
 - Client APK artifact (30-day retention)
 
-### 2. Cleanup Snapshots (`cleanup-snapshots.yml`)
+### 2. Version Bump (`version.yml`)
 
-**Triggers:**
-- When a PR is closed (merged or not) - immediate cleanup
-- Daily at 2 AM UTC (safety net)
-- Manual trigger via `workflow_dispatch`
+**Trigger:** Every push to `master` branch
 
 **What it does:**
-1. **Determine what to keep:**
-   - Lists all open PRs
-   - Identifies last merged PR
-   - Creates keep list: open PRs + last merged PR
+- Runs semantic-release for each app in separate jobs
+- Analyzes commits since last release using conventional commit format
+- Determines version bump based on commit types:
+  - `feat:` → minor bump
+  - `fix:` → patch bump
+  - `BREAKING CHANGE:` → major bump
+- Creates git tags: `api-v{version}`, `client-v{version}`, `admin-v{version}`
+- Generates CHANGELOG.md in each app directory
+- Creates GitHub releases with changelogs
 
-2. **Parallel Docker cleanup:**
-   - For each app (api, admin) independently
-   - Lists all Docker Hub tags
-   - Deletes tags matching old PR numbers
-   - Uses `regctl` for Docker Hub API access
-
-3. **Sequential GitHub cleanup:**
-   - Deletes pre-release GitHub releases (must be first)
-   - Deletes orphaned git tags (after releases)
-   - Deletes old APK artifacts (safety net)
-
-**Retention Policy:**
-- ✅ Keep all snapshots from **open PRs** (active development)
-- ✅ Keep snapshots from **last merged PR** (rollback capability)
-- ❌ Delete all other snapshots (old PRs)
-
-**Cleanup Order:**
-```
-Docker Hub Tags (parallel, independent)
-        ↓
-GitHub Releases (sequential - first)
-        ↓
-Git Tags (sequential - after releases)
-        ↓
-Artifacts (sequential - safety net)
-```
+**Tag Format:**
+- API: `api-v1.2.3`
+- Client: `client-v1.2.3`
+- Admin: `admin-v1.2.3`
 
 ### 3. Production Release (`release.yml`)
 
 **Trigger:** Push of git tags matching patterns:
 - `api-v*` - API only
-- `client-v*` - Client only  
+- `client-v*` - Client only
 - `admin-v*` - Admin only
 
 **Versioning:**
-- Versions are managed by versio in `versio.toml`
-- Tags created by versio release workflow
+- Versions are managed by semantic-release
+- Tags created by version.yml workflow
 - Format: `api-v1.2.3`, `client-v1.2.3`, `admin-v1.2.3`
 
 **Process:**
@@ -134,44 +111,45 @@ When a tag is pushed:
 1. **Docker Images (API + Admin):**
    - Builds only the affected app
    - Uses production environment variables
-   - Tags: `{app}:v{version}` + `{app}:latest`
+   - Tags: `ghcr.io/{owner}/{repo}/{app}:v{version}` + `:latest`
 
 2. **Client APK:**
    - Flutter 3.35.4 + Java 17
-   - Builds release APK
+   - Builds release APK with production configuration
    - Uploads as artifact
 
 3. **GitHub Releases:**
-   - Versio creates GitHub releases with changelogs
-   - Workflow updates releases with build status and deployment information
+   - Creates/updates GitHub releases with changelogs
    - Adds Docker image pull commands
    - Attaches APK for client releases
-   - Links to relevant changelogs
 
 **Release Examples:**
 ```
 API release: api-v1.2.3
 → Release: "API v1.2.3"
 → Builds: API only at version 1.2.3
-→ Docker tags: api:1.2.3
+→ Docker tags: ghcr.io/owner/repo/api:1.2.3
 
-Client release: client-v1.2.4  
+Client release: client-v1.2.4
 → Release: "Client v1.2.4"
 → Builds: Client only at version 1.2.4
-→ APK: client 1.2.4
+→ APK: attached to release
+
+Admin release: admin-v1.2.5
+→ Release: "Admin v1.2.5"
+→ Builds: Admin only at version 1.2.5
+→ Docker tags: ghcr.io/owner/repo/admin:1.2.5
 ```
 
 **Breaking Changes:**
-- Versio automatically detects breaking changes using conventional commit format
-- `feat!:` commits trigger major version bumps for affected packages
+- semantic-release automatically detects breaking changes using conventional commit format
+- `feat!:` or `BREAKING CHANGE:` commits trigger major version bumps
 - Each package maintains independent versioning
-- Breaking changes only affect packages that implement them
 
 **Outputs:**
-- Docker images: `davidcharbonnier/alacarte-{app}:v{version}` + `:latest`
+- Docker images: `ghcr.io/{owner}/{repo}/{app}:v{version}` + `:latest`
 - GitHub releases with tags (app-specific)
 - Client APK attached to relevant release
-- Build status indicators in release notes
 
 ## 🚀 Developer Workflow
 
@@ -190,6 +168,7 @@ git push origin feat/add-wine-support
 
 # 4. Open PR with conventional commit messages
 # → Snapshot builds automatically trigger
+# → Tests run in parallel
 # → Wait for comment with image tags
 
 # Example commits:
@@ -202,9 +181,9 @@ git commit -m "docs: update wine documentation"
 
 ```bash
 # 1. Merge feature PR to master with conventional commits
-# → Versio workflow runs automatically on master push
+# → version.yml runs semantic-release automatically
 
-# 2. Versio analyzes commits and determines releases
+# 2. semantic-release analyzes commits and determines releases
 # - Detects conventional commits (feat, fix, feat!, etc.)
 # - Bumps versions according to semantic versioning rules
 # - Only releases packages that have changes
@@ -213,21 +192,20 @@ git commit -m "docs: update wine documentation"
 
 # 3. Tag push triggers release.yml workflow
 # → Validates tag format
-# → Builds affected apps in parallel
-# → Updates GitHub releases with build status and deployment info
-# → Attaches APK for client releases
+# → Builds affected app
+# → Pushes to GHCR
+# → Updates GitHub releases
 
 # 4. Monitor release completion
 # - Check GitHub Actions for build status
-# - Verify Docker images published
+# - Verify Docker images published to GHCR
 # - Confirm APK attached to releases
 ```
 
 **Breaking Change Handling:**
 - Use `feat!:` for breaking feature additions
-- Use `fix!:` for breaking bug fixes
-- Versio automatically bumps major version for affected packages
-- Each package versions independently
+- Use `fix!:` or include `BREAKING CHANGE:` in body for breaking bug fixes
+- semantic-release automatically bumps major version
 
 ## 🧪 Manual QA Deployment
 
@@ -236,18 +214,18 @@ After snapshot build completes:
 ```bash
 # Deploy API snapshot
 gcloud run deploy alacarte-api-qa \
-  --image=davidcharbonnier/alacarte-api:v0.1.0-pr-123.abc1234 \
+  --image=ghcr.io/owner/repo/api:pr-123.5 \
   --region=northamerica-northeast1
 
 # Deploy Admin snapshot
 gcloud run deploy alacarte-admin-qa \
-  --image=davidcharbonnier/alacarte-admin:v0.1.0-pr-123.abc1234 \
+  --image=ghcr.io/owner/repo/admin:pr-123.5 \
   --region=northamerica-northeast1
 
 # Download Client APK
 # Go to PR → Checks → build-client → Artifacts
 # Or use GitHub CLI:
-gh run download <run-id> -n client-apk-<version>
+gh run download <run-id> -n alacarte-client-pr-123.5
 ```
 
 ## 📊 Monitoring
@@ -257,10 +235,9 @@ gh run download <run-id> -n client-apk-<version>
 - **PR Checks:** See build status directly on PRs
 - **Email Notifications:** Configure in GitHub settings
 
-### Docker Hub
-- View published images: https://hub.docker.com/u/davidcharbonnier
+### GitHub Container Registry
+- View published images: https://github.com/orgs/{org}/packages
 - Check tag timestamps and sizes
-- Verify cleanup removed old tags
 
 ### Release Verification
 - **GitHub Releases:** All production releases listed
@@ -273,7 +250,7 @@ gh run download <run-id> -n client-apk-<version>
 
 **Issue:** Docker build fails
 - Check Dockerfile exists in `apps/{app}/`
-- Verify Docker Hub credentials are set
+- Verify GHCR credentials are set (GITHUB_TOKEN)
 - Review build logs for specific errors
 - Check if base images are accessible
 
@@ -284,46 +261,58 @@ gh run download <run-id> -n client-apk-<version>
 - Review Java 17 setup logs
 
 **Issue:** Admin build fails
-- Verify `NEXT_PUBLIC_API_URL` is set in dev environment
+- Verify `ADMIN_NEXT_PUBLIC_API_URL` is set in dev environment
 - Check Next.js build errors in logs
 - Ensure Dockerfile has `prod` target
 
-### Cleanup Not Working
+### Test Failures
 
-**Issue:** Docker tags not deleted
-- Verify `DOCKERHUB_TOKEN` has **Delete** permissions
-- Check if `regctl` installed successfully
-- Review cleanup logs for API errors
-- Ensure Docker Hub is accessible
+**Issue:** API tests fail
+- Run `go test ./...` locally in `apps/api`
+- Check for test flakiness
 
-**Issue:** GitHub releases not deleted
-- Check if releases reference git tags (must delete releases first)
-- Verify `GITHUB_TOKEN` has write permissions
-- Review error messages in cleanup logs
+**Issue:** Client tests fail
+- Run `flutter gen-l10n && flutter test` locally in `apps/client`
+- Check for test flakiness
+
+**Issue:** Admin tests fail
+- Run `npm test` locally in `apps/admin`
+- Check for test flakiness
 
 ### Release Issues
 
-**Issue:** Release-please PR not created
-- Verify conventional commits exist since last release
-- Check release-please workflow logs
-- Ensure commits are pushed to `master` branch
-- Verify `.release-please-manifest.json` is valid
-
 **Issue:** Version not detected correctly
-- Check git tag format matches patterns (v*, api-v*, etc.)
+- Check git tag format matches patterns (api-v*, client-v*, admin-v*)
 - Verify tag was pushed (not just created locally)
-- Review release.yml workflow logs for version extraction
-- Ensure tag follows semantic versioning (e.g., v0.6.0)
+- Review version.yml workflow logs
+- Ensure commits follow conventional format
 
 **Issue:** Production build fails
-- Check `NEXT_PUBLIC_API_URL` in prod environment
+- Check environment variables in prod environment
 - Verify Dockerfile builds locally
 - Review build logs for specific errors
 
 ## 🔧 Configuration Reference
 
+### Semantic Release Configuration
+
+Each app has a `.releaserc` file with:
+```json
+{
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    "@semantic-release/github",
+    "@semantic-release/git"
+  ]
+}
+```
+
 ### Action Versions
 - `actions/checkout@v4`
+- `actions/setup-node@v4` (Node 20)
+- `actions/setup-go@v5` (Go 1.21)
 - `actions/setup-java@v3` (Java 17, Zulu)
 - `actions/upload-artifact@v4`
 - `actions/download-artifact@v4`
@@ -331,20 +320,19 @@ gh run download <run-id> -n client-apk-<version>
 - `docker/login-action@v3`
 - `docker/build-push-action@v5`
 - `subosito/flutter-action@v2` (Flutter 3.35.4)
-- `dorny/paths-filter@v3`
-- `google-github-actions/release-please-action@v4`
 - `actions/github-script@v7`
 
 ### Build Specifications
 - **Flutter:** 3.35.4 (stable channel)
 - **Java:** 17 (Zulu distribution)
-- **Node:** 18.x
+- **Node:** 20.x
+- **Go:** 1.21
 - **Docker Platform:** linux/amd64
 - **Gradle Cache:** Enabled for Flutter builds
 
 ### Environment Variables
-- **Dev:** `NEXT_PUBLIC_API_URL` (development API)
-- **Prod:** `NEXT_PUBLIC_API_URL` (production API)
+- **Dev:** `CLIENT_API_BASE_URL`, `CLIENT_GOOGLE_CLIENT_ID`, `ADMIN_NEXT_PUBLIC_API_URL`
+- **Prod:** Same as dev (production values)
 
 ## 📝 Best Practices
 
@@ -363,39 +351,33 @@ gh run download <run-id> -n client-apk-<version>
 - Test snapshot builds before requesting review
 - Deploy to QA manually if needed
 - Ensure all checks pass before merge
+- Documentation-only changes (`.md` files) will skip builds
 
 ### Release Management
-- Batch multiple features into one release
-- Review release-please PR carefully
-- Don't merge release PR until ready for deployment
+- semantic-release runs automatically on master push
+- Review generated CHANGELOG.md before merging
 - Monitor release workflow completion after tag creation
-- Version comes from git tag, not package.json
-
-### Cleanup Maintenance
-- Cleanup runs automatically (no action needed)
-- Check cleanup logs if storage concerns arise
-- Last merged PR kept for emergency rollback
+- Version comes from semantic-release analysis
 
 ## 🎯 Quick Reference
 
-**Required Secrets:** 2 (DOCKERHUB_USERNAME, DOCKERHUB_TOKEN)  
-**Required Variables:** 2 (NEXT_PUBLIC_API_URL in dev + prod)  
-**Workflows:** 3 (pr-snapshot, cleanup, release)  
+**Required Secrets:** 0 (GITHUB_TOKEN is automatic)  
+**Required Variables:** 6 (CLIENT_API_BASE_URL, CLIENT_GOOGLE_CLIENT_ID, ADMIN_NEXT_PUBLIC_API_URL in dev + prod)  
+**Workflows:** 3 (pr-snapshot, version, release)  
 **Environments:** 2 (dev, prod)
 
 **Workflow Triggers:**
-- PR commit → Snapshot build
-- PR close → Cleanup
-- Master push → Release (if Version Packages PR)
+- PR commit → Snapshot build (excludes .md files)
+- Master push → Version bump (semantic-release)
 
 **Artifact Retention:**
-- Snapshots: Until PR closes + 1 (last merged)
+- Snapshots: Until PR closes
 - Production: Forever (GitHub releases)
 - APK artifacts: 30 days
 
 ## 📚 Additional Resources
 
-- [Release Please Documentation](https://github.com/googleapis/release-please)
+- [semantic-release Documentation](https://semantic-release.gitbook.io/)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Docker BuildKit](https://docs.docker.com/build/buildkit/)
 - [GitHub Actions Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments)
@@ -403,5 +385,5 @@ gh run download <run-id> -n client-apk-<version>
 
 ---
 
-**Last Updated:** March 2025  
-**Workflow Versions:** v1.1.0
+**Last Updated:** February 2026
+**Workflow Versions:** v2.0.0
