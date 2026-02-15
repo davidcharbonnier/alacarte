@@ -27,11 +27,12 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Login to Docker Hub
+    - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push API
       uses: docker/build-push-action@v5
@@ -40,8 +41,8 @@ jobs:
         file: ./apps/api/Dockerfile
         push: true
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:${{ steps.version.outputs.version }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:latest
+          ghcr.io/${{ github.repository }}/api:${{ steps.version.outputs.version }}
+          ghcr.io/${{ github.repository }}/api:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -131,11 +132,12 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Login to Docker Hub
+    - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push Admin
       uses: docker/build-push-action@v5
@@ -147,8 +149,8 @@ jobs:
         build-args: |
           NEXT_PUBLIC_API_URL=${{ vars.ADMIN_NEXT_PUBLIC_API_URL }}
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:${{ steps.version.outputs.version }}
-          ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:latest
+          ghcr.io/${{ github.repository }}/admin:${{ steps.version.outputs.version }}
+          ghcr.io/${{ github.repository }}/admin:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -161,6 +163,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Extract tag info
       id: tag_info
@@ -194,9 +198,14 @@ jobs:
         path: ./artifacts
 
     - name: Generate release notes
+      id: release_notes
       run: |
         APP="${{ steps.tag_info.outputs.app }}"
         VERSION="${{ steps.tag_info.outputs.version }}"
+        REPO="${{ github.repository }}"
+
+        # Generate changelog from conventional commits since last tag
+        CHANGELOG=$(git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')" 2>/dev/null | grep -E "^(feat|fix|BREAKING)" || echo "No feat/fix commits found")
 
         echo "## 🚀 Deployment Information" > release_notes.md
         echo "" >> release_notes.md
@@ -204,27 +213,39 @@ jobs:
         if [ "$APP" = "api" ]; then
           echo "### 🐳 Docker Image" >> release_notes.md
           echo "\`\`\`bash" >> release_notes.md
-          echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-api:$VERSION" >> release_notes.md
+          echo "docker pull ghcr.io/$REPO/api:$VERSION" >> release_notes.md
           echo "\`\`\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "### 📝 Changelog" >> release_notes.md
-          echo "See [API Changelog](./apps/api/CHANGELOG.md) for detailed changes." >> release_notes.md
+          if [ -f "apps/api/CHANGELOG.md" ]; then
+            echo "See [API Changelog](./apps/api/CHANGELOG.md) for detailed changes." >> release_notes.md
+          else
+            echo "$CHANGELOG" >> release_notes.md
+          fi
 
         elif [ "$APP" = "client" ]; then
           echo "### 📱 Android APK" >> release_notes.md
           echo "Download the APK from the assets below." >> release_notes.md
           echo "" >> release_notes.md
           echo "### 📝 Changelog" >> release_notes.md
-          echo "See [Client Changelog](./apps/client/CHANGELOG.md) for detailed changes." >> release_notes.md
+          if [ -f "apps/client/CHANGELOG.md" ]; then
+            echo "See [Client Changelog](./apps/client/CHANGELOG.md) for detailed changes." >> release_notes.md
+          else
+            echo "$CHANGELOG" >> release_notes.md
+          fi
 
         elif [ "$APP" = "admin" ]; then
           echo "### 🐳 Docker Image" >> release_notes.md
           echo "\`\`\`bash" >> release_notes.md
-          echo "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/alacarte-admin:$VERSION" >> release_notes.md
+          echo "docker pull ghcr.io/$REPO/admin:$VERSION" >> release_notes.md
           echo "\`\`\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "### 📝 Changelog" >> release_notes.md
-          echo "See [Admin Changelog](./apps/admin/CHANGELOG.md) for detailed changes." >> release_notes.md
+          if [ -f "apps/admin/CHANGELOG.md" ]; then
+            echo "See [Admin Changelog](./apps/admin/CHANGELOG.md) for detailed changes." >> release_notes.md
+          else
+            echo "$CHANGELOG" >> release_notes.md
+          fi
         fi
 
     - name: Create GitHub Release

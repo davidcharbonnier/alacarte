@@ -5,5 +5,10 @@
   "scripts": {
     "build": "flutter build apk",
     "dev": "flutter run"
+  },
+  "devDependencies": {
+    "semantic-release": "^24.2.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/changelog": "^6.0.3"
   }
 }
