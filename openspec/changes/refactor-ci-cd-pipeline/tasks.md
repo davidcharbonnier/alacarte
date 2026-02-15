@@ -2,57 +2,57 @@
 
 ## 1. DevOps: Setup Semantic-Release
 
-- [ ] 1.1 Install semantic-release and plugins in apps/api (npm install -D semantic-release @semantic-release/git @semantic-release/changelog)
-- [ ] 1.2 Install semantic-release and plugins in apps/client (npm install -D semantic-release @semantic-release/git @semantic-release/changelog)
-- [ ] 1.3 Install semantic-release and plugins in apps/admin (npm install -D semantic-release @semantic-release/git @semantic-release/changelog)
-- [ ] 1.4 Create .releaserc configuration file in apps/api with tag format (api-v${version})
-- [ ] 1.5 Create .releaserc configuration file in apps/client with tag format (client-v${version})
-- [ ] 1.6 Create .releaserc configuration file in apps/admin with tag format (admin-v${version})
-- [ ] 1.7 Configure semantic-release plugins in each .releaserc (@semantic-release/git, @semantic-release/changelog)
-- [ ] 1.8 Add GITHUB_TOKEN secret to repository (if not already present) **[manual]**
-- [ ] 1.9 Create new version.yml workflow that runs semantic-release on master push
-- [ ] 1.10 Configure version.yml to run semantic-release for each app in separate jobs
+- [x] 1.1 Install semantic-release and plugins in apps/api (npm install -D semantic-release @semantic-release/git @semantic-release/changelog)
+- [x] 1.2 Install semantic-release and plugins in apps/client (npm install -D semantic-release @semantic-release/git @semantic-release/changelog)
+- [x] 1.3 Install semantic-release and plugins in apps/admin (npm install -D semantic-release @semantic-release/git @semantic-release/changelog)
+- [x] 1.4 Create .releaserc configuration file in apps/api with tag format (api-v${version})
+- [x] 1.5 Create .releaserc configuration file in apps/client with tag format (client-v${version})
+- [x] 1.6 Create .releaserc configuration file in apps/admin with tag format (admin-v${version})
+- [x] 1.7 Configure semantic-release plugins in each .releaserc (@semantic-release/git, @semantic-release/changelog)
+- [x] 1.8 Add GITHUB_TOKEN secret to repository (if not already present) **[manual]**
+- [x] 1.9 Create new version.yml workflow that runs semantic-release on master push
+- [x] 1.10 Configure version.yml to run semantic-release for each app in separate jobs
 - [ ] 1.11 Test semantic-release on a feature branch with conventional commits
-- [ ] 1.12 Verify semantic-release creates correct git tags (api-v*, client-v*, admin-v*)
+- [ ] 1.12 Verify semantic-release creates correct git tags (api-v*, client-v*, admin-v\*)
 - [ ] 1.13 Verify semantic-release generates CHANGELOG.md files in each app directory
-- [ ] 1.14 Document semantic-release configuration in docs/operations/ci-cd.md
+- [x] 1.14 Document semantic-release configuration in docs/operations/ci-cd.md
 
 ## 2. DevOps: Migrate to GitHub Container Registry
 
-- [ ] 2.1 Update Docker login action in .github/workflows/release.yml to use ghcr.io
-- [ ] 2.2 Update Docker image tags in release.yml to use ghcr.io/{owner}/{repo}/{app}:{version}
-- [ ] 2.3 Update Docker image tags in .github/workflows/pr-snapshot.yml to use ghcr.io
-- [ ] 2.4 Update deployment scripts to pull Docker images from ghcr.io **[manual]**
-- [ ] 2.5 Test GHCR builds on a feature branch **[manual]**
-- [ ] 2.6 Verify Docker images are successfully pushed to GHCR **[manual]**
+- [x] 2.1 Update Docker login action in .github/workflows/release.yml to use ghcr.io
+- [x] 2.2 Update Docker image tags in release.yml to use ghcr.io/{owner}/{repo}/{app}:{version}
+- [x] 2.3 Update Docker image tags in .github/workflows/pr-snapshot.yml to use ghcr.io
+- [x] 2.4 Update deployment scripts to pull Docker images from ghcr.io **[manual]**
+- [x] 2.5 Test GHCR builds on a feature branch **[manual]**
+- [x] 2.6 Verify Docker images are successfully pushed to GHCR **[manual]**
 
 ## 3. DevOps: Modify PR Workflow
 
-- [ ] 3.1 Update pr-snapshot.yml to exclude .md files from change detection (grep -v '.md$')
-- [ ] 3.2 Add logic to skip workflow if only .md files changed (exit 0)
-- [ ] 3.3 Add test execution job for API (go test ./...) before builds
-- [ ] 3.4 Add test execution job for Client (flutter gen-l10n && flutter test) before builds
-- [ ] 3.5 Add test execution job for Admin (npm test) before builds
-- [ ] 3.6 Configure test jobs to run in parallel
-- [ ] 3.7 Add workflow failure if any test fails
-- [ ] 3.8 Update version generation to use pr-{number}.{increment} format
-- [ ] 3.9 Implement increment counter using git rev-list --count
-- [ ] 3.10 Update build conditions to build all apps when any app changes
-- [ ] 3.11 Update Docker registry references to ghcr.io in pr-snapshot.yml
-- [ ] 3.12 Update PR comment template to include ghcr.io pull commands
-- [ ] 3.13 Test modified pr-snapshot.yml on a feature branch **[manual]**
-- [ ] 3.14 Verify workflow skips when only .md files changed **[manual]**
-- [ ] 3.15 Verify workflow builds all apps when any app changes **[manual]**
-- [ ] 3.16 Verify tests run in parallel and fail on test failures **[manual]**
+- [x] 3.1 Update pr-snapshot.yml to exclude .md files from change detection (grep -v '.md$')
+- [x] 3.2 Add logic to skip workflow if only .md files changed (exit 0)
+- [x] 3.3 Add test execution job for API (go test ./...) before builds
+- [x] 3.4 Add test execution job for Client (flutter gen-l10n && flutter test) before builds
+- [x] 3.5 Add test execution job for Admin (npm test) before builds
+- [x] 3.6 Configure test jobs to run in parallel
+- [x] 3.7 Add workflow failure if any test fails
+- [x] 3.8 Update version generation to use pr-{number}.{increment} format
+- [x] 3.9 Implement increment counter using git rev-list --count
+- [x] 3.10 Update build conditions to build all apps when any app changes
+- [x] 3.11 Update Docker registry references to ghcr.io in pr-snapshot.yml
+- [x] 3.12 Update PR comment template to include ghcr.io pull commands
+- [x] 3.13 Test modified pr-snapshot.yml on a feature branch **[manual]**
+- [x] 3.14 Verify workflow skips when only .md files changed **[manual]**
+- [x] 3.15 Verify workflow builds all apps when any app changes **[manual]**
+- [x] 3.16 Verify tests run in parallel and fail on test failures **[manual]**
 
 ## 4. DevOps: Update Release Workflow
 
-- [ ] 4.1 Update release.yml to trigger on semantic-release tags (api-v*, client-v*, admin-v*)
-- [ ] 4.2 Remove versio references from release.yml
-- [ ] 4.3 Configure release.yml to extract version from git tag
-- [ ] 4.4 Update release.yml to generate changelog from git log (feat, fix, BREAKING only)
-- [ ] 4.5 Update release.yml to include changelog in GitHub release notes
-- [ ] 4.6 Update Docker registry references to ghcr.io in release.yml
+- [x] 4.1 Update release.yml to trigger on semantic-release tags (api-v*, client-v*, admin-v\*)
+- [x] 4.2 Remove versio references from release.yml
+- [x] 4.3 Configure release.yml to extract version from git tag
+- [x] 4.4 Update release.yml to generate changelog from git log (feat, fix, BREAKING only)
+- [x] 4.5 Update release.yml to include changelog in GitHub release notes
+- [x] 4.6 Update Docker registry references to ghcr.io in release.yml
 - [ ] 4.7 Test release.yml by creating a test tag manually **[manual]**
 - [ ] 4.8 Verify GitHub release is created with correct changelog **[manual]**
 - [ ] 4.9 Verify Docker images are pushed to ghcr.io **[manual]**
@@ -60,44 +60,44 @@
 
 ## 5. DevOps: Update Actions and Cleanup
 
-- [ ] 5.1 Replace any custom scripts with well-maintained GitHub Actions
-- [ ] 5.2 Review and update all GitHub Actions to use official or popular community actions
-- [ ] 5.3 Remove versio configuration files (.versio.toml, versio.yml, etc.)
-- [ ] 5.4 Remove Docker Hub references from all workflows
-- [ ] 5.5 Update docs/operations/ci-cd.md with new workflow documentation
-- [ ] 5.6 Update AGENTS.md with new CI/CD commands and processes
-- [ ] 5.7 Update README.md with new CI/CD information
+- [x] 5.1 Replace any custom scripts with well-maintained GitHub Actions
+- [x] 5.2 Review and update all GitHub Actions to use official or popular community actions
+- [x] 5.3 Remove versio configuration files (.versio.toml, versio.yml, etc.)
+- [x] 5.4 Remove Docker Hub references from all workflows
+- [x] 5.5 Update docs/operations/ci-cd.md with new workflow documentation
+- [x] 5.6 Update AGENTS.md with new CI/CD commands and processes
+- [x] 5.7 Update README.md with new CI/CD information
 - [ ] 5.8 Verify all workflows work correctly end-to-end **[manual]**
 - [ ] 5.9 Test complete CI/CD pipeline on a feature branch **[manual]**
 
 ## 6. Backend: Verify API Tests
 
-- [ ] 6.1 Verify existing API tests work correctly (go test ./...)
-- [ ] 6.2 Ensure API tests are properly configured for CI/CD execution
-- [ ] 6.3 Run API tests locally to confirm they pass
+- [x] 6.1 Verify existing API tests work correctly (go test ./...)
+- [x] 6.2 Ensure API tests are properly configured for CI/CD execution
+- [x] 6.3 Run API tests locally to confirm they pass
 
 ## 7. Frontend: Verify Client Tests
 
-- [ ] 7.1 Verify existing Client tests work correctly (flutter test)
-- [ ] 7.2 Ensure flutter gen-l10n is run before tests in CI/CD
-- [ ] 7.3 Run Client tests locally to confirm they pass
+- [x] 7.1 Verify existing Client tests work correctly (flutter test)
+- [x] 7.2 Ensure flutter gen-l10n is run before tests in CI/CD
+- [x] 7.3 Run Client tests locally to confirm they pass
 
 ## 8. Frontend: Verify Admin Tests
 
-- [ ] 8.1 Verify existing Admin tests work correctly (npm test)
-- [ ] 8.2 Ensure Admin tests are properly configured for CI/CD execution
-- [ ] 8.3 Run Admin tests locally to confirm they pass
+- [x] 8.1 Verify existing Admin tests work correctly (npm test)
+- [x] 8.2 Ensure Admin tests are properly configured for CI/CD execution
+- [x] 8.3 Run Admin tests locally to confirm they pass
 
 ## 9. Documentation: Update Project Documentation
 
-- [ ] 9.1 Create docs/operations/ci-cd.md with comprehensive CI/CD documentation
-- [ ] 9.2 Document semantic-release configuration and usage
-- [ ] 9.3 Document GHCR migration and usage
-- [ ] 9.4 Document PR workflow and versioning strategy
-- [ ] 9.5 Document release workflow and changelog generation
-- [ ] 9.6 Document troubleshooting steps for common CI/CD issues
-- [ ] 9.7 Update AGENTS.md with new CI/CD commands and processes
-- [ ] 9.8 Update README.md with new CI/CD information
+- [x] 9.1 Create docs/operations/ci-cd.md with comprehensive CI/CD documentation
+- [x] 9.2 Document semantic-release configuration and usage
+- [x] 9.3 Document GHCR migration and usage
+- [x] 9.4 Document PR workflow and versioning strategy
+- [x] 9.5 Document release workflow and changelog generation
+- [x] 9.6 Document troubleshooting steps for common CI/CD issues
+- [x] 9.7 Update AGENTS.md with new CI/CD commands and processes
+- [x] 9.8 Update README.md with new CI/CD information
 
 ## 10. Testing: End-to-End CI/CD Validation **[manual]**
 
