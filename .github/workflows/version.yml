@@ -17,6 +17,14 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Fetch latest changes
+      run: |
+        git fetch origin master
+        git rebase origin/master
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -35,9 +43,18 @@ jobs:
 
   release-client:
     runs-on: ubuntu-latest
+    needs: release-admin
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Fetch latest changes
+      run: |
+        git fetch origin master
+        git rebase origin/master
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -56,9 +73,18 @@ jobs:
 
   release-admin:
     runs-on: ubuntu-latest
+    needs: release-api
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Fetch latest changes
+      run: |
+        git fetch origin master
+        git rebase origin/master
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
