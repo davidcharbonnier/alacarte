@@ -53,7 +53,7 @@ See [Getting Started Guide](./docs/getting-started/) for detailed setup instruct
 
 ## 🔄 Versioning & Releases
 
-This monorepo uses **[release-please](https://github.com/googleapis/release-please)** with **[Conventional Commits](https://www.conventionalcommits.org/)** for fully automated releases.
+This monorepo uses **[semantic-release](https://semantic-release.gitbook.io/)** with **[Conventional Commits](https://www.conventionalcommits.org/)** for fully automated releases.
 
 ### Making Commits
 
@@ -78,13 +78,12 @@ Commits are automatically validated via git hooks powered by commitlint.
 Releases are **fully automated**:
 
 1. **Make conventional commits** and merge to `master`
-2. **Release PR is auto-created** by release-please bot
-   - Contains version bumps
-   - Auto-generated changelogs
-   - All pending changes
-3. **Review & merge** the Release PR
-4. **Git tags are created** automatically
-5. **Builds & releases** are triggered by tags
+2. **semantic-release runs automatically** on master push
+   - Analyzes commits since last release
+   - Determines version bumps
+   - Updates CHANGELOG.md files
+3. **Git tags are created** automatically
+4. **Builds & releases** are triggered by tags
 
 **Version bumps:**
 - `feat:` → minor bump (0.3.1 → 0.4.0)
@@ -92,20 +91,28 @@ Releases are **fully automated**:
 - `BREAKING CHANGE:` → major bump (0.3.1 → 1.0.0)
 - `docs:`, `chore:`, etc → no version bump
 
-See [Release Workflow Guide](./docs/RELEASE_WORKFLOW.md) for complete details.
+Each app (api, client, admin) is versioned independently with tags:
+- `api-v1.2.3` - API releases
+- `client-v1.2.3` - Client releases
+- `admin-v1.2.3` - Admin releases
+
+See [CI/CD Setup Guide](./docs/operations/ci-cd-setup.md) for complete details.
 
 ## 🎭 Prerelease (Snapshot) Versions
 
 Every PR commit generates snapshot versions for manual QA:
 
 ```
-Format: v2.1.0-pr-123.abc1234
+Format: pr-{number}.{increment}
+Example: pr-123.5
 ```
 
-Docker images are published automatically:
-- `davidcharbonnier/alacarte-api:2.1.0-pr-123.abc1234`
-- `davidcharbonnier/alacarte-client:2.1.0-pr-123.abc1234`
-- `davidcharbonnier/alacarte-admin:2.1.0-pr-123.abc1234`
+Docker images are published automatically to GHCR:
+- `ghcr.io/{owner}/alacarte-api:pr-123.5`
+- `ghcr.io/{owner}/alacarte-client:pr-123.5`
+- `ghcr.io/{owner}/alacarte-admin:pr-123.5`
+
+**Note:** Documentation-only changes (.md files) are excluded from builds.
 
 ## 🏗️ Technology Stack
 
@@ -113,12 +120,12 @@ Docker images are published automatically:
 - **Client:** Flutter + Riverpod
 - **Admin:** Next.js + TypeScript
 - **Infrastructure:** Google Cloud Run + Cloud SQL
-- **CI/CD:** GitHub Actions + Docker Hub
-- **Release Automation:** release-please + Conventional Commits
+- **CI/CD:** GitHub Actions + GHCR (GitHub Container Registry)
+- **Release Automation:** semantic-release + Conventional Commits
 
 ## 📚 Documentation
 
-- [Release Workflow Guide](./docs/RELEASE_WORKFLOW.md) ⭐ **NEW!**
+- [CI/CD Setup Guide](./docs/operations/ci-cd-setup.md) ⭐ **UPDATED!**
 - [Local Development Guide](./docs/local-development.md)
 - [API Documentation](./apps/api/README.md)
 - [Client Documentation](./apps/client/README.md)
@@ -126,7 +133,7 @@ Docker images are published automatically:
 
 ## 🔧 Monorepo Tools
 
-- **release-please:** Automated versioning and changelogs
+- **semantic-release:** Automated versioning and changelogs
 - **commitlint:** Enforces conventional commit format
 - **husky:** Git hooks for commit validation
 - **Docker Compose:** Local development orchestration
@@ -139,14 +146,14 @@ Docker images are published automatically:
 2. Make changes with **conventional commits** (format enforced automatically)
 3. Push and open PR
 4. Snapshot versions are automatically published
-5. After merge, release-please handles versioning
-6. Merge the auto-generated Release PR when ready
+5. After merge, semantic-release handles versioning automatically
+6. Git tags trigger production builds
 
 **Important:**
 - Commit messages must follow conventional format (enforced by git hooks)
 - Choose correct scope: `api`, `client`, `admin`, etc.
 - Use correct type: `feat` for features, `fix` for bugs, etc.
-- See [Release Workflow Guide](./docs/RELEASE_WORKFLOW.md) for details
+- See [CI/CD Setup Guide](./docs/operations/ci-cd-setup.md) for details
 
 ## 📄 License
 
