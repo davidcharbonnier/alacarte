@@ -1,6 +1,6 @@
 {
   "name": "@alacarte/api",
-  "version": "0.5.0",
+  "version": "1.4.0",
   "private": true,
   "scripts": {
     "build": "go build -o bin/api",
