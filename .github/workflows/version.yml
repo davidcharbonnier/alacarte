@@ -41,6 +41,20 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: npx semantic-release
 
+    - name: Trigger release workflow
+      if: success()
+      run: |
+        # Wait for tag to be pushed
+        sleep 5
+        # Find the latest api-v tag
+        TAG=$(git describe --tags --abbrev=0 --match='api-v*' 2>/dev/null || true)
+        if [ -n "$TAG" ]; then
+          echo "Triggering release for $TAG"
+          gh workflow run release.yml -f tag="$TAG" --repo ${{ github.repository }}
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   release-client:
     runs-on: ubuntu-latest
     needs: release-admin
@@ -70,6 +84,20 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: npx semantic-release
+
+    - name: Trigger release workflow
+      if: success()
+      run: |
+        # Wait for tag to be pushed
+        sleep 5
+        # Find the latest client-v tag
+        TAG=$(git describe --tags --abbrev=0 --match='client-v*' 2>/dev/null || true)
+        if [ -n "$TAG" ]; then
+          echo "Triggering release for $TAG"
+          gh workflow run release.yml -f tag="$TAG" --repo ${{ github.repository }}
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-admin:
     runs-on: ubuntu-latest
@@ -102,3 +130,17 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: npx semantic-release
+
+    - name: Trigger release workflow
+      if: success()
+      run: |
+        # Wait for tag to be pushed
+        sleep 5
+        # Find the latest admin-v tag
+        TAG=$(git describe --tags --abbrev=0 --match='admin-v*' 2>/dev/null || true)
+        if [ -n "$TAG" ]; then
+          echo "Triggering release for $TAG"
+          gh workflow run release.yml -f tag="$TAG" --repo ${{ github.repository }}
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
