@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/davidcharbonnier/alacarte/compare/api-v1.3.0...api-v1.3.1) (2026-02-15)
+
+
+### Bug Fixes
+
+* **ci:** update triggers for release then publish ([1f14cc7](https://github.com/davidcharbonnier/alacarte/commit/1f14cc76b076634cd44fb45c85807e35897ec775))
+
 # [1.3.0](https://github.com/davidcharbonnier/alacarte/compare/api-v1.2.0...api-v1.3.0) (2026-02-15)
 
 
