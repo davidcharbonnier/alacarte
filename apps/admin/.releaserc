@@ -2,7 +2,23 @@
   "branches": ["master"],
   "tagFormat": "admin-v${version}",
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "releaseRules": [
+          { "type": "feat", "scope": "admin", "release": "minor" },
+          { "type": "fix", "scope": "admin", "release": "patch" },
+          { "type": "perf", "scope": "admin", "release": "patch" },
+          { "type": "refactor", "scope": "admin", "release": "patch" },
+          { "type": "docs", "scope": "admin", "release": "patch" },
+          { "type": "test", "scope": "admin", "release": "patch" },
+          { "type": "build", "scope": "admin", "release": "patch" },
+          { "type": "ci", "scope": "admin", "release": "patch" },
+          { "type": "chore", "scope": "admin", "release": "patch" },
+          { "type": "BREAKING CHANGE", "release": "major" }
+        ]
+      }
+    ],
     "@semantic-release/release-notes-generator",
     [
       "@semantic-release/changelog",
