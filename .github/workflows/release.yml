@@ -204,8 +204,14 @@ jobs:
         VERSION="${{ steps.tag_info.outputs.version }}"
         REPO="${{ github.repository }}"
 
-        # Generate changelog from conventional commits since last tag
-        CHANGELOG=$(git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')" 2>/dev/null | grep -E "^(feat|fix|BREAKING)" || echo "No feat/fix commits found")
+        # Generate changelog from conventional commits since last tag, filtered by app scope
+        if [ "$APP" = "api" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')" 2>/dev/null | grep -E "^(feat|fix|BREAKING).*\(api\)" || echo "No relevant feat/fix commits found for API")
+        elif [ "$APP" = "client" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')" 2>/dev/null | grep -E "^(feat|fix|BREAKING).*\(client\)" || echo "No relevant feat/fix commits found for Client")
+        elif [ "$APP" = "admin" ]; then
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --since="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo '')" 2>/dev/null | grep -E "^(feat|fix|BREAKING).*\(admin\)" || echo "No relevant feat/fix commits found for Admin")
+        fi
 
         echo "## 🚀 Deployment Information" > release_notes.md
         echo "" >> release_notes.md
