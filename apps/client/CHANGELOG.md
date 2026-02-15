@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/davidcharbonnier/alacarte/compare/client-v1.4.0...client-v1.4.1) (2026-02-15)
+
+
+### Bug Fixes
+
+* **ci:** fixing concurrency issues on version workflow ([43ca2bb](https://github.com/davidcharbonnier/alacarte/commit/43ca2bb12e150f6e566c5ebe53f6c770b163734b))
+
 # [1.4.0](https://github.com/davidcharbonnier/alacarte/compare/client-v1.3.0...client-v1.4.0) (2026-02-15)
 
 
