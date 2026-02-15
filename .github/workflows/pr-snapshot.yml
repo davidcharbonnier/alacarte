@@ -133,7 +133,7 @@ jobs:
         cache-dependency-path: apps/admin/package-lock.json
     - name: Install dependencies
       working-directory: ./apps/admin
-      run: npm ci
+      run: npm ci --ignore-scripts
     - name: Run tests
       working-directory: ./apps/admin
       run: npm test
