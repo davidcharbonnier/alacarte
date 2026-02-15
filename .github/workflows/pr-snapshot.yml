@@ -24,10 +24,10 @@ jobs:
       id: changes
       run: |
         # Fetch the base branch
-        git fetch origin ${{ github.event.pull_request.base.ref }}
+        git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
 
         # Get list of changed files compared to base branch, excluding .md files
-        CHANGED_FILES=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }}...HEAD | grep -v '\.md$')
+        CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.ref }}...HEAD | grep -v '\.md$' || true)
 
         echo "Changed files (excluding .md):"
         echo "$CHANGED_FILES"
