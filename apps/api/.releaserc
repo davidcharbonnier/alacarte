@@ -2,7 +2,23 @@
   "branches": ["master"],
   "tagFormat": "api-v${version}",
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "releaseRules": [
+          { "type": "feat", "scope": "api", "release": "minor" },
+          { "type": "fix", "scope": "api", "release": "patch" },
+          { "type": "perf", "scope": "api", "release": "patch" },
+          { "type": "refactor", "scope": "api", "release": "patch" },
+          { "type": "docs", "scope": "api", "release": "patch" },
+          { "type": "test", "scope": "api", "release": "patch" },
+          { "type": "build", "scope": "api", "release": "patch" },
+          { "type": "ci", "scope": "api", "release": "patch" },
+          { "type": "chore", "scope": "api", "release": "patch" },
+          { "type": "BREAKING CHANGE", "release": "major" }
+        ]
+      }
+    ],
     "@semantic-release/release-notes-generator",
     [
       "@semantic-release/changelog",
