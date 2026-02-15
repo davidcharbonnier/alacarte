@@ -101,6 +101,14 @@ jobs:
       with:
         flutter-version: "3.35.4"
         channel: "stable"
+    - name: Create .env file
+      working-directory: ./apps/client
+      run: |
+        cat << EOF > .env
+        API_BASE_URL=http://localhost:8080
+        GOOGLE_CLIENT_ID=mock-client-id
+        APP_VERSION=${{ needs.generate-version.outputs.snapshot_version }}
+        EOF
     - name: Install dependencies
       working-directory: ./apps/client
       run: flutter pub get
