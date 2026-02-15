@@ -2,7 +2,23 @@
   "branches": ["master"],
   "tagFormat": "client-v${version}",
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "releaseRules": [
+          { "type": "feat", "scope": "client", "release": "minor" },
+          { "type": "fix", "scope": "client", "release": "patch" },
+          { "type": "perf", "scope": "client", "release": "patch" },
+          { "type": "refactor", "scope": "client", "release": "patch" },
+          { "type": "docs", "scope": "client", "release": "patch" },
+          { "type": "test", "scope": "client", "release": "patch" },
+          { "type": "build", "scope": "client", "release": "patch" },
+          { "type": "ci", "scope": "client", "release": "patch" },
+          { "type": "chore", "scope": "client", "release": "patch" },
+          { "type": "BREAKING CHANGE", "release": "major" }
+        ]
+      }
+    ],
     "@semantic-release/release-notes-generator",
     [
       "@semantic-release/changelog",
