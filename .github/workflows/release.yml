@@ -6,16 +6,10 @@ on:
     - 'api-v*'
     - 'client-v*'
     - 'admin-v*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to release (e.g., api-v1.0.0)'
-        required: true
-        type: string
 
 jobs:
   build-api:
-    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/api-v')) || (github.event_name == 'workflow_dispatch' && inputs.tag != '' && startsWith(inputs.tag, 'api-v'))
+    if: startsWith(github.ref, 'refs/tags/api-v')
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -25,8 +19,7 @@ jobs:
     - name: Extract version
       id: version
       run: |
-        TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}"
-        TAG="${TAG#refs/tags/}"
+        TAG="${GITHUB_REF#refs/tags/}"
         VERSION="${TAG#api-v}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag=$TAG" >> $GITHUB_OUTPUT
@@ -54,7 +47,7 @@ jobs:
         cache-to: type=gha,mode=max
 
   build-client:
-    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/client-v')) || (github.event_name == 'workflow_dispatch' && inputs.tag != '' && startsWith(inputs.tag, 'client-v'))
+    if: startsWith(github.ref, 'refs/tags/client-v')
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -64,8 +57,7 @@ jobs:
     - name: Extract version
       id: version
       run: |
-        TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}"
-        TAG="${TAG#refs/tags/}"
+        TAG="${GITHUB_REF#refs/tags/}"
         VERSION="${TAG#client-v}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag=$TAG" >> $GITHUB_OUTPUT
@@ -122,7 +114,7 @@ jobs:
         path: apps/client/build/app/outputs/flutter-apk/app-release.apk
 
   build-admin:
-    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/admin-v')) || (github.event_name == 'workflow_dispatch' && inputs.tag != '' && startsWith(inputs.tag, 'admin-v'))
+    if: startsWith(github.ref, 'refs/tags/admin-v')
     runs-on: ubuntu-latest
     environment: prod
     steps:
@@ -132,8 +124,7 @@ jobs:
     - name: Extract version
       id: version
       run: |
-        TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}"
-        TAG="${TAG#refs/tags/}"
+        TAG="${GITHUB_REF#refs/tags/}"
         VERSION="${TAG#admin-v}"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag=$TAG" >> $GITHUB_OUTPUT
