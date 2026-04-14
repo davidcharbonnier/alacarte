@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Provide an Entity-Attribute-Value (EAV) based storage system that can store items of any schema type. Each item's field values are stored as separate records, enabling flexible schema evolution without database migrations.
+Provide a hybrid JSON + Entity-Attribute-Value (EAV) storage system that stores items of any schema type. The `items` table contains a `field_values` JSON column for fast reads, while `item_field_values` EAV table enables efficient filtering. This provides both fast display queries and flexible field-based filtering.
 
 ## ADDED Requirements
 
@@ -218,7 +218,9 @@ Item {
   name: string (max 255, indexed)
   description: text (optional)
   image_url: string (optional, nullable)
+  field_values: JSON (denormalized for fast reads)
   user_id: integer (foreign key to User)
+  schema_version_id: integer (foreign key to SchemaVersion)
   created_at: timestamp
   updated_at: timestamp
   deleted_at: timestamp (soft delete)
@@ -226,6 +228,16 @@ Item {
 
 Index: (schema_id, name)
 Index: (user_id)
+```
+
+**Field Values JSON Example:**
+```json
+{
+  "brewery": "Mountain Brew Co",
+  "style": "IPA",
+  "abv": "7.5",
+  "notes": "Hoppy with citrus notes"
+}
 ```
 
 ### Item Field Value Entity
@@ -244,10 +256,27 @@ Unique constraint: (item_id, field_id)
 Index: (field_id, value) -- for filtering
 ```
 
-### EAV Query Optimization
+### Hybrid Query Patterns
 
-For performant queries on EAV data:
-1. Index `(field_id, value)` for filtered searches
-2. Use materialized views for common queries
-3. Cache schema definitions in memory
-4. Consider denormalized search tables for large datasets
+**Read Path (display, list items):**
+- Uses `field_values` JSON column for single-row fetch
+- No joins required for item display
+- Field values parsed from JSON on client-side
+
+**Filter Path (search, filter by field):**
+- Uses `item_field_values` EAV table with `(field_id, value)` index
+- EXISTS subqueries for each filter condition
+- Multiple filters require multiple subqueries
+
+**Write Path (create/update):**
+- Both JSON column and EAV rows written in single transaction
+- JSON written first, then EAV rows
+- Transaction rollback on any failure
+
+### Query Optimization
+
+For performant hybrid queries:
+1. Index `(field_id, value(100))` on `item_field_values` for filtered searches
+2. JSON column enables fast single-row reads for display
+3. Composite index `(schema_id, name)` on items for list queries
+4. Consider generated columns for frequently-filtered numeric fields
