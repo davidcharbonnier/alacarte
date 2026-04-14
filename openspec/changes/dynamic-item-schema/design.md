@@ -31,22 +31,22 @@ The À la carte platform currently supports 5 hardcoded consumable types (cheese
 
 ## Decisions
 
-### Decision 1: EAV Storage Pattern
+### Decision 1: Hybrid JSON + EAV Storage Pattern
 
-**Choice:** Entity-Attribute-Value pattern with separate `items` and `item_field_values` tables.
+**Choice:** Hybrid approach with `items` table containing a `field_values` JSON column for fast reads, plus `item_field_values` EAV table for filter queries.
 
 **Alternatives Considered:**
 | Approach | Pros | Cons |
 |----------|------|------|
-| **JSON column** | Simple, single table | Poor queryability on individual fields, no indexing |
-| **EAV pattern** | Queryable, indexable | More complex queries, joins required |
-| **Hybrid** | Balance of both | Complexity of both approaches |
+| **JSON column only** | Simple, single table, fast reads | Poor queryability on individual fields, no indexing |
+| **EAV pattern only** | Queryable, indexable | Joins required for reads, slower display queries |
+| **Hybrid JSON + EAV** | Fast reads via JSON, efficient filtering via EAV indexes | Dual-write complexity |
 
-**Rationale:** EAV was chosen because:
-1. Filtering by field values is a core requirement (e.g., filter by style, origin)
-2. MySQL supports efficient indexing on EAV tables
-3. Field-level indexing enables performant filtered searches
-4. Schema versioning is cleaner with explicit field value records
+**Rationale:** Hybrid approach chosen because:
+1. **Fast reads**: `field_values` JSON column enables single-row fetch for display (no joins)
+2. **Efficient filtering**: EAV table with `(field_id, value)` index powers WHERE/EXISTS queries
+3. **Transactional integrity**: Both JSON and EAV writes happen in same database transaction
+4. **Schema versioning**: EAV records reference field IDs that are stable across versions
 
 ### Decision 2: Schema Registry with In-Memory Cache
 
@@ -218,6 +218,7 @@ CREATE TABLE items (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     image_url VARCHAR(500),
+    field_values JSON,  -- Denormalized for fast reads: {"brewery": "Mountain Brew Co", "style": "IPA"}
     user_id INT NOT NULL,
     schema_version_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -357,6 +358,15 @@ CREATE TABLE item_field_values (
 - Preview mode showing how items will appear
 - Validation before saving schema changes
 - Undo capability for recent changes
+
+### Risk 6: Dual-Write Synchronization
+**Risk:** JSON column and EAV rows could get out of sync if writes fail partially.
+
+**Mitigation:**
+- All writes use database transactions (atomic: both JSON and EAV succeed or both fail)
+- Application code writes JSON first, then EAV rows
+- On failure, transaction rolls back automatically
+- Periodic consistency check can verify JSON matches EAV data
 
 ## Migration Plan
 

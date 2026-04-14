@@ -3,10 +3,10 @@
 - [ ] 1.1 Create `ItemTypeSchema` model in `apps/api/models/schemaModel.go`
 - [ ] 1.2 Create `ItemTypeField` model in `apps/api/models/schemaModel.go`
 - [ ] 1.3 Create `SchemaVersion` model in `apps/api/models/schemaModel.go`
-- [ ] 1.4 Create `Item` model in `apps/api/models/itemModel.go`
+- [ ] 1.4 Create `Item` model with `field_values JSON` column in `apps/api/models/itemModel.go`
 - [ ] 1.5 Create `ItemFieldValue` model in `apps/api/models/itemModel.go`
 - [ ] 1.6 Add database migrations for new tables
-- [ ] 1.7 Add GORM indexes for EAV query optimization
+- [ ] 1.7 Add GORM indexes for hybrid query optimization (EAV + JSON)
 
 ## 2. API Core Services
 
@@ -21,9 +21,10 @@
 - [ ] 2.9 Implement validation for select/enum options
 - [ ] 2.10 Implement validation for field type matching
 - [ ] 2.11 Create `EAVQueryBuilder` service in `apps/api/services/query_builder.go`
-- [ ] 2.12 Implement dynamic query building for list operations
-- [ ] 2.13 Implement dynamic query building for filter operations
+- [ ] 2.12 Implement hybrid query building: JSON column for reads, EAV for filters
+- [ ] 2.13 Implement dynamic query building for filter operations using EAV indexes
 - [ ] 2.14 Implement dynamic query building for search operations
+- [ ] 2.15 Create `FieldValuesJSON` helper to build JSON from EAV rows
 
 ## 3. API Controllers & Routes
 
@@ -37,8 +38,8 @@
 - [ ] 3.8 Create `DynamicItemController` in `apps/api/controllers/dynamicItemController.go`
 - [ ] 3.9 Implement `GET /api/items/:type` endpoint (list items)
 - [ ] 3.10 Implement `GET /api/items/:type/:id` endpoint (get item)
-- [ ] 3.11 Implement `POST /api/items/:type` endpoint (create item)
-- [ ] 3.12 Implement `PUT /api/items/:type/:id` endpoint (update item)
+- [ ] 3.11 Implement `POST /api/items/:type` endpoint with dual-write (JSON + EAV in transaction)
+- [ ] 3.12 Implement `PUT /api/items/:type/:id` endpoint with dual-write
 - [ ] 3.13 Implement `DELETE /api/items/:type/:id` endpoint (delete item)
 - [ ] 3.14 Implement `POST /api/items/:type/:id/image` endpoint (upload image)
 - [ ] 3.15 Implement `DELETE /api/items/:type/:id/image` endpoint (delete image)
