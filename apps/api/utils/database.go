@@ -70,6 +70,11 @@ func RunMigrations() {
 		&models.Coffee{},
 		&models.ChiliSauce{},
 		&models.Rating{},
+		&models.ItemTypeSchema{},
+		&models.ItemTypeField{},
+		&models.SchemaVersion{},
+		&models.Item{},
+		&models.ItemFieldValue{},
 	)
 	if err != nil {
 		log.Fatal("Database migration failed:", err)

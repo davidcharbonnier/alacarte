@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/davidcharbonnier/alacarte-api/controllers"
+	"github.com/davidcharbonnier/alacarte-api/services"
 	"github.com/davidcharbonnier/alacarte-api/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,14 @@ func init() {
 	utils.MySQLConnect()
 	utils.RunMigrations()
 	utils.InitStorageClient()
+
+	// Load schemas into registry
+	schemaRegistry := services.GetSchemaRegistry()
+	if err := schemaRegistry.LoadSchemas(); err != nil {
+		fmt.Printf("Warning: Failed to load schemas: %v\n", err)
+	} else {
+		fmt.Printf("Loaded %d schemas into registry\n", len(schemaRegistry.GetAllSchemas()))
+	}
 }
 
 // gin code
@@ -212,6 +221,20 @@ func main() {
 		{
 			stats.GET("/community/:type/:id", controllers.GetCommunityStats)
 		}
+
+		// Dynamic item schemas (requires auth for all)
+		schemas := api.Group("/schemas")
+		{
+			schemas.GET("", controllers.SchemaList)
+			schemas.GET("/:type", controllers.SchemaDetails)
+			schemas.POST("", controllers.DynamicItemCreate)
+			schemas.GET("/:type/all", controllers.DynamicItemList)
+			schemas.GET("/:type/:id", controllers.DynamicItemDetails)
+			schemas.PUT("/:type/:id", controllers.DynamicItemUpdate)
+			schemas.DELETE("/:type/:id", controllers.DynamicItemDelete)
+			schemas.POST("/:type/:id/image", controllers.DynamicItemUploadImage)
+			schemas.DELETE("/:type/:id/image", controllers.DynamicItemDeleteImage)
+		}
 	}
 
 	// Admin routes (requires admin privileges)
@@ -276,6 +299,16 @@ func main() {
 			user.DELETE("/:id", controllers.DeleteUser)
 			user.PATCH("/:id/promote", controllers.PromoteUser)
 			user.PATCH("/:id/demote", controllers.DemoteUser)
+		}
+
+		// Schema management
+		schemaAdmin := admin.Group("/schemas")
+		{
+			schemaAdmin.POST("", controllers.SchemaCreate)
+			schemaAdmin.PUT("/:type", controllers.SchemaUpdate)
+			schemaAdmin.DELETE("/:type", controllers.SchemaDelete)
+			schemaAdmin.GET("/:type/versions/:version", controllers.SchemaVersionHistory)
+			schemaAdmin.GET("/:type/:id/delete-impact", controllers.DynamicItemDeleteImpact)
 		}
 	}
 
