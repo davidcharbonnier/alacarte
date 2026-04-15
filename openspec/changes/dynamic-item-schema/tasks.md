@@ -1,51 +1,51 @@
 ## 1. Database & Models (API)
 
-- [ ] 1.1 Create `ItemTypeSchema` model in `apps/api/models/schemaModel.go`
-- [ ] 1.2 Create `ItemTypeField` model in `apps/api/models/schemaModel.go`
-- [ ] 1.3 Create `SchemaVersion` model in `apps/api/models/schemaModel.go`
-- [ ] 1.4 Create `Item` model with `field_values JSON` column in `apps/api/models/itemModel.go`
-- [ ] 1.5 Create `ItemFieldValue` model in `apps/api/models/itemModel.go`
-- [ ] 1.6 Add database migrations for new tables
-- [ ] 1.7 Add GORM indexes for hybrid query optimization (EAV + JSON)
+- [x] 1.1 Create `ItemTypeSchema` model in `apps/api/models/schemaModel.go`
+- [x] 1.2 Create `ItemTypeField` model in `apps/api/models/schemaModel.go`
+- [x] 1.3 Create `SchemaVersion` model in `apps/api/models/schemaModel.go`
+- [x] 1.4 Create `Item` model with `field_values JSON` column in `apps/api/models/itemModel.go`
+- [x] 1.5 Create `ItemFieldValue` model in `apps/api/models/itemModel.go`
+- [x] 1.6 Add database migrations for new tables
+- [x] 1.7 Add GORM indexes for hybrid query optimization (EAV + JSON)
 
 ## 2. API Core Services
 
-- [ ] 2.1 Create `SchemaRegistry` service in `apps/api/services/schema_registry.go`
-- [ ] 2.2 Implement schema loading from database on startup
-- [ ] 2.3 Implement schema cache with mutex for thread safety
-- [ ] 2.4 Create `ValidationEngine` service in `apps/api/services/validation_engine.go`
-- [ ] 2.5 Implement validation for required fields
-- [ ] 2.6 Implement validation for string length (minLength, maxLength)
-- [ ] 2.7 Implement validation for numeric range (min, max)
-- [ ] 2.8 Implement validation for pattern matching
-- [ ] 2.9 Implement validation for select/enum options
-- [ ] 2.10 Implement validation for field type matching
-- [ ] 2.11 Create `EAVQueryBuilder` service in `apps/api/services/query_builder.go`
-- [ ] 2.12 Implement hybrid query building: JSON column for reads, EAV for filters
-- [ ] 2.13 Implement dynamic query building for filter operations using EAV indexes
-- [ ] 2.14 Implement dynamic query building for search operations
-- [ ] 2.15 Create `FieldValuesJSON` helper to build JSON from EAV rows
+- [x] 2.1 Create `SchemaRegistry` service in `apps/api/services/schema_registry.go`
+- [x] 2.2 Implement schema loading from database on startup
+- [x] 2.3 Implement schema cache with mutex for thread safety
+- [x] 2.4 Create `ValidationEngine` service in `apps/api/services/validation_engine.go`
+- [x] 2.5 Implement validation for required fields
+- [x] 2.6 Implement validation for string length (minLength, maxLength)
+- [x] 2.7 Implement validation for numeric range (min, max)
+- [x] 2.8 Implement validation for pattern matching
+- [x] 2.9 Implement validation for select/enum options
+- [x] 2.10 Implement validation for field type matching
+- [x] 2.11 Create `EAVQueryBuilder` service in `apps/api/services/query_builder.go`
+- [x] 2.12 Implement hybrid query building: JSON column for reads, EAV for filters
+- [x] 2.13 Implement dynamic query building for filter operations using EAV indexes
+- [x] 2.14 Implement dynamic query building for search operations
+- [x] 2.15 Create `FieldValuesJSON` helper to build JSON from EAV rows
 
 ## 3. API Controllers & Routes
 
-- [ ] 3.1 Create `SchemaController` in `apps/api/controllers/schemaController.go`
-- [ ] 3.2 Implement `GET /api/schemas` endpoint (list all schemas)
-- [ ] 3.3 Implement `GET /api/schemas/:type` endpoint (get schema details)
-- [ ] 3.4 Implement `POST /admin/schemas` endpoint (create schema)
-- [ ] 3.5 Implement `PUT /admin/schemas/:type` endpoint (update schema)
-- [ ] 3.6 Implement `DELETE /admin/schemas/:type` endpoint (delete schema)
-- [ ] 3.7 Implement `GET /admin/schemas/:type/versions/:version` endpoint (schema history)
-- [ ] 3.8 Create `DynamicItemController` in `apps/api/controllers/dynamicItemController.go`
-- [ ] 3.9 Implement `GET /api/items/:type` endpoint (list items)
-- [ ] 3.10 Implement `GET /api/items/:type/:id` endpoint (get item)
-- [ ] 3.11 Implement `POST /api/items/:type` endpoint with dual-write (JSON + EAV in transaction)
-- [ ] 3.12 Implement `PUT /api/items/:type/:id` endpoint with dual-write
-- [ ] 3.13 Implement `DELETE /api/items/:type/:id` endpoint (delete item)
-- [ ] 3.14 Implement `POST /api/items/:type/:id/image` endpoint (upload image)
-- [ ] 3.15 Implement `DELETE /api/items/:type/:id/image` endpoint (delete image)
-- [ ] 3.16 Implement `GET /admin/items/:type/:id/delete-impact` endpoint (admin)
-- [ ] 3.17 Add ETag support for schema responses with caching headers
-- [ ] 3.18 Update `main.go` to register new routes
+- [x] 3.1 Create `SchemaController` in `apps/api/controllers/schemaController.go`
+- [x] 3.2 Implement `GET /api/schemas` endpoint (list all schemas)
+- [x] 3.3 Implement `GET /api/schemas/:type` endpoint (get schema details)
+- [x] 3.4 Implement `POST /admin/schemas` endpoint (create schema)
+- [x] 3.5 Implement `PUT /admin/schemas/:type` endpoint (update schema)
+- [x] 3.6 Implement `DELETE /admin/schemas/:type` endpoint (delete schema)
+- [x] 3.7 Implement `GET /admin/schemas/:type/versions/:version` endpoint (schema history)
+- [x] 3.8 Create `DynamicItemController` in `apps/api/controllers/dynamicItemController.go`
+- [x] 3.9 Implement `GET /api/items/:type` endpoint (list items)
+- [x] 3.10 Implement `GET /api/items/:type/:id` endpoint (get item)
+- [x] 3.11 Implement `POST /api/items/:type` endpoint with dual-write (JSON + EAV in transaction)
+- [x] 3.12 Implement `PUT /api/items/:type/:id` endpoint with dual-write
+- [x] 3.13 Implement `DELETE /api/items/:type/:id` endpoint (delete item)
+- [x] 3.14 Implement `POST /api/items/:type/:id/image` endpoint (upload image)
+- [x] 3.15 Implement `DELETE /api/items/:type/:id/image` endpoint (delete image)
+- [x] 3.16 Implement `GET /admin/items/:type/:id/delete-impact` endpoint (admin)
+- [x] 3.17 Add ETag support for schema responses with caching headers
+- [x] 3.18 Update `main.go` to register new routes
 
 ## 4. Admin Panel - Schema Management
 
