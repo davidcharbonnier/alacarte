@@ -5,8 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Home, Users, Shield } from 'lucide-react';
 import * as Icons from 'lucide-react';
-import { getAllItemTypes, getItemTypeConfig } from '@/lib/config/item-types';
-import { getItemTypeColor } from '@/lib/config/design-system';
+import { useSchemaContext } from '@/lib/context/schema-context';
 
 // Static navigation items (non-item-types)
 const staticItems = [
@@ -15,21 +14,22 @@ const staticItems = [
 
 const bottomItems = [
   { name: 'Users', href: '/users', iconName: 'Users', type: 'static' },
+  { name: 'Schemas', href: '/admin/schemas', iconName: 'Shield', type: 'static' },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { schemas } = useSchemaContext();
 
-  // Get dynamic item type navigation items
-  const itemTypeItems = getAllItemTypes().map((itemType) => {
-    const config = getItemTypeConfig(itemType);
+  // Get dynamic item type navigation items from schemas
+  const itemTypeItems = schemas.map((schema) => {
     return {
-      name: config.labels.plural,
-      href: `/${itemType}`,
-      iconName: config.icon,
+      name: schema.plural_name,
+      href: `/${schema.name}`,
+      iconName: schema.icon,
       type: 'itemType',
-      itemType: itemType,
-      color: config.color,
+      itemType: schema.name,
+      color: schema.color,
     };
   });
 
@@ -44,9 +44,6 @@ export function Sidebar() {
     const isActive = pathname === item.href ||
       (item.href !== '/' && pathname?.startsWith(item.href));
 
-    // Get color for item types
-    const itemColor = item.type === 'itemType' ? getItemTypeColor(item.itemType) : null;
-
     return (
       <Link
         key={item.name}
@@ -60,7 +57,7 @@ export function Sidebar() {
         )}
       >
         {/* Icon with colored background for item types */}
-        {item.type === 'itemType' && itemColor ? (
+        {item.type === 'itemType' && item.color ? (
           <div
             className={cn(
               'flex items-center justify-center w-8 h-8 rounded-lg mr-3',
@@ -68,12 +65,12 @@ export function Sidebar() {
               isActive && 'scale-110'
             )}
             style={{
-              backgroundColor: isActive ? `${itemColor.hex}25` : `${itemColor.hex}15`,
+              backgroundColor: isActive ? `${item.color}25` : `${item.color}15`,
             }}
           >
             <Icon
               className="w-5 h-5"
-              style={{ color: itemColor.hex }}
+              style={{ color: item.color }}
             />
           </div>
         ) : (
@@ -87,10 +84,10 @@ export function Sidebar() {
         {item.name}
 
         {/* Active indicator */}
-        {isActive && item.type === 'itemType' && itemColor && (
+        {isActive && item.type === 'itemType' && item.color && (
           <div
             className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
-            style={{ backgroundColor: itemColor.hex }}
+            style={{ backgroundColor: item.color }}
           />
         )}
       </Link>

@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { getAllItemTypes, getItemTypeConfig } from '@/lib/config/item-types';
-import { getItemApi } from '@/lib/api/generic-item-api';
+import { useSchemaContext } from '@/lib/context/schema-context';
+import { dynamicItemApi } from '@/lib/api/schema-api';
 import { userApi } from '@/lib/api/users';
 import { ItemTypeCard } from './item-type-card';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,14 +11,14 @@ import { Users, ArrowRight } from 'lucide-react';
 import { spacing } from '@/lib/config/design-system';
 
 export function DashboardStats() {
-  const itemTypes = getAllItemTypes();
+  const { schemas } = useSchemaContext();
 
   return (
     <div className="space-y-6">
       {/* Item Type Cards - Flutter style */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {itemTypes.map((itemType: any) => (
-          <ItemTypeStatCard key={itemType} itemType={itemType} />
+        {schemas.map((schema) => (
+          <ItemTypeStatCard key={schema.name} schema={schema} />
         ))}
       </div>
       
@@ -28,20 +28,19 @@ export function DashboardStats() {
   );
 }
 
-function ItemTypeStatCard({ itemType }: { itemType: string }) {
-  const config = getItemTypeConfig(itemType);
-
-  const { data: items, isLoading } = useQuery({
-    queryKey: [itemType, 'list'],
-    queryFn: () => getItemApi(itemType).getAll(),
+function ItemTypeStatCard({ schema }: { schema: any }) {
+  const { data, isLoading } = useQuery({
+    queryKey: [schema.name, 'list'],
+    queryFn: () => dynamicItemApi.list(schema.name),
   });
 
   return (
     <ItemTypeCard
-      itemType={itemType}
-      displayName={config.labels.plural}
-      icon={config.icon}
-      totalItems={items?.length || 0}
+      itemType={schema.name}
+      displayName={schema.plural_name}
+      icon={schema.icon}
+      color={schema.color}
+      totalItems={data?.total || 0}
       isLoading={isLoading}
     />
   );
