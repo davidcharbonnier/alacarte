@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/davidcharbonnier/alacarte-api/models"
+	"github.com/davidcharbonnier/alacarte-api/services"
 	"github.com/davidcharbonnier/alacarte-api/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -221,39 +222,59 @@ func DeleteGin(c *gin.Context) {
 
 // SeedGins bulk imports gins from remote URL or direct file upload
 func SeedGins(c *gin.Context) {
-	// Use generic helper to get data from either URL or direct upload
 	data, err := utils.GetSeedData(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Parse gin-specific JSON structure
 	var jsonData struct {
-		Gins []models.Gin `json:"gins"`
+		Gins []map[string]interface{} `json:"gins"`
 	}
 	if err := json.Unmarshal(data, &jsonData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid JSON format: %v", err)})
 		return
 	}
 
-	// Import gins with gin-specific natural key logic
+	userID := utils.GetCurrentUserID(c)
+	if userID == 0 {
+		userID = 1 // System user for seeding
+	}
+
 	result := utils.SeedResult{Errors: []string{}}
 
-	for _, ginItem := range jsonData.Gins {
-		// Check if gin already exists (natural key: name + producer)
-		var existing models.Gin
-		err := utils.DB.Where("name = ? AND producer = ?", ginItem.Name, ginItem.Producer).First(&existing).Error
+	cached, ok := schemaRegistryItems.GetSchema("gin")
+	if !ok {
+		result.Errors = append(result.Errors, "Schema 'gin' not found")
+		c.JSON(http.StatusBadRequest, gin.H{"error": result.Errors[0]})
+		return
+	}
 
-		if err == nil {
-			// Already exists - skip
+	for _, ginItem := range jsonData.Gins {
+		fields := make(map[string]interface{})
+		for k, v := range ginItem {
+			fields[k] = v
+		}
+
+		filters := make(map[string]interface{})
+		for _, key := range cached.UniqueFields {
+			if val, exists := ginItem[key]; exists {
+				filters[key] = val
+			}
+		}
+
+		existingItems, _ := queryBuilderItems.BuildListQuery(services.QueryParams{
+			SchemaName: "gin",
+			Filters:    filters,
+		})
+		if existingItems.Total > 0 {
 			result.Skipped++
 			continue
 		}
 
-		// Create new gin
-		if err := utils.DB.Create(&ginItem).Error; err != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("Failed to create %s: %v", ginItem.Name, err))
+		_, err := queryBuilderItems.CreateItem("gin", userID, fields)
+		if err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("Failed to create %v: %v", ginItem["name"], err))
 			continue
 		}
 		result.Added++

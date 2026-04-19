@@ -6,6 +6,7 @@ import (
 
 type Item struct {
 	gorm.Model
+	ID              uint             `gorm:"primaryKey" json:"id"`
 	SchemaID        uint             `gorm:"not null;index:idx_schema_name" json:"schema_id"`
 	Name            string           `gorm:"type:varchar(255);not null;index:idx_schema_name" json:"name"`
 	Description     *string          `gorm:"type:text" json:"description,omitempty"`
@@ -33,6 +34,7 @@ func (i *Item) SetImageURL(url *string) {
 
 type ItemFieldValue struct {
 	gorm.Model
+	ID      uint          `gorm:"primaryKey" json:"id"`
 	ItemID  uint          `gorm:"not null;uniqueIndex:uk_item_field" json:"item_id"`
 	FieldID uint          `gorm:"not null;uniqueIndex:uk_item_field;index:idx_field_value" json:"field_id"`
 	Value   *string       `gorm:"type:text" json:"value,omitempty"`
