@@ -36,7 +36,7 @@ func MySQLConnect() {
 		log.Fatal("MYSQL_DATABASE env var is not defined")
 	}
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&allowNativePasswords=false", mysql_username, mysql_password, mysql_host, mysql_port, mysql_database)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=True&allowNativePasswords=false", mysql_username, mysql_password, mysql_host, mysql_port, mysql_database)
 
 	fmt.Println("Connecting to database " + mysql_database + " at " + mysql_host + ":" + mysql_port)
 
