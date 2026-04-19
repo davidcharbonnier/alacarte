@@ -49,28 +49,28 @@
 
 ## 4. Admin Panel - Schema Management
 
-- [ ] 4.1 Create TypeScript types for schema in `apps/admin/lib/types/schema.ts`
-- [ ] 4.2 Create `schemaApi` client in `apps/admin/lib/api/schema-api.ts`
-- [ ] 4.3 Create schema list page at `apps/admin/app/admin/schemas/page.tsx`
-- [ ] 4.4 Create schema editor page at `apps/admin/app/admin/schemas/[type]/page.tsx`
-- [ ] 4.5 Create `FieldEditor` component for field configuration
-- [ ] 4.6 Create `ValidationEditor` component for validation rules
-- [ ] 4.7 Create `DisplayConfigurator` component for display hints
-- [ ] 4.8 Create `SchemaBuilder` component with drag-and-drop field ordering
-- [ ] 4.9 Implement field type selector (text, textarea, number, select, checkbox, enum)
-- [ ] 4.10 Implement options editor for select/enum fields
-- [ ] 4.11 Implement primary/secondary field designation
-- [ ] 4.12 Implement schema activation/deactivation
-- [ ] 4.13 Implement schema version history view
+- [x] 4.1 Create TypeScript types for schema in `apps/admin/lib/types/schema.ts`
+- [x] 4.2 Create `schemaApi` client in `apps/admin/lib/api/schema-api.ts`
+- [x] 4.3 Create schema list page at `apps/admin/app/admin/schemas/page.tsx`
+- [x] 4.4 Create schema editor page at `apps/admin/app/admin/schemas/[type]/page.tsx`
+- [x] 4.5 Create `FieldEditor` component for field configuration
+- [x] 4.6 Create `ValidationEditor` component for validation rules
+- [x] 4.7 Create `DisplayConfigurator` component for display hints
+- [x] 4.8 Create `SchemaBuilder` component with drag-and-drop field ordering
+- [x] 4.9 Implement field type selector (text, textarea, number, select, checkbox, enum)
+- [x] 4.10 Implement options editor for select/enum fields
+- [x] 4.11 Implement primary/secondary field designation
+- [x] 4.12 Implement schema activation/deactivation
+- [x] 4.13 Implement schema version history view
 
 ## 5. Admin Panel - Dynamic Item Management
 
-- [ ] 5.1 Update `GenericItemTable` to fetch schema dynamically
-- [ ] 5.2 Update `GenericItemDetail` to render fields from schema
-- [ ] 5.3 Update `GenericSeedForm` to work with dynamic schemas
-- [ ] 5.4 Remove static `itemTypesConfig` from `apps/admin/lib/config/item-types.ts`
-- [ ] 5.5 Update API client to use dynamic endpoints
-- [ ] 5.6 Implement schema caching in admin panel
+- [x] 5.1 Update `GenericItemTable` to fetch schema dynamically
+- [x] 5.2 Update `GenericItemDetail` to render fields from schema
+- [x] 5.3 Update `GenericSeedForm` to work with dynamic schemas
+- [x] 5.4 Remove static `itemTypesConfig` from `apps/admin/lib/config/item-types.ts`
+- [x] 5.5 Update API client to use dynamic endpoints
+- [x] 5.6 Implement schema caching in admin panel
 
 ## 6. Flutter Client - Schema Discovery
 
@@ -101,16 +101,16 @@
 
 ## 8. Data Migration
 
-- [ ] 8.1 Create migration script in `apps/api/scripts/migrate_to_dynamic.go`
-- [ ] 8.2 Implement cheese data migration
-- [ ] 8.3 Implement gin data migration
-- [ ] 8.4 Implement wine data migration
-- [ ] 8.5 Implement coffee data migration
-- [ ] 8.6 Implement chili-sauce data migration
-- [ ] 8.7 Create schema definitions for existing item types
-- [ ] 8.8 Create initial schema versions
+- [x] 8.1 Create migration script in `apps/api/scripts/migrate_to_dynamic.go`
+- [x] 8.2 Implement cheese data migration
+- [x] 8.3 Implement gin data migration
+- [x] 8.4 Implement wine data migration
+- [x] 8.5 Implement coffee data migration
+- [x] 8.6 Implement chili-sauce data migration
+- [x] 8.7 Create schema definitions for existing item types
+- [x] 8.8 Create initial schema versions
 - [ ] 8.9 Write migration verification tests
-- [ ] 8.10 Create rollback script
+- [x] 8.10 Create rollback script
 
 ## 9. Testing
 
