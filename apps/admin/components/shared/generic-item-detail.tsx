@@ -2,38 +2,48 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { getItemTypeConfig } from '@/lib/config/item-types';
-import { getItemTypeColor } from '@/lib/config/design-system';
-import type { BaseItem } from '@/lib/types/item-config';
+import { useSchema } from '@/lib/context/schema-context';
+import type { SchemaField } from '@/lib/types/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
 import { ArrowLeft, Trash2, CheckCircle, XCircle, Package, Expand } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
-interface GenericItemDetailProps<T extends BaseItem> {
+interface GenericItemDetailProps {
   itemType: string;
-  item: T;
+  item: any;
 }
 
-export function GenericItemDetail<T extends BaseItem>({ 
-  itemType, 
-  item 
-}: GenericItemDetailProps<T>) {
-  const config = getItemTypeConfig(itemType);
-  const colors = getItemTypeColor(itemType);
-  const IconComponent = (Icons as any)[config.icon] || Icons.HelpCircle;
+export function GenericItemDetail({ itemType, item }: GenericItemDetailProps) {
+  const { schema, fields } = useSchema(itemType);
   const [imageZoomOpen, setImageZoomOpen] = useState(false);
 
-  // Split fields into main fields and description
-  const mainFields = config.fields.filter((f: any) => f.type !== 'textarea');
-  const descriptionField = config.fields.find((f: any) => f.type === 'textarea');
+  if (!schema) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Schema not found for type: {itemType}
+      </div>
+    );
+  }
 
-  // Format field value based on type
-  const formatFieldValue = (field: any, value: any) => {
+  const colors = { hex: schema.color };
+  const IconComponent = (Icons as any)[schema.icon] || Icons.HelpCircle;
+
+  const sortedFields = [...fields].sort((a, b) => a.order - b.order);
+  const mainFields = sortedFields.filter(
+    (f) => f.field_type !== 'textarea' && f.field_type !== 'checkbox'
+  );
+  const descriptionField = sortedFields.find(
+    (f) => f.field_type === 'textarea'
+  );
+  const checkboxFields = sortedFields.filter(
+    (f) => f.field_type === 'checkbox'
+  );
+
+  const formatFieldValue = (field: SchemaField, value: any) => {
     if (value === null || value === undefined || value === '') {
-      // For checkbox/boolean, show "No" explicitly
-      if (field.type === 'checkbox') {
+      if (field.field_type === 'checkbox') {
         return (
           <span className="flex items-center text-gray-400">
             <XCircle className="w-5 h-5 mr-2" />
@@ -41,12 +51,10 @@ export function GenericItemDetail<T extends BaseItem>({
           </span>
         );
       }
-      // For other fields, show muted "Not specified"
       return <span className="text-gray-400 italic">Not specified</span>;
     }
 
-    // Handle boolean/checkbox fields with icons
-    if (field.type === 'checkbox') {
+    if (field.field_type === 'checkbox') {
       return value ? (
         <span className="flex items-center text-green-600">
           <CheckCircle className="w-5 h-5 mr-2" />
@@ -60,34 +68,37 @@ export function GenericItemDetail<T extends BaseItem>({
       );
     }
 
-    // Handle number fields
-    if (field.type === 'number') {
+    if (field.field_type === 'select' || field.field_type === 'enum') {
+      const option = field.options?.find((o) => o.value === value);
+      return option?.label || value;
+    }
+
+    if (field.field_type === 'number') {
       return value.toString();
     }
 
-    // Default: return as string
     return value.toString();
   };
 
+  const itemName = item.name || item.title || `Item #${item.id}`;
+
   return (
     <div className="space-y-6">
-      {/* Colored Header */}
       <div className="flex justify-between items-start">
         <div>
           <Link href={`/${itemType}`}>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               className="mb-4 hover:bg-transparent"
               style={{ color: colors.hex }}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to {config.labels.plural}
+              Back to {schema.plural_name}
             </Button>
           </Link>
-          
+
           <div className="flex items-center gap-3">
-            {/* Colored Icon */}
             <div
               className="flex items-center justify-center w-12 h-12 rounded-xl"
               style={{ backgroundColor: `${colors.hex}20` }}
@@ -97,30 +108,43 @@ export function GenericItemDetail<T extends BaseItem>({
                 style={{ color: colors.hex }}
               />
             </div>
-            <h1 className="text-3xl font-bold">{item.name}</h1>
+            <h1 className="text-3xl font-bold">{itemName}</h1>
           </div>
         </div>
-        
+
         <Link href={`/${itemType}/${item.id}/delete`}>
           <Button variant="destructive">
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete {config.labels.singular}
+            Delete {schema.display_name}
           </Button>
         </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Basic Information Card with colored border */}
-        <Card 
+        <Card
           className="border-l-4"
           style={{ borderLeftColor: colors.hex }}
         >
           <CardHeader>
-            <CardTitle style={{ color: colors.hex }}>Basic Information</CardTitle>
-            <CardDescription>Details about this {config.labels.singular.toLowerCase()}</CardDescription>
+            <CardTitle style={{ color: colors.hex }}>
+              Basic Information
+            </CardTitle>
+            <CardDescription>
+              Details about this {schema.display_name.toLowerCase()}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {mainFields.map((field: any) => (
+            {mainFields.map((field) => (
+              <div key={field.key}>
+                <label className="text-sm font-medium text-gray-500">
+                  {field.label}
+                </label>
+                <p className="text-lg">
+                  {formatFieldValue(field, item[field.key])}
+                </p>
+              </div>
+            ))}
+            {checkboxFields.map((field) => (
               <div key={field.key}>
                 <label className="text-sm font-medium text-gray-500">
                   {field.label}
@@ -134,26 +158,29 @@ export function GenericItemDetail<T extends BaseItem>({
         </Card>
 
         {descriptionField && (
-          <Card 
+          <Card
             className="border-l-4"
             style={{ borderLeftColor: colors.hex }}
           >
             <CardHeader>
-              <CardTitle style={{ color: colors.hex }}>{descriptionField.label}</CardTitle>
+              <CardTitle style={{ color: colors.hex }}>
+                {descriptionField.label}
+              </CardTitle>
               <CardDescription>Additional information</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-foreground leading-relaxed">
                 {item[descriptionField.key] || (
-                  <span className="text-muted-foreground italic">No description available</span>
+                  <span className="text-muted-foreground italic">
+                    No description available
+                  </span>
                 )}
               </p>
             </CardContent>
           </Card>
         )}
 
-        {/* Image Card */}
-        <Card 
+        <Card
           className="border-l-4"
           style={{ borderLeftColor: colors.hex }}
         >
@@ -163,18 +190,20 @@ export function GenericItemDetail<T extends BaseItem>({
           </CardHeader>
           <CardContent>
             {item.image_url ? (
-              <Dialog open={imageZoomOpen} onOpenChange={setImageZoomOpen}>
+              <Dialog
+                open={imageZoomOpen}
+                onOpenChange={setImageZoomOpen}
+              >
                 <DialogTrigger asChild>
                   <div className="relative w-full rounded-lg overflow-hidden bg-gray-100 cursor-pointer group">
                     <img
                       src={item.image_url}
-                      alt={item.name}
+                      alt={itemName}
                       className="w-full h-auto object-contain transition-opacity group-hover:opacity-90"
                     />
-                    {/* Zoom overlay hint */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div 
+                        <div
                           className="rounded-full p-3"
                           style={{ backgroundColor: colors.hex }}
                         >
@@ -184,24 +213,29 @@ export function GenericItemDetail<T extends BaseItem>({
                     </div>
                   </div>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl w-[90vw] p-0 bg-black [&>button]:bg-white/90 [&>button]:hover:bg-white [&>button]:text-gray-800" showCloseButton={true}>
-                  <DialogTitle className="sr-only">{item.name} - Full Size Image</DialogTitle>
+                <DialogContent
+                  className="max-w-4xl w-[90vw] p-0 bg-black [&>button]:bg-white/90 [&>button]:hover:bg-white [&>button]:text-gray-800"
+                  showCloseButton={true}
+                >
+                  <DialogTitle className="sr-only">
+                    {itemName} - Full Size Image
+                  </DialogTitle>
                   <div className="relative w-full">
                     <img
                       src={item.image_url}
-                      alt={item.name}
+                      alt={itemName}
                       className="w-full h-auto object-contain max-h-[85vh]"
                     />
                   </div>
                 </DialogContent>
               </Dialog>
             ) : (
-              <div 
+              <div
                 className="w-full h-48 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: `${colors.hex}10` }}
               >
                 <div className="text-center">
-                  <Package 
+                  <Package
                     className="w-12 h-12 mx-auto mb-2"
                     style={{ color: `${colors.hex}40` }}
                   />

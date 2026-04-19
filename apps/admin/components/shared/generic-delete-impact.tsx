@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { getItemTypeConfig } from '@/lib/config/item-types';
-import { getItemApi } from '@/lib/api/generic-item-api';
-import type { BaseItem } from '@/lib/types/item-config';
+import { useSchema, dynamicItemApi } from '@/lib/context/schema-context';
 import type { DeleteImpact } from '@/lib/types/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,36 +12,44 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { ArrowLeft, AlertTriangle, Trash2 } from 'lucide-react';
 
-interface GenericDeleteImpactProps<T extends BaseItem> {
+interface GenericDeleteImpactProps {
   itemType: string;
-  item: T;
+  item: any;
   impact: DeleteImpact;
 }
 
-export function GenericDeleteImpact<T extends BaseItem>({ 
-  itemType, 
+export function GenericDeleteImpact({
+  itemType,
   item,
-  impact 
-}: GenericDeleteImpactProps<T>) {
-  const config = getItemTypeConfig(itemType);
+  impact,
+}: GenericDeleteImpactProps) {
+  const { schema } = useSchema(itemType);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const displayName = schema?.display_name || itemType;
+
   const deleteMutation = useMutation({
-    mutationFn: () => getItemApi(itemType).delete(item.id),
+    mutationFn: () => dynamicItemApi.delete(itemType, item.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [itemType, 'list'] });
+      queryClient.invalidateQueries({ queryKey: ['items', itemType, 'list'] });
       router.push(`/${itemType}`);
     },
   });
 
   const handleDelete = () => {
-    if (window.confirm(`Are you absolutely sure? This will permanently delete this ${config.labels.singular.toLowerCase()} and all associated data. This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you absolutely sure? This will permanently delete this ${displayName.toLowerCase()} and all associated data. This action cannot be undone.`
+      )
+    ) {
       setIsDeleting(true);
       deleteMutation.mutate();
     }
   };
+
+  const itemName = item.name || item.title || `Item #${item.id}`;
 
   return (
     <div>
@@ -55,7 +61,7 @@ export function GenericDeleteImpact<T extends BaseItem>({
           </Button>
         </Link>
         <h1 className="text-3xl font-bold text-gray-900">
-          Delete {config.labels.singular}: {item.name}
+          Delete {displayName}: {itemName}
         </h1>
       </div>
 
@@ -63,31 +69,40 @@ export function GenericDeleteImpact<T extends BaseItem>({
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Warning: This action is permanent</AlertTitle>
         <AlertDescription>
-          Deleting this {config.labels.singular.toLowerCase()} will cascade and remove all associated data. This cannot be undone.
+          Deleting this {displayName.toLowerCase()} will cascade and remove all
+          associated data. This cannot be undone.
         </AlertDescription>
       </Alert>
 
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Impact Assessment</CardTitle>
-          <CardDescription>Review what will be affected by this deletion</CardDescription>
+          <CardDescription>
+            Review what will be affected by this deletion
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-              <div className="text-sm font-medium text-red-600">Ratings to Delete</div>
+              <div className="text-sm font-medium text-red-600">
+                Ratings to Delete
+              </div>
               <div className="text-3xl font-bold text-red-700 mt-2">
                 {impact.impact.ratings_count}
               </div>
             </div>
             <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="text-sm font-medium text-orange-600">Users Affected</div>
+              <div className="text-sm font-medium text-orange-600">
+                Users Affected
+              </div>
               <div className="text-3xl font-bold text-orange-700 mt-2">
                 {impact.impact.users_affected}
               </div>
             </div>
             <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="text-sm font-medium text-yellow-600">Sharings Removed</div>
+              <div className="text-sm font-medium text-yellow-600">
+                Sharings Removed
+              </div>
               <div className="text-3xl font-bold text-yellow-700 mt-2">
                 {impact.impact.sharings_count}
               </div>
@@ -96,9 +111,11 @@ export function GenericDeleteImpact<T extends BaseItem>({
 
           {impact.warnings.length > 0 && (
             <div className="space-y-2 mb-6">
-              <h3 className="font-semibold text-gray-900">Important Warnings:</h3>
+              <h3 className="font-semibold text-gray-900">
+                Important Warnings:
+              </h3>
               <ul className="list-disc list-inside space-y-1">
-                {impact.warnings.map((warning: any, index: number) => (
+                {impact.warnings.map((warning: string, index: number) => (
                   <li key={index} className="text-sm text-gray-700">
                     {warning}
                   </li>
@@ -109,7 +126,9 @@ export function GenericDeleteImpact<T extends BaseItem>({
 
           {impact.impact.affected_users.length > 0 && (
             <div>
-              <h3 className="font-semibold text-gray-900 mb-3">Affected Users:</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">
+                Affected Users:
+              </h3>
               <div className="space-y-2">
                 {impact.impact.affected_users.map((user: any) => (
                   <div
@@ -118,7 +137,8 @@ export function GenericDeleteImpact<T extends BaseItem>({
                   >
                     <span className="font-medium">{user.display_name}</span>
                     <span className="text-sm text-gray-600">
-                      {user.ratings_count} rating{user.ratings_count !== 1 ? 's' : ''} will be lost
+                      {user.ratings_count} rating
+                      {user.ratings_count !== 1 ? 's' : ''} will be lost
                     </span>
                   </div>
                 ))}
