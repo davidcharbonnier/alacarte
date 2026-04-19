@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -15,28 +16,151 @@ var schemaRegistry = services.GetSchemaRegistry()
 var validationEngine = services.NewValidationEngine(schemaRegistry)
 var queryBuilder = services.NewEAVQueryBuilder(schemaRegistry)
 
+func parseFieldOptionsValue(options *string) interface{} {
+	if options == nil || *options == "" || *options == "null" {
+		return []interface{}{}
+	}
+	var arr []string
+	if err := json.Unmarshal([]byte(*options), &arr); err != nil {
+		return []interface{}{}
+	}
+	result := make([]interface{}, len(arr))
+	for i, v := range arr {
+		result[i] = map[string]interface{}{"value": v, "label": v}
+	}
+	return result
+}
+
+func DebugOptions(c *gin.Context) {
+	var field models.ItemTypeField
+	if err := utils.DB.Where("`key` = ? AND schema_id = (SELECT id FROM item_type_schemas WHERE name = ?)", "color", "wine").First(&field).Error; err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{
+		"options_ptr": fmt.Sprintf("%p", field.Options),
+		"options_val": *field.Options,
+		"options_hex": fmt.Sprintf("%x", *field.Options),
+	})
+}
+
+func parseFieldValidationValue(validation *string) interface{} {
+	if validation == nil || *validation == "" || *validation == "null" {
+		return []interface{}{}
+	}
+	var v interface{}
+	if err := json.Unmarshal([]byte(*validation), &v); err != nil {
+		return []interface{}{}
+	}
+	return v
+}
+
+func parseFieldDisplayValue(display *string) interface{} {
+	if display == nil || *display == "" || *display == "null" {
+		return map[string]interface{}{}
+	}
+	var v interface{}
+	if err := json.Unmarshal([]byte(*display), &v); err != nil {
+		return map[string]interface{}{}
+	}
+	return v
+}
+
 func SchemaList(c *gin.Context) {
 	includeCounts := c.Query("include_counts") == "true"
+	includeInactive := c.Query("include_inactive") == "true"
 
-	schemas := schemaRegistry.GetAllSchemas()
+	var response []map[string]interface{}
 
-	response := make([]map[string]interface{}, 0, len(schemas))
-	for _, cached := range schemas {
-		schemaData := map[string]interface{}{
-			"name":         cached.Schema.Name,
-			"display_name": cached.Schema.DisplayName,
-			"plural_name":  cached.Schema.PluralName,
-			"icon":         cached.Schema.Icon,
-			"color":        cached.Schema.Color,
+	if includeInactive {
+		schemas, err := schemaRegistry.GetAllSchemasIncludingInactive()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load schemas"})
+			return
 		}
 
-		if includeCounts {
-			var count int64
-			utils.DB.Model(&models.Item{}).Where("schema_id = ?", cached.Schema.ID).Count(&count)
-			schemaData["item_count"] = count
-		}
+		for _, schema := range schemas {
+			var fields []models.ItemTypeField
+			utils.DB.Where("schema_id = ?", schema.ID).Order("`order` ASC").Find(&fields)
 
-		response = append(response, schemaData)
+			fieldsData := make([]map[string]interface{}, 0, len(fields))
+			for _, field := range fields {
+				fieldData := map[string]interface{}{
+					"key":        field.Key,
+					"label":      field.Label,
+					"field_type": field.FieldType,
+					"required":   field.Required,
+					"order":      field.Order,
+					"options":    parseFieldOptionsValue(field.Options),
+					"validation": parseFieldValidationValue(field.Validation),
+					"display":    parseFieldDisplayValue(field.Display),
+				}
+				if field.Group != nil {
+					fieldData["group"] = *field.Group
+				}
+				fieldsData = append(fieldsData, fieldData)
+			}
+
+			schemaData := map[string]interface{}{
+				"id":           schema.ID,
+				"name":         schema.Name,
+				"display_name": schema.DisplayName,
+				"plural_name":  schema.PluralName,
+				"icon":         schema.Icon,
+				"color":        schema.Color,
+				"is_active":    schema.IsActive,
+				"fields":       fieldsData,
+			}
+
+			if includeCounts {
+				var count int64
+				utils.DB.Model(&models.Item{}).Where("schema_id = ?", schema.ID).Count(&count)
+				schemaData["item_count"] = count
+			}
+
+			response = append(response, schemaData)
+		}
+	} else {
+		schemas := schemaRegistry.GetAllSchemas()
+
+		for _, cached := range schemas {
+			fields := make([]map[string]interface{}, 0, len(cached.Fields))
+			for _, field := range cached.Fields {
+				fieldData := map[string]interface{}{
+					"key":        field.Key,
+					"label":      field.Label,
+					"field_type": field.FieldType,
+					"required":   field.Required,
+					"order":      field.Order,
+					"options":    parseFieldOptionsValue(field.Options),
+					"validation": parseFieldValidationValue(field.Validation),
+					"display":    parseFieldDisplayValue(field.Display),
+				}
+				if field.Group != nil {
+					fieldData["group"] = *field.Group
+				}
+				fields = append(fields, fieldData)
+			}
+
+			schemaData := map[string]interface{}{
+				"id":           cached.Schema.ID,
+				"name":         cached.Schema.Name,
+				"display_name": cached.Schema.DisplayName,
+				"plural_name":  cached.Schema.PluralName,
+				"icon":         cached.Schema.Icon,
+				"color":        cached.Schema.Color,
+				"is_active":    cached.Schema.IsActive,
+				"fields":       fields,
+			}
+
+			if includeCounts {
+				var count int64
+				utils.DB.Model(&models.Item{}).Where("schema_id = ?", cached.Schema.ID).Count(&count)
+				schemaData["item_count"] = count
+			}
+
+			response = append(response, schemaData)
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"schemas": response})
@@ -47,7 +171,17 @@ func SchemaDetails(c *gin.Context) {
 
 	cached, ok := schemaRegistry.GetSchema(schemaType)
 	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
+		var schema models.ItemTypeSchema
+		if err := utils.DB.Where("name = ?", schemaType).First(&schema).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
+			return
+		}
+
+		var fields []models.ItemTypeField
+		utils.DB.Where("schema_id = ?", schema.ID).Order("`order` ASC").Find(&fields)
+
+		response := buildSchemaDetailResponse(&schema, fields)
+		c.JSON(http.StatusOK, response)
 		return
 	}
 
@@ -56,12 +190,12 @@ func SchemaDetails(c *gin.Context) {
 		fieldData := map[string]interface{}{
 			"key":        field.Key,
 			"label":      field.Label,
-			"type":       field.FieldType,
+			"field_type": field.FieldType,
 			"required":   field.Required,
 			"order":      field.Order,
-			"validation": field.Validation,
-			"display":    field.Display,
-			"options":    field.Options,
+			"options":    parseFieldOptionsValue(field.Options),
+			"validation": parseFieldValidationValue(field.Validation),
+			"display":    parseFieldDisplayValue(field.Display),
 		}
 
 		if field.Group != nil {
@@ -71,15 +205,21 @@ func SchemaDetails(c *gin.Context) {
 		fields = append(fields, fieldData)
 	}
 
+	var itemCount int64
+	utils.DB.Model(&models.Item{}).Where("schema_id = ?", cached.Schema.ID).Count(&itemCount)
+
 	response := map[string]interface{}{
-		"name":         cached.Schema.Name,
-		"display_name": cached.Schema.DisplayName,
-		"plural_name":  cached.Schema.PluralName,
-		"icon":         cached.Schema.Icon,
-		"color":        cached.Schema.Color,
-		"version":      0,
-		"version_hash": cached.VersionHash,
-		"fields":       fields,
+		"name":          cached.Schema.Name,
+		"display_name":  cached.Schema.DisplayName,
+		"plural_name":   cached.Schema.PluralName,
+		"icon":          cached.Schema.Icon,
+		"color":         cached.Schema.Color,
+		"is_active":     cached.Schema.IsActive,
+		"unique_fields": cached.UniqueFields,
+		"version":       0,
+		"version_hash":  cached.VersionHash,
+		"item_count":    itemCount,
+		"fields":        fields,
 	}
 
 	if cached.Version != nil {
@@ -91,14 +231,66 @@ func SchemaDetails(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func buildSchemaDetailResponse(schema *models.ItemTypeSchema, fields []models.ItemTypeField) map[string]interface{} {
+	fieldsData := make([]map[string]interface{}, 0, len(fields))
+	for _, field := range fields {
+		fieldData := map[string]interface{}{
+			"key":        field.Key,
+			"label":      field.Label,
+			"field_type": field.FieldType,
+			"required":   field.Required,
+			"order":      field.Order,
+			"options":    parseFieldOptionsValue(field.Options),
+			"validation": parseFieldValidationValue(field.Validation),
+			"display":    parseFieldDisplayValue(field.Display),
+		}
+		if field.Group != nil {
+			fieldData["group"] = *field.Group
+		}
+		fieldsData = append(fieldsData, fieldData)
+	}
+
+	var versionHash string
+	var version int
+	var schemaVersion models.SchemaVersion
+	if err := utils.DB.Where("schema_id = ? AND is_active = ?", schema.ID, true).First(&schemaVersion).Error; err == nil {
+		version = schemaVersion.Version
+		hashData := fmt.Sprintf("%d-%d-%s", schemaVersion.SchemaID, schemaVersion.Version, schemaVersion.Fields)
+		versionHash = fmt.Sprintf("%x", hashData)
+	}
+
+	var itemCount int64
+	utils.DB.Model(&models.Item{}).Where("schema_id = ?", schema.ID).Count(&itemCount)
+
+	var uniqueFields []string
+	if schema.UniqueFields != "" {
+		json.Unmarshal([]byte(schema.UniqueFields), &uniqueFields)
+	}
+
+	return map[string]interface{}{
+		"name":          schema.Name,
+		"display_name":  schema.DisplayName,
+		"plural_name":   schema.PluralName,
+		"icon":          schema.Icon,
+		"color":         schema.Color,
+		"is_active":     schema.IsActive,
+		"unique_fields": uniqueFields,
+		"version":       version,
+		"version_hash":  versionHash,
+		"item_count":    itemCount,
+		"fields":        fieldsData,
+	}
+}
+
 func SchemaCreate(c *gin.Context) {
 	var body struct {
-		Name        string                   `json:"name"`
-		DisplayName string                   `json:"display_name"`
-		PluralName  string                   `json:"plural_name"`
-		Icon        string                   `json:"icon"`
-		Color       string                   `json:"color"`
-		Fields      []map[string]interface{} `json:"fields"`
+		Name         string                   `json:"name"`
+		DisplayName  string                   `json:"display_name"`
+		PluralName   string                   `json:"plural_name"`
+		Icon         string                   `json:"icon"`
+		Color        string                   `json:"color"`
+		UniqueFields []string                 `json:"unique_fields"`
+		Fields       []map[string]interface{} `json:"fields"`
 	}
 
 	if err := c.Bind(&body); err != nil {
@@ -127,6 +319,11 @@ func SchemaCreate(c *gin.Context) {
 		IsActive:    true,
 	}
 
+	if len(body.UniqueFields) > 0 {
+		uniqueFieldsJSON, _ := json.Marshal(body.UniqueFields)
+		schema.UniqueFields = string(uniqueFieldsJSON)
+	}
+
 	tx := utils.DB.Begin()
 
 	if err := tx.Create(&schema).Error; err != nil {
@@ -140,19 +337,21 @@ func SchemaCreate(c *gin.Context) {
 			SchemaID:  schema.ID,
 			Key:       getStringField(fieldData, "key"),
 			Label:     getStringField(fieldData, "label"),
-			FieldType: models.FieldType(getStringField(fieldData, "type")),
+			FieldType: models.FieldType(getStringField(fieldData, "field_type")),
 			Required:  getBoolField(fieldData, "required"),
 			Order:     i,
 		}
 
 		if validation, ok := fieldData["validation"].(map[string]interface{}); ok {
 			validationJSON, _ := json.Marshal(validation)
-			field.Validation = string(validationJSON)
+			s := string(validationJSON)
+			field.Validation = &s
 		}
 
 		if display, ok := fieldData["display"].(map[string]interface{}); ok {
 			displayJSON, _ := json.Marshal(display)
-			field.Display = string(displayJSON)
+			s := string(displayJSON)
+			field.Display = &s
 		}
 
 		if options, ok := fieldData["options"].([]interface{}); ok {
@@ -163,7 +362,8 @@ func SchemaCreate(c *gin.Context) {
 				}
 			}
 			optionsJSON, _ := json.Marshal(optionsStr)
-			field.Options = string(optionsJSON)
+			s := string(optionsJSON)
+			field.Options = &s
 		}
 
 		if group, ok := fieldData["group"].(string); ok {
@@ -209,17 +409,28 @@ func SchemaUpdate(c *gin.Context) {
 
 	cached, ok := schemaRegistry.GetSchema(schemaType)
 	if !ok {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
+		var schema models.ItemTypeSchema
+		if err := utils.DB.Where("name = ?", schemaType).First(&schema).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
+			return
+		}
+
+		processSchemaUpdate(c, schema.ID, schema.Name, true)
 		return
 	}
 
+	processSchemaUpdate(c, cached.Schema.ID, cached.Schema.Name, false)
+}
+
+func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string, isInactive bool) {
 	var body struct {
-		DisplayName string                   `json:"display_name"`
-		PluralName  string                   `json:"plural_name"`
-		Icon        string                   `json:"icon"`
-		Color       string                   `json:"color"`
-		IsActive    *bool                    `json:"is_active"`
-		Fields      []map[string]interface{} `json:"fields"`
+		DisplayName  string                   `json:"display_name"`
+		PluralName   string                   `json:"plural_name"`
+		Icon         string                   `json:"icon"`
+		Color        string                   `json:"color"`
+		IsActive     *bool                    `json:"is_active"`
+		UniqueFields []string                 `json:"unique_fields"`
+		Fields       []map[string]interface{} `json:"fields"`
 	}
 
 	if err := c.Bind(&body); err != nil {
@@ -230,30 +441,34 @@ func SchemaUpdate(c *gin.Context) {
 	tx := utils.DB.Begin()
 
 	if body.DisplayName != "" {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", cached.Schema.ID).Update("display_name", body.DisplayName)
+		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("display_name", body.DisplayName)
 	}
 	if body.PluralName != "" {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", cached.Schema.ID).Update("plural_name", body.PluralName)
+		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("plural_name", body.PluralName)
 	}
 	if body.Icon != "" {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", cached.Schema.ID).Update("icon", body.Icon)
+		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("icon", body.Icon)
 	}
 	if body.Color != "" {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", cached.Schema.ID).Update("color", body.Color)
+		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("color", body.Color)
 	}
 	if body.IsActive != nil {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", cached.Schema.ID).Update("is_active", *body.IsActive)
+		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("is_active", *body.IsActive)
+	}
+	if body.UniqueFields != nil {
+		uniqueFieldsJSON, _ := json.Marshal(body.UniqueFields)
+		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("unique_fields", string(uniqueFieldsJSON))
 	}
 
 	if body.Fields != nil {
 		var currentVersion int
-		utils.DB.Model(&models.SchemaVersion{}).Where("schema_id = ?", cached.Schema.ID).Select("MAX(version)").Scan(&currentVersion)
+		utils.DB.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Select("MAX(version)").Scan(&currentVersion)
 		newVersion := currentVersion + 1
 
-		utils.DB.Model(&models.SchemaVersion{}).Where("schema_id = ?", cached.Schema.ID).Update("is_active", false)
+		utils.DB.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Update("is_active", false)
 
 		version := models.SchemaVersion{
-			SchemaID: cached.Schema.ID,
+			SchemaID: schemaID,
 			Version:  newVersion,
 			IsActive: true,
 		}
@@ -271,25 +486,27 @@ func SchemaUpdate(c *gin.Context) {
 			fieldKey := getStringField(fieldData, "key")
 
 			var existingField models.ItemTypeField
-			err := tx.Where("schema_id = ? AND `key` = ?", cached.Schema.ID, fieldKey).First(&existingField).Error
+			err := tx.Where("schema_id = ? AND `key` = ?", schemaID, fieldKey).First(&existingField).Error
 
 			field := models.ItemTypeField{
-				SchemaID:  cached.Schema.ID,
+				SchemaID:  schemaID,
 				Key:       fieldKey,
 				Label:     getStringField(fieldData, "label"),
-				FieldType: models.FieldType(getStringField(fieldData, "type")),
+				FieldType: models.FieldType(getStringField(fieldData, "field_type")),
 				Required:  getBoolField(fieldData, "required"),
 				Order:     i,
 			}
 
 			if validation, ok := fieldData["validation"].(map[string]interface{}); ok {
 				validationJSON, _ := json.Marshal(validation)
-				field.Validation = string(validationJSON)
+				s := string(validationJSON)
+				field.Validation = &s
 			}
 
 			if display, ok := fieldData["display"].(map[string]interface{}); ok {
 				displayJSON, _ := json.Marshal(display)
-				field.Display = string(displayJSON)
+				s := string(displayJSON)
+				field.Display = &s
 			}
 
 			if options, ok := fieldData["options"].([]interface{}); ok {
@@ -300,7 +517,8 @@ func SchemaUpdate(c *gin.Context) {
 					}
 				}
 				optionsJSON, _ := json.Marshal(optionsStr)
-				field.Options = string(optionsJSON)
+				s := string(optionsJSON)
+				field.Options = &s
 			}
 
 			if group, ok := fieldData["group"].(string); ok {
@@ -334,11 +552,19 @@ func SchemaUpdate(c *gin.Context) {
 		return
 	}
 
-	schemaRegistry.InvalidateSchema(schemaType)
-	if err := schemaRegistry.RefreshSchema(schemaType); err != nil {
+	schemaRegistry.InvalidateSchema(schemaName)
+	if err := schemaRegistry.RefreshSchema(schemaName); err != nil {
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Schema updated successfully"})
+	var updatedSchema models.ItemTypeSchema
+	utils.DB.Where("id = ?", schemaID).First(&updatedSchema)
+	var fields []models.ItemTypeField
+	utils.DB.Where("schema_id = ?", schemaID).Order("`order` ASC").Find(&fields)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Schema updated successfully",
+		"schema":  buildSchemaDetailResponse(&updatedSchema, fields),
+	})
 }
 
 func SchemaDelete(c *gin.Context) {
