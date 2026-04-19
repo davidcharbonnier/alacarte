@@ -218,10 +218,69 @@ func (qb *EAVQueryBuilder) buildItemMap(item *models.Item, cached *CachedSchema)
 	return result
 }
 
+func (qb *EAVQueryBuilder) checkUniqueness(cached *CachedSchema, fields map[string]interface{}, excludeItemID *uint) (bool, error) {
+	if len(cached.UniqueFields) == 0 {
+		return true, nil
+	}
+
+	uniqueFieldValues := make(map[string]interface{})
+	hasAllFields := true
+	for _, fieldKey := range cached.UniqueFields {
+		if value, exists := fields[fieldKey]; exists && value != nil {
+			uniqueFieldValues[fieldKey] = fmt.Sprintf("%v", value)
+		} else {
+			hasAllFields = false
+			break
+		}
+	}
+
+	if !hasAllFields || len(uniqueFieldValues) == 0 {
+		return true, nil
+	}
+
+	query := utils.DB.Model(&models.Item{}).Where("schema_id = ?", cached.Schema.ID)
+
+	if excludeItemID != nil {
+		query = query.Where("id != ?", *excludeItemID)
+	}
+
+	for fieldKey, value := range uniqueFieldValues {
+		if fieldKey == "name" {
+			query = query.Where("name = ?", value)
+		} else {
+			field, found := qb.registry.GetFieldByKey(cached.Schema.Name, fieldKey)
+			if !found {
+				continue
+			}
+
+			subquery := utils.DB.Model(&models.ItemFieldValue{}).
+				Select("item_id").
+				Where("field_id = ? AND value = ?", field.ID, value)
+
+			query = query.Where("id IN (?)", subquery)
+		}
+	}
+
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return false, fmt.Errorf("failed to check uniqueness: %w", err)
+	}
+
+	return count == 0, nil
+}
+
 func (qb *EAVQueryBuilder) CreateItem(schemaName string, userID uint, fields map[string]interface{}) (*models.Item, error) {
 	cached, ok := qb.registry.GetSchema(schemaName)
 	if !ok {
 		return nil, fmt.Errorf("schema '%s' not found", schemaName)
+	}
+
+	unique, err := qb.checkUniqueness(cached, fields, nil)
+	if err != nil {
+		return nil, err
+	}
+	if !unique {
+		return nil, fmt.Errorf("duplicate item")
 	}
 
 	item := &models.Item{
@@ -300,6 +359,14 @@ func (qb *EAVQueryBuilder) UpdateItem(schemaName string, itemID uint, userID uin
 
 	if userID != uint(item.UserID) {
 		return nil, fmt.Errorf("unauthorized")
+	}
+
+	unique, err := qb.checkUniqueness(cached, fields, &itemID)
+	if err != nil {
+		return nil, err
+	}
+	if !unique {
+		return nil, fmt.Errorf("duplicate item")
 	}
 
 	if name, ok := fields["name"].(string); ok {
