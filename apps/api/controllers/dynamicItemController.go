@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -265,6 +267,176 @@ func DynamicItemDeleteImpact(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, impact)
+}
+
+func DynamicItemSeed(c *gin.Context) {
+	schemaType := c.Param("type")
+
+	cached, ok := schemaRegistryItems.GetSchema(schemaType)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
+		return
+	}
+
+	data, err := utils.GetSeedData(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var rawData map[string]interface{}
+	if err := json.Unmarshal(data, &rawData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid JSON format: %v", err)})
+		return
+	}
+
+	var items []map[string]interface{}
+
+	if itemsData, ok := rawData["items"].([]interface{}); ok {
+		for _, item := range itemsData {
+			if itemMap, ok := item.(map[string]interface{}); ok {
+				items = append(items, itemMap)
+			}
+		}
+	} else {
+		for _, key := range []string{"gins", "wines", "cheeses", "coffees", "chili_sauces", "chili-sauces"} {
+			if itemsData, ok := rawData[key].([]interface{}); ok {
+				for _, item := range itemsData {
+					if itemMap, ok := item.(map[string]interface{}); ok {
+						items = append(items, itemMap)
+					}
+				}
+				break
+			}
+		}
+	}
+
+	if len(items) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No items to seed"})
+		return
+	}
+
+	userID := utils.GetCurrentUserID(c)
+	if userID == 0 {
+		userID = 1
+	}
+
+	result := utils.SeedResult{Errors: []string{}}
+
+	for _, itemData := range items {
+		filters := make(map[string]interface{})
+		for _, key := range cached.UniqueFields {
+			if val, exists := itemData[key]; exists {
+				filters[key] = val
+			}
+		}
+
+		if len(filters) > 0 {
+			existingItems, _ := queryBuilderItems.BuildListQuery(services.QueryParams{
+				SchemaName: schemaType,
+				Filters:    filters,
+			})
+			if existingItems.Total > 0 {
+				result.Skipped++
+				continue
+			}
+		}
+
+		validationResult := validationEngineItems.ValidateCreate(schemaType, itemData)
+		if !validationResult.Valid {
+			result.Errors = append(result.Errors, fmt.Sprintf("Validation failed: %v", validationResult.Errors))
+			continue
+		}
+
+		_, err := queryBuilderItems.CreateItem(schemaType, userID, itemData)
+		if err != nil {
+			nameVal := "unknown"
+			if name, ok := itemData["name"].(string); ok {
+				nameVal = name
+			}
+			result.Errors = append(result.Errors, fmt.Sprintf("Failed to create %s: %v", nameVal, err))
+			continue
+		}
+		result.Added++
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"added":   result.Added,
+		"skipped": result.Skipped,
+		"errors":  result.Errors,
+	})
+}
+
+func DynamicItemValidate(c *gin.Context) {
+	schemaType := c.Param("type")
+
+	cached, ok := schemaRegistryItems.GetSchema(schemaType)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
+		return
+	}
+
+	data, err := utils.GetSeedData(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var rawData map[string]interface{}
+	if err := json.Unmarshal(data, &rawData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid JSON format: %v", err)})
+		return
+	}
+
+	var items []map[string]interface{}
+
+	if itemsData, ok := rawData["items"].([]interface{}); ok {
+		for _, item := range itemsData {
+			if itemMap, ok := item.(map[string]interface{}); ok {
+				items = append(items, itemMap)
+			}
+		}
+	} else {
+		for _, key := range []string{"gins", "wines", "cheeses", "coffees", "chili_sauces", "chili-sauces"} {
+			if itemsData, ok := rawData[key].([]interface{}); ok {
+				for _, item := range itemsData {
+					if itemMap, ok := item.(map[string]interface{}); ok {
+						items = append(items, itemMap)
+					}
+				}
+				break
+			}
+		}
+	}
+
+	result := struct {
+		Valid     bool     `json:"valid"`
+		Errors    []string `json:"errors"`
+		ItemCount int      `json:"item_count"`
+	}{
+		Valid:     true,
+		Errors:    []string{},
+		ItemCount: len(items),
+	}
+
+	for i, itemData := range items {
+		validationResult := validationEngineItems.ValidateCreate(schemaType, itemData)
+		if !validationResult.Valid {
+			result.Valid = false
+			for _, err := range validationResult.Errors {
+				result.Errors = append(result.Errors, fmt.Sprintf("Item %d: %v", i+1, err))
+			}
+		}
+
+		for _, key := range cached.UniqueFields {
+			if _, exists := itemData[key]; !exists {
+				result.Valid = false
+				result.Errors = append(result.Errors, fmt.Sprintf("Item %d: missing unique field '%s'", i+1, key))
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func parseFilterParams(filterStr string) map[string]interface{} {

@@ -222,19 +222,25 @@ func main() {
 			stats.GET("/community/:type/:id", controllers.GetCommunityStats)
 		}
 
-		// Dynamic item schemas (requires auth for all)
-		schemas := api.Group("/schemas")
+		// Dynamic items
+		items := api.Group("/items")
 		{
-			schemas.GET("", controllers.SchemaList)
-			schemas.GET("/:type", controllers.SchemaDetails)
-			schemas.POST("", controllers.DynamicItemCreate)
-			schemas.GET("/:type/all", controllers.DynamicItemList)
-			schemas.GET("/:type/:id", controllers.DynamicItemDetails)
-			schemas.PUT("/:type/:id", controllers.DynamicItemUpdate)
-			schemas.DELETE("/:type/:id", controllers.DynamicItemDelete)
-			schemas.POST("/:type/:id/image", controllers.DynamicItemUploadImage)
-			schemas.DELETE("/:type/:id/image", controllers.DynamicItemDeleteImage)
+			items.GET("/:type", controllers.DynamicItemList)
+			items.GET("/:type/:id", controllers.DynamicItemDetails)
+			items.POST("/:type", controllers.DynamicItemCreate)
+			items.PUT("/:type/:id", controllers.DynamicItemUpdate)
+			items.DELETE("/:type/:id", controllers.DynamicItemDelete)
+			items.POST("/:type/:id/image", controllers.DynamicItemUploadImage)
+			items.DELETE("/:type/:id/image", controllers.DynamicItemDeleteImage)
 		}
+	}
+
+	// Public API routes (no auth required)
+	publicApi := router.Group("/api")
+	{
+		// Dynamic item schemas (public read-only)
+		publicApi.GET("/schemas", controllers.SchemaList)
+		publicApi.GET("/schemas/:type", controllers.SchemaDetails)
 	}
 
 	// Admin routes (requires admin privileges)
@@ -308,7 +314,14 @@ func main() {
 			schemaAdmin.PUT("/:type", controllers.SchemaUpdate)
 			schemaAdmin.DELETE("/:type", controllers.SchemaDelete)
 			schemaAdmin.GET("/:type/versions/:version", controllers.SchemaVersionHistory)
-			schemaAdmin.GET("/:type/:id/delete-impact", controllers.DynamicItemDeleteImpact)
+		}
+
+		// Dynamic item admin
+		itemAdmin := admin.Group("/items")
+		{
+			itemAdmin.GET("/:type/:id/delete-impact", controllers.DynamicItemDeleteImpact)
+			itemAdmin.POST("/:type/seed", controllers.DynamicItemSeed)
+			itemAdmin.POST("/:type/validate", controllers.DynamicItemValidate)
 		}
 	}
 
