@@ -11,6 +11,7 @@ interface ItemTypeCardProps {
   itemType: string;
   displayName: string;
   icon: string;
+  color: string;
   totalItems: number;
   isLoading?: boolean;
 }
@@ -25,10 +26,10 @@ export function ItemTypeCard({
   itemType,
   displayName,
   icon,
+  color,
   totalItems,
   isLoading = false,
 }: ItemTypeCardProps) {
-  const colors = getItemTypeColor(itemType);
   const IconComponent = (Icons as any)[icon] || Icons.HelpCircle;
 
   return (
@@ -43,12 +44,12 @@ export function ItemTypeCard({
                 'transition-transform hover:scale-105'
               )}
               style={{
-                backgroundColor: `${colors.hex}1A`, // 10% opacity
+                backgroundColor: `${color}1A`, // 10% opacity
               }}
             >
               <IconComponent
                 className="h-12 w-12"
-                style={{ color: colors.hex }}
+                style={{ color: color }}
               />
             </div>
 
@@ -69,7 +70,7 @@ export function ItemTypeCard({
                   </p>
                   <p
                     className="text-sm font-semibold"
-                    style={{ color: colors.hex }}
+                    style={{ color: color }}
                   >
                     View all {displayName.toLowerCase()}
                   </p>
