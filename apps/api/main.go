@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/davidcharbonnier/alacarte-api/controllers"
+	"github.com/davidcharbonnier/alacarte-api/services"
 	"github.com/davidcharbonnier/alacarte-api/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,14 @@ func init() {
 	utils.MySQLConnect()
 	utils.RunMigrations()
 	utils.InitStorageClient()
+
+	// Load schemas into registry
+	schemaRegistry := services.GetSchemaRegistry()
+	if err := schemaRegistry.LoadSchemas(); err != nil {
+		fmt.Printf("Warning: Failed to load schemas: %v\n", err)
+	} else {
+		fmt.Printf("Loaded %d schemas into registry\n", len(schemaRegistry.GetAllSchemas()))
+	}
 }
 
 // gin code
@@ -212,6 +221,26 @@ func main() {
 		{
 			stats.GET("/community/:type/:id", controllers.GetCommunityStats)
 		}
+
+		// Dynamic items
+		items := api.Group("/items")
+		{
+			items.GET("/:type", controllers.DynamicItemList)
+			items.GET("/:type/:id", controllers.DynamicItemDetails)
+			items.POST("/:type", controllers.DynamicItemCreate)
+			items.PUT("/:type/:id", controllers.DynamicItemUpdate)
+			items.DELETE("/:type/:id", controllers.DynamicItemDelete)
+			items.POST("/:type/:id/image", controllers.DynamicItemUploadImage)
+			items.DELETE("/:type/:id/image", controllers.DynamicItemDeleteImage)
+		}
+	}
+
+	// Public API routes (no auth required)
+	publicApi := router.Group("/api")
+	{
+		// Dynamic item schemas (public read-only)
+		publicApi.GET("/schemas", controllers.SchemaList)
+		publicApi.GET("/schemas/:type", controllers.SchemaDetails)
 	}
 
 	// Admin routes (requires admin privileges)
@@ -276,6 +305,23 @@ func main() {
 			user.DELETE("/:id", controllers.DeleteUser)
 			user.PATCH("/:id/promote", controllers.PromoteUser)
 			user.PATCH("/:id/demote", controllers.DemoteUser)
+		}
+
+		// Schema management
+		schemaAdmin := admin.Group("/schemas")
+		{
+			schemaAdmin.POST("", controllers.SchemaCreate)
+			schemaAdmin.PUT("/:type", controllers.SchemaUpdate)
+			schemaAdmin.DELETE("/:type", controllers.SchemaDelete)
+			schemaAdmin.GET("/:type/versions/:version", controllers.SchemaVersionHistory)
+		}
+
+		// Dynamic item admin
+		itemAdmin := admin.Group("/items")
+		{
+			itemAdmin.GET("/:type/:id/delete-impact", controllers.DynamicItemDeleteImpact)
+			itemAdmin.POST("/:type/seed", controllers.DynamicItemSeed)
+			itemAdmin.POST("/:type/validate", controllers.DynamicItemValidate)
 		}
 	}
 
