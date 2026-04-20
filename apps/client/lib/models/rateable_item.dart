@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/extensions.dart';
+import 'item_schema.dart';
 
 /// Detail field structure for item-specific information
 class DetailField {
@@ -7,7 +8,7 @@ class DetailField {
   final String value;
   final IconData? icon;
   final bool isDescription;
-  
+
   const DetailField({
     required this.label,
     required this.value,
@@ -20,41 +21,41 @@ class DetailField {
 abstract class RateableItem {
   /// Unique identifier for the item
   int? get id;
-  
+
   /// Type identifier for the rating system ('cheese', future types, etc.)
   String get itemType;
-  
+
   /// Primary name/title of the item
   String get name;
-  
+
   /// Display title for UI (formatted for presentation)
   String get displayTitle;
-  
+
   /// Display subtitle for UI (additional context)
   String get displaySubtitle;
-  
+
   /// Check if item is new (no ID assigned)
   bool get isNew;
-  
+
   /// Convert to JSON for API communication
   Map<String, dynamic> toJson();
-  
+
   /// Create a copy with updated fields
   RateableItem copyWith(Map<String, dynamic> updates);
-  
+
   /// Get searchable text for filtering
   String get searchableText;
-  
+
   /// Get all categorization fields for filtering
   Map<String, String> get categories;
-  
+
   /// Get structured detail fields for display
   List<DetailField> get detailFields;
 }
 
 /// Helper class for item type utilities
 class ItemTypeHelper {
-  /// Get display name for item type
+  /// Get display name for item type (fallback when schema unavailable)
   static String getItemTypeDisplayName(String itemType) {
     switch (itemType.toLowerCase()) {
       case 'cheese':
@@ -71,8 +72,16 @@ class ItemTypeHelper {
         return itemType.capitalized;
     }
   }
-  
-  /// Get icon for item type
+
+  /// Get display name from schema (preferred method when schema is available)
+  static String getDisplayNameFromSchema(ItemSchema? schema) {
+    if (schema == null) return 'Unknown';
+    return schema.displayName.isNotEmpty
+        ? schema.displayName
+        : schema.name.capitalized;
+  }
+
+  /// Get icon for item type (fallback when schema unavailable)
   static IconData getItemTypeIcon(String itemType) {
     switch (itemType.toLowerCase()) {
       case 'cheese':
@@ -91,8 +100,49 @@ class ItemTypeHelper {
         return Icons.category;
     }
   }
-  
-  /// Get appropriate color for item type
+
+  /// Get icon from schema (preferred method when schema is available)
+  static IconData getIconFromSchema(ItemSchema? schema) {
+    if (schema == null) return Icons.category;
+    return _parseIcon(schema.icon);
+  }
+
+  /// Parse icon string to IconData
+  static IconData _parseIcon(String iconName) {
+    switch (iconName.toLowerCase()) {
+      case 'local_pizza':
+      case 'cheese':
+        return Icons.local_pizza;
+      case 'local_bar':
+      case 'gin':
+        return Icons.local_bar;
+      case 'wine_bar':
+      case 'wine':
+        return Icons.wine_bar;
+      case 'sports_bar':
+      case 'beer':
+        return Icons.sports_bar;
+      case 'local_cafe':
+      case 'coffee':
+        return Icons.local_cafe;
+      case 'local_fire_department':
+      case 'chili':
+      case 'chili-sauce':
+        return Icons.local_fire_department;
+      case 'restaurant':
+        return Icons.restaurant;
+      case 'local_dining':
+        return Icons.local_dining;
+      case 'cake':
+        return Icons.cake;
+      case 'icecream':
+        return Icons.icecream;
+      default:
+        return Icons.category;
+    }
+  }
+
+  /// Get appropriate color for item type (fallback when schema unavailable)
   static Color getItemTypeColor(String itemType) {
     switch (itemType.toLowerCase()) {
       case 'cheese':
@@ -111,10 +161,21 @@ class ItemTypeHelper {
         return Colors.grey;
     }
   }
-  
-  /// Check if item type is supported
-  static bool isItemTypeSupported(String itemType) {
-    const supportedTypes = ['cheese', 'gin', 'wine', 'coffee', 'chili-sauce']; // Add more as they're implemented
-    return supportedTypes.contains(itemType.toLowerCase());
+
+  /// Get color from schema (preferred method when schema is available)
+  static Color getColorFromSchema(ItemSchema? schema) {
+    if (schema == null) return Colors.grey;
+    try {
+      final colorValue = int.parse(schema.color.replaceFirst('#', '0xFF'));
+      return Color(colorValue);
+    } catch (_) {
+      return Colors.grey;
+    }
+  }
+
+  /// Check if item type is supported by active schema
+  static bool isItemTypeSupported(ItemSchema? schema) {
+    if (schema == null) return false;
+    return schema.isActive;
   }
 }
