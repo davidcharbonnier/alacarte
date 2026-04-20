@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../models/rating.dart';
 import '../services/api_service.dart';
-import 'item_provider.dart';
 import 'rating_provider.dart';
 import 'auth_provider.dart';
 import 'connectivity_provider.dart';
@@ -20,13 +19,11 @@ final userRatingDataProvider = Provider<({User? user, List<Rating> ratings})>((
 /// Provider for dashboard data summary (OAuth compatible)
 final dashboardDataProvider = Provider<Map<String, dynamic>>((ref) {
   final authState = ref.watch(authProvider);
-  final cheeseItemState = ref.watch(cheeseItemProvider);
   final ratingState = ref.watch(ratingProvider);
 
   return {
     'isAuthenticated': authState.isAuthenticated,
     'currentUserName': authState.user?.uiDisplayName ?? '',
-    'totalCheeses': cheeseItemState.items.length,
     'totalRatings': ratingState.ratings.length,
     'averageRating': ratingState.averageRating,
     'isOnline': ref.watch(isOnlineProvider),
@@ -52,12 +49,11 @@ final dataRefreshProvider = Provider<void>((ref) {
   ref.listen(connectivityStateProvider, (previous, next) {
     final wasOffline = previous?.value != ConnectivityState.online;
     final isNowOnline = next.value == ConnectivityState.online;
-    
+
     if (wasOffline && isNowOnline) {
       // Just came back online - refresh all data if authenticated
       final isAuthenticated = ref.read(authProvider).isAuthenticated;
       if (isAuthenticated) {
-        ref.read(cheeseItemProvider.notifier).refreshItems();
         ref.read(ratingProvider.notifier).refreshRatings();
       }
     }

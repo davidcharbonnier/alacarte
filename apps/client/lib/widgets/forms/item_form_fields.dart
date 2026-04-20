@@ -26,7 +26,7 @@ class ItemTypeDropdownField extends StatelessWidget {
   Widget build(BuildContext context) {
     // Ensure the current value is in the options list, or set to null
     final safeValue = (value != null && options.contains(value)) ? value : null;
-    
+
     return DropdownButtonFormField<String>(
       initialValue: safeValue,
       decoration: InputDecoration(
@@ -37,10 +37,7 @@ class ItemTypeDropdownField extends StatelessWidget {
         enabled: enabled,
       ),
       items: options.map((String option) {
-        return DropdownMenuItem<String>(
-          value: option,
-          child: Text(option),
-        );
+        return DropdownMenuItem<String>(value: option, child: Text(option));
       }).toList(),
       onChanged: enabled ? onChanged : null,
       validator: (value) {
@@ -99,12 +96,14 @@ class ItemPropertyField extends StatelessWidget {
       maxLength: maxLength,
       keyboardType: keyboardType,
       textCapitalization: TextCapitalization.sentences,
-      validator: required ? (value) {
-        if (value == null || value.trim().isEmpty) {
-          return errorText ?? '$labelText is required';
-        }
-        return null;
-      } : null,
+      validator: required
+          ? (value) {
+              if (value == null || value.trim().isEmpty) {
+                return errorText ?? '$labelText is required';
+              }
+              return null;
+            }
+          : null,
     );
   }
 }
@@ -190,32 +189,6 @@ class ItemDescriptionField extends StatelessWidget {
         }
         return null;
       },
-    );
-  }
-}
-
-/// Pre-configured form fields specifically for cheese items
-class CheeseTypeField extends StatelessWidget {
-  final TextEditingController controller;
-  final String? errorText;
-  final bool enabled;
-
-  const CheeseTypeField({
-    super.key,
-    required this.controller,
-    this.errorText,
-    this.enabled = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ItemPropertyField(
-      controller: controller,
-      labelText: context.l10n.type,
-      hintText: context.l10n.cheeseTypeHint,
-      required: true,
-      enabled: enabled,
-      prefixIcon: Icons.category,
     );
   }
 }

@@ -1,79 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/item_provider.dart';
 import '../../providers/rating_provider.dart';
+import '../../providers/schema_provider.dart';
+import '../../providers/dynamic_item_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/appbar_helper.dart';
+import '../../utils/schema_icon_utils.dart';
 import '../../routes/route_names.dart';
-// Removed auth_status_widget import - user profile now shown in app bar
 
-/// Item Type Hub - main dashboard for selecting item type to focus on
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _hasLoadedSchemas = false;
+  final Set<String> _loadedSchemaTypes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadInitialData();
+    });
+  }
+
+  void _loadInitialData() {
+    if (_hasLoadedSchemas) return;
+    final schemaState = ref.read(schemaProvider);
+    if (schemaState.schemas.isEmpty && !schemaState.isLoading) {
+      _hasLoadedSchemas = true;
+      ref.read(schemaProvider.notifier).loadSchemas();
+    }
+  }
 
   void _navigateToItemType(BuildContext context, String itemType) {
     GoRouter.of(context).go('${RouteNames.itemType}/$itemType');
   }
 
-  /// Count unique items that have ratings (personal or shared) for this user
   int _getUniqueItemCount(List<dynamic> ratings, String itemType) {
     final itemIds = ratings
         .where((r) => r.itemType == itemType)
         .map((r) => r.itemId)
-        .toSet(); // Set automatically handles uniqueness
+        .toSet();
     return itemIds.length;
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Initialize the rating listener to enable automatic auth change reactions
+  Widget build(BuildContext context) {
     ref.read(ratingListenerProvider);
 
-    // Ensure data is loaded when accessing the home screen
-    final cheeseItemState = ref.watch(cheeseItemProvider);
-    final ginItemState = ref.watch(ginItemProvider);
-    final wineItemState = ref.watch(wineItemProvider);
-    final coffeeItemState = ref.watch(coffeeItemProvider);
-    final chiliSauceItemState = ref.watch(chiliSauceItemProvider);
-
-    // Load cheese data if not already loaded and not currently loading
-    if (!cheeseItemState.hasLoadedOnce && !cheeseItemState.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(cheeseItemProvider.notifier).loadItems();
-      });
-    }
-
-    // Load gin data if not already loaded and not currently loading
-    if (!ginItemState.hasLoadedOnce && !ginItemState.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(ginItemProvider.notifier).loadItems();
-      });
-    }
-
-    // Load wine data if not already loaded and not currently loading
-    if (!wineItemState.hasLoadedOnce && !wineItemState.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(wineItemProvider.notifier).loadItems();
-      });
-    }
-
-    // Load coffee data if not already loaded and not currently loading
-    if (!coffeeItemState.hasLoadedOnce && !coffeeItemState.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(coffeeItemProvider.notifier).loadItems();
-      });
-    }
-
-    // Load chili-sauce data if not already loaded and not currently loading
-    if (!chiliSauceItemState.hasLoadedOnce && !chiliSauceItemState.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(chiliSauceItemProvider.notifier).loadItems();
-      });
-    }
-
+    final schemaState = ref.watch(schemaProvider);
+    final dynamicItemState = ref.watch(dynamicItemProvider);
     final ratingState = ref.watch(ratingProvider);
+
+    if (schemaState.schemas.isEmpty &&
+        !schemaState.isLoading &&
+        !_hasLoadedSchemas) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _hasLoadedSchemas = true;
+        ref.read(schemaProvider.notifier).loadSchemas();
+      });
+    }
+
+    for (final schema in schemaState.schemas) {
+      if (schema.isActive && !_loadedSchemaTypes.contains(schema.name)) {
+        _loadedSchemaTypes.add(schema.name);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(dynamicItemProvider.notifier).loadItems(schema.name);
+        });
+      }
+    }
+
+    final activeSchemas = schemaState.schemas.where((s) => s.isActive).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -87,119 +90,102 @@ class HomeScreen extends ConsumerWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.read(cheeseItemProvider.notifier).refreshItems();
-          ref.read(ginItemProvider.notifier).refreshItems();
-          ref.read(wineItemProvider.notifier).refreshItems();
-          ref.read(coffeeItemProvider.notifier).refreshItems();
-          ref.read(chiliSauceItemProvider.notifier).refreshItems();
-          ref.read(ratingProvider.notifier).refreshRatings();
+          await ref.read(schemaProvider.notifier).refreshSchemas();
+          for (final schema in activeSchemas) {
+            await ref
+                .read(dynamicItemProvider.notifier)
+                .refreshItems(schema.name);
+          }
+          await ref.read(ratingProvider.notifier).refreshRatings();
         },
-        child: SingleChildScrollView(
-          padding: AppConstants.screenPadding,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: AppConstants.maxContentWidth,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Item type grid
-                  Text(
-                    context.l10n.yourPreferenceLists,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+        child: schemaState.isLoading && activeSchemas.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : schemaState.error != null && activeSchemas.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Failed to load item types'),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () =>
+                          ref.read(schemaProvider.notifier).loadSchemas(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              )
+            : SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: AppConstants.screenPadding,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: AppConstants.maxContentWidth,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          context.l10n.yourPreferenceLists,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: AppConstants.spacingM),
+                        ...activeSchemas.map((schema) {
+                          final items = dynamicItemState.getItems(schema.name);
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppConstants.spacingM,
+                            ),
+                            child: _buildSchemaCard(
+                              context,
+                              schema.name,
+                              schema.displayName,
+                              schema.icon,
+                              schema.color,
+                              items.length,
+                              _getUniqueItemCount(
+                                ratingState.ratings,
+                                schema.name,
+                              ),
+                            ),
+                          );
+                        }),
+                        if (activeSchemas.isEmpty && !schemaState.isLoading)
+                          _buildComingSoonCard(
+                            context,
+                            context.l10n.moreCategoriesTitle,
+                            Icons.add_box,
+                            Colors.grey,
+                          ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: AppConstants.spacingM),
-
-                  // Item type cards
-                  _buildItemTypeCard(
-                    context,
-                    ItemTypeLocalizer.getLocalizedItemType(context, 'cheese'),
-                    'cheese',
-                    Icons.local_pizza,
-                    AppConstants.primaryColor,
-                    cheeseItemState.items.length,
-                    _getUniqueItemCount(ratingState.ratings, 'cheese'),
-                  ),
-
-                  const SizedBox(height: AppConstants.spacingM),
-
-                  _buildItemTypeCard(
-                    context,
-                    ItemTypeLocalizer.getLocalizedItemType(context, 'gin'),
-                    'gin',
-                    Icons.local_bar,
-                    Colors.teal,
-                    ginItemState.items.length,
-                    _getUniqueItemCount(ratingState.ratings, 'gin'),
-                  ),
-
-                  const SizedBox(height: AppConstants.spacingM),
-
-                  _buildItemTypeCard(
-                    context,
-                    ItemTypeLocalizer.getLocalizedItemType(context, 'wine'),
-                    'wine',
-                    Icons.wine_bar,
-                    const Color(0xFF8E24AA),
-                    wineItemState.items.length,
-                    _getUniqueItemCount(ratingState.ratings, 'wine'),
-                  ),
-
-                  const SizedBox(height: AppConstants.spacingM),
-
-                  _buildItemTypeCard(
-                    context,
-                    ItemTypeLocalizer.getLocalizedItemType(context, 'coffee'),
-                    'coffee',
-                    Icons.local_cafe,
-                    Colors.brown,
-                    coffeeItemState.items.length,
-                    _getUniqueItemCount(ratingState.ratings, 'coffee'),
-                  ),
-
-                  const SizedBox(height: AppConstants.spacingM),
-
-                  _buildItemTypeCard(
-                    context,
-                    ItemTypeLocalizer.getLocalizedItemType(context, 'chili-sauce'),
-                    'chili-sauce',
-                    Icons.whatshot,
-                    Colors.red,
-                    chiliSauceItemState.items.length,
-                    _getUniqueItemCount(ratingState.ratings, 'chili-sauce'),
-                  ),
-
-                  const SizedBox(height: AppConstants.spacingM),
-
-                  // Future item types (grayed out for now)
-                  _buildComingSoonCard(
-                    context,
-                    context.l10n.moreCategoriesTitle,
-                    Icons.add_box,
-                    Colors.grey,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }
 
-  Widget _buildItemTypeCard(
+  Widget _buildSchemaCard(
     BuildContext context,
-    String displayName,
     String itemType,
-    IconData icon,
-    Color color,
+    String displayName,
+    String iconName,
+    String colorHex,
     int totalItems,
     int myRatings,
   ) {
+    final icon = SchemaIconUtils.getIcon(iconName);
+    final color = SchemaIconUtils.parseColor(colorHex);
+
     return Card(
       child: InkWell(
         onTap: () => _navigateToItemType(context, itemType),
@@ -208,7 +194,6 @@ class HomeScreen extends ConsumerWidget {
           padding: AppConstants.cardPadding,
           child: Row(
             children: [
-              // Icon
               Container(
                 padding: const EdgeInsets.all(AppConstants.spacingM),
                 decoration: BoxDecoration(
@@ -217,10 +202,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 child: Icon(icon, size: AppConstants.iconXL, color: color),
               ),
-
               const SizedBox(width: AppConstants.spacingM),
-
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,8 +233,6 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-
-              // Arrow
               Icon(
                 Icons.arrow_forward_ios,
                 color: Theme.of(
