@@ -1,57 +1,33 @@
 import 'package:flutter/material.dart';
 import '../../models/rateable_item.dart';
-import '../../models/cheese_item.dart';
-import '../../models/gin_item.dart';
-import '../../models/wine_item.dart';
-import '../../models/coffee_item.dart';
-import '../../models/chili_sauce_item.dart';
+import '../../models/dynamic_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../items/item_image.dart';
 
-/// Reusable header component for any item type detail display
 class ItemDetailHeader extends StatelessWidget {
   final RateableItem item;
   final VoidCallback? onEditPressed;
 
   const ItemDetailHeader({super.key, required this.item, this.onEditPressed});
 
-  /// Get the badge text based on item type
+  DynamicItem get _dynamicItem => item as DynamicItem;
+
   String _getBadgeText(BuildContext context) {
-    switch (item.itemType) {
-      case 'cheese':
-        return item.categories['type'] ?? 'Unknown';
-      case 'gin':
-        return item.categories['profile'] ?? 'Unknown';
-      case 'wine':
-        return item.categories['color'] ?? 'Unknown';
-      case 'coffee':
-        return item.categories['roast_level'] ?? 'Unknown';
-      case 'chili-sauce':
-        if (item is ChiliSauceItem) {
-          return (item as ChiliSauceItem).spiceLevel.getLocalizedDisplayName(context);
-        }
-        return 'Unknown';
-      default:
-        return item.categories['type'] ?? 'Unknown';
+    final primaryField = _dynamicItem.schema?.primaryField;
+    if (primaryField != null) {
+      final value = _dynamicItem.fieldValues[primaryField.key];
+      if (value != null && value.toString().isNotEmpty) {
+        return value.toString();
+      }
     }
+    return _dynamicItem.schemaName;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get image URL based on item type
-    String? imageUrl;
-    if (item is CheeseItem) {
-      imageUrl = (item as CheeseItem).imageUrl;
-    } else if (item is GinItem) {
-      imageUrl = (item as GinItem).imageUrl;
-    } else if (item is WineItem) {
-      imageUrl = (item as WineItem).imageUrl;
-    } else if (item is CoffeeItem) {
-      imageUrl = (item as CoffeeItem).imageUrl;
-    } else if (item is ChiliSauceItem) {
-      imageUrl = (item as ChiliSauceItem).imageUrl;
-    }
+    final imageUrl = _dynamicItem.imageUrl;
+    final detailFields = _dynamicItem.detailFields;
 
     return Card(
       child: Padding(
@@ -59,7 +35,6 @@ class ItemDetailHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Item name and type (common to all items)
             Row(
               children: [
                 Expanded(
@@ -91,7 +66,6 @@ class ItemDetailHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Edit button
                 if (onEditPressed != null) ...[
                   const SizedBox(width: AppConstants.spacingS),
                   IconButton(
@@ -108,39 +82,17 @@ class ItemDetailHeader extends StatelessWidget {
                 ],
               ],
             ),
-
             const SizedBox(height: AppConstants.spacingM),
-
-            // Item-specific fields (from detailFields) - excluding description
-            ...(() {
-              if (item is CheeseItem) {
-                return (item as CheeseItem).getLocalizedDetailFields(context);
-              } else if (item is GinItem) {
-                return (item as GinItem).getLocalizedDetailFields(context);
-              } else if (item is WineItem) {
-                return (item as WineItem).getLocalizedDetailFields(context);
-              } else if (item is CoffeeItem) {
-                return (item as CoffeeItem).getLocalizedDetailFields(context);
-              } else if (item is ChiliSauceItem) {
-                return (item as ChiliSauceItem).getLocalizedDetailFields(context);
-              }
-              return item.detailFields;
-            }())
+            ...detailFields
                 .where((field) => !field.isDescription)
                 .map(
-                  (field) {
-                    // Special handling for tasting notes (coffee)
-                    if (field.label == context.l10n.tastingNotesLabel && item is CoffeeItem) {
-                      final coffeeItem = item as CoffeeItem;
-                      if (coffeeItem.tastingNotes != null && coffeeItem.tastingNotes!.isNotEmpty) {
-                        return _buildTastingNotesField(context, field.label, coffeeItem.tastingNotes!, field.icon);
-                      }
-                    }
-                    return _buildDetailRow(context, field.label, field.value, field.icon);
-                  },
+                  (field) => _buildDetailRow(
+                    context,
+                    field.label,
+                    field.value,
+                    field.icon,
+                  ),
                 ),
-
-            // Image display (centered, before description)
             if (imageUrl != null && imageUrl.isNotEmpty) ...[
               const SizedBox(height: AppConstants.spacingM),
               const Divider(),
@@ -154,26 +106,9 @@ class ItemDetailHeader extends StatelessWidget {
                 ),
               ),
             ],
-
-            // Description field (if available)
-            ...(() {
-              if (item is CheeseItem) {
-                return (item as CheeseItem).getLocalizedDetailFields(context);
-              } else if (item is GinItem) {
-                return (item as GinItem).getLocalizedDetailFields(context);
-              } else if (item is WineItem) {
-                return (item as WineItem).getLocalizedDetailFields(context);
-              } else if (item is CoffeeItem) {
-                return (item as CoffeeItem).getLocalizedDetailFields(context);
-              } else if (item is ChiliSauceItem) {
-                return (item as ChiliSauceItem).getLocalizedDetailFields(context);
-              }
-              return item.detailFields;
-            }())
+            ...detailFields
                 .where((field) => field.isDescription)
-                .map(
-                  (field) => _buildDescriptionField(context, field),
-                ),
+                .map((field) => _buildDescriptionField(context, field)),
           ],
         ),
       ),
@@ -186,7 +121,6 @@ class ItemDetailHeader extends StatelessWidget {
     String value,
     IconData? icon,
   ) {
-    // Check if this is a boolean field (Yes/No or Oui/Non)
     final isYes = value == context.l10n.yes || value == 'Yes' || value == 'Oui';
     final isNo = value == context.l10n.no || value == 'No' || value == 'Non';
     final isBooleanField = isYes || isNo;
@@ -199,7 +133,9 @@ class ItemDetailHeader extends StatelessWidget {
             Icon(
               icon,
               size: AppConstants.iconS,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
             const SizedBox(width: AppConstants.spacingS),
           ],
@@ -207,7 +143,9 @@ class ItemDetailHeader extends StatelessWidget {
             '$label: ',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           Expanded(
@@ -215,9 +153,13 @@ class ItemDetailHeader extends StatelessWidget {
                 ? Row(
                     children: [
                       Icon(
-                        isYes ? Icons.check_circle_outline : Icons.radio_button_unchecked,
+                        isYes
+                            ? Icons.check_circle_outline
+                            : Icons.radio_button_unchecked,
                         size: 16,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: AppConstants.spacingXS),
                       Text(
@@ -249,66 +191,6 @@ class ItemDetailHeader extends StatelessWidget {
         const SizedBox(height: AppConstants.spacingS),
         Text(field.value, style: Theme.of(context).textTheme.bodyMedium),
       ],
-    );
-  }
-
-  Widget _buildTastingNotesField(
-    BuildContext context,
-    String label,
-    List<String> notes,
-    IconData? icon,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppConstants.spacingM),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: AppConstants.iconS,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: AppConstants.spacingS),
-              ],
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppConstants.spacingS),
-          Wrap(
-            spacing: AppConstants.spacingS,
-            runSpacing: AppConstants.spacingS,
-            children: notes.map((note) {
-              return Chip(
-                label: Text(
-                  note,
-                  style: const TextStyle(
-                    fontSize: AppConstants.fontS,
-                  ),
-                ),
-                backgroundColor: Colors.brown.shade50,
-                side: BorderSide(
-                  color: Colors.brown.shade200,
-                  width: 1,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppConstants.spacingXS,
-                  vertical: 0,
-                ),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              );
-            }).toList(),
-          ),
-        ],
-      ),
     );
   }
 }

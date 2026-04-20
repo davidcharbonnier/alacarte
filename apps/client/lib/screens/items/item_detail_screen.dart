@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rating_provider.dart';
+import '../../providers/schema_provider.dart';
 import '../../models/rating.dart';
 import '../../models/rateable_item.dart';
 import '../../models/api_response.dart';
@@ -49,7 +50,9 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
   }
 
   Future<void> _loadItemData() async {
-    if (!ItemTypeHelper.isItemTypeSupported(widget.itemType)) return;
+    final schemaState = ref.read(schemaProvider);
+    final schema = schemaState.getSchema(widget.itemType);
+    if (!ItemTypeHelper.isItemTypeSupported(schema)) return;
 
     setState(() {
       _isLoading = true;
@@ -80,12 +83,14 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           _itemRatings = viewerRatingsResponse.data
               .where(
                 (r) =>
-                    r.itemType == widget.itemType &&
-                    r.itemId == widget.itemId,
+                    r.itemType == widget.itemType && r.itemId == widget.itemId,
               )
               .toList();
         } else if (viewerRatingsResponse is ApiError<List<Rating>>) {
-          if (kDebugMode) print('Error loading viewer ratings: ${viewerRatingsResponse.message}');
+          if (kDebugMode)
+            print(
+              'Error loading viewer ratings: ${viewerRatingsResponse.message}',
+            );
           _itemRatings = [];
         }
       } else {
@@ -112,7 +117,9 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     // 2. Invalidate this item from provider state
     ItemProviderHelper.invalidateItem(ref, widget.itemType, widget.itemId);
     // 3. Reload this item from API (puts it back in provider state)
-    await ItemProviderHelper.loadSpecificItems(ref, widget.itemType, [widget.itemId]);
+    await ItemProviderHelper.loadSpecificItems(ref, widget.itemType, [
+      widget.itemId,
+    ]);
     // 4. Reload local state to display the fresh item
     await _loadItemData();
   }
@@ -132,20 +139,17 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
   }
 
   void _navigateToEditItem() {
-    if (widget.itemType == 'cheese') {
-      GoRouter.of(context).go('${RouteNames.cheeseEdit}/${widget.itemId}');
-    } else if (widget.itemType == 'gin') {
-      GoRouter.of(context).go('${RouteNames.ginEdit}/${widget.itemId}');
-    } else if (widget.itemType == 'wine') {
-      GoRouter.of(context).go('${RouteNames.wineEdit}/${widget.itemId}');
-    } else if (widget.itemType == 'coffee') {
-      GoRouter.of(context).go('${RouteNames.coffeeEdit}/${widget.itemId}');
-    } else if (widget.itemType == 'chili-sauce') {
-      GoRouter.of(context).go('${RouteNames.chiliSauceEdit}/${widget.itemId}');
+    final schemaState = ref.read(schemaProvider);
+    final schema = schemaState.getSchema(widget.itemType);
+    if (ItemTypeHelper.isItemTypeSupported(schema)) {
+      GoRouter.of(
+        context,
+      ).push('${RouteNames.itemType}/${widget.itemType}/edit/${widget.itemId}');
     } else {
-      // TODO: Handle other item types
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Edit not yet supported for this item type')),
+        const SnackBar(
+          content: Text('Edit not yet supported for this item type'),
+        ),
       );
     }
   }
@@ -253,10 +257,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   const SizedBox(height: AppConstants.spacingL),
 
                   // Community statistics section using reusable widget
-                  RatingSummaryCard(
-                    item: _item!,
-                    itemType: widget.itemType,
-                  ),
+                  RatingSummaryCard(item: _item!, itemType: widget.itemType),
 
                   const SizedBox(height: AppConstants.spacingL),
 

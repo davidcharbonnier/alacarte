@@ -8,17 +8,13 @@ import '../screens/initialization/app_initialization_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/items/item_type_screen.dart';
 import '../screens/items/item_detail_screen.dart';
+import '../screens/items/dynamic_item_form_screen.dart';
 import '../screens/rating/rating_create_screen.dart';
 import '../screens/rating/rating_edit_screen.dart';
 import 'route_names.dart';
 
 import '../screens/settings/user_settings_screen.dart';
 import '../screens/settings/privacy_settings_screen.dart';
-import '../screens/cheese/cheese_form_screens.dart';
-import '../screens/gin/gin_form_screens.dart';
-import '../screens/wine/wine_form_screens.dart';
-import '../screens/coffee/coffee_form_screens.dart';
-import '../screens/chili_sauce/chili_sauce_form_screens.dart';
 
 /// Provider for the GoRouter configuration with OAuth authentication
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -125,7 +121,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Generic Item Detail
+      // Generic item routes (work for any item type) - MUST be before item detail to avoid /create being interpreted as itemId
+      GoRoute(
+        path: RoutePaths.itemCreateSection,
+        name: RouteNames.itemCreate,
+        builder: (context, state) {
+          final itemType = state.pathParameters[RouteParams.itemType];
+          if (itemType == null) {
+            return _buildPlaceholderScreen('Invalid Item Type');
+          }
+          return DynamicItemFormScreen(itemType: itemType);
+        },
+      ),
+
+      GoRoute(
+        path: RoutePaths.itemEditSection,
+        name: RouteNames.itemEdit,
+        builder: (context, state) {
+          final itemType = state.pathParameters[RouteParams.itemType];
+          final itemIdParam = state.pathParameters[RouteParams.itemId];
+          final itemId = int.tryParse(itemIdParam ?? '');
+          if (itemType == null || itemId == null) {
+            return _buildPlaceholderScreen('Invalid Item Type or ID');
+          }
+          return DynamicItemFormScreen(itemType: itemType, itemId: itemId);
+        },
+      ),
+
+      // Generic Item Detail - MUST be after item create/edit routes
       GoRoute(
         path: RoutePaths.itemDetailSection,
         name: RouteNames.itemDetail,
@@ -139,120 +162,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           }
 
           return ItemDetailScreen(itemType: itemType, itemId: itemId);
-        },
-      ),
-
-      // Cheese-specific routes
-      GoRoute(
-        path: RoutePaths.cheeseDetail,
-        name: RouteNames.cheeseDetail,
-        builder: (context, state) {
-          final cheeseIdParam = state.pathParameters[RouteParams.cheeseId];
-          return _buildPlaceholderScreen(
-            'Cheese Detail Screen (ID: $cheeseIdParam)',
-          );
-          // final cheeseId = int.tryParse(cheeseIdParam ?? '');
-          // if (cheeseId == null) return const NotFoundScreen();
-          // return CheeseDetailScreen(cheeseId: cheeseId);
-        },
-      ),
-
-      GoRoute(
-        path: RoutePaths.cheeseCreate,
-        name: RouteNames.cheeseCreate,
-        builder: (context, state) => const CheeseCreateScreen(),
-      ),
-
-      GoRoute(
-        path: RoutePaths.cheeseEdit,
-        name: RouteNames.cheeseEdit,
-        builder: (context, state) {
-          final cheeseIdParam = state.pathParameters[RouteParams.cheeseId];
-          final cheeseId = int.tryParse(cheeseIdParam ?? '');
-          if (cheeseId == null) {
-            return _buildPlaceholderScreen('Invalid Cheese ID');
-          }
-          return CheeseEditScreen(cheeseId: cheeseId);
-        },
-      ),
-
-      // Gin-specific routes
-      GoRoute(
-        path: RoutePaths.ginCreate,
-        name: RouteNames.ginCreate,
-        builder: (context, state) => const GinCreateScreen(),
-      ),
-
-      GoRoute(
-        path: RoutePaths.ginEdit,
-        name: RouteNames.ginEdit,
-        builder: (context, state) {
-          final ginIdParam = state.pathParameters[RouteParams.ginId];
-          final ginId = int.tryParse(ginIdParam ?? '');
-          if (ginId == null) {
-            return _buildPlaceholderScreen('Invalid Gin ID');
-          }
-          return GinEditScreen(ginId: ginId);
-        },
-      ),
-
-      // Wine-specific routes
-      GoRoute(
-        path: RoutePaths.wineCreate,
-        name: RouteNames.wineCreate,
-        builder: (context, state) => const WineCreateScreen(),
-      ),
-
-      GoRoute(
-        path: RoutePaths.wineEdit,
-        name: RouteNames.wineEdit,
-        builder: (context, state) {
-          final wineIdParam = state.pathParameters[RouteParams.wineId];
-          final wineId = int.tryParse(wineIdParam ?? '');
-          if (wineId == null) {
-            return _buildPlaceholderScreen('Invalid Wine ID');
-          }
-          return WineEditScreen(wineId: wineId);
-        },
-      ),
-
-      // Coffee-specific routes
-      GoRoute(
-        path: RoutePaths.coffeeCreate,
-        name: RouteNames.coffeeCreate,
-        builder: (context, state) => const CoffeeCreateScreen(),
-      ),
-
-      GoRoute(
-        path: RoutePaths.coffeeEdit,
-        name: RouteNames.coffeeEdit,
-        builder: (context, state) {
-          final coffeeIdParam = state.pathParameters[RouteParams.coffeeId];
-          final coffeeId = int.tryParse(coffeeIdParam ?? '');
-          if (coffeeId == null) {
-            return _buildPlaceholderScreen('Invalid Coffee ID');
-          }
-          return CoffeeEditScreen(coffeeId: coffeeId);
-        },
-      ),
-
-      // Chili Sauce-specific routes
-      GoRoute(
-        path: RoutePaths.chiliSauceCreate,
-        name: RouteNames.chiliSauceCreate,
-        builder: (context, state) => const ChiliSauceCreateScreen(),
-      ),
-
-      GoRoute(
-        path: RoutePaths.chiliSauceEdit,
-        name: RouteNames.chiliSauceEdit,
-        builder: (context, state) {
-          final chiliSauceIdParam = state.pathParameters[RouteParams.chiliSauceId];
-          final chiliSauceId = int.tryParse(chiliSauceIdParam ?? '');
-          if (chiliSauceId == null) {
-            return _buildPlaceholderScreen('Invalid Chili Sauce ID');
-          }
-          return ChiliSauceEditScreen(chiliSauceId: chiliSauceId);
         },
       ),
 
@@ -352,7 +261,10 @@ Widget _buildPlaceholderScreen(String title) {
               _buildRouteChip('Create User', RouteNames.userCreate),
               _buildRouteChip('Home', RouteNames.home),
               _buildRouteChip('Cheese List', '${RouteNames.itemType}/cheese'),
-              _buildRouteChip('Create Cheese', RouteNames.cheeseCreate),
+              _buildRouteChip(
+                'Create Item',
+                '${RouteNames.itemType}/cheese/create',
+              ),
             ],
           ),
         ],
@@ -385,21 +297,10 @@ extension AppRouterExtension on GoRouter {
   void goToHome() => go(RouteNames.home); // Item Type Hub
   void goToItemType(String itemType) => go('${RouteNames.itemType}/$itemType');
 
-  // Legacy cheese routes (redirect to item type sections)
-  void goToCheeseList() => go('${RouteNames.itemType}/cheese');
-  void goToCheeseDetail(int cheeseId) =>
-      go('${RouteNames.itemType}/cheese/$cheeseId');
-  void goToCheeseCreate() => go(RouteNames.cheeseCreate);
-  void goToCheeseEdit(int cheeseId) => go('${RouteNames.cheeseEdit}/$cheeseId');
-
   // Rating routes
   void goToRatingCreate(String itemType, int itemId) =>
       go('${RouteNames.ratingCreate}/$itemType/$itemId');
   void goToRatingEdit(int ratingId) => go('${RouteNames.ratingEdit}/$ratingId');
-
-  // Convenience methods
-  void goToCreateCheeseRating(int cheeseId) =>
-      goToRatingCreate('cheese', cheeseId);
 }
 
 /// Navigation helper methods for use in widgets
@@ -412,32 +313,12 @@ class AppNavigation {
     GoRouter.of(context).goToHome();
   }
 
-  static void toCheeseList(BuildContext context) {
-    GoRouter.of(context).go('${RouteNames.itemType}/cheese');
-  }
-
-  static void toCheeseDetail(BuildContext context, int cheeseId) {
-    GoRouter.of(context).goToCheeseDetail(cheeseId);
-  }
-
-  static void toCreateCheese(BuildContext context) {
-    GoRouter.of(context).goToCheeseCreate();
-  }
-
-  static void toEditCheese(BuildContext context, int cheeseId) {
-    GoRouter.of(context).goToCheeseEdit(cheeseId);
-  }
-
   static void toCreateRating(
     BuildContext context,
     String itemType,
     int itemId,
   ) {
     GoRouter.of(context).goToRatingCreate(itemType, itemId);
-  }
-
-  static void toCreateCheeseRating(BuildContext context, int cheeseId) {
-    GoRouter.of(context).goToCreateCheeseRating(cheeseId);
   }
 
   static void toEditRating(BuildContext context, int ratingId) {

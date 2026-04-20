@@ -5,14 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rating_provider.dart';
 import '../../providers/community_stats_provider.dart';
+import '../../providers/schema_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/rating.dart';
 import '../../models/rateable_item.dart';
-import '../../models/cheese_item.dart';
-import '../../models/gin_item.dart';
-import '../../models/wine_item.dart';
-import '../../models/coffee_item.dart';
-import '../../models/chili_sauce_item.dart';
+import '../../models/dynamic_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/appbar_helper.dart';
@@ -109,18 +106,13 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   }
 
   void _navigateToAddItem() {
-    if (widget.itemType == 'cheese') {
-      GoRouter.of(context).go(RouteNames.cheeseCreate);
-    } else if (widget.itemType == 'gin') {
-      GoRouter.of(context).go(RouteNames.ginCreate);
-    } else if (widget.itemType == 'wine') {
-      GoRouter.of(context).go(RouteNames.wineCreate);
-    } else if (widget.itemType == 'coffee') {
-      GoRouter.of(context).go(RouteNames.coffeeCreate);
-    } else if (widget.itemType == 'chili-sauce') {
-      GoRouter.of(context).go(RouteNames.chiliSauceCreate);
+    final schemaState = ref.read(schemaProvider);
+    final schema = schemaState.getSchema(widget.itemType);
+    if (ItemTypeHelper.isItemTypeSupported(schema)) {
+      GoRouter.of(
+        context,
+      ).push('${RouteNames.itemType}/${widget.itemType}/create');
     } else {
-      // Fallback for unsupported item types
       GoRouter.of(context).go(RouteNames.home);
     }
   }
@@ -161,10 +153,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
           tabs: [
-            Tab(
-              icon: const Icon(Icons.list),
-              text: context.l10n.allItemsTab,
-            ),
+            Tab(icon: const Icon(Icons.list), text: context.l10n.allItemsTab),
             Tab(
               icon: const Icon(Icons.bookmark),
               text: context.l10n.myItemsTab,
@@ -517,25 +506,14 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             ],
           ),
         ),
-        PopupMenuItem(
-          enabled: false,
-          child: Row(
-            children: [
-              const Icon(Icons.add_box, color: Colors.grey),
-              const SizedBox(width: AppConstants.spacingS),
-              Text(
-                context.l10n.moreCategoriesComingSoon,
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
 
   Widget _buildAllItemsTab(bool isLoading) {
-    if (!ItemTypeHelper.isItemTypeSupported(widget.itemType)) {
+    final schemaState = ref.watch(schemaProvider);
+    final schema = schemaState.getSchema(widget.itemType);
+    if (!ItemTypeHelper.isItemTypeSupported(schema)) {
       return _buildComingSoonTab();
     }
 
@@ -632,7 +610,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   }
 
   Widget _buildMyListTab(bool isLoading) {
-    if (!ItemTypeHelper.isItemTypeSupported(widget.itemType)) {
+    final schemaState = ref.watch(schemaProvider);
+    final schema = schemaState.getSchema(widget.itemType);
+    if (!ItemTypeHelper.isItemTypeSupported(schema)) {
       return _buildComingSoonTab();
     }
 
@@ -979,16 +959,6 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     );
   }
 
-  /// Build localized subtitle for chili sauce items
-  String _buildChiliSauceSubtitle(BuildContext context, ChiliSauceItem item) {
-    final parts = <String>[];
-    if (item.brand != null && item.brand!.isNotEmpty) {
-      parts.add(item.brand!);
-    }
-    parts.add(item.spiceLevel.getLocalizedDisplayName(context));
-    return parts.join(' • ');
-  }
-
   Widget _buildItemCard(
     RateableItem item,
     Rating? myRating,
@@ -996,19 +966,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     bool showCommunityData, {
     Map<int, Map<String, dynamic>>? statsMap,
   }) {
-    // Get image URL based on item type
-    String? imageUrl;
-    if (item is CheeseItem) {
-      imageUrl = item.imageUrl;
-    } else if (item is GinItem) {
-      imageUrl = item.imageUrl;
-    } else if (item is WineItem) {
-      imageUrl = item.imageUrl;
-    } else if (item is CoffeeItem) {
-      imageUrl = item.imageUrl;
-    } else if (item is ChiliSauceItem) {
-      imageUrl = item.imageUrl;
-    }
+    final imageUrl = (item as DynamicItem).imageUrl;
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppConstants.spacingM),
@@ -1060,10 +1018,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                     ),
                     const SizedBox(height: AppConstants.spacingXS),
                     Text(
-                      // Special handling for chili-sauce to show localized spice level
-                      item is ChiliSauceItem
-                          ? _buildChiliSauceSubtitle(context, item as ChiliSauceItem)
-                          : item.displaySubtitle,
+                      item.displaySubtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(
                           context,

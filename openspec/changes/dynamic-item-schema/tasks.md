@@ -74,30 +74,30 @@
 
 ## 6. Flutter Client - Schema Discovery
 
-- [ ] 6.1 Create `ItemSchema` model in `apps/client/lib/models/item_schema.dart`
-- [ ] 6.2 Create `SchemaField` model in `apps/client/lib/models/schema_field.dart`
-- [ ] 6.3 Create `ValidationRule` model in `apps/client/lib/models/validation_rule.dart`
-- [ ] 6.4 Create `DisplayHint` model in `apps/client/lib/models/display_hint.dart`
-- [ ] 6.5 Create `SchemaService` in `apps/client/lib/services/schema_service.dart`
-- [ ] 6.6 Create `SchemaProvider` in `apps/client/lib/providers/schema_provider.dart`
-- [ ] 6.7 Implement schema fetching on app startup
-- [ ] 6.8 Implement schema caching with ETag revalidation
-- [ ] 6.9 Implement schema refresh mechanism
+- [x] 6.1 Create `ItemSchema` model in `apps/client/lib/models/item_schema.dart`
+- [x] 6.2 Create `SchemaField` model in `apps/client/lib/models/schema_field.dart`
+- [x] 6.3 Create `ValidationRule` model in `apps/client/lib/models/validation_rule.dart`
+- [x] 6.4 Create `DisplayHint` model in `apps/client/lib/models/display_hint.dart`
+- [x] 6.5 Create `SchemaService` in `apps/client/lib/services/schema_service.dart`
+- [x] 6.6 Create `SchemaProvider` in `apps/client/lib/providers/schema_provider.dart`
+- [x] 6.7 Implement schema fetching on app startup
+- [x] 6.8 Implement schema caching with ETag revalidation
+- [x] 6.9 Implement schema refresh mechanism
 
 ## 7. Flutter Client - Dynamic Items
 
-- [ ] 7.1 Create `DynamicItem` model in `apps/client/lib/models/dynamic_item.dart`
-- [ ] 7.2 Implement `DynamicItem` as `RateableItem` interface
-- [ ] 7.3 Create `DynamicItemService` in `apps/client/lib/services/dynamic_item_service.dart`
-- [ ] 7.4 Create `DynamicItemProvider` in `apps/client/lib/providers/dynamic_item_provider.dart`
-- [ ] 7.5 Create `DynamicForm` widget in `apps/client/lib/widgets/forms/dynamic_form.dart`
-- [ ] 7.6 Create field renderer widgets (TextField, NumberField, SelectField, Checkbox)
-- [ ] 7.7 Update `RatingCard` to work with `DynamicItem`
-- [ ] 7.8 Update `ItemDetailScreen` to render dynamic fields
-- [ ] 7.9 Update `ItemListScreen` to use schema for display
-- [ ] 7.10 Remove individual item models (CheeseItem, GinItem, WineItem, CoffeeItem, ChiliSauceItem)
-- [ ] 7.11 Remove individual form strategies
-- [ ] 7.12 Update `ItemTypeHelper` to use discovered schemas
+- [x] 7.1 Create `DynamicItem` model in `apps/client/lib/models/dynamic_item.dart`
+- [x] 7.2 Implement `DynamicItem` as `RateableItem` interface
+- [x] 7.3 Create `DynamicItemService` in `apps/client/lib/services/dynamic_item_service.dart`
+- [x] 7.4 Create `DynamicItemProvider` in `apps/client/lib/providers/dynamic_item_provider.dart`
+- [x] 7.5 Create `DynamicForm` widget in `apps/client/lib/widgets/forms/dynamic_form.dart`
+- [x] 7.6 Create field renderer widgets (TextField, NumberField, SelectField, Checkbox)
+- [x] 7.7 Update `RatingCard` to work with `DynamicItem` (existing widgets accept RateableItem)
+- [x] 7.8 Update `ItemDetailScreen` to render dynamic fields (existing widgets use detailFields)
+- [x] 7.9 Update `ItemListScreen` to use schema for display (uses RateableItem interface)
+- [x] 7.10 Remove individual item models (CheeseItem, GinItem, WineItem, CoffeeItem, ChiliSauceItem)
+- [x] 7.11 Remove individual form strategies
+- [x] 7.12 Update `ItemTypeHelper` to use discovered schemas
 
 ## 8. Data Migration
 
