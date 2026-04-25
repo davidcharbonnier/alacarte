@@ -184,24 +184,18 @@ func (qb *EAVQueryBuilder) GetItem(schemaName string, itemID uint) (*map[string]
 func (qb *EAVQueryBuilder) buildItemMap(item *models.Item, cached *CachedSchema) map[string]interface{} {
 	result := map[string]interface{}{
 		"id":          item.ID,
-		"schema_type": cached.Schema.Name,
 		"name":        item.Name,
+		"schema_type": cached.Schema.Name,
 		"image_url":   item.ImageURL,
 		"user_id":     item.UserID,
 		"created_at":  item.CreatedAt,
 		"updated_at":  item.UpdatedAt,
 	}
 
-	if item.Description != nil {
-		result["description"] = *item.Description
-	}
-
 	if item.FieldValues != "" {
 		var fieldValues map[string]interface{}
 		if err := json.Unmarshal([]byte(item.FieldValues), &fieldValues); err == nil {
-			for k, v := range fieldValues {
-				result[k] = v
-			}
+			result["field_values"] = fieldValues
 		}
 	}
 
@@ -291,9 +285,7 @@ func (qb *EAVQueryBuilder) CreateItem(schemaName string, userID uint, fields map
 	if name, ok := fields["name"].(string); ok {
 		item.Name = name
 	}
-	if desc, ok := fields["description"].(string); ok {
-		item.Description = &desc
-	}
+
 	if imageURL, ok := fields["image_url"].(string); ok {
 		item.ImageURL = &imageURL
 	}
@@ -372,11 +364,7 @@ func (qb *EAVQueryBuilder) UpdateItem(schemaName string, itemID uint, userID uin
 	if name, ok := fields["name"].(string); ok {
 		item.Name = name
 	}
-	if desc, ok := fields["description"]; ok {
-		if descStr, ok := desc.(string); ok {
-			item.Description = &descStr
-		}
-	}
+
 	if imageURL, ok := fields["image_url"].(string); ok {
 		item.ImageURL = &imageURL
 	}

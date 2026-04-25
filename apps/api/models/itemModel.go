@@ -7,9 +7,8 @@ import (
 type Item struct {
 	gorm.Model
 	ID              uint             `gorm:"primaryKey" json:"id"`
-	SchemaID        uint             `gorm:"not null;index:idx_schema_name" json:"schema_id"`
-	Name            string           `gorm:"type:varchar(255);not null;index:idx_schema_name" json:"name"`
-	Description     *string          `gorm:"type:text" json:"description,omitempty"`
+	Name            string           `gorm:"type:varchar(255);index" json:"name"`
+	SchemaID        uint             `gorm:"not null;index" json:"schema_id"`
 	ImageURL        *string          `gorm:"type:varchar(500)" json:"image_url,omitempty"`
 	FieldValues     string           `gorm:"type:json" json:"field_values,omitempty"`
 	UserID          int              `gorm:"not null;index" json:"user_id"`

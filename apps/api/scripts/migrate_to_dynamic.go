@@ -443,9 +443,8 @@ func migrateCheese() {
 		})
 
 		item := models.Item{
-			SchemaID:        schema.ID,
 			Name:            cheese.Name,
-			Description:     &cheese.Description,
+			SchemaID:        schema.ID,
 			ImageURL:        cheese.ImageURL,
 			FieldValues:     fieldValues,
 			UserID:          1,
@@ -459,7 +458,6 @@ func migrateCheese() {
 		}
 
 		migrateFieldValues(item.ID, fieldMap, map[string]interface{}{
-			"name":        cheese.Name,
 			"type":        cheese.Type,
 			"origin":      cheese.Origin,
 			"producer":    cheese.Producer,
@@ -506,9 +504,8 @@ func migrateGin() {
 		})
 
 		item := models.Item{
-			SchemaID:        schema.ID,
 			Name:            gin.Name,
-			Description:     &gin.Description,
+			SchemaID:        schema.ID,
 			ImageURL:        gin.ImageURL,
 			FieldValues:     fieldValues,
 			UserID:          1,
@@ -522,7 +519,6 @@ func migrateGin() {
 		}
 
 		migrateFieldValues(item.ID, fieldMap, map[string]interface{}{
-			"name":        gin.Name,
 			"producer":    gin.Producer,
 			"origin":      gin.Origin,
 			"profile":     gin.Profile,
@@ -579,9 +575,8 @@ func migrateWine() {
 		})
 
 		item := models.Item{
-			SchemaID:        schema.ID,
 			Name:            wine.Name,
-			Description:     &wine.Description,
+			SchemaID:        schema.ID,
 			ImageURL:        wine.ImageURL,
 			FieldValues:     fieldValues,
 			UserID:          1,
@@ -595,7 +590,6 @@ func migrateWine() {
 		}
 
 		migrateFieldValues(item.ID, fieldMap, map[string]interface{}{
-			"name":        wine.Name,
 			"producer":    wine.Producer,
 			"country":     wine.Country,
 			"region":      wine.Region,
@@ -666,9 +660,8 @@ func migrateCoffee() {
 		})
 
 		item := models.Item{
-			SchemaID:        schema.ID,
 			Name:            coffee.Name,
-			Description:     &coffee.Description,
+			SchemaID:        schema.ID,
 			ImageURL:        coffee.ImageURL,
 			FieldValues:     fieldValues,
 			UserID:          1,
@@ -682,7 +675,6 @@ func migrateCoffee() {
 		}
 
 		migrateFieldValues(item.ID, fieldMap, map[string]interface{}{
-			"name":              coffee.Name,
 			"roaster":           coffee.Roaster,
 			"country":           coffee.Country,
 			"region":            coffee.Region,
@@ -744,9 +736,8 @@ func migrateChiliSauce() {
 		})
 
 		item := models.Item{
-			SchemaID:        schema.ID,
 			Name:            cs.Name,
-			Description:     &cs.Description,
+			SchemaID:        schema.ID,
 			ImageURL:        cs.ImageURL,
 			FieldValues:     fieldValues,
 			UserID:          1,
@@ -760,7 +751,6 @@ func migrateChiliSauce() {
 		}
 
 		migrateFieldValues(item.ID, fieldMap, map[string]interface{}{
-			"name":        cs.Name,
 			"brand":       cs.Brand,
 			"spice_level": spiceLevel,
 			"chilis":      cs.Chilis,

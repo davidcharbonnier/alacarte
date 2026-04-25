@@ -104,7 +104,16 @@ func DynamicItemCreate(c *gin.Context) {
 		return
 	}
 
-	validationResult := validationEngineItems.ValidateCreate(schemaType, body)
+	fields := body
+	if fieldValues, ok := body["field_values"].(map[string]interface{}); ok {
+		fields = fieldValues
+	}
+
+	if name, ok := body["name"].(string); ok && name != "" {
+		fields["name"] = name
+	}
+
+	validationResult := validationEngineItems.ValidateCreate(schemaType, fields)
 	if !validationResult.Valid {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":  "validation_failed",
@@ -113,7 +122,7 @@ func DynamicItemCreate(c *gin.Context) {
 		return
 	}
 
-	item, err := queryBuilderItems.CreateItem(schemaType, userID, body)
+	item, err := queryBuilderItems.CreateItem(schemaType, userID, fields)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -149,7 +158,16 @@ func DynamicItemUpdate(c *gin.Context) {
 		return
 	}
 
-	validationResult := validationEngineItems.ValidateUpdate(schemaType, body)
+	fields := body
+	if fieldValues, ok := body["field_values"].(map[string]interface{}); ok {
+		fields = fieldValues
+	}
+
+	if name, ok := body["name"].(string); ok && name != "" {
+		fields["name"] = name
+	}
+
+	validationResult := validationEngineItems.ValidateUpdate(schemaType, fields)
 	if !validationResult.Valid {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":  "validation_failed",
@@ -158,7 +176,7 @@ func DynamicItemUpdate(c *gin.Context) {
 		return
 	}
 
-	item, err := queryBuilderItems.UpdateItem(schemaType, uint(id), userID, body)
+	item, err := queryBuilderItems.UpdateItem(schemaType, uint(id), userID, fields)
 	if err != nil {
 		if err.Error() == "unauthorized" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "You can only update your own items"})
@@ -214,7 +232,8 @@ func DynamicItemUploadImage(c *gin.Context) {
 	schemaType := c.Param("type")
 	idStr := c.Param("id")
 
-	if _, err := strconv.ParseUint(idStr, 10, 32); err != nil {
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
 		return
 	}
@@ -225,16 +244,21 @@ func DynamicItemUploadImage(c *gin.Context) {
 		return
 	}
 
-	c.Params = append(c.Params, gin.Param{Key: "itemType", Value: schemaType})
-	c.Params = append(c.Params, gin.Param{Key: "itemId", Value: idStr})
-	UploadItemImage(c)
+	item, err := utils.GetDynamicItem(schemaType, uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
+		return
+	}
+
+	processAndSaveImage(c, item, schemaType)
 }
 
 func DynamicItemDeleteImage(c *gin.Context) {
 	schemaType := c.Param("type")
 	idStr := c.Param("id")
 
-	if _, err := strconv.ParseUint(idStr, 10, 32); err != nil {
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
 		return
 	}
@@ -245,9 +269,33 @@ func DynamicItemDeleteImage(c *gin.Context) {
 		return
 	}
 
-	c.Params = append(c.Params, gin.Param{Key: "itemType", Value: schemaType})
-	c.Params = append(c.Params, gin.Param{Key: "itemId", Value: idStr})
-	DeleteItemImage(c)
+	item, err := utils.GetDynamicItem(schemaType, uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
+		return
+	}
+
+	// Delete image from storage
+	imageURL := item.GetImageURL()
+	if imageURL == nil || *imageURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Item has no image"})
+		return
+	}
+
+	filename := utils.ExtractFilenameFromURL(*imageURL)
+	if err := utils.DeleteFromStorage(filename); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete image"})
+		return
+	}
+
+	// Clear image URL in database
+	item.SetImageURL(nil)
+	if err := utils.SaveItem(item); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update database"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image deleted successfully"})
 }
 
 func DynamicItemDeleteImpact(c *gin.Context) {
