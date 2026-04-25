@@ -54,11 +54,9 @@ type FieldFormData = {
     message?: string;
   }[];
   display?: {
-    columnWidth?: 'small' | 'medium' | 'large';
-    showInTable?: boolean;
-    sortable?: boolean;
+    badge?: boolean;
     primary?: boolean;
-    group?: string;
+    secondary?: boolean;
   };
 };
 
@@ -471,7 +469,7 @@ function SchemaBuilder({
       order: formFields.length,
       options: [],
       validation: [],
-      display: { showInTable: true, sortable: true },
+      display: {},
     });
   };
 
@@ -723,6 +721,9 @@ function FieldEditor({
             onChange={(newDisplay) =>
               setValue(`fields.${index}.display`, newDisplay)
             }
+            watch={watch}
+            setValue={setValue}
+            currentIndex={index}
           />
         </div>
       )}
@@ -902,63 +903,74 @@ function ValidationEditor({
 function DisplayConfigurator({
   display,
   onChange,
+  watch,
+  setValue,
+  currentIndex,
 }: {
   display: any;
   onChange: (display: any) => void;
+  watch: any;
+  setValue: any;
+  currentIndex: number;
 }) {
+  const clearOtherFields = (fieldName: string, checked: boolean) => {
+    if (checked) {
+      const allFields = watch('fields') || [];
+      allFields.forEach((field: any, i: number) => {
+        if (i !== currentIndex && field.display?.[fieldName]) {
+          setValue(`fields.${i}.display`, { ...field.display, [fieldName]: false });
+        }
+      });
+    }
+  };
+
+  const handleBadgeChange = (checked: boolean) => {
+    clearOtherFields('badge', checked);
+    onChange({ ...display, badge: checked });
+  };
+
+  const handlePrimaryChange = (checked: boolean) => {
+    clearOtherFields('primary', checked);
+    onChange({ ...display, primary: checked });
+  };
+
+  const handleSecondaryChange = (checked: boolean) => {
+    clearOtherFields('secondary', checked);
+    onChange({ ...display, secondary: checked });
+  };
+
   return (
-    <div className="space-y-2">
-      <Label>Display Settings</Label>
-      <div className="flex flex-wrap gap-4">
+    <div className="space-y-3">
+      <Label>Client Display</Label>
+      <div className="space-y-2">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            checked={display.showInTable ?? true}
-            onChange={(e) =>
-              onChange({ ...display, showInTable: e.target.checked })
-            }
+            checked={display.badge ?? false}
+            onChange={(e) => handleBadgeChange(e.target.checked)}
           />
-          <span className="text-sm">Show in table</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={display.sortable ?? true}
-            onChange={(e) =>
-              onChange({ ...display, sortable: e.target.checked })
-            }
-          />
-          <span className="text-sm">Sortable</span>
+          <span className="text-sm">Badge - Show value as badge in item card</span>
         </label>
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={display.primary ?? false}
-            onChange={(e) =>
-              onChange({ ...display, primary: e.target.checked })
-            }
+            onChange={(e) => handlePrimaryChange(e.target.checked)}
           />
-          <span className="text-sm">Primary field</span>
+          <span className="text-sm">Primary - First line in item list</span>
         </label>
-        <div className="flex items-center gap-2">
-          <span className="text-sm">Width:</span>
-          <Select
-            value={display.columnWidth || 'medium'}
-            onValueChange={(value) =>
-              onChange({ ...display, columnWidth: value })
-            }
-          >
-            <SelectTrigger className="w-24">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="small">Small</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="large">Large</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={display.secondary ?? false}
+            onChange={(e) => handleSecondaryChange(e.target.checked)}
+          />
+          <span className="text-sm">Secondary - Second line in item list</span>
+        </label>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Only one field can be marked per type per schema
+      </p>
     </div>
   );
 }

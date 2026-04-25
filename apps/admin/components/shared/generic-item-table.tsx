@@ -22,6 +22,13 @@ interface GenericItemTableProps {
   itemType: string;
 }
 
+const getFieldValue = (item: any, fieldKey: string): any => {
+  if (fieldKey === 'image_url') return item.image_url;
+  if (fieldKey === 'id') return item.id;
+  if (fieldKey === 'name') return item.field_values?.name;
+  return item.field_values?.[fieldKey];
+};
+
 export function GenericItemTable({ itemType }: GenericItemTableProps) {
   const { schema, fields, isLoading: schemaLoading } = useSchema(itemType);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,10 +45,16 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
     hex: schema.color,
   } : { hex: '#673AB7' };
 
-  const tableColumns = fields
-    .filter((f) => f.display?.showInTable !== false)
-    .sort((a, b) => a.order - b.order)
-    .slice(0, 5);
+  const uniqueFields = schema?.unique_fields || [];
+  const tableColumns = (uniqueFields.length > 0
+    ? fields.filter((f) => uniqueFields.includes(f.key))
+        .sort((a, b) => {
+          const aIndex = uniqueFields.indexOf(a.key);
+          const bIndex = uniqueFields.indexOf(b.key);
+          return aIndex - bIndex;
+        })
+    : fields.sort((a, b) => a.order - b.order)
+  ).slice(0, 5);
 
   const searchableFields = fields.filter(
     (f) => f.field_type === 'text' || f.field_type === 'textarea'
@@ -52,7 +65,7 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
 
     const searchLower = searchTerm.toLowerCase();
     return searchableFields.some((field) => {
-      const value = item[field.key];
+      const value = getFieldValue(item, field.key);
       return value && String(value).toLowerCase().includes(searchLower);
     });
   });
@@ -193,6 +206,7 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
               filteredItems.map((item: any, index: number) => {
                 const IconComponent =
                   (Icons as any)[schema.icon] || Icons.HelpCircle;
+                const itemName = getFieldValue(item, 'name') || `Item #${item.id}`;
                 return (
                   <TableRow
                     key={item.id}
@@ -214,7 +228,7 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
                         <div className="relative w-12 h-12 rounded-md overflow-hidden bg-gray-100">
                           <img
                             src={item.image_url}
-                            alt={item.name}
+                            alt={itemName}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -231,13 +245,8 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
                       )}
                     </TableCell>
                     {tableColumns.map((field) => (
-                      <TableCell
-                        key={field.key}
-                        className={
-                          field.display?.primary ? 'font-medium' : ''
-                        }
-                      >
-                        {formatCellValue(field.key, item[field.key])}
+                      <TableCell key={field.key}>
+                        {formatCellValue(field.key, getFieldValue(item, field.key))}
                       </TableCell>
                     ))}
                     <TableCell className="text-right space-x-2">

@@ -301,12 +301,22 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
 
   void addItem(String type, DynamicItem item) {
     final items = state.getItems(type);
-    if (!items.any((i) => i.id == item.id)) {
-      final updatedItems = [...items, item];
-      state = state.copyWith(
-        itemsByType: {...state.itemsByType, type: updatedItems},
-      );
+    final existingIndex = items.indexWhere((i) => i.id == item.id);
+    List<DynamicItem> updatedItems;
+    if (existingIndex >= 0) {
+      updatedItems = List<DynamicItem>.from(items);
+      updatedItems[existingIndex] = item;
+    } else {
+      updatedItems = [...items, item];
     }
+    state = state.copyWith(
+      itemsByType: {...state.itemsByType, type: updatedItems},
+    );
+  }
+
+  void updateItemInCache(String type, DynamicItem item) {
+    addItem(type, item);
+    _refreshFilterOptions(type);
   }
 
   void _refreshFilterOptions(String type) {

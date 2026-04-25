@@ -91,21 +91,27 @@ class ItemSchema {
     return sortedFields.where((f) => f.isVisible).toList();
   }
 
+  SchemaField? get badgeField {
+    try {
+      return sortedFields.firstWhere((f) => f.isBadge);
+    } catch (_) {
+      return null;
+    }
+  }
+
   SchemaField? get primaryField {
     try {
       return sortedFields.firstWhere((f) => f.isPrimary);
     } catch (_) {
-      return sortedFields.isNotEmpty ? sortedFields.first : null;
+      return null;
     }
   }
 
   SchemaField? get secondaryField {
-    final sorted = sortedFields;
-    if (sorted.length < 2) return null;
     try {
-      return sorted.firstWhere((f) => f.isSecondary);
+      return sortedFields.firstWhere((f) => f.isSecondary);
     } catch (_) {
-      return sorted.length > 1 ? sorted[1] : null;
+      return null;
     }
   }
 

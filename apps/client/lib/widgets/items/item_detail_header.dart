@@ -13,15 +13,12 @@ class ItemDetailHeader extends StatelessWidget {
 
   DynamicItem get _dynamicItem => item as DynamicItem;
 
-  String _getBadgeText(BuildContext context) {
-    final primaryField = _dynamicItem.schema?.primaryField;
-    if (primaryField != null) {
-      final value = _dynamicItem.fieldValues[primaryField.key];
-      if (value != null && value.toString().isNotEmpty) {
-        return value.toString();
-      }
-    }
-    return _dynamicItem.schemaName;
+  String? _getBadgeText() {
+    final badgeField = _dynamicItem.schema?.badgeField;
+    if (badgeField == null) return null;
+    final value = _dynamicItem.fieldValues[badgeField.key];
+    if (value == null || (value is String && value.isEmpty)) return null;
+    return value.toString();
   }
 
   @override
@@ -45,27 +42,28 @@ class ItemDetailHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.spacingS,
-                    vertical: AppConstants.spacingXS,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppConstants.primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                    border: Border.all(
-                      color: AppConstants.primaryColor.withValues(alpha: 0.3),
+                if (_getBadgeText() != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.spacingS,
+                      vertical: AppConstants.spacingXS,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppConstants.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      border: Border.all(
+                        color: AppConstants.primaryColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      _getBadgeText()!,
+                      style: TextStyle(
+                        color: AppConstants.primaryColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: AppConstants.fontS,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    _getBadgeText(context),
-                    style: TextStyle(
-                      color: AppConstants.primaryColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: AppConstants.fontS,
-                    ),
-                  ),
-                ),
                 if (onEditPressed != null) ...[
                   const SizedBox(width: AppConstants.spacingS),
                   IconButton(
