@@ -111,21 +111,13 @@ class _DynamicItemFormScreenState extends ConsumerState<DynamicItemFormScreen> {
     });
 
     final name = _formValues['name'] as String? ?? '';
-    final description = _formValues['description'] as String?;
-
-    final fieldValues = <String, dynamic>{};
-    for (final entry in _formValues.entries) {
-      if (entry.key != 'name' && entry.key != 'description') {
-        fieldValues[entry.key] = entry.value;
-      }
-    }
+    final fieldValuesWithoutName = Map<String, dynamic>.from(_formValues)..remove('name');
 
     final item = DynamicItem(
       id: widget.itemId,
       name: name,
       schemaName: widget.itemType,
-      description: description?.isNotEmpty == true ? description : null,
-      fieldValues: fieldValues,
+      fieldValues: fieldValuesWithoutName,
     );
 
     try {
@@ -137,8 +129,9 @@ class _DynamicItemFormScreenState extends ConsumerState<DynamicItemFormScreen> {
         if (response is ApiSuccess<DynamicItem>) {
           await _handleImageUpload(response.data.id!);
           if (mounted) {
+            ItemProviderHelper.updateItemInCache(ref, widget.itemType, response.data);
             _showSuccessMessage();
-            _navigateBack();
+            context.pop();
           }
         } else if (response is ApiError<DynamicItem>) {
           if (mounted) {
@@ -157,7 +150,7 @@ class _DynamicItemFormScreenState extends ConsumerState<DynamicItemFormScreen> {
           await _handleImageUpload(response.data.id!);
           if (mounted) {
             _showSuccessMessage();
-            _navigateBack();
+            context.pop();
           }
         } else if (response is ApiError<DynamicItem>) {
           if (mounted) {
@@ -198,7 +191,6 @@ class _DynamicItemFormScreenState extends ConsumerState<DynamicItemFormScreen> {
         if (_isEditMode && _oldImageUrl != null) {
           await CachedNetworkImage.evictFromCache(_oldImageUrl!);
         }
-        ItemProviderHelper.invalidateItem(ref, widget.itemType, itemId);
         await ItemProviderHelper.loadSpecificItems(ref, widget.itemType, [
           itemId,
         ]);
@@ -206,7 +198,6 @@ class _DynamicItemFormScreenState extends ConsumerState<DynamicItemFormScreen> {
     }
 
     if (_imageRemoved && _isEditMode) {
-      ItemProviderHelper.invalidateItem(ref, widget.itemType, itemId);
       await ItemProviderHelper.loadSpecificItems(ref, widget.itemType, [
         itemId,
       ]);
@@ -448,30 +439,6 @@ class _DynamicItemFormScreenState extends ConsumerState<DynamicItemFormScreen> {
                                       height: AppConstants.spacingL,
                                     ),
                                     if (schema != null) ...[
-                                      TextFormField(
-                                        initialValue: _item?.name ?? '',
-                                        decoration: const InputDecoration(
-                                          labelText: 'Name *',
-                                          border: OutlineInputBorder(),
-                                        ),
-                                        enabled: !_isLoading,
-                                        validator: (value) {
-                                          if (value == null ||
-                                              value.trim().isEmpty) {
-                                            return 'Name is required';
-                                          }
-                                          if (value.trim().length < 2) {
-                                            return 'Name must be at least 2 characters';
-                                          }
-                                          return null;
-                                        },
-                                        onChanged: (value) {
-                                          _formValues['name'] = value;
-                                        },
-                                      ),
-                                      const SizedBox(
-                                        height: AppConstants.spacingL,
-                                      ),
                                       DynamicForm(
                                         schema: schema,
                                         initialItem: _item,
