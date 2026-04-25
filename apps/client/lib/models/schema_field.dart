@@ -117,9 +117,10 @@ class SchemaField {
     };
   }
 
-  bool get isPrimary => display?.isPrimary ?? false;
-  bool get isSecondary => display?.isSecondary ?? false;
-  bool get isVisible => display?.isVisible ?? true;
+  bool get isBadge => display?.badge ?? false;
+  bool get isPrimary => display?.primary ?? false;
+  bool get isSecondary => display?.secondary ?? false;
+  bool get isVisible => true;
 
   @override
   bool operator ==(Object other) =>

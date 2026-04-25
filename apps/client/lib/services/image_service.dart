@@ -25,14 +25,14 @@ class ImageService {
       });
 
       final response = await _dio.post(
-        '/api/$itemType/$itemId/image',
+        '/api/items/$itemType/$itemId/image',
         data: formData,
       );
 
       if (response.statusCode == 200) {
         return response.data['image_url'] as String?;
       }
-      
+
       return null;
     } catch (e) {
       if (kDebugMode) print('Error uploading image: $e');
@@ -47,7 +47,7 @@ class ImageService {
   ) async {
     try {
       final response = await _dio.delete(
-        '/api/$itemType/$itemId/image',
+        '/api/items/$itemType/$itemId/image',
       );
 
       return response.statusCode == 200;

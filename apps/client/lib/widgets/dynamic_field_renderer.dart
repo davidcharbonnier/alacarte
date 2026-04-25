@@ -202,7 +202,6 @@ class _DynamicFieldEditRendererState extends State<DynamicFieldEditRenderer> {
       decoration: InputDecoration(
         labelText: widget.field.label,
         border: const OutlineInputBorder(),
-        hintText: widget.field.display?.placeholder,
       ),
       enabled: widget.enabled,
       onChanged: (value) => widget.onChanged(value),
@@ -215,7 +214,6 @@ class _DynamicFieldEditRendererState extends State<DynamicFieldEditRenderer> {
       decoration: InputDecoration(
         labelText: widget.field.label,
         border: const OutlineInputBorder(),
-        hintText: widget.field.display?.placeholder,
       ),
       enabled: widget.enabled,
       maxLines: 4,
@@ -229,7 +227,6 @@ class _DynamicFieldEditRendererState extends State<DynamicFieldEditRenderer> {
       decoration: InputDecoration(
         labelText: widget.field.label,
         border: const OutlineInputBorder(),
-        hintText: widget.field.display?.placeholder,
       ),
       enabled: widget.enabled,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),

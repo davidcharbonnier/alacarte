@@ -7,11 +7,9 @@ export interface ValidationRule {
 }
 
 export interface DisplayHint {
-  columnWidth?: 'small' | 'medium' | 'large';
-  showInTable?: boolean;
-  sortable?: boolean;
+  badge?: boolean;
   primary?: boolean;
-  group?: string;
+  secondary?: boolean;
 }
 
 export interface SchemaField {

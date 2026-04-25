@@ -15,6 +15,10 @@ interface GenericItemDetailProps {
   item: any;
 }
 
+const getFieldValue = (item: any, fieldKey: string): any => {
+  return item.field_values?.[fieldKey];
+};
+
 export function GenericItemDetail({ itemType, item }: GenericItemDetailProps) {
   const { schema, fields } = useSchema(itemType);
   const [imageZoomOpen, setImageZoomOpen] = useState(false);
@@ -80,7 +84,7 @@ export function GenericItemDetail({ itemType, item }: GenericItemDetailProps) {
     return value.toString();
   };
 
-  const itemName = item.name || item.title || `Item #${item.id}`;
+  const itemName = getFieldValue(item, 'name') || `Item #${item.id}`;
 
   return (
     <div className="space-y-6">
@@ -140,7 +144,7 @@ export function GenericItemDetail({ itemType, item }: GenericItemDetailProps) {
                   {field.label}
                 </label>
                 <p className="text-lg">
-                  {formatFieldValue(field, item[field.key])}
+                  {formatFieldValue(field, getFieldValue(item, field.key))}
                 </p>
               </div>
             ))}
@@ -150,7 +154,7 @@ export function GenericItemDetail({ itemType, item }: GenericItemDetailProps) {
                   {field.label}
                 </label>
                 <p className="text-lg">
-                  {formatFieldValue(field, item[field.key])}
+                  {formatFieldValue(field, getFieldValue(item, field.key))}
                 </p>
               </div>
             ))}
@@ -170,7 +174,7 @@ export function GenericItemDetail({ itemType, item }: GenericItemDetailProps) {
             </CardHeader>
             <CardContent>
               <p className="text-foreground leading-relaxed">
-                {item[descriptionField.key] || (
+                {getFieldValue(item, descriptionField.key) || (
                   <span className="text-muted-foreground italic">
                     No description available
                   </span>

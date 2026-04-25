@@ -49,7 +49,7 @@ export function GenericDeleteImpact({
     }
   };
 
-  const itemName = item.name || item.title || `Item #${item.id}`;
+  const itemName = item.field_values?.name || item.title || `Item #${item.id}`;
 
   return (
     <div>
