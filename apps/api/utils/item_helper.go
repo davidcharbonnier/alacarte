@@ -51,6 +51,20 @@ func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
 	return item, nil
 }
 
+// GetDynamicItem fetches a dynamic item by schema name and ID
+// Returns the item and any error
+func GetDynamicItem(schemaName string, itemID uint) (ItemWithImage, error) {
+	var item models.Item
+
+	if err := DB.Joins("JOIN item_type_schemas ON item_type_schemas.id = items.schema_id").
+		Where("items.id = ? AND item_type_schemas.name = ?", itemID, schemaName).
+		First(&item).Error; err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
+
 // SaveItem saves an item to the database
 func SaveItem(item ItemWithImage) error {
 	return DB.Save(item).Error

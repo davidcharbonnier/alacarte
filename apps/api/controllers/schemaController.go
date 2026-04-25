@@ -66,6 +66,17 @@ func parseFieldDisplayValue(display *string) interface{} {
 	return v
 }
 
+func parseUniqueFields(uniqueFields string) []string {
+	if uniqueFields == "" || uniqueFields == "null" {
+		return []string{}
+	}
+	var result []string
+	if err := json.Unmarshal([]byte(uniqueFields), &result); err != nil {
+		return []string{}
+	}
+	return result
+}
+
 func SchemaList(c *gin.Context) {
 	includeCounts := c.Query("include_counts") == "true"
 	includeInactive := c.Query("include_inactive") == "true"
@@ -102,14 +113,15 @@ func SchemaList(c *gin.Context) {
 			}
 
 			schemaData := map[string]interface{}{
-				"id":           schema.ID,
-				"name":         schema.Name,
-				"display_name": schema.DisplayName,
-				"plural_name":  schema.PluralName,
-				"icon":         schema.Icon,
-				"color":        schema.Color,
-				"is_active":    schema.IsActive,
-				"fields":       fieldsData,
+				"id":            schema.ID,
+				"name":          schema.Name,
+				"display_name":  schema.DisplayName,
+				"plural_name":   schema.PluralName,
+				"icon":          schema.Icon,
+				"color":         schema.Color,
+				"is_active":     schema.IsActive,
+				"unique_fields": parseUniqueFields(schema.UniqueFields),
+				"fields":        fieldsData,
 			}
 
 			if includeCounts {
@@ -143,14 +155,15 @@ func SchemaList(c *gin.Context) {
 			}
 
 			schemaData := map[string]interface{}{
-				"id":           cached.Schema.ID,
-				"name":         cached.Schema.Name,
-				"display_name": cached.Schema.DisplayName,
-				"plural_name":  cached.Schema.PluralName,
-				"icon":         cached.Schema.Icon,
-				"color":        cached.Schema.Color,
-				"is_active":    cached.Schema.IsActive,
-				"fields":       fields,
+				"id":            cached.Schema.ID,
+				"name":          cached.Schema.Name,
+				"display_name":  cached.Schema.DisplayName,
+				"plural_name":   cached.Schema.PluralName,
+				"icon":          cached.Schema.Icon,
+				"color":         cached.Schema.Color,
+				"is_active":     cached.Schema.IsActive,
+				"unique_fields": parseUniqueFields(cached.Schema.UniqueFields),
+				"fields":        fields,
 			}
 
 			if includeCounts {

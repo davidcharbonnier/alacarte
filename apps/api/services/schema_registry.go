@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/davidcharbonnier/alacarte-api/models"
@@ -44,7 +45,7 @@ func (r *SchemaRegistry) LoadSchemas() error {
 	var schemas []models.ItemTypeSchema
 	if err := utils.DB.Preload("Fields", func(db *gorm.DB) *gorm.DB {
 		return db.Order("`order` ASC")
-	}).Where("is_active = ?", true).Find(&schemas).Error; err != nil {
+	}).Where("is_active = ?", true).Order("name ASC").Find(&schemas).Error; err != nil {
 		return fmt.Errorf("failed to load schemas: %w", err)
 	}
 
@@ -122,6 +123,9 @@ func (r *SchemaRegistry) GetAllSchemas() []*CachedSchema {
 	for _, schema := range r.schemas {
 		result = append(result, schema)
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Schema.Name < result[j].Schema.Name
+	})
 	return result
 }
 
