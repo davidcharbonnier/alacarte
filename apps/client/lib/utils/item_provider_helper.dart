@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/rateable_item.dart';
 import '../models/api_response.dart';
+import '../models/dynamic_item.dart';
 import '../providers/dynamic_item_provider.dart';
 
 class ItemProviderHelper {
@@ -81,17 +83,20 @@ class ItemProviderHelper {
     String itemType,
     int itemId,
   ) async {
-    final items = getItems(ref, itemType);
-    final cachedItem = items.where((item) => item.id == itemId).firstOrNull;
-
-    if (cachedItem != null) return cachedItem;
-
     final response = await ref
         .read(dynamicItemProvider.notifier)
         .getItemById(itemType, itemId);
     return response.when(
-      success: (item, _) => item,
-      error: (_, __, ___, ____) => null,
+      success: (item, _) {
+        ref.read(dynamicItemProvider.notifier).addItem(itemType, item);
+        return item;
+      },
+      error: (message, statusCode, errorCode, details) {
+        if (kDebugMode) {
+          print('getItemById error: $message, statusCode: $statusCode');
+        }
+        return null;
+      },
       loading: () => null,
     );
   }
@@ -102,24 +107,23 @@ class ItemProviderHelper {
     List<int> itemIds,
   ) async {
     for (final itemId in itemIds) {
-      final items = getItems(ref, itemType);
-      if (items.any((item) => item.id == itemId)) {
-        continue;
-      }
+      invalidateItem(ref, itemType, itemId);
 
       final response = await ref
           .read(dynamicItemProvider.notifier)
           .getItemById(itemType, itemId);
       response.when(
         success: (item, _) {
-          if (item != null) {
-            ref.read(dynamicItemProvider.notifier).addItem(itemType, item);
-          }
+          ref.read(dynamicItemProvider.notifier).addItem(itemType, item);
         },
-        error: (_, __, ___, ____) {},
+        error: (message, statusCode, errorCode, details) {},
         loading: () {},
       );
     }
+  }
+
+  static void updateItemInCache(WidgetRef ref, String itemType, DynamicItem item) {
+    ref.read(dynamicItemProvider.notifier).updateItemInCache(itemType, item);
   }
 
   static void invalidateItem(WidgetRef ref, String itemType, int itemId) {

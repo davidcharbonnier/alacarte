@@ -40,6 +40,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
   RateableItem? _item;
   List<Rating> _itemRatings = []; // User's own ratings + shared ratings
   bool _isLoading = true;
+  bool _initialLoadDone = false;
 
   @override
   void initState() {
@@ -47,6 +48,14 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadItemData();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialLoadDone) {
+      _loadItemData();
+    }
   }
 
   Future<void> _loadItemData() async {
@@ -87,10 +96,11 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               )
               .toList();
         } else if (viewerRatingsResponse is ApiError<List<Rating>>) {
-          if (kDebugMode)
+          if (kDebugMode) {
             print(
               'Error loading viewer ratings: ${viewerRatingsResponse.message}',
             );
+          }
           _itemRatings = [];
         }
       } else {
@@ -100,6 +110,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _initialLoadDone = true;
         });
       }
     }

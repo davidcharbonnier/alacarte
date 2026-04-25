@@ -9,7 +9,6 @@ class DynamicItem implements RateableItem {
   @override
   final String name;
   final String schemaName;
-  final String? description;
   final String? imageUrl;
   final int? userId;
   final Map<String, dynamic> fieldValues;
@@ -21,7 +20,6 @@ class DynamicItem implements RateableItem {
     this.id,
     required this.name,
     required this.schemaName,
-    this.description,
     this.imageUrl,
     this.userId,
     this.fieldValues = const {},
@@ -30,17 +28,25 @@ class DynamicItem implements RateableItem {
     this.updatedAt,
   });
 
+  String? get description => fieldValues['description'] as String?;
+
   @override
   String get itemType => schemaName;
 
   @override
   String get displayTitle => name;
 
+  String? get badgeValue {
+    final badgeField = schema?.badgeField;
+    if (badgeField == null) return null;
+    final value = fieldValues[badgeField.key];
+    if (value == null || (value is String && value.isEmpty)) return null;
+    return value.toString();
+  }
+
   @override
   String get displaySubtitle {
-    if (schema == null) return schemaName;
-
-    final secondary = schema!.secondaryField;
+    final secondary = schema?.secondaryField;
     if (secondary != null) {
       final value = fieldValues[secondary.key];
       if (value != null && value.toString().isNotEmpty) {
@@ -48,7 +54,7 @@ class DynamicItem implements RateableItem {
       }
     }
 
-    final primary = schema!.primaryField;
+    final primary = schema?.primaryField;
     if (primary != null && primary.key != 'name') {
       final value = fieldValues[primary.key];
       if (value != null && value.toString().isNotEmpty) {
@@ -56,7 +62,7 @@ class DynamicItem implements RateableItem {
       }
     }
 
-    return schema!.displayName;
+    return '';
   }
 
   @override
@@ -103,11 +109,16 @@ class DynamicItem implements RateableItem {
     }
 
     final fields = <DetailField>[];
+    final badgeField = schema!.badgeField;
     for (final field in schema!.visibleFields) {
       final value = fieldValues[field.key];
       if (value == null || (value is String && value.isEmpty)) continue;
 
-      if (field.key == 'description' || field.display?.isVisible == false) {
+      if (field.key == 'description') {
+        continue;
+      }
+
+      if (badgeField != null && field.key == badgeField.key) {
         continue;
       }
 
@@ -154,7 +165,6 @@ class DynamicItem implements RateableItem {
       if (id != null) 'id': id,
       'name': name,
       'schema_name': schemaName,
-      'description': description,
       'image_url': imageUrl,
       'field_values': fieldValues,
     };
@@ -164,21 +174,23 @@ class DynamicItem implements RateableItem {
     Map<String, dynamic> json, {
     ItemSchema? schema,
   }) {
-    final fieldValuesJson = json['field_values'] as Map<String, dynamic>?;
+    final fieldValuesJson = json['field_values'] as Map<String, dynamic>? ?? {};
+
     final schemaName =
         json['schema_name'] as String? ??
         json['schema_type'] as String? ??
         json['type'] as String? ??
         '';
 
+    final name = json['name'] as String? ?? '';
+
     return DynamicItem(
       id: json['id'] as int?,
-      name: (json['name'] as String?) ?? '',
+      name: name,
       schemaName: schemaName,
-      description: json['description'] as String?,
       imageUrl: json['image_url'] as String?,
       userId: json['user_id'] as int?,
-      fieldValues: fieldValuesJson ?? {},
+      fieldValues: fieldValuesJson,
       schema: schema,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
@@ -193,12 +205,11 @@ class DynamicItem implements RateableItem {
   DynamicItem copyWith(Map<String, dynamic> updates) {
     return DynamicItem(
       id: updates['id'] ?? id,
-      name: updates['name'] ?? name,
-      schemaName: updates['schema_name'] ?? schemaName,
-      description: updates['description'] ?? description,
-      imageUrl: updates['image_url'] ?? imageUrl,
-      userId: updates['user_id'] ?? userId,
-      fieldValues: updates['field_values'] ?? fieldValues,
+      name: updates['name'] as String? ?? name,
+      schemaName: updates['schema_name'] as String? ?? schemaName,
+      imageUrl: updates['image_url'] as String? ?? imageUrl,
+      userId: updates['user_id'] as int? ?? userId,
+      fieldValues: updates['field_values'] as Map<String, dynamic>? ?? fieldValues,
       schema: schema,
     );
   }
@@ -208,7 +219,6 @@ class DynamicItem implements RateableItem {
       id: id,
       name: name,
       schemaName: schemaName,
-      description: description,
       imageUrl: imageUrl,
       userId: userId,
       fieldValues: fieldValues,

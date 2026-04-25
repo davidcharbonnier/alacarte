@@ -1001,6 +1001,32 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ),
+                        if ((item as DynamicItem).badgeValue != null) ...[
+                          const SizedBox(width: AppConstants.spacingS),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppConstants.spacingS,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusS,
+                              ),
+                            ),
+                            child: Text(
+                              (item as DynamicItem).badgeValue!,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                  ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(width: AppConstants.spacingS),
                         // Inline rating badges
                         if (showCommunityData)
@@ -1016,15 +1042,17 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                           ),
                       ],
                     ),
-                    const SizedBox(height: AppConstants.spacingXS),
-                    Text(
-                      item.displaySubtitle,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.7),
+                    if (item.displaySubtitle.isNotEmpty) ...[
+                      const SizedBox(height: AppConstants.spacingXS),
+                      Text(
+                        item.displaySubtitle,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.7),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
