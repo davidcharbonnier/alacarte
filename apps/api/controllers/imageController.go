@@ -16,6 +16,16 @@ func UploadItemImage(c *gin.Context) {
 	itemType := c.Param("itemType")
 	itemID := c.Param("id")
 
+	item, err := utils.GetItemByType(itemType, itemID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
+		return
+	}
+
+	processAndSaveImage(c, item, itemType)
+}
+
+func processAndSaveImage(c *gin.Context, item utils.ItemWithImage, itemType string) {
 	// Validate item type
 	if !utils.ValidateItemType(itemType) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item type"})
@@ -49,15 +59,6 @@ func UploadItemImage(c *gin.Context) {
 	if err != nil {
 		utils.AppLogger.LogError("Failed to upload to storage", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
-		return
-	}
-
-	// Get item (generic!)
-	item, err := utils.GetItemByType(itemType, itemID)
-	if err != nil {
-		// Cleanup uploaded image
-		utils.DeleteFromStorage(filename)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
 		return
 	}
 
