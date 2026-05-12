@@ -140,7 +140,7 @@
 - [x] 11.6 Implement chili-sauce data migration
 - [x] 11.7 Create schema definitions for existing item types
 - [x] 11.8 Create initial schema versions
-- [ ] 11.9 Write migration verification tests
+- [x] 11.9 Write migration verification tests
 - [x] 11.10 Create rollback script
 
 ## 12. Known Issues
