@@ -94,7 +94,7 @@ The system SHALL allow administrators to reorder fields within a schema to contr
 
 - **GIVEN** an administrator is editing a schema
 - **AND** the schema has fields in order: name, brewery, style
-- **WHEN** the administrator drags "style" to position 2
+- **WHEN** the administrator uses arrow buttons to move "style" to position 2
 - **THEN** the field order SHALL be updated to: name, style, brewery
 - **AND** the new order SHALL be reflected in forms and detail views
 
@@ -187,7 +187,7 @@ The system SHALL allow administrators to deactivate schemas without deleting the
 
 ### Requirement: Set Primary and Secondary Display Fields
 
-The system SHALL allow administrators to designate which fields are used for primary and secondary display in listings.
+The system SHALL allow administrators to designate which fields are used for primary, secondary, and badge display in listings.
 
 #### Scenario: Administrator sets primary display field
 
@@ -203,6 +203,52 @@ The system SHALL allow administrators to designate which fields are used for pri
 - **THEN** the brewery field SHALL be used as the subtitle in item cards
 - **AND** only one field SHALL be marked as secondary
 
+#### Scenario: Administrator sets badge display field
+
+- **GIVEN** an administrator is editing a schema
+- **WHEN** the administrator marks the "type" field as badge
+- **THEN** the type field value SHALL be displayed as a pill/badge on item cards
+- **AND** the badge field SHALL be excluded from the item detail fields section
+
+### Requirement: Deactivate Schema
+
+The system SHALL allow administrators to deactivate schemas without deleting them.
+
+#### Scenario: Administrator deactivates a schema
+
+- **GIVEN** an administrator is authenticated
+- **AND** a schema "seasonal-special" exists
+- **WHEN** the administrator deactivates the schema
+- **THEN** the schema SHALL be marked as inactive
+- **AND** the schema SHALL NOT appear in client discovery
+- **AND** existing items SHALL remain accessible
+- **AND** new items SHALL NOT be creatable for inactive schemas
+
+### Requirement: Define Composite Uniqueness Constraint
+
+The system SHALL allow administrators to designate a set of fields whose combined values must be unique across all items in the schema.
+
+#### Scenario: Administrator sets composite unique constraint
+
+- **GIVEN** an administrator is editing a schema
+- **AND** the schema has fields: name, producer, type
+- **WHEN** the administrator marks "producer" and "type" as unique fields
+- **THEN** the system SHALL enforce that no two items have the same (producer, type) combination
+- **AND** items with matching combinations SHALL be rejected with a "duplicate item" error
+
+#### Scenario: Unique constraint includes name field
+
+- **GIVEN** schema "cheese" has `unique_fields: ["name"]`
+- **WHEN** a user creates an item with name "Brie"
+- **AND** an item with name "Brie" already exists
+- **THEN** the system SHALL reject the creation as duplicate
+
+#### Scenario: Unique constraint is optional
+
+- **GIVEN** schema "beer" has no unique fields configured
+- **WHEN** a user creates multiple items with identical field values
+- **THEN** the system SHALL accept all items
+
 ## Data Model
 
 ### Schema Entity
@@ -216,6 +262,7 @@ ItemTypeSchema {
   icon: string (Lucide icon name, max 50)
   color: string (hex color, max 7)
   is_active: boolean (default true)
+  unique_fields: JSON array of field keys (optional, for composite uniqueness)
   created_at: timestamp
   updated_at: timestamp
   deleted_at: timestamp (soft delete)
@@ -287,12 +334,16 @@ Unique constraint: (schema_id, version)
 
 ```json
 {
-  "component": "text-field",
-  "width": "full",
-  "hideInList": false,
-  "hideInDetail": false,
-  "hideInForm": false,
+  "badge": false,
   "primary": false,
   "secondary": false
 }
 ```
+
+Display hint semantics:
+
+| Hint | Description |
+|------|-------------|
+| `badge` | Field value rendered as pill/badge on item cards; excluded from detail fields section |
+| `primary` | Field value used as main title (if not "name"); drives `displayTitle` and `displaySubtitle` fallback |
+| `secondary` | Field value used as subtitle on item cards; checked first in `displaySubtitle` fallback chain |

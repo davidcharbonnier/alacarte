@@ -207,6 +207,32 @@ The system SHALL allow administrators to delete items with impact assessment.
 - **THEN** the system SHALL delete the item regardless of ownership
 - **AND** all associated data SHALL be cascade deleted
 
+### Requirement: Enforce Composite Uniqueness at Write Time
+
+The system SHALL enforce composite uniqueness constraints defined in the schema's `unique_fields`.
+
+#### Scenario: Duplicate composite key rejected
+
+- **GIVEN** schema "gin" has `unique_fields: ["name", "producer"]`
+- **AND** an item exists with name="Tanqueray", producer="Diageo"
+- **WHEN** a user creates another item with name="Tanqueray", producer="Diageo"
+- **THEN** the system SHALL reject with a "duplicate item" error
+
+#### Scenario: Partial match of unique fields is allowed
+
+- **GIVEN** schema "gin" has `unique_fields: ["name", "producer"]`
+- **AND** an item exists with name="Tanqueray", producer="Diageo"
+- **WHEN** a user creates an item with name="Tanqueray", producer="William Grant"
+- **THEN** the system SHALL accept the item
+
+#### Scenario: Name field uniquely constrained
+
+- **GIVEN** schema "cheese" has `unique_fields: ["name"]`
+- **AND** an item exists with name="Brie"
+- **WHEN** a user creates another item with name="Brie"
+- **THEN** the system SHALL reject the creation as duplicate
+- **AND** the uniqueness check SHALL query the `items.name` column directly (not EAV)
+
 ## Data Model
 
 ### Item Entity
@@ -215,10 +241,10 @@ The system SHALL allow administrators to delete items with impact assessment.
 Item {
   id: integer (auto-generated)
   schema_id: integer (foreign key to ItemTypeSchema)
-  name: string (max 255, indexed)
+  name: string (max 255, indexed, first-class column — not in field_values JSON)
   description: text (optional)
   image_url: string (optional, nullable)
-  field_values: JSON (denormalized for fast reads)
+  field_values: JSON (denormalized for fast reads — excludes name)
   user_id: integer (foreign key to User)
   schema_version_id: integer (foreign key to SchemaVersion)
   created_at: timestamp

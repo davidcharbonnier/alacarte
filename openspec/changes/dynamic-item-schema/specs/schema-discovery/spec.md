@@ -47,8 +47,9 @@ The system SHALL provide an endpoint to retrieve complete schema details includi
     "display_name": "Beer",
     "plural_name": "Beers",
     "icon": "Beer",
-    "color": "#FFA000",
-    "fields": [
+      "color": "#FFA000",
+      "unique_fields": ["producer", "type"],
+      "fields": [
       {
         "key": "name",
         "label": "Name",
@@ -56,7 +57,7 @@ The system SHALL provide an endpoint to retrieve complete schema details includi
         "required": true,
         "order": 1,
         "validation": {"maxLength": 100},
-        "display": {"width": "full", "primary": true}
+        "display": {"badge": false, "primary": true, "secondary": false}
       },
       ...
     ]
@@ -97,10 +98,7 @@ The system SHALL include display hints in schema responses for UI rendering.
   ```json
   {
     "display": {
-      "component": "text-field",
-      "width": "half",
-      "hideInList": false,
-      "hideInDetail": false,
+      "badge": false,
       "primary": false,
       "secondary": false
     }
@@ -239,6 +237,7 @@ Response: 200 OK
   "color": "#673AB7",
   "version": 2,
   "version_hash": "a1b2c3d4",
+  "unique_fields": ["name"],
   "fields": [...]
 }
 ```

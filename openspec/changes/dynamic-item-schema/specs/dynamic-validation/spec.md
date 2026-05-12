@@ -257,6 +257,24 @@ The system SHALL validate items against the schema version active at creation ti
 - **THEN** the update SHALL be validated against version 2
 - **AND** new required fields SHALL be enforced
 
+### Requirement: Validate Unique Fields on Seed and Bulk Operations
+
+The system SHALL ensure seed and bulk data contain all configured unique fields per schema.
+
+#### Scenario: Seed data missing unique field
+
+- **GIVEN** schema "wine" has `unique_fields: ["name", "producer"]`
+- **WHEN** an admin submits seed data with items missing the "name" field
+- **THEN** the system SHALL report validation errors for items missing unique fields
+
+#### Scenario: Seed data deduplicates using unique fields
+
+- **GIVEN** schema "gin" has `unique_fields: ["name", "producer"]`
+- **AND** an item already exists with name="Tanqueray", producer="Diageo"
+- **WHEN** an admin submits seed data containing a duplicate
+- **THEN** the duplicate item SHALL be skipped
+- **AND** the seed result SHALL report skipped count
+
 ## Error Response Format
 
 ### Validation Error Response

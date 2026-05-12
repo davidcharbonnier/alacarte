@@ -99,52 +99,103 @@
 - [x] 7.11 Remove individual form strategies
 - [x] 7.12 Update `ItemTypeHelper` to use discovered schemas
 
-## 8. Data Migration
+## 8. Display Hint Refactor
 
-- [x] 8.1 Create migration script in `apps/api/scripts/migrate_to_dynamic.go`
-- [x] 8.2 Implement cheese data migration
-- [x] 8.3 Implement gin data migration
-- [x] 8.4 Implement wine data migration
-- [x] 8.5 Implement coffee data migration
-- [x] 8.6 Implement chili-sauce data migration
-- [x] 8.7 Create schema definitions for existing item types
-- [x] 8.8 Create initial schema versions
-- [ ] 8.9 Write migration verification tests
-- [x] 8.10 Create rollback script
+- [x] 8.1 Refactor DisplayHint model from `{component, width, hideInList, hideInDetail, hideInForm, primary, secondary}` to `{badge, primary, secondary}`
+- [x] 8.2 Add `badgeField`, `primaryField`, `secondaryField` getters to `ItemSchema`
+- [x] 8.3 Implement `badgeValue` and `displaySubtitle` with primary/secondary fallback on `DynamicItem`
+- [x] 8.4 Update `ItemDetailHeader` to use badge field for pill display instead of per-type switch
+- [x] 8.5 Create `DynamicFieldRenderer` widget for field-type-based rendering
+- [x] 8.6 Create `DynamicFieldEditRenderer` widget for edit-mode field rendering
+- [x] 8.7 Create `SchemaIconUtils` utility for icon name → IconData and color parsing
+- [x] 8.8 Update `DynamicItem.detailFields` to skip badge field in detail rows
 
-## 9. Testing
+## 9. Unique Fields Support
 
-- [ ] 9.1 Write unit tests for `SchemaRegistry`
-- [ ] 9.2 Write unit tests for `ValidationEngine`
-- [ ] 9.3 Write unit tests for `EAVQueryBuilder`
-- [ ] 9.4 Write integration tests for schema CRUD endpoints
-- [ ] 9.5 Write integration tests for dynamic item CRUD endpoints
-- [ ] 9.6 Write integration tests for filtering and search
-- [ ] 9.7 Write widget tests for admin schema builder
-- [ ] 9.8 Write widget tests for Flutter dynamic form
-- [ ] 9.9 Write E2E tests for schema creation workflow
-- [ ] 9.10 Write E2E tests for item creation with dynamic schema
+- [x] 9.1 Add `UniqueFields` JSON column to `ItemTypeSchema` model
+- [x] 9.2 Implement `checkUniqueness()` in `EAVQueryBuilder` with composite uniqueness check
+- [x] 9.3 Special-case `name` field in uniqueness query (queries `items.name` column directly)
+- [x] 9.4 Parse `unique_fields` on schema load/refresh in `SchemaRegistry`
+- [x] 9.5 Return `unique_fields` in schema API responses
+- [x] 9.6 Add `unique_fields` to admin `ItemTypeSchema` type and form models
+- [x] 9.7 Implement unique fields selector in SchemaSettings admin form
+- [x] 9.8 Use `unique_fields` as table column selector in `GenericItemTable`
+- [x] 9.9 Use `unique_fields` for seed deduplication in `DynamicItemSeed`
+- [x] 9.10 Validate `unique_fields` presence in seed data batches
 
-## 10. Documentation
+## 10. Name Field as First-Class Column
 
-- [ ] 10.1 Update API documentation for new endpoints
-- [ ] 10.2 Create schema management guide for administrators
-- [ ] 10.3 Update developer documentation for adding new item types
-- [ ] 10.4 Document migration process for existing deployments
-- [ ] 10.5 Update README with dynamic schema information
+- [x] 10.1 Add `Name` as top-level column on `items` table (varchar 255, indexed)
+- [x] 10.2 Populate `name` from request body in `DynamicItemCreate` and `DynamicItemUpdate`
+- [x] 10.3 Update `DynamicItem.fromJson` to parse `name` from API response
+- [x] 10.4 Add `name` to `RateableItem` interface and `DynamicItem` model
 
-## 11. Deployment
+## 11. Data Migration
 
-- [ ] 11.1 Deploy database migrations to staging
-- [ ] 11.2 Verify migration on staging with test data
-- [ ] 11.3 Deploy API changes to staging
-- [ ] 11.4 Deploy admin changes to staging
-- [ ] 11.5 Deploy client changes to staging
-- [ ] 11.6 Run full regression tests on staging
-- [ ] 11.7 Deploy database migrations to production
-- [ ] 11.8 Deploy API to production
-- [ ] 11.9 Deploy admin to production
-- [ ] 11.10 Deploy client to production
-- [ ] 11.11 Monitor error rates and performance
-- [ ] 11.12 Remove old item type tables after verification
-- [ ] 11.13 Remove old model/controller code
+- [x] 11.1 Create migration script in `apps/api/scripts/migrate_to_dynamic.go`
+- [x] 11.2 Implement cheese data migration
+- [x] 11.3 Implement gin data migration
+- [x] 11.4 Implement wine data migration
+- [x] 11.5 Implement coffee data migration
+- [x] 11.6 Implement chili-sauce data migration
+- [x] 11.7 Create schema definitions for existing item types
+- [x] 11.8 Create initial schema versions
+- [ ] 11.9 Write migration verification tests
+- [x] 11.10 Create rollback script
+
+## 12. Known Issues
+
+- [ ] 12.1 Fix React Query stale-data bug: schema editor shows stale data after mutation (see TODO in `schemas/[type]/page.tsx:112`)
+- [ ] 12.2 Integrate or remove unused `DynamicFieldRenderer` widget (280 lines, never imported)
+- [ ] 12.3 Integrate or remove unused `SchemaIconUtils` utility (100 lines, never imported)
+- [ ] 12.4 Wire `filter[has_image]` into admin `GenericItemTable` and Flutter client (API supports it, UI doesn't)
+- [ ] 12.5 Wire pagination into admin `GenericItemTable` (API client supports it, UI loads all items)
+- [ ] 12.6 Wire server-side search into admin table (currently uses client-side filtering only)
+- [ ] 12.7 Add sort controls to admin item table and API client
+- [ ] 12.8 Add `unique_fields` to admin `SchemaDetailResponse` TypeScript type
+- [ ] 12.9 Add client-side kebab-case validation to schema create form (currently only server-enforced)
+
+## 13. Testing
+
+- [ ] 13.1 Write unit tests for `SchemaRegistry`
+- [ ] 13.2 Write unit tests for `ValidationEngine`
+- [ ] 13.3 Write unit tests for `EAVQueryBuilder`
+- [ ] 13.4 Write integration tests for schema CRUD endpoints
+- [ ] 13.5 Write integration tests for dynamic item CRUD endpoints
+- [ ] 13.6 Write integration tests for filtering and search
+- [ ] 13.7 Write widget tests for admin schema builder
+- [ ] 13.8 Write widget tests for Flutter dynamic form
+- [ ] 13.9 Write E2E tests for schema creation workflow
+- [ ] 13.10 Write E2E tests for item creation with dynamic schema
+
+## 14. Documentation
+
+- [ ] 14.1 Update API documentation for new endpoints
+- [ ] 14.2 Create schema management guide for administrators
+- [ ] 14.3 Update developer documentation for adding new item types
+- [ ] 14.4 Document migration process for existing deployments
+- [ ] 14.5 Update README with dynamic schema information
+
+## 15. Deployment
+
+- [ ] 15.1 Deploy database migrations to staging
+- [ ] 15.2 Verify migration on staging with test data
+- [ ] 15.3 Deploy API changes to staging
+- [ ] 15.4 Deploy admin changes to staging
+- [ ] 15.5 Deploy client changes to staging
+- [ ] 15.6 Run full regression tests on staging
+- [ ] 15.7 Deploy database migrations to production
+- [ ] 15.8 Deploy API to production
+- [ ] 15.9 Deploy admin to production
+- [ ] 15.10 Deploy client to production
+- [ ] 15.11 Monitor error rates and performance
+- [ ] 15.12 Remove old item type tables after verification
+- [ ] 15.13 Remove old API route registrations from `main.go` (old `/api/cheese/*`, `/api/gin/*`, etc.)
+- [ ] 15.14 Remove old API models (`cheeseModel.go`, `ginModel.go`, `wineModel.go`, `coffeeModel.go`, `chiliSauceModel.go`, `coffeeEnums.go`, `wineColor.go`)
+- [ ] 15.15 Remove old API controllers (`cheeseController.go`, `ginController.go`, `wineController.go`, `coffeeController.go`, `chiliSauceController.go`)
+- [ ] 15.16 Remove old model AutoMigrate entries from `database.go`
+- [ ] 15.17 Remove old item type switch-case from `item_helper.go`
+- [ ] 15.18 Remove old seeding from `seed.go`
+- [ ] 15.19 Remove old table drops from `reset_database.go`
+- [ ] 15.20 Remove legacy JSON key mapping from `dynamicItemController.go` seed/validate
+- [ ] 15.21 Remove old item type hardcoded config from admin `item-types.ts`

@@ -48,6 +48,8 @@ The À la carte platform currently supports 5 hardcoded consumable types (cheese
 3. **Transactional integrity**: Both JSON and EAV writes happen in same database transaction
 4. **Schema versioning**: EAV records reference field IDs that are stable across versions
 
+**Implementation note:** The `name` field is stored as a first-class column on the `items` table (`varchar(255), indexed`), not in the `field_values` JSON or EAV table. This enables direct SQL WHERE clauses on name without JSON extraction or EAV subqueries. The `checkUniqueness()` method has a special-case branch for `name` that queries `items.name` directly rather than doing an EAV subquery.
+
 ### Decision 2: Schema Registry with In-Memory Cache
 
 **Choice:** API maintains an in-memory `SchemaRegistry` that caches schemas from the database, with automatic refresh on schema changes.
@@ -115,6 +117,12 @@ The À la carte platform currently supports 5 hardcoded consumable types (cheese
 2. Field display hints control layout within components
 3. Reduces client complexity significantly
 4. Predefined widgets are already well-tested
+
+**Implementation note:** The display hints model was simplified during implementation:
+- Spec: `{component, width, hideInList, hideInDetail, hideInForm, primary, secondary}`
+- Implemented: `{badge, primary, secondary}`
+
+The badge field renders as a pill on item cards and is excluded from detail rows. Primary and secondary drive the `displaySubtitle` fallback chain. Hide/show visibility controls and component/width hints were not implemented in the initial version.
 
 ### Decision 6: Validation Engine Architecture
 
@@ -306,11 +314,41 @@ CREATE TABLE item_field_values (
 │                      Widgets                                 │
 ├─────────────────────────────────────────────────────────────┤
 │  DynamicForm          - Schema-driven form builder          │
-│  DynamicFieldRenderer - Per-type field widgets              │
-│  RatingCard           - Item card (existing, adapted)       │
+│  DynamicFieldRenderer - Per-type field rendering (unused)   │
+│  RatingCard           - Item card (built in item_type_screen)│
 │  ItemDetailScreen     - Detail view (existing, adapted)     │
+├─────────────────────────────────────────────────────────────┤
+│                      Utilities                               │
+├─────────────────────────────────────────────────────────────┤
+│  SchemaIconUtils      - Icon/color parsing (unused)         │
+├─────────────────────────────────────────────────────────────┤
+│                      Models                                  │
+├─────────────────────────────────────────────────────────────┤
+│  ItemSchema           - Schema definition                   │
+│  SchemaField          - Field configuration                 │
+│  DynamicItem          - Item with field values              │
+│  ValidationRule       - Validation rules                    │
+│  DisplayHint          - Display configuration (badge/primary/secondary) │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### Decision 7: Composite Uniqueness at Schema Level
+
+**Choice:** Schemas may define a `unique_fields` array of field keys whose combined values must be unique. The backend enforces this via `checkUniqueness()` in `EAVQueryBuilder`.
+
+**Alternatives Considered:**
+| Approach | Pros | Cons |
+|----------|------|------|
+| **No uniqueness enforcement** | Simple | Allows duplicates |
+| **Per-field uniqueness only** | Predictable | Can't express (name+producer) uniqueness |
+| **Composite uniqueness at schema level** | Flexible, admin-configurable | Requires EAV subqueries for non-name fields |
+
+**Rationale:** Composite uniqueness because:
+1. Some item types require uniqueness across field combinations (e.g., gin: name+producer)
+2. Stored as JSON array on the schema, fully admin-configurable
+3. The admin item table uses `unique_fields` as display columns when configured (shows what makes items distinct)
+4. Seed operation uses `unique_fields` for deduplication checks
+5. The `name` field gets a fast-path check against `items.name` column; other fields use EAV subqueries
 
 ## Risks / Trade-offs
 
@@ -367,6 +405,11 @@ CREATE TABLE item_field_values (
 - Application code writes JSON first, then EAV rows
 - On failure, transaction rolls back automatically
 - Periodic consistency check can verify JSON matches EAV data
+
+### Risk 7: Orphaned Client Widgets
+**Risk:** `DynamicFieldRenderer` (280 lines) and `SchemaIconUtils` (100 lines) exist in the Flutter client but are never imported by any other file. They duplicate rendering logic done inline in `ItemDetailHeader` and icon parsing in `ItemTypeHelper`.
+
+**Mitigation:** Either integrate them into the active rendering pipeline or remove them to avoid maintenance burden and confusion about which pattern to follow.
 
 ## Migration Plan
 
