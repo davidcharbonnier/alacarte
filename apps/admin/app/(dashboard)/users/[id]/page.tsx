@@ -49,7 +49,12 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const promoteMutation = useMutation({
     mutationFn: () => userApi.promote(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.setQueryData(['users', id], (oldData: any) => ({
+        ...oldData,
+        is_admin: true,
+      }));
+      queryClient.invalidateQueries({ queryKey: ['users'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['users', 'list'], exact: true });
       setShowPromoteDialog(false);
     },
   });
@@ -57,7 +62,12 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
   const demoteMutation = useMutation({
     mutationFn: () => userApi.demote(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.setQueryData(['users', id], (oldData: any) => ({
+        ...oldData,
+        is_admin: false,
+      }));
+      queryClient.invalidateQueries({ queryKey: ['users'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['users', 'list'], exact: true });
       setShowDemoteDialog(false);
     },
   });

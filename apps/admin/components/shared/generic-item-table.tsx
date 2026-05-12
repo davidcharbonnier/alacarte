@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Eye, Trash2, CheckCircle, XCircle, Package } from 'lucide-react';
+import { Eye, Trash2, CheckCircle, XCircle, Package, Image, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
 interface GenericItemTableProps {
@@ -25,20 +25,46 @@ interface GenericItemTableProps {
 const getFieldValue = (item: any, fieldKey: string): any => {
   if (fieldKey === 'image_url') return item.image_url;
   if (fieldKey === 'id') return item.id;
-  if (fieldKey === 'name') return item.field_values?.name;
+  if (fieldKey === 'name') return item.name ?? item.field_values?.name;
   return item.field_values?.[fieldKey];
 };
+
+const PAGE_SIZE = 20;
 
 export function GenericItemTable({ itemType }: GenericItemTableProps) {
   const { schema, fields, isLoading: schemaLoading } = useSchema(itemType);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [hasImageFilter, setHasImageFilter] = useState<boolean | undefined>(undefined);
+  const [sortField, setSortField] = useState<string>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  // Debounce search input
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+    const timeout = setTimeout(() => setDebouncedSearch(value), 300);
+    return () => clearTimeout(timeout);
+  };
+
+  const sortParam = sortDir === 'desc' ? `-${sortField}` : sortField;
 
   const { data: itemsData, isLoading: itemsLoading } = useQuery({
-    queryKey: ['items', itemType, 'list'],
-    queryFn: () => dynamicItemApi.list(itemType),
+    queryKey: ['items', itemType, 'list', page, debouncedSearch, hasImageFilter, sortParam],
+    queryFn: () =>
+      dynamicItemApi.list(itemType, {
+        page,
+        page_size: PAGE_SIZE,
+        search: debouncedSearch || undefined,
+        has_image: hasImageFilter,
+        sort: sortParam,
+      }),
   });
 
   const items = itemsData?.items || [];
+  const total = itemsData?.total || 0;
+  const totalPages = itemsData?.total_pages || 1;
   const isLoading = schemaLoading || itemsLoading;
 
   const colors = schema ? {
@@ -55,20 +81,6 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
         })
     : fields.sort((a, b) => a.order - b.order)
   ).slice(0, 5);
-
-  const searchableFields = fields.filter(
-    (f) => f.field_type === 'text' || f.field_type === 'textarea'
-  );
-
-  const filteredItems = items.filter((item: any) => {
-    if (!searchTerm) return true;
-
-    const searchLower = searchTerm.toLowerCase();
-    return searchableFields.some((field) => {
-      const value = getFieldValue(item, field.key);
-      return value && String(value).toLowerCase().includes(searchLower);
-    });
-  });
 
   const getFieldLabel = (fieldKey: string): string => {
     const field = fields.find((f) => f.key === fieldKey);
@@ -118,6 +130,23 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
     return value.toString();
   };
 
+  const handleSort = (fieldKey: string) => {
+    if (sortField === fieldKey) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(fieldKey);
+      setSortDir('asc');
+    }
+    setPage(1);
+  };
+
+  const SortIcon = ({ fieldKey }: { fieldKey: string }) => {
+    if (sortField !== fieldKey) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="w-3 h-3 ml-1" />
+      : <ArrowDown className="w-3 h-3 ml-1" />;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -138,33 +167,67 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
 
   return (
     <div className="space-y-4">
-      <Input
-        placeholder={`Search ${schema.plural_name.toLowerCase()}...`}
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="max-w-md focus-visible:ring-offset-0"
-        style={{
-          '--tw-ring-color': colors.hex,
-        } as React.CSSProperties}
-      />
+      <div className="flex items-center gap-3">
+        <Input
+          placeholder={`Search ${schema.plural_name.toLowerCase()}...`}
+          value={searchTerm}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="max-w-md focus-visible:ring-offset-0"
+          style={{
+            '--tw-ring-color': colors.hex,
+          } as React.CSSProperties}
+        />
+        <Button
+          variant={hasImageFilter === true ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setHasImageFilter(hasImageFilter === true ? undefined : true);
+            setPage(1);
+          }}
+          className="gap-1"
+        >
+          <Image className="w-4 h-4" />
+          Has Image
+        </Button>
+        <Button
+          variant={hasImageFilter === false ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setHasImageFilter(hasImageFilter === false ? undefined : false);
+            setPage(1);
+          }}
+          className="gap-1"
+        >
+          <Package className="w-4 h-4" />
+          No Image
+        </Button>
+      </div>
 
       <div className="rounded-md border" style={{ borderColor: `${colors.hex}20` }}>
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead
-                className="font-semibold w-20"
+                className="font-semibold w-20 cursor-pointer"
                 style={{ color: colors.hex }}
+                onClick={() => handleSort('name')}
               >
-                Image
+                <span className="flex items-center">
+                  Name
+                  <SortIcon fieldKey="name" />
+                </span>
               </TableHead>
               {tableColumns.map((field) => (
                 <TableHead
                   key={field.key}
-                  className="font-semibold"
+                  className="font-semibold cursor-pointer"
                   style={{ color: colors.hex }}
+                  onClick={() => handleSort(field.key)}
                 >
-                  {field.label}
+                  <span className="flex items-center">
+                    {field.label}
+                    <SortIcon fieldKey={field.key} />
+                  </span>
                 </TableHead>
               ))}
               <TableHead
@@ -176,7 +239,7 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.length === 0 ? (
+            {items.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
                   colSpan={tableColumns.length + 2}
@@ -194,16 +257,16 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
                     <p className="text-muted-foreground font-medium">
                       No {schema.plural_name.toLowerCase()} found
                     </p>
-                    {searchTerm && (
+                    {(searchTerm || hasImageFilter !== undefined) && (
                       <p className="text-sm text-muted-foreground">
-                        Try adjusting your search term
+                        Try adjusting your filters
                       </p>
                     )}
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredItems.map((item: any, index: number) => {
+              items.map((item: any, index: number) => {
                 const IconComponent =
                   (Icons as any)[schema.icon] || Icons.HelpCircle;
                 const itemName = getFieldValue(item, 'name') || `Item #${item.id}`;
@@ -224,25 +287,28 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
                     }}
                   >
                     <TableCell>
-                      {item.image_url ? (
-                        <div className="relative w-12 h-12 rounded-md overflow-hidden bg-gray-100">
-                          <img
-                            src={item.image_url}
-                            alt={itemName}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div
-                          className="w-12 h-12 rounded-md flex items-center justify-center"
-                          style={{ backgroundColor: `${colors.hex}10` }}
-                        >
-                          <Package
-                            className="w-6 h-6"
-                            style={{ color: `${colors.hex}40` }}
-                          />
-                        </div>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {item.image_url ? (
+                          <div className="relative w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                            <img
+                              src={item.image_url}
+                              alt={itemName}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: `${colors.hex}10` }}
+                          >
+                            <Package
+                              className="w-5 h-5"
+                              style={{ color: `${colors.hex}40` }}
+                            />
+                          </div>
+                        )}
+                        <span className="font-medium">{itemName}</span>
+                      </div>
                     </TableCell>
                     {tableColumns.map((field) => (
                       <TableCell key={field.key}>
@@ -282,14 +348,29 @@ export function GenericItemTable({ itemType }: GenericItemTableProps) {
 
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">
-          Showing {filteredItems.length} of {items.length}{' '}
-          {schema.plural_name.toLowerCase()}
+          Showing {items.length} of {total} {schema.plural_name.toLowerCase()}
         </span>
-        {filteredItems.length > 0 && (
-          <span className="font-medium" style={{ color: colors.hex }}>
-            {filteredItems.length} result{filteredItems.length !== 1 ? 's' : ''}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-muted-foreground">
+            Page {page} of {totalPages}
           </span>
-        )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

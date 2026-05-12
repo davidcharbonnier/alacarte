@@ -47,15 +47,17 @@ export const schemaApi = {
 };
 
 export const dynamicItemApi = {
-  list: async (type: string, params?: { page?: number; page_size?: number; search?: string }): Promise<{ items: any[]; total: number }> => {
+  list: async (type: string, params?: { page?: number; page_size?: number; search?: string; has_image?: boolean; sort?: string }): Promise<{ items: any[]; total: number; page: number; per_page: number; total_pages: number }> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.page_size) searchParams.set('per_page', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
+    if (params?.has_image !== undefined) searchParams.set('filter[has_image]', params.has_image.toString());
+    if (params?.sort) searchParams.set('sort', params.sort);
     
     const queryString = searchParams.toString();
     const url = `/api/items/${type}${queryString ? `?${queryString}` : ''}`;
-    return apiClient.get<{ items: any[]; total: number }>(url);
+    return apiClient.get<{ items: any[]; total: number; page: number; per_page: number; total_pages: number }>(url);
   },
 
   get: async (type: string, id: number): Promise<any> => {

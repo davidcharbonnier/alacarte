@@ -99,7 +99,8 @@ export default function SchemaListPage() {
         fields: [],
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['schemas'] });
+      queryClient.invalidateQueries({ queryKey: ['schemas'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['schemas', 'all'], exact: true });
       setIsCreateOpen(false);
     },
   });
@@ -107,7 +108,8 @@ export default function SchemaListPage() {
   const deleteMutation = useMutation({
     mutationFn: (type: string) => schemaApi.delete(type),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['schemas'] });
+      queryClient.invalidateQueries({ queryKey: ['schemas'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['schemas', 'all'], exact: true });
       setDeleteTarget(null);
     },
   });
@@ -116,7 +118,8 @@ export default function SchemaListPage() {
     mutationFn: ({ type, isActive }: { type: string; isActive: boolean }) =>
       schemaApi.update(type, { is_active: isActive }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['schemas'] });
+      queryClient.invalidateQueries({ queryKey: ['schemas'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['schemas', 'all'], exact: true });
     },
   });
 
@@ -307,7 +310,7 @@ function CreateSchemaForm({
   onSubmit: (data: CreateSchemaFormData) => void;
   isLoading: boolean;
 }) {
-  const { register, handleSubmit, setValue, watch } = useForm<CreateSchemaFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<CreateSchemaFormData>({
     defaultValues: {
       name: '',
       display_name: '',
@@ -328,11 +331,22 @@ function CreateSchemaForm({
           <Input
             id="name"
             placeholder="e.g., cheese, wine"
-            {...register('name', { required: true })}
+            {...register('name', {
+              required: 'Schema name is required',
+              pattern: {
+                value: /^[a-z0-9]+(-[a-z0-9]+)*$/,
+                message: 'Must be lowercase kebab-case (e.g., red-wine)',
+              },
+            })}
+            aria-invalid={errors.name ? 'true' : 'false'}
           />
-          <p className="text-xs text-muted-foreground">
-            Unique identifier (lowercase, no spaces)
-          </p>
+          {errors.name ? (
+            <p className="text-xs text-destructive">{errors.name.message}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Unique identifier (lowercase, no spaces)
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="icon">Icon</Label>
