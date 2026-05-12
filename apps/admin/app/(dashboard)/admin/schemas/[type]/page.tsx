@@ -8,6 +8,7 @@ import type {
   ItemTypeSchema,
   SchemaField,
   UpdateSchemaRequest,
+  SchemaDetailResponse,
 } from '@/lib/types/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save, Eye, EyeOff, History, Plus, Trash2, GripVertical } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
 import { useForm, useFieldArray } from 'react-hook-form';
 
@@ -103,21 +104,28 @@ export default function SchemaEditorPage({
   const { type } = use(params);
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('fields');
+  const [saveCount, setSaveCount] = useState(0);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['schemas', type],
     queryFn: () => schemaApi.get(type),
   });
 
-  // TODO: Fix caching issue - after schema update, the query data is not properly refreshed.
-  // The schema edit page shows stale data even after invalidation, while other pages update correctly.
-  // This may be related to React Query's stale-while-revalidate behavior or a race condition.
-  const updateMutation = useMutation({
+  const updateMutation = useMutation<SchemaDetailResponse, Error, UpdateSchemaRequest>({
     mutationFn: (updateData: UpdateSchemaRequest) =>
       schemaApi.update(type, updateData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['schemas'] });
-      queryClient.invalidateQueries({ queryKey: ['schemas', type] });
+    onSuccess: (updatedSchema) => {
+      queryClient.setQueryData(['schemas', type], {
+        schema: updatedSchema,
+        fields: updatedSchema.fields || [],
+      });
+      // Invalidate the list queries so sidebar and schema list page refetch.
+      // Use exact match to avoid also invalidating detail queries (which would
+      // trigger a background refetch that could return stale server data and
+      // overwrite our fresh setQueryData cache).
+      queryClient.invalidateQueries({ queryKey: ['schemas'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['schemas', 'all'], exact: true });
+      setSaveCount((c) => c + 1);
     },
   });
 
@@ -215,6 +223,7 @@ export default function SchemaEditorPage({
 
         <TabsContent value="fields" className="mt-4">
           <SchemaBuilder
+            key={`builder-${saveCount}`}
             fields={fields}
             onSave={(fieldsData) => {
               updateMutation.mutate({ fields: fieldsData });
@@ -225,6 +234,7 @@ export default function SchemaEditorPage({
 
         <TabsContent value="settings" className="mt-4">
           <SchemaSettings
+            key={`settings-${saveCount}`}
             schema={schema}
             fields={fields}
             onSave={(settings) => {
@@ -253,7 +263,7 @@ function SchemaSettings({
   onSave: (settings: UpdateSchemaRequest) => void;
   isSaving: boolean;
 }) {
-  const { register, handleSubmit, watch, setValue } = useForm<SchemaEditorFormData>({
+  const { register, handleSubmit, watch, setValue, reset } = useForm<SchemaEditorFormData>({
     defaultValues: {
       display_name: schema.display_name,
       plural_name: schema.plural_name,
@@ -263,6 +273,17 @@ function SchemaSettings({
       unique_fields: schema.unique_fields || [],
     },
   });
+
+  useEffect(() => {
+    reset({
+      display_name: schema.display_name,
+      plural_name: schema.plural_name,
+      icon: schema.icon,
+      color: schema.color,
+      is_active: schema.is_active,
+      unique_fields: schema.unique_fields || [],
+    });
+  }, [schema, reset]);
 
   const selectedUniqueFields = watch('unique_fields') || [];
 
@@ -455,10 +476,27 @@ function SchemaBuilder({
       },
     });
 
-  const { fields: formFields, append, remove, move } = useFieldArray({
+  const { fields: formFields, append, remove, move, replace } = useFieldArray({
     control,
     name: 'fields',
   });
+
+  useEffect(() => {
+    replace(
+      fields.map((f) => ({
+        id: f.id,
+        key: f.key,
+        label: f.label,
+        field_type: f.field_type,
+        required: f.required,
+        order: f.order,
+        group: f.group,
+        options: f.options,
+        validation: f.validation,
+        display: f.display,
+      }))
+    );
+  }, [fields, replace]);
 
   const addField = () => {
     append({

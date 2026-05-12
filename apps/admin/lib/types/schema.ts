@@ -88,6 +88,7 @@ export interface SchemaDetailResponse {
   icon: string;
   color: string;
   is_active?: boolean;
+  unique_fields?: string[];
   item_count?: number;
   version?: number;
   version_hash?: string;

@@ -41,7 +41,8 @@ export default function UserDeleteImpactPage({ params }: { params: Promise<{ id:
   const deleteMutation = useMutation({
     mutationFn: () => userApi.delete(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['users'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['users', 'list'], exact: true });
       router.push('/users');
     },
   });

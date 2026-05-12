@@ -145,15 +145,15 @@
 
 ## 12. Known Issues
 
-- [ ] 12.1 Fix React Query stale-data bug: schema editor shows stale data after mutation (see TODO in `schemas/[type]/page.tsx:112`)
-- [ ] 12.2 Integrate or remove unused `DynamicFieldRenderer` widget (280 lines, never imported)
-- [ ] 12.3 Integrate or remove unused `SchemaIconUtils` utility (100 lines, never imported)
-- [ ] 12.4 Wire `filter[has_image]` into admin `GenericItemTable` and Flutter client (API supports it, UI doesn't)
-- [ ] 12.5 Wire pagination into admin `GenericItemTable` (API client supports it, UI loads all items)
-- [ ] 12.6 Wire server-side search into admin table (currently uses client-side filtering only)
-- [ ] 12.7 Add sort controls to admin item table and API client
-- [ ] 12.8 Add `unique_fields` to admin `SchemaDetailResponse` TypeScript type
-- [ ] 12.9 Add client-side kebab-case validation to schema create form (currently only server-enforced)
+- [x] 12.1 Fix React Query stale-data bug: schema editor shows stale data after mutation (see TODO in `schemas/[type]/page.tsx:112`)
+- [x] 12.2 Integrate or remove unused `DynamicFieldRenderer` widget (280 lines, never imported)
+- [x] 12.3 Integrate or remove unused `SchemaIconUtils` utility (100 lines, never imported)
+- [x] 12.4 Wire `filter[has_image]` into admin `GenericItemTable` and Flutter client (API supports it, UI doesn't)
+- [x] 12.5 Wire pagination into admin `GenericItemTable` (API client supports it, UI loads all items)
+- [x] 12.6 Wire server-side search into admin table (currently uses client-side filtering only)
+- [x] 12.7 Add sort controls to admin item table and API client
+- [x] 12.8 Add `unique_fields` to admin `SchemaDetailResponse` TypeScript type
+- [x] 12.9 Add client-side kebab-case validation to schema create form (currently only server-enforced)
 
 ## 13. Testing
 
