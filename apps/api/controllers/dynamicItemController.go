@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/davidcharbonnier/alacarte-api/services"
 	"github.com/davidcharbonnier/alacarte-api/utils"
@@ -34,8 +35,9 @@ func DynamicItemList(c *gin.Context) {
 		Search:     c.Query("search"),
 	}
 
-	if filterStr := c.Query("filter"); filterStr != "" {
-		parsedFilters := parseFilterParams(filterStr)
+	// Parse filter parameters from query string
+	parsedFilters := parseFilterParams(c)
+	if len(parsedFilters) > 0 {
 		params.Filters = parsedFilters
 	}
 
@@ -487,7 +489,15 @@ func DynamicItemValidate(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-func parseFilterParams(filterStr string) map[string]interface{} {
+func parseFilterParams(c *gin.Context) map[string]interface{} {
 	result := make(map[string]interface{})
+	for key, values := range c.Request.URL.Query() {
+		if strings.HasPrefix(key, "filter[") && strings.HasSuffix(key, "]") {
+			fieldKey := key[7 : len(key)-1]
+			if len(values) > 0 && values[0] != "" {
+				result[fieldKey] = values[0]
+			}
+		}
+	}
 	return result
 }

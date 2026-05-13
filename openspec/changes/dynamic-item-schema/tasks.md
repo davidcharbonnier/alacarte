@@ -157,17 +157,17 @@
 
 ## 13. Testing
 
-- [ ] 13.1 Add `testcontainers-go` and `testcontainers-go/modules/mysql` dependencies
-- [ ] 13.2 Create `utils/testdb.go` with `SetupTestDB()` using testcontainers MySQL 8.4
-- [ ] 13.3 Extract seed schema helpers from `scripts/migration.go` into `utils/test_seed.go`
-- [ ] 13.4 Add `Reset()` method to `SchemaRegistry` for test isolation
-- [ ] 13.5 Update CI `test-api` job to ensure Docker is available
-- [ ] 13.6 Write `ValidationEngine` unit tests (required, length, range, pattern, select/enum, checkbox, unknown schema/field, create vs update)
-- [ ] 13.7 Write `SchemaRegistry` unit tests (load from DB, get, ordering, refresh, invalidate, exists, field lookup, unique fields parsing, reset)
-- [ ] 13.8 Write `EAVQueryBuilder` unit tests (pagination, search, EAV filters, has_image, sorting, get item, dual-write create, duplicate rejection, update, unauthorized, delete cascade, impact, field values JSON coercion)
-- [ ] 13.9 Write schema CRUD integration tests (create, duplicate rejection, kebab-case validation, update, delete empty, reject with items, list, get details, version history)
-- [ ] 13.10 Write dynamic item CRUD integration tests (create, duplicate rejection, list pagination, get details, update, unauthorized, delete, impact report)
-- [ ] 13.11 Write filtering and search integration tests (EAV field filter, has_image, search, EAV sort, combined filter+search+sort)
+- [x] 13.1 Add `testcontainers-go` and `testcontainers-go/modules/mysql` dependencies
+- [x] 13.2 Create `utils/testdb.go` with `SetupTestDB()` using testcontainers MySQL 8.4
+- [x] 13.3 Extract seed schema helpers from `scripts/migration.go` into `utils/test_seed.go`
+- [x] 13.4 Add `Reset()` method to `SchemaRegistry` for test isolation
+- [x] 13.5 Update CI `test-api` job to ensure Docker is available
+- [x] 13.6 Write `ValidationEngine` unit tests (required, length, range, pattern, select/enum, checkbox, unknown schema/field, create vs update)
+- [x] 13.7 Write `SchemaRegistry` unit tests (load from DB, get, ordering, refresh, invalidate, exists, field lookup, unique fields parsing, reset)
+- [x] 13.8 Write `EAVQueryBuilder` unit tests (pagination, search, EAV filters, has_image, sorting, get item, dual-write create, duplicate rejection, update, unauthorized, delete cascade, impact, field values JSON coercion)
+- [x] 13.9 Write schema CRUD integration tests (create, duplicate rejection, kebab-case validation, update, delete empty, reject with items, list, get details, version history)
+- [x] 13.10 Write dynamic item CRUD integration tests (create, duplicate rejection, list pagination, get details, update, unauthorized, delete, impact report)
+- [x] 13.11 Write filtering and search integration tests (EAV field filter, has_image, search, EAV sort, combined filter+search+sort)
 
 ## 14. Documentation
 

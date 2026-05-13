@@ -29,6 +29,11 @@ var (
 	registryOnce sync.Once
 )
 
+func ResetGlobalRegistry() {
+	registry = nil
+	registryOnce = sync.Once{}
+}
+
 func GetSchemaRegistry() *SchemaRegistry {
 	registryOnce.Do(func() {
 		registry = &SchemaRegistry{
@@ -105,6 +110,12 @@ func (r *SchemaRegistry) LoadSchemas() error {
 	}
 
 	return nil
+}
+
+func (r *SchemaRegistry) Reset() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.schemas = make(map[string]*CachedSchema)
 }
 
 func (r *SchemaRegistry) GetSchema(name string) (*CachedSchema, bool) {
