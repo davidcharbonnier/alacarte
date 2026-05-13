@@ -350,6 +350,74 @@ CREATE TABLE item_field_values (
 4. Seed operation uses `unique_fields` for deduplication checks
 5. The `name` field gets a fast-path check against `items.name` column; other fields use EAV subqueries
 
+### Decision 8: Test Infrastructure with Testcontainers
+
+**Choice:** Use `testcontainers-go` with the MySQL module for all database-dependent tests. Controller integration tests use `httptest` + testcontainers.
+
+**Alternatives Considered:**
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Real MySQL (current)** | Simple setup | Requires running DB, no isolation, CI unfriendly |
+| **SQLite in-memory** | Fast, no Docker | Different DB engine, no EAV index testing, no JSON column parity |
+| **Mocks/stubs** | Fast, no infra | Can't test real EAV queries, fragile, no integration coverage |
+| **testcontainers-go** | Self-contained, prod-identical | Requires Docker |
+
+**Rationale:** Testcontainers because:
+1. Same MySQL 8.4 as production — EAV indexes, JSON columns, transactions behave identically
+2. Self-contained — `go test ./...` works anywhere Docker is available
+3. CI-ready — GitHub Actions `ubuntu-latest` runners have Docker pre-installed (already used by `build-api` job)
+4. Isolated — each test run gets a fresh ephemeral database
+5. No env vars needed — container DSN is generated at runtime
+
+**Architecture:**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  utils/testdb.go                                             │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │  SetupTestDB(ctx) → (cleanup func, error)              │    │
+│  │    • mysql.Run(ctx, "mysql:8.4")                     │    │
+│  │    • sets utils.DB via container DSN                  │    │
+│  │    • calls RunMigrations()                            │    │
+│  │    • returns cleanup (terminate container)            │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                                                              │
+│  utils/test_seed.go                                          │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │  SeedDefaultSchemas(db) → creates 5 type schemas   │    │
+│  │    • Extracted from scripts/migration.go              │    │
+│  │    • Reusable by any test package                     │    │
+│  └──────────────────────────────────────────────────────┘    │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**SchemaRegistry change:** Add `Reset()` method to clear in-memory cache. Needed because `sync.Once` prevents re-initialization between tests that modify schemas.
+
+**Test file organization:** One `_test.go` per source file:
+- `services/validation_engine_test.go` — pure unit tests, no DB needed
+- `services/schema_registry_test.go` — DB-dependent via testcontainers
+- `services/query_builder_test.go` — DB-dependent via testcontainers
+- `controllers/schema_controller_test.go` — `httptest` + testcontainers
+- `controllers/dynamic_item_controller_test.go` — `httptest` + testcontainers
+
+**Controller test pattern:**
+```go
+func TestSchemaCreate(t *testing.T) {
+    cleanup, _ := utils.SetupTestDB()
+    defer cleanup()
+    utils.SeedDefaultSchemas(utils.DB)
+    services.GetSchemaRegistry().LoadSchemas()
+
+    router := setupTestRouter()
+    w := httptest.NewRecorder()
+    req, _ := http.NewRequest("POST", "/admin/schemas", body)
+    router.ServeHTTP(w, req)
+
+    assert.Equal(t, 201, w.Code)
+    // Verify DB state...
+}
+```
+
 ## Risks / Trade-offs
 
 ### Risk 1: EAV Query Performance
