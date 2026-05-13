@@ -335,6 +335,8 @@ func SchemaCreate(c *gin.Context) {
 	if len(body.UniqueFields) > 0 {
 		uniqueFieldsJSON, _ := json.Marshal(body.UniqueFields)
 		schema.UniqueFields = string(uniqueFieldsJSON)
+	} else {
+		schema.UniqueFields = "[]"
 	}
 
 	tx := utils.DB.Begin()
