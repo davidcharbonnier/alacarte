@@ -122,6 +122,10 @@ class DynamicItem implements RateableItem {
         continue;
       }
 
+      if (field.key == 'name') {
+        continue;
+      }
+
       fields.add(
         DetailField(
           label: field.label,

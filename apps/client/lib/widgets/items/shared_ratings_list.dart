@@ -4,6 +4,7 @@ import '../../models/rating.dart';
 import '../../models/rateable_item.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
+import '../common/star_rating_display.dart';
 
 /// Reusable component for displaying shared ratings from other users
 class SharedRatingsList extends ConsumerWidget {
@@ -133,15 +134,10 @@ class SharedRatingsList extends ConsumerWidget {
                     Row(
                       children: [
                         // Star rating
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(5, (index) {
-                            return Icon(
-                              index < rating.grade.round() ? Icons.star : Icons.star_border,
-                              size: AppConstants.iconS,
-                              color: AppConstants.recommendationColor,
-                            );
-                          }),
+                        StarRatingDisplay(
+                          rating: rating.grade,
+                          starSize: AppConstants.iconS,
+                          color: AppConstants.recommendationColor,
                         ),
                         const SizedBox(width: AppConstants.spacingXS),
                         Container(

@@ -4,6 +4,7 @@ import '../../models/rateable_item.dart';
 import '../../providers/community_stats_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
+import '../common/star_rating_display.dart';
 
 /// Reusable rating summary component showing community statistics
 class RatingSummaryCard extends ConsumerStatefulWidget {
@@ -155,15 +156,10 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
                           color: AppConstants.primaryColor,
                         ),
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: List.generate(5, (index) {
-                          return Icon(
-                            index < averageRating.round() ? Icons.star : Icons.star_border,
-                            size: AppConstants.iconS,
-                            color: AppConstants.primaryColor,
-                          );
-                        }),
+                      StarRatingDisplay(
+                        rating: averageRating,
+                        starSize: AppConstants.iconS,
+                        color: AppConstants.primaryColor,
                       ),
                     ],
                   ),
