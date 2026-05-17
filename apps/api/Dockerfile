@@ -1,4 +1,4 @@
-FROM golang:1.23.7-alpine AS builder
+FROM golang:1.25.0-alpine AS builder
 
 # Install build dependencies for static linking and security
 RUN apk add --no-cache \
@@ -26,7 +26,7 @@ FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Note: Timezone data not copied - app uses UTC timestamps
-# Add this line if you need timezone parsing: 
+# Add this line if you need timezone parsing:
 # COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 # Copy binaries from build stage
