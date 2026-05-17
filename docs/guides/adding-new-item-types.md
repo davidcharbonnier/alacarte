@@ -1,783 +1,401 @@
-# Adding New Item Types - Complete Platform Guide
+# Adding New Item Types - Dynamic Schema Guide
 
-**Last Updated:** January 2025  
-**Current Item Types:** Cheese, Gin, Wine, Coffee, Chili Sauce  
-**Total Time:** ~2 hours (Backend: 65 min | Client: 50 min | Admin: 5 min)
+**Last Updated:** May 2026
+**Status:** ✅ Dynamic Schema System Active
 
-This guide covers the complete process of adding a new item type (e.g., wine, beer, coffee) to the À la carte platform across all three applications.
+This guide covers how to add new consumable types to the À la carte platform using the dynamic schema system. **No code changes are required** for most item types.
 
 ---
 
 ## 🎯 Overview
 
-### What You'll Build
-- ✅ Backend API with full CRUD + admin endpoints
-- ✅ Frontend with complete user interface and forms
-- ✅ Admin panel with management capabilities
-- ✅ Rating system integration (works automatically!)
-- ✅ Privacy settings integration (works automatically!)
-- ✅ Search and filtering
-- ✅ Complete French/English localization
+### The Old Way (Deprecated)
 
-### Prerequisites
-- Backend: Go 1.21+, MySQL running
-- Frontend: Flutter 3.27+, Backend API running
-- Admin: Node.js 18+, Backend API running
-- Seed data prepared (JSON file with 10-30 items)
+Previously, adding a new item type required coordinated changes across three codebases:
+- **Backend:** New Go model, controller, routes, migrations (~65 min)
+- **Frontend:** New Dart model, service, provider, form strategy, localization (~50 min)
+- **Admin:** Config entry, color definition (~5 min)
+- **Total:** ~2 hours of development time
 
-### Time Estimates
-- **Backend (API):** ~65 minutes
-- **Frontend (Client):** ~50 minutes  
-- **Admin Panel:** ~5 minutes (config + color, navigation is automatic!)
-- **Total:** ~2 hours
+### The New Way (Current)
 
----
+With the dynamic schema system, adding a new item type is done entirely through the **admin panel UI**:
+- **Admin Panel:** Create schema, define fields, set validation (~5-10 min)
+- **Backend:** Automatic - no code changes
+- **Frontend:** Automatic - no code changes
+- **Total:** ~5-10 minutes
 
-## 📋 Implementation Path
+### When Code Changes Are Still Needed
 
-### Phase 1: Backend Implementation (~65 min)
-
-> **See also:** Backend authentication and privacy implementations are documented in [/docs/api/authentication-system.md](/docs/api/authentication-system.md) and [/docs/api/privacy-model.md](/docs/api/privacy-model.md).
-
-The backend uses GORM's polymorphic associations to support multiple item types with a single Rating table.
-
-#### Step 1: Create Model (~5 min)
-
-**File:** `apps/api/models/[itemType]Model.go`
-
-```go
-package models
-
-import "gorm.io/gorm"
-
-type Wine struct {
-    gorm.Model
-    Name        string   `gorm:"unique" json:"name"`
-    Producer    string   `json:"producer"`
-    Origin      string   `json:"origin"`
-    Varietal    string   `json:"varietal"`  // Item-specific field
-    Description string   `json:"description"`
-    ImageURL    *string  `json:"image_url,omitempty"`  // Required for image support!
-    Ratings     []Rating `gorm:"polymorphic:Item;"`  // Required!
-}
-
-// GetImageURL implements ItemWithImage interface
-func (w *Wine) GetImageURL() *string {
-    return w.ImageURL
-}
-
-// SetImageURL implements ItemWithImage interface
-func (w *Wine) SetImageURL(url *string) {
-    w.ImageURL = url
-}
-```
-
-**Key points:**
-- `gorm.Model` adds ID, timestamps, soft delete
-- `gorm:"unique"` on Name prevents duplicates
-- `gorm:"polymorphic:Item;"` enables rating system
-- JSON tags lowercase match frontend expectations
-- **ImageURL field required** for image upload support
-- **Implement ItemWithImage interface** (GetImageURL/SetImageURL methods)
-
-#### Step 2: Create Controller (~25 min)
-
-**File:** `apps/api/controllers/[itemType]Controller.go`
-
-**⚠️ Critical:** ALL body struct fields MUST have JSON tags matching the frontend's snake_case field names. Without JSON tags, fields won't bind correctly from the frontend payload.
-
-```go
-var body struct {
-    Name     string `json:"name"`      // ← Must have json tags!
-    Producer string `json:"producer"`  // ← Must match frontend exactly
-    Organic  bool   `json:"organic"`   // ← Critical for booleans!
-}
-```
-
-Implement 9 functions:
-1. **Public CRUD** (5 functions, ~10 min):
-   - `WineCreate` - POST with JSON binding (with json tags!)
-   - `WineIndex` - GET all items
-   - `WineDetails` - GET single item by ID
-   - `WineEdit` - PUT with updates (with json tags!)
-   - `WineRemove` - DELETE by ID
-
-2. **Admin Endpoints** (4 functions, ~15 min):
-   - `GetWineDeleteImpact` - Show affected ratings/users before delete
-   - `DeleteWine` - Cascade delete with transactions
-   - `SeedWines` - Bulk import from remote URL
-   - `ValidateWines` - Validate JSON without importing
-
-**Template:** Copy `coffeeController.go` (has correct JSON tags) and replace coffee fields with wine fields
-
-#### Step 3: Register Routes (~8 min)
-
-**File:** `apps/api/main.go`
-
-Add two route groups:
-
-```go
-// Public routes
-wineItem := api.Group("/wine")
-wineItem.Use(utils.RequireAuth())
-{
-    wineItem.POST("/new", controllers.WineCreate)
-    wineItem.GET("/all", controllers.WineIndex)
-    wineItem.GET("/:id", controllers.WineDetails)
-    wineItem.PUT("/:id", controllers.WineEdit)
-    wineItem.DELETE("/:id", controllers.WineRemove)
-    // Image management
-    wineItem.POST("/:id/image", func(c *gin.Context) {
-        c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
-        controllers.UploadItemImage(c)
-    })
-    wineItem.DELETE("/:id/image", func(c *gin.Context) {
-        c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
-        controllers.DeleteItemImage(c)
-    })
-}
-
-// Admin routes
-wineAdmin := admin.Group("/wine")
-wineAdmin.Use(utils.RequireAuth(), utils.RequireAdmin())
-{
-    wineAdmin.GET("/:id/delete-impact", controllers.GetWineDeleteImpact)
-    wineAdmin.DELETE("/:id", controllers.DeleteWine)
-    wineAdmin.POST("/seed", controllers.SeedWines)
-    wineAdmin.POST("/validate", controllers.ValidateWines)
-}
-```
-
-#### Step 4: Add Migration (~2 min)
-
-**File:** `apps/api/utils/database.go`
-
-```go
-func RunMigrations() {
-    err := DB.AutoMigrate(
-        &models.User{},
-        &models.Cheese{},
-        &models.Gin{},
-        &models.Wine{},  // ADD THIS
-        &models.Rating{},
-    )
-}
-```
-
-#### Step 5: Update Item Helper (~3 min)
-
-**File:** `apps/api/utils/item_helper.go`
-
-Add wine support in three places:
-
-```go
-// 1. Add compile-time interface check
-var (
-    _ ItemWithImage = (*models.Cheese)(nil)
-    _ ItemWithImage = (*models.Gin)(nil)
-    _ ItemWithImage = (*models.Wine)(nil)  // ADD THIS
-)
-
-// 2. Add case to GetItemByType
-func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
-    var model interface{}
-    
-    switch itemType {
-    case "cheese":
-        model = &models.Cheese{}
-    case "gin":
-        model = &models.Gin{}
-    case "wine":  // ADD THIS
-        model = &models.Wine{}
-    default:
-        return nil, fmt.Errorf("invalid item type: %s", itemType)
-    }
-    // ... rest of function
-}
-
-// 3. Add to ValidateItemType
-func ValidateItemType(itemType string) bool {
-    validTypes := map[string]bool{
-        "cheese": true,
-        "gin":    true,
-        "wine":   true,  // ADD THIS
-    }
-    return validTypes[itemType]
-}
-```
-
-**Why this matters:**
-- Enables generic image upload/delete endpoints
-- Type validation for image operations
-- Compile-time safety ensures interface compliance
-
-#### Step 6: Add Seeding (~15 min)
-
-**File:** `apps/api/utils/database.go`
-
-Add three functions:
-1. Update `RunSeeding()` to call wine seeding
-2. Create `seedWineData()` with natural key matching (name + origin)
-3. Create `loadWineData()` to fetch JSON from URL or file
-
-**Natural key strategy:**
-```go
-result := DB.Where("name = ? AND origin = ?", wine.Name, wine.Origin).First(&existing)
-if result.Error == gorm.ErrRecordNotFound {
-    DB.Create(&wine)  // Only add if doesn't exist
-}
-```
-
-#### Step 7: Configure Environment (~2 min)
-
-**File:** `apps/api/.env`
-
-```bash
-WINE_DATA_SOURCE=../alacarte-seed/wines.json
-RUN_SEEDING=true
-```
-
-#### Step 8: Test Backend (~8 min)
-
-```bash
-# Reset and seed
-go run scripts/reset_database.go
-RUN_SEEDING=true go run main.go
-
-# Test endpoints
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/wine/all
-curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/admin/wine/1/delete-impact
-
-# Test image upload
-curl -X POST -H "Authorization: Bearer $TOKEN" \
-  -F "image=@wine.jpg" \
-  http://localhost:8080/api/wine/1/image
-```
-
-**✅ Backend Complete!** See [Backend Checklist](backend-checklist.md) for detailed steps.
+Code changes are only needed for:
+- **Custom field types** not supported by the schema system (text, textarea, number, select, checkbox, enum)
+- **Custom validation logic** beyond min/max/length/pattern/enum
+- **Custom client-side rendering** beyond the standard field renderers
+- **Integration with external APIs** or data sources
 
 ---
 
-### Phase 2: Frontend Implementation (~50 min)
+## 📋 Quick Start: Adding a New Item Type
 
-The frontend uses a **Strategy Pattern** for forms and **generic architecture** for most features.
+### Step 1: Plan Your Schema
 
-#### What Works Automatically
+Before opening the admin panel, plan:
 
-Thanks to October 2025 refactorings:
-- ✅ Rating system (create, edit, delete, share)
-- ✅ Privacy settings (manage shared ratings)
-- ✅ Search & filtering (all item types)
-- ✅ Navigation and routing
-- ✅ Offline support
-- ✅ Community statistics
+1. **What fields does this item type need?**
+   - Name (always required, stored as first-class column)
+   - Description (optional, stored as first-class column)
+   - Custom fields (e.g., ABV, Style, Origin, Organic)
 
-**You only implement:** Model, Service, Provider, Form Strategy, Helpers, Localization
+2. **What field type for each?**
+   - Text: Names, short labels
+   - Textarea: Descriptions, tasting notes
+   - Number: Quantities, percentages, ages
+   - Select: Fixed categories (IPA, Stout, Pilsner)
+   - Checkbox: Boolean flags (Organic, Gluten-Free)
+   - Enum: Status fields
 
-#### Step 1: Create Model (~10 min)
+3. **Which fields are required?**
+   - Name is always required
+   - Choose 2-3 more that are essential
 
-**File:** `apps/client/lib/models/wine_item.dart`
+4. **What makes items unique?**
+   - Define `unique_fields` to prevent duplicates
+   - Example: For beer, `name` + `brewery`
 
-**⚠️ Important:** Do NOT add extension methods like `getUniqueProducers()`, `getUniqueOrigins()`, etc. These are deprecated and unused. See [Filtering System Documentation](/docs/features/filtering-system.md#deprecated-pattern---do-not-use) for details.
+5. **How should items display?**
+   - Badge field: Shows as a colored pill on cards
+   - Primary field: Main subtitle (e.g., Style)
+   - Secondary field: Fallback subtitle (e.g., Brewery)
 
-```dart
-class WineItem implements RateableItem {
-  final int? id;
-  final String name;
-  final String producer;
-  final String origin;
-  final String varietal;  // Wine-specific
-  final String? description;
+### Step 2: Create the Schema in Admin Panel
 
-  @override
-  String get itemType => 'wine';
+1. Log in to the admin panel at `/admin`
+2. Navigate to **Schema Management** → **New Schema**
+3. Fill in schema settings:
+   - **Name:** `craft-beer` (kebab-case, permanent)
+   - **Display Name:** `Craft Beer`
+   - **Plural Name:** `Craft Beers`
+   - **Icon:** `Beer` (or any Material icon name)
+   - **Color:** `#FFA726` (choose a distinct color)
 
-  @override
-  String get displayTitle => '$name ($varietal)';
+4. Add fields:
+   | Key | Label | Type | Required | Validation | Display |
+   |-----|-------|------|----------|------------|---------|
+   | `name` | Name | text | ✅ | min:1, max:100 | - |
+   | `brewery` | Brewery | text | ✅ | min:1, max:100 | secondary |
+   | `style` | Style | select | ✅ | options: [IPA, Stout, Pilsner, Wheat] | primary |
+   | `abv` | ABV (%) | number | ❌ | min:0, max:20 | - |
+   | `origin` | Origin | text | ❌ | - | - |
+   | `organic` | Organic | checkbox | ❌ | - | - |
+   | `description` | Description | textarea | ❌ | max:500 | - |
 
-  @override
-  Map<String, String> get categories => {
-    'producer': producer,
-    'origin': origin,
-    'varietal': varietal,
-  };
+5. Set unique fields: `name` + `brewery`
+6. Click **Create Schema**
 
-  // JSON serialization, etc.
-}
-```
+### Step 3: Verify in API
 
-#### Step 2: Create Service (~10 min)
+```bash
+# List schemas
+curl http://localhost:8080/api/schemas
 
-**File:** `apps/client/lib/services/item_service.dart` (add to end)
+# Get schema details
+curl http://localhost:8080/api/schemas/craft-beer
 
-**⚠️ Important:** Do NOT add filter option methods like `getWineProducers()`, `getWineOrigins()`, etc. These are deprecated. Filter options are automatically generated from items in the provider state. See [Filtering System Documentation](/docs/features/filtering-system.md#deprecated-pattern---do-not-use) for details.
-
-```dart
-class WineItemService extends ItemService<WineItem> {
-  // Singleton pattern to preserve cache
-  static final WineItemService _instance = WineItemService._internal();
-  
-  factory WineItemService() => _instance;
-  
-  WineItemService._internal();
-  
-  // Cache for 5-minute expiry
-  ApiResponse<List<WineItem>>? _cachedResponse;
-  DateTime? _cacheTime;
-  static const Duration _cacheExpiry = Duration(minutes: 5);
-
-  @override
-  String get itemTypeEndpoint => '/api/wine';
-
-  @override
-  WineItem Function(dynamic) get fromJson =>
-      (dynamic json) => WineItem.fromJson(json as Map<String, dynamic>);
-
-  @override
-  List<String> Function(WineItem) get validateItem => _validateWineItem;
-  
-  @override
-  Future<ApiResponse<List<WineItem>>> getAllItems() async {
-    // Check cache
-    if (_cachedResponse != null && _cacheTime != null) {
-      final age = DateTime.now().difference(_cacheTime!);
-      if (age < _cacheExpiry) {
-        return _cachedResponse!;
-      }
+# Create an item
+curl -X POST http://localhost:8080/api/items/craft-beer \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Hazy IPA",
+    "field_values": {
+      "brewery": "Mountain Brew Co",
+      "style": "IPA",
+      "abv": 6.5,
+      "origin": "Vermont",
+      "organic": true
     }
-    
-    // Fetch and cache
-    final response = await handleListResponse<WineItem>(
-      get('$itemTypeEndpoint/all'),
-      fromJson,
-    );
-    
-    if (response is ApiSuccess<List<WineItem>>) {
-      _cachedResponse = response;
-      _cacheTime = DateTime.now();
-    }
-    
-    return response;
-  }
-  
-  void clearCache() {
-    _cachedResponse = null;
-    _cacheTime = null;
-  }
+  }'
 
-  static List<String> _validateWineItem(WineItem wine) {
-    final errors = <String>[];
-    if (wine.name.trim().isEmpty) errors.add('Name is required');
-    if (wine.varietal.trim().isEmpty) errors.add('Varietal is required');
-    if (wine.producer.trim().isEmpty) errors.add('Producer is required');
-    if (wine.origin.trim().isEmpty) errors.add('Origin is required');
-    return errors;
-  }
-}
-
-final wineItemServiceProvider = Provider<WineItemService>(
-  (ref) => WineItemService(), // Factory returns singleton
-);
+# List items
+curl http://localhost:8080/api/items/craft-beer \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-**Key points:**
-- Singleton pattern ensures cache persists across navigation
-- Factory constructor returns the same instance
-- 5-minute cache with automatic expiry
-- `clearCache()` method for cache invalidation
+### Step 4: Verify in Client App
 
-#### Step 3: Register Provider (~5 min)
+1. Open the Flutter client app
+2. The new item type appears automatically in the home screen
+3. Tap it to see the list view
+4. Tap "+" to create a new item with the dynamic form
+5. Fields render according to their types (text, select, checkbox, etc.)
 
-**File:** `apps/client/lib/providers/item_provider.dart` (add to end)
+### Step 5: Seed Data (Optional)
 
-```dart
-final wineItemProvider = StateNotifierProvider<WineItemProvider, ItemState<WineItem>>(
-  (ref) => WineItemProvider(ref.read(wineItemServiceProvider)),
-);
+Prepare a JSON file:
 
-class WineItemProvider extends ItemProvider<WineItem> {
-  // Implement filter options and filter methods
-  @override
-  Future<void> _loadFilterOptions() async {
-    // Extract unique producers, origins, varietals
-  }
-}
-```
-
-#### Step 4: Create Form Strategy (~10 min) ⭐
-
-**File:** `apps/client/lib/forms/strategies/wine_form_strategy.dart`
-
-```dart
-class WineFormStrategy extends ItemFormStrategy<WineItem> {
-  @override
-  List<FormFieldConfig> getFormFields() {
-    return [
-      FormFieldConfig.text(
-        key: 'name',
-        labelBuilder: (context) => context.l10n.name,
-        required: true,
-      ),
-      FormFieldConfig.text(
-        key: 'varietal',
-        labelBuilder: (context) => context.l10n.varietalLabel,
-        required: true,
-      ),
-      // ... producer, origin, description
-    ];
-  }
-
-  @override
-  WineItem buildItem(controllers, itemId) {
-    return WineItem(
-      id: itemId,
-      name: controllers['name']!.text.trim(),
-      varietal: controllers['varietal']!.text.trim(),
-      // ...
-    );
-  }
-}
-```
-
-**Template:** Copy `gin_form_strategy.dart`
-
-#### Step 5: Register Strategy (~1 min)
-
-**File:** `apps/client/lib/forms/strategies/item_form_strategy_registry.dart`
-
-```dart
-static final Map<String, ItemFormStrategy> _strategies = {
-  'cheese': CheeseFormStrategy(),
-  'gin': GinFormStrategy(),
-  'wine': WineFormStrategy(),  // ← ADD THIS LINE
-};
-```
-
-#### Step 6-11: Standard Updates (~16 min)
-
-- **Routes:** Add wineCreate, wineEdit to route_names.dart and app_router.dart
-- **Navigation:** Add wine cases to item_type_screen.dart and item_detail_screen.dart
-- **ItemProviderHelper:** Add 'wine' case to all 16 methods
-- **ItemTypeHelper:** Add wine icon, color, and supported check
-- **Home Screen:** Add wine card with item count
-- **Item Type Switcher:** Add wine option to dropdown
-- **Item List Images:** Add wine case to `_buildItemCard()` in item_type_screen.dart:
-  ```dart
-  // Add import at top
-  import '../../models/wine_item.dart';
-  
-  // In _buildItemCard method:
-  String? imageUrl;
-  if (item is CheeseItem) {
-    imageUrl = item.imageUrl;
-  } else if (item is GinItem) {
-    imageUrl = item.imageUrl;
-  } else if (item is WineItem) {  // ← ADD THIS
-    imageUrl = item.imageUrl;
-  }
-  ```
-
-#### Step 12: Add Localization (~5 min) ⚠️
-
-**Files:** `apps/client/lib/l10n/app_en.arb` and `app_fr.arb`
-
-Add wine-specific strings:
 ```json
 {
-  "wine": "Wine",
-  "wines": "Wines",
-  "varietalLabel": "Varietal",
-  "enterWineName": "Enter wine name",
-  "wineCreated": "Wine created!",
-  // ... ~20 more strings
+  "items": [
+    {
+      "name": "Hazy IPA",
+      "brewery": "Mountain Brew Co",
+      "style": "IPA",
+      "abv": 6.5,
+      "origin": "Vermont",
+      "organic": true
+    },
+    {
+      "name": "Imperial Stout",
+      "brewery": "Dark Matter Brewing",
+      "style": "Stout",
+      "abv": 9.2,
+      "origin": "Oregon",
+      "organic": false
+    }
+  ]
 }
 ```
 
-**⚠️ CRITICAL:** Update `ItemTypeLocalizer.getLocalizedItemType()`:
-
-**File:** `apps/client/lib/utils/localization_utils.dart`
-
-```dart
-switch (itemType.toLowerCase()) {
-  case 'cheese': return l10n.cheese;
-  case 'gin': return l10n.gin;
-  case 'wine': return l10n.wine;  // ← MUST ADD THIS
-  default: return itemType;
-}
-```
-
-Run: `flutter gen-l10n`
-
-#### Step 13: Test Frontend (~3 min)
+Upload to a publicly accessible URL, then use the admin panel's **Seed** feature or API:
 
 ```bash
-flutter run -d linux
-
-# Test:
-# - Wine card appears on home screen
-# - Click wine → list loads
-# - Click item → detail shows
-# - Rate wine → form works (automatic!)
-# - Share rating → dialog works (automatic!)
-# - Privacy settings → wine ratings appear (automatic!)
+curl -X POST http://localhost:8080/admin/items/craft-beer/seed \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/beers.json"}'
 ```
-
-**✅ Frontend Complete!** See [Client Checklist](client-checklist.md) for detailed steps.
 
 ---
 
-### Phase 3: Admin Panel Implementation (~5 min)
+## 🔧 Advanced: Custom Field Types
 
-The admin panel uses a **config-driven architecture** where everything works automatically from a single config entry plus a color definition. The sidebar navigation is now dynamic and updates automatically!
+If you need a field type not supported by the schema system (e.g., date picker, multi-select, rich text), you need to extend the system.
 
-#### Step 1: Add to Config (~3 min)
+### Backend Extension
 
-**File:** `apps/admin/lib/config/item-types.ts`
+1. Add the new field type to the `FieldType` enum in `apps/api/models/schemaModel.go`
+2. Add validation logic in `apps/api/services/validation_engine.go`
+3. Add EAV query handling in `apps/api/services/query_builder.go`
 
-```typescript
-wine: {
-  name: 'wine',
-  labels: { singular: 'Wine', plural: 'Wines' },
-  icon: 'Wine',
-  color: itemTypeColors.wine.hex,  // ← ADD THIS (from design-system.ts)
-  
-  fields: [
-    { key: 'name', label: 'Name', type: 'text', required: true },
-    { key: 'varietal', label: 'Varietal', type: 'text', required: true },
-    { key: 'producer', label: 'Producer', type: 'text', required: true },
-    { key: 'origin', label: 'Origin', type: 'text', required: true },
-    { key: 'description', label: 'Description', type: 'textarea' },
-  ],
-  
-  table: {
-    columns: ['name', 'varietal', 'producer', 'origin'],
-    searchableFields: ['name', 'varietal', 'origin'],
-  },
-  
-  apiEndpoints: {
-    list: '/api/wine/all',
-    detail: (id) => `/api/wine/${id}`,
-    deleteImpact: (id) => `/admin/wine/${id}/delete-impact`,
-    delete: (id) => `/admin/wine/${id}`,
-    seed: '/admin/wine/seed',
-    validate: '/admin/wine/validate',
-  },
-}
-```
+### Client Extension
 
-#### Step 2: Add Color to Design System (~2 min)
+1. Add a new field renderer widget in `apps/client/lib/widgets/forms/`
+2. Register it in `DynamicForm` widget
+3. Add localization strings for the new field type
 
-**File:** `apps/admin/lib/config/design-system.ts`
+### Admin Extension
 
-Add the new color to the `itemTypeColors` object:
+1. Add the field type to the field type selector in `apps/admin/app/admin/schemas/[type]/page.tsx`
+2. Add configuration UI for the field type's specific options
 
-```typescript
-export const itemTypeColors = {
-  cheese: {
-    hex: '#673AB7',
-    rgb: 'rgb(103, 58, 183)',
-    hsl: 'hsl(262, 52%, 47%)',
-    className: 'text-[#673AB7] bg-[#673AB7]/10',
-  },
-  gin: {
-    hex: '#009688',
-    rgb: 'rgb(0, 150, 136)',
-    hsl: 'hsl(174, 100%, 29%)',
-    className: 'text-[#009688] bg-[#009688]/10',
-  },
-  wine: {
-    hex: '#8E24AA',
-    rgb: 'rgb(142, 36, 170)',
-    hsl: 'hsl(288, 65%, 40%)',
-    className: 'text-[#8E24AA] bg-[#8E24AA]/10',
-  },
-  beer: {  // ← ADD YOUR NEW ITEM TYPE
-    hex: '#FFA726',        // Choose a color that doesn't conflict
-    rgb: 'rgb(255, 167, 38)',
-    hsl: 'hsl(36, 100%, 57%)',
-    className: 'text-[#FFA726] bg-[#FFA726]/10',
-  },
-} as const;
-```
+---
 
-**Color Selection Tips:**
-- Choose colors that stand out from existing ones
+## 🔧 Advanced: Custom Validation
+
+For validation beyond the built-in rules (required, length, range, pattern, enum), extend the validation engine.
+
+### Example: Cross-Field Validation
+
+Validate that `abv` is between 0 and 20 only when `style` is "IPA":
+
+1. Add custom validation logic in `apps/api/services/validation_engine.go`
+2. Add a new validation rule type to the schema field model
+3. Add UI for configuring the rule in the admin panel
+
+---
+
+## 🔧 Advanced: Custom Client Rendering
+
+For custom display beyond the standard field renderers:
+
+### Example: Custom Card Layout
+
+Override the default item card for a specific schema:
+
+1. Create a custom widget in `apps/client/lib/widgets/items/`
+2. Register it in `ItemListScreen` based on schema name
+3. Use schema display hints to control when to use the custom layout
+
+---
+
+## 📊 Schema Design Best Practices
+
+### Field Naming
+
+- Use descriptive, self-documenting keys
+- Be consistent with existing schemas
+- Use snake_case: `milk_type`, not `milkType` or `milk type`
+
+### Required Fields
+
+- Keep required fields minimal (name + 2-3 essentials)
+- Too many required fields make item creation tedious
+- Use validation instead of required for soft constraints
+
+### Unique Fields
+
+- Always configure unique fields before seeding
+- Use the minimum set that guarantees uniqueness
+- Test with a few manual items before bulk import
+
+### Display Hints
+
+- Choose a distinctive badge field for visual identity
+- Primary field should be the most informative subtitle
+- Secondary field is a fallback - choose something always present
+
+### Validation
+
+- Set reasonable maxLength (100 for names, 500 for descriptions)
+- Use numeric ranges to catch data entry errors
+- Use select/enum instead of free text for standardized values
+
+### Color Selection
+
+- Choose colors that stand out from existing types
 - Ensure good contrast for accessibility
 - Test in both light and dark modes
-- Common choices: Orange (#FFA726), Blue (#2196F3), Red (#F44336), Amber (#FFC107)
-
-#### Step 3: ~~Update Navigation~~ **Automatic!** 🎉
-
-**No action needed!** The sidebar now dynamically loads item types from your config.
-
-Your new item type will automatically appear in the sidebar with:
-- Correct icon and color
-- Proper routing
-- Active states
-- Hover effects
-
-**✅ Admin Complete!** All features work automatically:
-- List view with table
-- Detail view
-- Delete with impact assessment
-- Bulk seed import
-- Dashboard stats card
-- **Sidebar navigation** (automatic!)
-
-See [Admin Checklist](admin-checklist.md) for details.
 
 ---
 
-## ✅ Verification Checklist
+## 🧪 Testing a New Schema
 
-### Backend
-- [ ] Model created with polymorphic ratings
-- [ ] Model implements ItemWithImage interface (GetImageURL/SetImageURL)
-- [ ] All 9 endpoints working (5 public + 4 admin)
-- [ ] Image upload/delete endpoints working
-- [ ] Item helper updated (compile check, GetItemByType, ValidateItemType)
-- [ ] Migration creates table on startup
-- [ ] Seeding loads data with natural key matching
-- [ ] Admin endpoints require authentication
+### API Testing
 
-### Frontend
-- [ ] Model implements RateableItem interface
-- [ ] Service with 5-minute caching
-- [ ] Provider registered in item_provider.dart
-- [ ] Form strategy registered in registry
-- [ ] ItemProviderHelper updated (15 methods)
-- [ ] ItemTypeHelper updated (icon, color, support)
-- [ ] ItemTypeLocalizer updated (localization)
-- [ ] Home screen shows item card
-- [ ] Rating system works (automatic!)
-- [ ] Privacy settings work (automatic!)
-- [ ] Localization complete (FR/EN)
+```bash
+# 1. Verify schema appears in list
+curl http://localhost:8080/api/schemas | jq '.schemas[] | select(.name == "craft-beer")'
 
-### Admin Panel
-- [ ] Config entry added to item-types.ts
-- [ ] Color added to design-system.ts
-- [ ] ~~Navigation updated in sidebar~~ (automatic!)
-- [ ] List view works at /wine
-- [ ] Detail view works
-- [ ] Delete impact works
-- [ ] Seed form works
-- [ ] Dashboard shows "Total Wines" card
+# 2. Verify schema details
+curl http://localhost:8080/api/schemas/craft-beer | jq '.fields'
 
----
+# 3. Test validation - missing required field
+curl -X POST http://localhost:8080/api/items/craft-beer \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Test", "field_values": {}}'
+# Expected: 400 with validation error for missing brewery/style
 
-## 🎯 What Works Automatically
+# 4. Test validation - invalid type
+curl -X POST http://localhost:8080/api/items/craft-beer \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Test", "field_values": {"brewery": "Brew", "style": "IPA", "abv": "not-a-number"}}'
+# Expected: 400 with validation error for abv
 
-Thanks to the generic architecture and October 2025 refactorings:
+# 5. Test unique constraint
+curl -X POST http://localhost:8080/api/items/craft-beer \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Hazy IPA", "field_values": {"brewery": "Mountain Brew Co", "style": "IPA"}}'
+# Run twice - second should fail with duplicate error
 
-### Frontend
-- ✅ Rating CRUD (create, edit, delete, share)
-- ✅ Privacy settings (manage shared ratings, bulk actions)
-- ✅ Search & filtering (by all categories)
-- ✅ Item type filtering in privacy settings
-- ✅ Progressive item loading
-- ✅ Navigation (all routing)
-- ✅ Offline support
-- ✅ Community statistics
-- ✅ Theme support (light/dark)
+# 6. Test filtering
+curl "http://localhost:8080/api/items/craft-beer?filter[style]=IPA" \
+  -H "Authorization: Bearer $TOKEN"
 
-### Admin Panel
-- ✅ List view with table
-- ✅ Detail view with all fields
-- ✅ Delete impact assessment
-- ✅ Bulk seed import
-- ✅ JSON validation
-- ✅ Dashboard stat cards
-- ✅ Search and filtering
-- ✅ Loading states
-- ✅ Error handling
+# 7. Test search
+curl "http://localhost:8080/api/items/craft-beer?search=mountain" \
+  -H "Authorization: Bearer $TOKEN"
 
----
-
-## 📚 Quick Reference
-
-### Checklists
-- [Backend Checklist](backend-checklist.md) - Detailed backend steps
-- [Client Checklist](client-checklist.md) - Detailed frontend steps
-- [Admin Checklist](admin-checklist.md) - Detailed admin steps
-
-### Chili Sauce Example (Enum Fields)
-
-For item types with enum/select fields like **Spice Level**, follow this pattern:
-
-**Backend Model:**
-```go
-type ChiliSauce struct {
-    gorm.Model
-    Name        string   `gorm:"uniqueIndex:idx_chili_name_brand" json:"name"`
-    Brand       string   `gorm:"uniqueIndex:idx_chili_name_brand" json:"brand"`
-    SpiceLevel  string   `gorm:"not null" json:"spice_level"`  // Mild, Medium, Hot, Extra Hot, Extreme
-    Chilis      string   `json:"chilis"`  // e.g., "Habanero, Ghost Pepper"
-    Description string   `json:"description"`
-    ImageURL    *string  `json:"image_url,omitempty"`
-    Ratings     []Rating `gorm:"polymorphic:Item;"`
-}
+# 8. Test sorting
+curl "http://localhost:8080/api/items/craft-beer?sort=-created_at" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-**Frontend Form Strategy (Select Field):**
-```dart
-FormFieldConfig.select(
-  key: 'spice_level',
-  labelBuilder: (context) => context.l10n.spiceLevelLabel,
-  required: true,
-  options: [
-    SelectOption(value: 'Mild', labelBuilder: (context) => context.l10n.spiceLevelMild),
-    SelectOption(value: 'Medium', labelBuilder: (context) => context.l10n.spiceLevelMedium),
-    SelectOption(value: 'Hot', labelBuilder: (context) => context.l10n.spiceLevelHot),
-    SelectOption(value: 'Extra Hot', labelBuilder: (context) => context.l10n.spiceLevelExtraHot),
-    SelectOption(value: 'Extreme', labelBuilder: (context) => context.l10n.spiceLevelExtreme),
-  ],
-),
+### Client Testing
+
+1. **Home Screen:** New item type card appears with correct icon and color
+2. **List View:** Items display with badge, primary, and secondary fields
+3. **Detail View:** All fields render with correct types
+4. **Create Form:** Fields appear in correct order with validation
+5. **Edit Form:** Existing values populate correctly
+6. **Image Upload:** Works via standard image picker
+7. **Rating:** Rating system works automatically (polymorphic)
+8. **Sharing:** Privacy/sharing works automatically
+
+### Admin Testing
+
+1. **Schema List:** New schema appears with item count
+2. **Schema Editor:** All fields editable, validation works
+3. **Item Table:** Columns match unique fields, filtering works
+4. **Seed:** Bulk import works with deduplication
+5. **Delete Impact:** Shows correct ratings/users affected
+
+---
+
+## 🔄 Migrating from Legacy Item Types
+
+If you have existing item types created with the old hardcoded approach, migrate them to the dynamic schema system:
+
+### Step 1: Create Schema in Admin Panel
+
+Create a schema that matches the existing item type's fields.
+
+### Step 2: Run Migration Script
+
+Use the migration script at `apps/api/scripts/migrate_to_dynamic.go`:
+
+```bash
+cd apps/api
+go run scripts/migrate_to_dynamic.go
 ```
 
-**Key Points:**
-- Use `FormFieldConfig.select()` for enum fields
-- Provide localized labels for each option
-- Store the value (e.g., "Hot") not the label
-- Add validation in the strategy's `validate()` method
+This script:
+1. Creates schema records for existing item types
+2. Creates field records for each model field
+3. Migrates existing items to the new `items` table
+4. Creates EAV rows for filterable fields
+5. Creates initial schema versions
 
-### Related Documentation
-- [Form Strategy Pattern](/docs/client/architecture/form-strategy-pattern.md) - Strategy Pattern explained
-- [Rating System](/docs/features/rating-system.md) - How ratings work
-- [Privacy Model](/docs/features/privacy-model.md) - Privacy architecture
-- [Filtering System](/docs/features/filtering-system.md) - Search and filtering
+### Step 3: Verify Migration
+
+```bash
+# Check schema exists
+curl http://localhost:8080/api/schemas/cheese
+
+# Check items migrated
+curl http://localhost:8080/api/items/cheese \
+  -H "Authorization: Bearer $TOKEN"
+
+# Check field values
+curl http://localhost:8080/api/items/cheese/1 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Step 4: Clean Up (After Verification)
+
+Once verified, remove old code:
+- Old models (`cheeseModel.go`, `ginModel.go`, etc.)
+- Old controllers (`cheeseController.go`, `ginController.go`, etc.)
+- Old routes from `main.go`
+- Old AutoMigrate entries from `database.go`
+- Old seeding from `seed.go`
+
+See the [Migration Process Guide](/docs/guides/migration-process.md) for detailed steps.
+
+---
+
+## 📚 Related Documentation
+
+- [Schema Management Guide](/docs/admin/schema-management.md) - Detailed admin UI guide
+- [API Endpoints Reference](/docs/api/endpoints.md) - Dynamic schema and item API
+- [Dynamic Schema Design](/openspec/changes/dynamic-item-schema/design.md) - Technical architecture
+- [Client Architecture](/docs/client/README.md) - Flutter client schema discovery
 
 ---
 
 ## 💡 Pro Tips
 
-1. **Work sequentially:** Backend → Frontend → Admin
-2. **Test incrementally:** Don't wait until everything is done
-3. **Copy templates:** Use gin files as templates (most recent)
-4. **Natural keys:** Always use name + origin for seeding
-5. **Localization:** Run `flutter gen-l10n` after adding .arb strings
-6. **Strategy pattern:** All form logic in one place (wine_form_strategy.dart)
-7. **Cache clearing:** Clear wine cache in `createItem()`, `updateItem()`, and `deleteItem()` using `clearCache()`
-8. **Singleton services:** Use factory constructors that return singleton instances for caching
+1. **Start simple:** Create a basic schema first, then iterate
+2. **Test early:** Create a few items manually before seeding
+3. **Use select fields:** Prefer select over text for standardized values
+4. **Plan unique fields:** Configure before bulk import to avoid duplicates
+5. **Choose colors wisely:** Distinct colors help users identify item types quickly
+6. **Leverage display hints:** Badge + primary + secondary make items visually informative
+7. **Validate seed data:** Use the validate endpoint before importing
+8. **Monitor client cache:** Schema changes take up to 5 minutes to reflect in client apps
 
 ---
 
-## 🐛 Common Issues
-
-**Backend:**
-- "Duplicate entry" → Normal, seeding skips existing items
-- "404 on /api/wine/all" → Check routes registered, restart API
-
-**Frontend:**
-- "No form strategy registered" → Add to item_form_strategy_registry.dart
-- "Method 'wine' isn't defined" → Add wine to app_en.arb/app_fr.arb + run gen-l10n
-- "Search hints showing wrong type" → Update ItemTypeLocalizer.getLocalizedItemType()
-- "Images not displaying in item list" → Add wine case to _buildItemCard() in item_type_screen.dart with import
-- "Routes not working / 404 errors" → Check RouteNames constants have leading slash (e.g., '/wine/create' not 'wineCreate')
-
-**Admin:**
-- Config not loading → Check syntax in item-types.ts
-- Routes 404 → Backend endpoints must exist first
-
----
-
-**Total implementation time: ~2 hours | Maintainable, scalable, production-ready** 🚀
+**Adding a new item type now takes 5-10 minutes instead of 2 hours. No code deployment required.** 🚀

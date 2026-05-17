@@ -123,13 +123,61 @@ Docker images are published automatically to GHCR:
 - **CI/CD:** GitHub Actions + GHCR (GitHub Container Registry)
 - **Release Automation:** semantic-release + Conventional Commits
 
+## 🧩 Dynamic Schema System
+
+À la carte uses a **dynamic schema system** that allows administrators to define new consumable types through the admin panel without code changes.
+
+### Key Features
+
+- **Schema Management UI** - Create, edit, and manage item type schemas in the admin panel
+- **Dynamic API Endpoints** - `/api/items/:type` automatically adapts to any active schema
+- **Client Discovery** - Flutter client fetches schemas at startup and renders forms dynamically
+- **Validation Engine** - Server-side validation based on schema-defined rules
+- **Hybrid Storage** - JSON column for fast reads + EAV pattern for efficient filtering
+- **Schema Versioning** - Immutable versions preserve data integrity as schemas evolve
+
+### Adding a New Item Type
+
+```bash
+# No code changes needed! Just use the admin panel:
+# 1. Go to /admin/schemas
+# 2. Click "New Schema"
+# 3. Define fields, validation, and display hints
+# 4. Save - the new type is immediately available in API and client
+```
+
+See [Schema Management Guide](/docs/admin/schema-management.md) for detailed instructions.
+
+### Supported Field Types
+
+- `text` - Single-line text
+- `textarea` - Multi-line text
+- `number` - Numeric values with min/max validation
+- `select` - Dropdown with predefined options
+- `checkbox` - Boolean toggles
+- `enum` - Categorized selections
+
+### Migration from Legacy System
+
+Existing deployments with hardcoded item types can migrate to the dynamic schema system:
+
+```bash
+cd apps/api
+go run scripts/migrate_to_dynamic.go
+```
+
+See [Migration Process Guide](/docs/guides/migration-process.md) for complete instructions.
+
 ## 📚 Documentation
 
 - [CI/CD Setup Guide](./docs/operations/ci-cd-setup.md) ⭐ **UPDATED!**
-- [Local Development Guide](./docs/local-development.md)
-- [API Documentation](./apps/api/README.md)
-- [Client Documentation](./apps/client/README.md)
-- [Admin Documentation](./apps/admin/README.md)
+- [Local Development Guide](./docs/getting-started/local-development.md)
+- [API Documentation](./docs/api/README.md)
+- [Client Documentation](./docs/client/README.md)
+- [Admin Documentation](./docs/admin/README.md)
+- [Schema Management Guide](./docs/admin/schema-management.md) - Admin UI for managing item types
+- [Adding New Item Types](./docs/guides/adding-new-item-types.md) - Dynamic schema guide
+- [Migration Process](./docs/guides/migration-process.md) - Migrate from legacy to dynamic schemas
 
 ## 🔧 Monorepo Tools
 
