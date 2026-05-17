@@ -10,6 +10,7 @@ import '../../services/rating_service.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/notification_helper.dart';
+import '../common/star_rating_display.dart';
 import '../../utils/safe_navigation.dart';
 import '../../routes/route_names.dart';
 import '../rating/share_rating_dialog.dart';
@@ -193,15 +194,10 @@ class MyRatingSection extends ConsumerWidget {
                     Row(
                       children: [
                         // Star rating display
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(5, (index) {
-                            return Icon(
-                              index < myRating!.grade.round() ? Icons.star : Icons.star_border,
-                              size: AppConstants.iconM,
-                              color: AppConstants.primaryColor,
-                            );
-                          }),
+                        StarRatingDisplay(
+                          rating: myRating!.grade,
+                          starSize: AppConstants.iconM,
+                          color: AppConstants.primaryColor,
                         ),
                         const SizedBox(width: AppConstants.spacingS),
                         Container(
