@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/davidcharbonnier/alacarte-api/controllers"
+	"github.com/davidcharbonnier/alacarte-api/internal/migration"
 	"github.com/davidcharbonnier/alacarte-api/services"
 	"github.com/davidcharbonnier/alacarte-api/utils"
 	"github.com/gin-contrib/cors"
@@ -21,8 +22,20 @@ func init() {
 	// Initialize secure logger
 	utils.InitLogger()
 
+	// Initialize database and run base migrations
 	utils.MySQLConnect()
 	utils.RunMigrations()
+}
+
+// gin code
+func main() {
+	// Check for self-healing migration mode (Cloud Run Job mode)
+	if os.Getenv("RUN_SELF_HEALING_MIGRATION") == "true" {
+		fmt.Println("🚀 Running in migration mode")
+		runSelfHealingMigration()
+		return
+	}
+
 	utils.InitStorageClient()
 
 	// Load schemas into registry
@@ -32,10 +45,7 @@ func init() {
 	} else {
 		fmt.Printf("Loaded %d schemas into registry\n", len(schemaRegistry.GetAllSchemas()))
 	}
-}
 
-// gin code
-func main() {
 	// Set gin mode from env
 	if ginMode, defined := os.LookupEnv("GIN_MODE"); defined {
 		gin.SetMode(ginMode)
@@ -326,6 +336,24 @@ func main() {
 	}
 
 	router.Run()
+}
+
+// runSelfHealingMigration executes the migration pipeline with verification and rollback
+func runSelfHealingMigration() {
+	fmt.Println("=============================================")
+	fmt.Println("  A LA CARTE - SELF-HEALING MIGRATION")
+	fmt.Println("=============================================\n")
+
+	if err := migration.RunSelfHealingMigration(); err != nil {
+		fmt.Println("\n❌ Migration failed:", err)
+		migration.PerformRollback()
+		os.Exit(1)
+	}
+
+	fmt.Println("\n=============================================")
+	fmt.Println("  MIGRATION SUCCESSFUL")
+	fmt.Println("=============================================\n")
+	os.Exit(0)
 }
 
 // Setup CORS for frontend integration
