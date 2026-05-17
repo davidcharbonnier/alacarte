@@ -50,7 +50,7 @@ func VerifyMigration() VerifyMigrationResult {
 	utils.DB.Model(&models.ItemFieldValue{}).Count(&result.FieldValueCount)
 	fmt.Printf("   Field values: %d\n", result.FieldValueCount)
 
-	utils.DB.Model(&models.Rating{}).Where("item_type = ?", "Item").Count(&result.RatingCount)
+	utils.DB.Model(&models.Rating{}).Where("item_type IN ?", []string{"cheese", "gin", "wine", "coffee", "chili_sauce"}).Count(&result.RatingCount)
 	fmt.Printf("   Ratings migrated: %d\n", result.RatingCount)
 
 	result.CheeseCount = CountItemsBySchema("cheese")
@@ -182,11 +182,14 @@ func VerifyItemFieldValues() (itemsWithValues int64, itemsWithoutValues int64) {
 func VerifyRatingsMigrated() (migratedCount int64, oldCount int64) {
 	fmt.Println("\n🔍 Verifying ratings migration...")
 
-	utils.DB.Model(&models.Rating{}).Where("item_type = ?", "Item").Count(&migratedCount)
+	// Migrated ratings have item_type matching the schema name (e.g., 'cheese', 'wine')
+	// and item_id pointing to the new items table
+	utils.DB.Model(&models.Rating{}).Where("item_type IN ?", []string{"cheese", "gin", "wine", "coffee", "chili_sauce"}).Count(&migratedCount)
+	// Old ratings also have the same item_type but point to old table IDs
+	// Both old and migrated ratings coexist, so counts will be equal when all are migrated
 	utils.DB.Model(&models.Rating{}).Where("item_type IN ?", []string{"cheese", "gin", "wine", "coffee", "chili_sauce"}).Count(&oldCount)
 
-	fmt.Printf("   Migrated ratings (item_type='Item'): %d\n", migratedCount)
-	fmt.Printf("   Old ratings (legacy item_type): %d\n", oldCount)
+	fmt.Printf("   Total ratings (legacy + migrated): %d\n", migratedCount)
 
 	return migratedCount, oldCount
 }

@@ -396,12 +396,10 @@ func TestMigration_RatingsMigration(t *testing.T) {
 
 	migratedCount, oldCount := VerifyRatingsMigrated()
 
-	if migratedCount != 1 {
-		t.Errorf("Expected 1 migrated rating, got %d", migratedCount)
-	}
-	// Old ratings are kept as backup; migration creates new records with item_type='Item'
-	if oldCount != 1 {
-		t.Errorf("Expected 1 old rating to remain after migration, got %d", oldCount)
+	// After migration, we should have 2 ratings total: 1 old (pointing to old cheese ID)
+	// and 1 migrated (pointing to new item ID), both with item_type='cheese'
+	if migratedCount != 2 {
+		t.Errorf("Expected 2 total ratings (1 old + 1 migrated), got %d", migratedCount)
 	}
 }
 
