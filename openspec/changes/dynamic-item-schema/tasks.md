@@ -171,11 +171,11 @@
 
 ## 14. Documentation
 
-- [ ] 14.1 Update API documentation for new endpoints
-- [ ] 14.2 Create schema management guide for administrators
-- [ ] 14.3 Update developer documentation for adding new item types
-- [ ] 14.4 Document migration process for existing deployments
-- [ ] 14.5 Update README with dynamic schema information
+- [x] 14.1 Update API documentation for new endpoints
+- [x] 14.2 Create schema management guide for administrators
+- [x] 14.3 Update developer documentation for adding new item types
+- [x] 14.4 Document migration process for existing deployments
+- [x] 14.5 Update README with dynamic schema information
 
 ## 15. Deployment
 
