@@ -508,38 +508,33 @@ func migrateItemToDynamic(name string, imageURL *string, schemaID, versionID uin
 	}
 	MigratedItems++
 
+	// Log the mapping for potential rollback
+	migrationLog := models.MigrationLog{
+		OldItemID: oldID,
+		NewItemID: int(newItem.ID),
+		ItemType:  oldItemType,
+	}
+	if err := utils.DB.Create(&migrationLog).Error; err != nil {
+		log.Printf("      ⚠️ Failed to log migration mapping: %v", err)
+	}
+
 	// Migrate ratings
 	return migrateRatings(newItem.ID, oldID, oldItemType)
 }
 
-// migrateRatings migrates ratings from old item type to new dynamic item
+// migrateRatings updates existing ratings in place to point to the new item ID
 func migrateRatings(newItemID uint, oldItemID int, oldItemType string) error {
-	var ratings []models.Rating
-	if err := utils.DB.Where("item_type = ? AND item_id = ?", oldItemType, oldItemID).Find(&ratings).Error; err != nil {
-		return nil // No ratings to migrate
+	result := utils.DB.Model(&models.Rating{}).
+		Where("item_type = ? AND item_id = ?", oldItemType, oldItemID).
+		Update("item_id", int(newItemID))
+	
+	if result.Error != nil {
+		log.Printf("      ✗ Failed to migrate ratings: %v", result.Error)
+		return result.Error
 	}
-
-	for _, rating := range ratings {
-		// Check if this rating was already migrated for this item
-		var existingCount int64
-		utils.DB.Model(&models.Rating{}).Where("item_type = ? AND item_id = ? AND user_id = ? AND score = ?", 
-			"Item", int(newItemID), rating.UserID, rating.Grade).Count(&existingCount)
-		if existingCount > 0 {
-			continue // Already migrated
-		}
-
-		newRating := models.Rating{
-			ItemType: "Item",
-			ItemID:   int(newItemID),
-			UserID:   rating.UserID,
-			Grade:    rating.Grade,
-			Note:     rating.Note,
-		}
-		if err := utils.DB.Create(&newRating).Error; err != nil {
-			log.Printf("      ✗ Failed to migrate rating: %v", err)
-			continue
-		}
-		MigratedRatings++
+	
+	if result.RowsAffected > 0 {
+		MigratedRatings += int(result.RowsAffected)
 	}
 	return nil
 }
@@ -578,10 +573,31 @@ func countOldItems() int64 {
 	return cheeseCount + ginCount + wineCount + coffeeCount + chiliSauceCount
 }
 
-// PerformRollback deletes all migrated data from the new schema tables
+// PerformRollback restores ratings to their original item IDs and deletes migrated data
 func PerformRollback() {
 	fmt.Println("⚠️  Performing rollback...")
-	tables := []string{"ratings", "item_field_values", "items", "schema_versions", "item_type_fields", "item_type_schemas"}
+
+	// Step 1: Restore ratings to their original item IDs using migration log
+	var logs []models.MigrationLog
+	if err := utils.DB.Find(&logs).Error; err != nil {
+		log.Printf("   ✗ Failed to read migration logs: %v", err)
+	} else {
+		restoredCount := int64(0)
+		for _, logEntry := range logs {
+			result := utils.DB.Model(&models.Rating{}).
+				Where("item_id = ?", logEntry.NewItemID).
+				Update("item_id", logEntry.OldItemID)
+			if result.Error != nil {
+				log.Printf("   ✗ Failed to restore ratings for item %d: %v", logEntry.NewItemID, result.Error)
+			} else {
+				restoredCount += result.RowsAffected
+			}
+		}
+		fmt.Printf("   Restored %d ratings to original item IDs\n", restoredCount)
+	}
+
+	// Step 2: Delete migrated data from new schema tables
+	tables := []string{"migration_logs", "item_field_values", "items", "schema_versions", "item_type_fields", "item_type_schemas"}
 	for _, table := range tables {
 		result := utils.DB.Exec("DELETE FROM " + table)
 		if result.Error != nil {
