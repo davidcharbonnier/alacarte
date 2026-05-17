@@ -342,17 +342,17 @@ func main() {
 func runSelfHealingMigration() {
 	fmt.Println("=============================================")
 	fmt.Println("  A LA CARTE - SELF-HEALING MIGRATION")
-	fmt.Println("=============================================\n")
+	fmt.Println("=============================================")
 
 	if err := migration.RunSelfHealingMigration(); err != nil {
-		fmt.Println("\n❌ Migration failed:", err)
+		fmt.Println("❌ Migration failed:", err)
 		migration.PerformRollback()
 		os.Exit(1)
 	}
 
-	fmt.Println("\n=============================================")
+	fmt.Println("=============================================")
 	fmt.Println("  MIGRATION SUCCESSFUL")
-	fmt.Println("=============================================\n")
+	fmt.Println("=============================================")
 	os.Exit(0)
 }
 
