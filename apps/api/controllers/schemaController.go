@@ -31,19 +31,6 @@ func parseFieldOptionsValue(options *string) interface{} {
 	return result
 }
 
-func DebugOptions(c *gin.Context) {
-	var field models.ItemTypeField
-	if err := utils.DB.Where("`key` = ? AND schema_id = (SELECT id FROM item_type_schemas WHERE name = ?)", "color", "wine").First(&field).Error; err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(200, gin.H{
-		"options_ptr": fmt.Sprintf("%p", field.Options),
-		"options_val": *field.Options,
-		"options_hex": fmt.Sprintf("%x", *field.Options),
-	})
-}
-
 func parseFieldValidationValue(validation *string) interface{} {
 	if validation == nil || *validation == "" || *validation == "null" {
 		return []interface{}{}
@@ -82,6 +69,24 @@ func SchemaList(c *gin.Context) {
 	includeInactive := c.Query("include_inactive") == "true"
 
 	var response []map[string]interface{}
+
+	// Pre-fetch item counts in a single query to avoid N+1
+	var countMap map[uint]int64
+	if includeCounts {
+		type schemaCount struct {
+			SchemaID uint
+			Count    int64
+		}
+		var counts []schemaCount
+		utils.DB.Model(&models.Item{}).
+			Select("schema_id, COUNT(*) as count").
+			Group("schema_id").
+			Find(&counts)
+		countMap = make(map[uint]int64, len(counts))
+		for _, c := range counts {
+			countMap[c.SchemaID] = c.Count
+		}
+	}
 
 	if includeInactive {
 		schemas, err := schemaRegistry.GetAllSchemasIncludingInactive()
@@ -125,9 +130,7 @@ func SchemaList(c *gin.Context) {
 			}
 
 			if includeCounts {
-				var count int64
-				utils.DB.Model(&models.Item{}).Where("schema_id = ?", schema.ID).Count(&count)
-				schemaData["item_count"] = count
+				schemaData["item_count"] = countMap[schema.ID]
 			}
 
 			response = append(response, schemaData)
@@ -167,9 +170,7 @@ func SchemaList(c *gin.Context) {
 			}
 
 			if includeCounts {
-				var count int64
-				utils.DB.Model(&models.Item{}).Where("schema_id = ?", cached.Schema.ID).Count(&count)
-				schemaData["item_count"] = count
+				schemaData["item_count"] = countMap[cached.Schema.ID]
 			}
 
 			response = append(response, schemaData)
@@ -456,31 +457,31 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string, isIna
 	tx := utils.DB.Begin()
 
 	if body.DisplayName != "" {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("display_name", body.DisplayName)
+		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("display_name", body.DisplayName)
 	}
 	if body.PluralName != "" {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("plural_name", body.PluralName)
+		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("plural_name", body.PluralName)
 	}
 	if body.Icon != "" {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("icon", body.Icon)
+		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("icon", body.Icon)
 	}
 	if body.Color != "" {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("color", body.Color)
+		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("color", body.Color)
 	}
 	if body.IsActive != nil {
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("is_active", *body.IsActive)
+		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("is_active", *body.IsActive)
 	}
 	if body.UniqueFields != nil {
 		uniqueFieldsJSON, _ := json.Marshal(body.UniqueFields)
-		utils.DB.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("unique_fields", string(uniqueFieldsJSON))
+		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("unique_fields", string(uniqueFieldsJSON))
 	}
 
 	if body.Fields != nil {
 		var currentVersion int
-		utils.DB.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Select("MAX(version)").Scan(&currentVersion)
+		tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Select("MAX(version)").Scan(&currentVersion)
 		newVersion := currentVersion + 1
 
-		utils.DB.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Update("is_active", false)
+		tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Update("is_active", false)
 
 		version := models.SchemaVersion{
 			SchemaID: schemaID,
@@ -541,7 +542,7 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string, isIna
 			}
 
 			if err == nil {
-				utils.DB.Model(&existingField).Updates(map[string]interface{}{
+				tx.Model(&existingField).Updates(map[string]interface{}{
 					"label":      field.Label,
 					"field_type": field.FieldType,
 					"required":   field.Required,

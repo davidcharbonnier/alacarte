@@ -368,7 +368,8 @@ func DynamicItemSeed(c *gin.Context) {
 
 	userID := utils.GetCurrentUserID(c)
 	if userID == 0 {
-		userID = 1
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
 	}
 
 	result := utils.SeedResult{Errors: []string{}}
