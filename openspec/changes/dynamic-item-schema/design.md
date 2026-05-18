@@ -418,6 +418,66 @@ func TestSchemaCreate(t *testing.T) {
 }
 ```
 
+### Decision 9: Rating Foreign Key Migration
+
+**Choice:** Replace the polymorphic `item_type`/`item_id` pair on ratings with a direct foreign key to `items.id` with `ON DELETE CASCADE`.
+
+**Alternatives Considered:**
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Keep polymorphic** | No migration needed | Redundant column, GORM preload broken |
+| **FK + CASCADE** | Data integrity, simpler queries, auto-cleanup | Requires migration, ratings deleted with item |
+| **FK + RESTRICT** | Prevents accidental item deletion | Manual cleanup required, more complex |
+
+**Rationale:** FK with CASCADE because:
+1. `item_type` is redundant — `item_id` alone uniquely identifies an item in the unified `items` table
+2. GORM's polymorphic preload (`Item.Ratings`) is already broken (generates `WHERE item_type = 'items'` but data has `'cheese'`, `'gin'`, etc.) — the codebase never uses it
+3. Item deletion is an admin action with a deletion impact screen before confirmation — CASCADE is safe
+4. All rating queries currently filter by both `item_type` AND `item_id` — removing `item_type` simplifies to `WHERE item_id = ?`
+
+**Migration Strategy (3-phase):**
+
+```
+Phase 1: Code + Model (zero-downtime)
+  • Change Rating.ItemType → Rating.Item (FK to items)
+  • Keep ItemType as gorm:"-" to prevent AutoMigrate from dropping column
+  • Remove item_type from all queries, request bodies, URL params
+  • Add FK constraint via AutoMigrate
+
+Phase 2: Soak (N days)
+  • Verify all rating queries resolve correctly
+  • Monitor for orphaned ratings (none expected)
+  • Confirm FK CASCADE behaves as expected on item delete
+
+Phase 3: DB Cleanup (with legacy table removal)
+  • DROP INDEX idx_ratings_item ON ratings
+  • ALTER TABLE ratings DROP COLUMN item_type
+  • Remove ItemType gorm:"-" field from Rating struct
+```
+
+**Index changes:**
+```
+Before:  idx_ratings_user_item (user_id, item_type, item_id)
+         idx_ratings_item       (item_type, item_id)
+
+After:   idx_ratings_user_item (user_id, item_id)
+         idx_ratings_item       (item_id)
+```
+
+**API endpoint changes:**
+```
+Before:  GET  /api/rating/:type/:id          → RatingByItem
+         GET  /api/stats/community/:type/:id  → GetCommunityStats
+
+After:   GET  /api/rating/:id                → RatingByItem
+         GET  /api/stats/community/:id       → GetCommunityStats
+```
+
+**Client impact:**
+- `Rating` model drops `itemType` field — item type derived from item's schema when needed
+- `RatingByAuthor`/`RatingByViewer` `?type=` filter removed (client never used it)
+- `RatingByItem` and `GetCommunityStats` URL patterns simplified
+
 ## Risks / Trade-offs
 
 ### Risk 1: EAV Query Performance

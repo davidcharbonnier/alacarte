@@ -33,6 +33,9 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
   // Track loaded items by type - automatically handles all item types
   final Map<String, Set<int>> _loadedItemIds = {};
 
+  // Inverted lookup: itemId -> itemType (derived from loaded items)
+  final Map<int, String> _itemTypeById = {};
+
   @override
   void initState() {
     super.initState();
@@ -382,9 +385,11 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     WidgetRef ref,
     List<Rating> sharedRatings,
   ) {
-    // Get available item types
+    // Get available item types (derived from loaded items)
     final availableItemTypes = sharedRatings
-        .map((r) => r.itemType)
+        .map((r) => _getItemTypeForRating(r))
+        .where((t) => t != null)
+        .cast<String>()
         .toSet()
         .toList();
     availableItemTypes.sort();
@@ -393,7 +398,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     final filteredRatings = _selectedItemTypeFilter == 'all'
         ? sharedRatings
         : sharedRatings
-              .where((r) => r.itemType == _selectedItemTypeFilter)
+              .where((r) => _getItemTypeForRating(r) == _selectedItemTypeFilter)
               .toList();
 
     // Sort ratings alphabetically by item display title (A to Z, case-insensitive)
@@ -418,6 +423,7 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
               rating: rating,
               getDisplayTitle: (rating) =>
                   _getLocalizedRatingDisplayTitle(context, rating),
+              getItemType: _getItemTypeForRating,
               getItemTypeDisplayName: _getItemTypeDisplayName,
               onManageSharing: () =>
                   _showIndividualSharingDialog(context, ref, rating),
@@ -433,10 +439,13 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     List<Rating> sharedRatings,
     List<String> availableItemTypes,
   ) {
-    // Count ratings by type
+    // Count ratings by type (derived from loaded items)
     final ratingCounts = <String, int>{};
     for (final rating in sharedRatings) {
-      ratingCounts[rating.itemType] = (ratingCounts[rating.itemType] ?? 0) + 1;
+      final itemType = _getItemTypeForRating(rating);
+      if (itemType != null) {
+        ratingCounts[itemType] = (ratingCounts[itemType] ?? 0) + 1;
+      }
     }
 
     return Wrap(
@@ -538,11 +547,14 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
 
     for (final rating in sharedRatings) {
       if (_isItemDataMissing(rating)) {
-        final loadedIds = _loadedItemIds[rating.itemType] ?? <int>{};
+        final itemType = _getItemTypeForRating(rating);
+        if (itemType == null) continue; // Can't determine type yet, skip
+
+        final loadedIds = _loadedItemIds[itemType] ?? <int>{};
 
         if (!loadedIds.contains(rating.itemId)) {
           missingItemsByType
-              .putIfAbsent(rating.itemType, () => <int>{})
+              .putIfAbsent(itemType, () => <int>{})
               .add(rating.itemId);
         }
       }
@@ -574,6 +586,10 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
       ) {
         // Track loaded items after successful load
         _loadedItemIds.putIfAbsent(itemType, () => <int>{}).addAll(itemIds);
+        // Build inverted lookup for item type derivation
+        for (final id in itemIds) {
+          _itemTypeById[id] = itemType;
+        }
       });
     });
 
@@ -581,28 +597,50 @@ class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
     await Future.wait(futures);
   }
 
+  /// Derive item type from item ID using loaded items lookup
+  String? _getItemTypeForRating(Rating rating) {
+    // First check inverted map from loaded items
+    if (_itemTypeById.containsKey(rating.itemId)) {
+      return _itemTypeById[rating.itemId];
+    }
+    // Fallback: search all item providers
+    for (final itemType in _loadedItemIds.keys) {
+      final items = ItemProviderHelper.getItems(ref, itemType);
+      if (items.any((item) => item.id == rating.itemId)) {
+        _itemTypeById[rating.itemId] = itemType;
+        return itemType;
+      }
+    }
+    return null;
+  }
+
   bool _isItemDataMissing(Rating rating) {
+    final itemType = _getItemTypeForRating(rating);
+    if (itemType == null) return true;
     // Check if item exists in cache using helper
-    final items = ItemProviderHelper.getItems(ref, rating.itemType);
+    final items = ItemProviderHelper.getItems(ref, itemType);
     return !items.any((item) => item.id == rating.itemId);
   }
 
   // Display title methods
   String _getLocalizedRatingDisplayTitle(BuildContext context, Rating rating) {
-    // Try to get item from cache using helper (works for any item type)
-    final items = ItemProviderHelper.getItems(ref, rating.itemType);
-    final item = items.where((i) => i.id == rating.itemId).firstOrNull;
+    final itemType = _getItemTypeForRating(rating);
 
-    if (item != null) {
-      // Use generic displayTitle from RateableItem interface
-      return item.displayTitle;
+    // Try to get item from cache using helper (works for any item type)
+    if (itemType != null) {
+      final items = ItemProviderHelper.getItems(ref, itemType);
+      final item = items.where((i) => i.id == rating.itemId).firstOrNull;
+
+      if (item != null) {
+        // Use generic displayTitle from RateableItem interface
+        return item.displayTitle;
+      }
     }
 
     // Fallback with localized item type
-    final localizedType = ItemTypeLocalizer.getLocalizedItemType(
-      context,
-      rating.itemType,
-    );
+    final localizedType = itemType != null
+        ? ItemTypeLocalizer.getLocalizedItemType(context, itemType)
+        : 'Item';
 
     if (_isLoadingItemData && _isItemDataMissing(rating)) {
       return '$localizedType #${rating.itemId} (${context.l10n.loading})';

@@ -200,3 +200,47 @@
 - [ ] 15.19 Remove old table drops from `reset_database.go`
 - [ ] 15.20 Remove legacy JSON key mapping from `dynamicItemController.go` seed/validate
 - [ ] 15.21 Remove old item type hardcoded config from admin `item-types.ts`
+
+## 16. Rating item_type Removal
+
+### Phase 1: Model & Code Changes
+
+- [x] 16.1 Change `Rating.ItemType string` to `Rating.Item Item` with FK + CASCADE in `ratingModel.go`
+- [x] 16.2 Keep `ItemType` as `gorm:"-"` on Rating struct (prevents AutoMigrate from dropping column prematurely)
+- [x] 16.3 Change `Item.Ratings` from `polymorphic:Item` to `foreignKey:ItemID` in `itemModel.go`
+- [x] 16.4 Remove `ItemType` from `RatingCreate` request body and rating struct assignment
+- [x] 16.5 Remove `itemType` query param and WHERE clause from `RatingByAuthor`
+- [x] 16.6 Remove `itemType` query param and WHERE clause from `RatingByViewer`
+- [x] 16.7 Change `RatingByItem` route from `/:type/:id` to `/:id`, remove `itemType` from WHERE
+- [x] 16.8 Remove `ItemType` from `RatingEdit` request body and `Updates()` call
+- [x] 16.9 Change `GetCommunityStats` route from `/community/:type/:id` to `/community/:id`, remove `item_type` from WHERE and response
+- [x] 16.10 Remove `item_type = ?` from rating count queries in `query_builder.go:488-492`
+- [x] 16.11 Update route registrations in `main.go` for rating and stats endpoints
+- [x] 16.12 Remove `item_type` from legacy controller delete operations (cheese, gin, wine, coffee, chili-sauce) — these controllers are deleted in task 15.15 anyway
+
+### Phase 1: Client Changes
+
+- [x] 16.13 Remove `itemType` field from `Rating` model in `rating.dart` (fromJson, toJson, toCreateJson, toUpdateJson)
+- [x] 16.14 Remove `isCheeseRating` and `displayTitle` extensions that depend on `itemType`
+- [x] 16.15 Update `api_config.dart`: `ratingByItem(type, id)` → `ratingByItem(id)`, `communityStats(type, id)` → `communityStats(id)`
+- [x] 16.16 Update `rating_service.dart`: remove `itemType` param from `getRatingsByItem()`, `getItemRatingStats()`, `getCheeseRatings()`, `getCheeseRatingStats()`; remove `itemType` validation in `validateRating()`
+- [x] 16.17 Update `community_stats_provider.dart`: remove `itemType` from `CommunityStatsParams` and `CommunityStatsMapExtension.itemType` getter
+- [x] 16.18 Update `rating_create_screen.dart`: stop passing `itemType` to `createRating()`
+- [x] 16.19 Update `rating_provider.dart`: stop passing `itemType` in `createRating()` and `updateRating()`; derive item type from item lookup for cache invalidation in `updateRating()` (line 327) and `deleteRating()` (line 372)
+- [x] 16.20 Update `item_type_screen.dart`: replace all `r.itemType == widget.itemType` filters (~20 occurrences) with item ID set membership checks (`cheeseItemIds.contains(r.itemId)`)
+- [x] 16.21 Update `api_service.dart`: remove `itemType` param from `getCommunityStats()` and `clearCommunityStatsCache()`
+- [x] 16.22 Audit `privacy_settings_screen.dart`, `my_rating_section.dart`, `rateable_item.dart` for `Rating.itemType` references (note: `item.itemType` from RateableItem interface is unaffected)
+
+### Phase 2: Verification
+
+- [x] 16.23 Verify FK constraint exists: `ratings.item_id → items.id ON DELETE CASCADE`
+- [x] 16.24 Verify no orphaned ratings (all `item_id` values exist in `items` table)
+- [x] 16.25 Run full test suite: `go test ./...` in API, `flutter test` in client
+- [x] 16.26 Manual smoke test: create rating, edit rating, delete item (verify cascade), view community stats
+
+### Phase 3: Database Cleanup (with legacy table removal — tasks 15.12-15.21)
+
+- [ ] 16.27 Drop composite index: `DROP INDEX idx_ratings_item ON ratings`
+- [ ] 16.28 Drop column: `ALTER TABLE ratings DROP COLUMN item_type`
+- [ ] 16.29 Remove `ItemType` `gorm:"-"` field from Rating struct
+- [ ] 16.30 Verify new indexes are in place: `idx_ratings_user_item (user_id, item_id)`, `idx_ratings_item (item_id)`

@@ -51,6 +51,17 @@ Adding a new item type currently requires coordinated changes across three codeb
 - New tables: `item_type_schemas`, `item_type_fields`, `items`, `item_field_values`, `schema_versions`
 - Migration: Convert existing item data to EAV format
 - Remove: Individual item tables (cheeses, gins, wines, coffees, chili_sauces) after migration
+- Remove: `item_type` column and composite index from `ratings` table after verification
+- Add: FK constraint `ratings.item_id → items.id` with CASCADE delete
 
 **Rating System**:
-- Polymorphic `ItemType` field in ratings remains compatible (now references schema name instead of table name)
+- `apps/api/models/ratingModel.go`: Replace `ItemType string` with `Item Item` FK, keep field as `gorm:"-"` in Phase 1
+- `apps/api/models/itemModel.go`: Change `polymorphic:Item` to `foreignKey:ItemID`
+- `apps/api/controllers/ratingController.go`: Remove `item_type` from all request bodies, WHERE clauses, and URL params
+- `apps/api/services/query_builder.go`: Remove `item_type = ?` from rating count queries
+- `apps/api/main.go`: Update rating and stats route definitions
+- `apps/client/lib/models/rating.dart`: Remove `itemType` field and extensions
+- `apps/client/lib/config/api_config.dart`: Update rating and stats URL patterns
+- `apps/client/lib/services/rating_service.dart`: Update method signatures
+- `apps/client/lib/providers/community_stats_provider.dart`: Remove `itemType` from params
+- Database: Add FK constraint, drop `item_type` column and composite index in Phase 3

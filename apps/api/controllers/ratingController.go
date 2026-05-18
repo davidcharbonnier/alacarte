@@ -12,10 +12,9 @@ import (
 
 func RatingCreate(c *gin.Context) {
 	var body struct {
-		Grade    float32 `json:"grade" binding:"required"`
-		Note     string  `json:"note"`
-		ItemID   int     `json:"item_id" binding:"required"`
-		ItemType string  `json:"item_type" binding:"required"`
+		Grade  float32 `json:"grade" binding:"required"`
+		Note   string  `json:"note"`
+		ItemID int     `json:"item_id" binding:"required"`
 	}
 	c.Bind(&body)
 
@@ -28,11 +27,10 @@ func RatingCreate(c *gin.Context) {
 	}
 
 	rating := models.Rating{
-		Grade:    body.Grade,
-		Note:     body.Note,
-		UserID:   int(userID),
-		ItemID:   body.ItemID,
-		ItemType: body.ItemType,
+		Grade:  body.Grade,
+		Note:   body.Note,
+		UserID: int(userID),
+		ItemID: body.ItemID,
 	}
 
 	if err := utils.DB.Create(&rating).Error; err != nil {
@@ -61,8 +59,6 @@ func RatingByAuthor(c *gin.Context) {
 		return
 	}
 
-	itemType := c.DefaultQuery("type", "%")
-
 	// get our list of ratings for a specific id
 	var ratings []models.Rating
 	if err := utils.DB.
@@ -77,7 +73,6 @@ func RatingByAuthor(c *gin.Context) {
 		Where(models.Rating{
 			UserID: id,
 		}).
-		Where("`ratings`.`item_type` LIKE ?", itemType).
 		Find(&ratings).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -101,8 +96,6 @@ func RatingByViewer(c *gin.Context) {
 		return
 	}
 
-	itemType := c.DefaultQuery("type", "%")
-
 	// Get ratings where user is EITHER the author OR in viewers list
 	var ratings []models.Rating
 	viewerSubQuery := utils.DB.Table("rating_viewers").Select("rating_id").Where("user_id = ?", id)
@@ -117,7 +110,6 @@ func RatingByViewer(c *gin.Context) {
 			return db.Select("id, display_name, avatar")
 		}).
 		Where("user_id = ? OR id IN (?)", id, viewerSubQuery).
-		Where("item_type LIKE ?", itemType).
 		Find(&ratings).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -247,7 +239,6 @@ func RatingHide(c *gin.Context) {
 }
 
 func RatingByItem(c *gin.Context) {
-	itemType := c.Param("type")
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -271,8 +262,7 @@ func RatingByItem(c *gin.Context) {
 		}).
 		Where("id IN (?)", subQuery).
 		Where(models.Rating{
-			ItemType: itemType,
-			ItemID:   id,
+			ItemID: id,
 		}).
 		Find(&ratings).
 		Error; err != nil {
@@ -286,10 +276,9 @@ func RatingByItem(c *gin.Context) {
 func RatingEdit(c *gin.Context) {
 	id := c.Param("id")
 	var body struct {
-		Grade    float32 `json:"grade" binding:"required"`
-		Note     string  `json:"note"`
-		ItemID   int     `json:"item_id" binding:"required"`
-		ItemType string  `json:"item_type" binding:"required"`
+		Grade  float32 `json:"grade" binding:"required"`
+		Note   string  `json:"note"`
+		ItemID int     `json:"item_id" binding:"required"`
 	}
 	c.Bind(&body)
 
@@ -307,10 +296,9 @@ func RatingEdit(c *gin.Context) {
 	}
 
 	if err := utils.DB.Model(&rating).Updates(models.Rating{
-		Grade:    body.Grade,
-		Note:     body.Note,
-		ItemID:   body.ItemID,
-		ItemType: body.ItemType,
+		Grade:  body.Grade,
+		Note:   body.Note,
+		ItemID: body.ItemID,
 	}).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -345,7 +333,6 @@ func RatingRemove(c *gin.Context) {
 
 // Get anonymous community statistics for an item
 func GetCommunityStats(c *gin.Context) {
-	itemType := c.Param("type")
 	itemId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
@@ -359,7 +346,7 @@ func GetCommunityStats(c *gin.Context) {
 	}
 
 	err = utils.DB.Model(&models.Rating{}).
-		Where("item_type = ? AND item_id = ?", itemType, itemId).
+		Where("item_id = ?", itemId).
 		Select("COUNT(*) as count, COALESCE(AVG(grade), 0) as average").
 		Scan(&result).Error
 	if err != nil {
@@ -370,7 +357,6 @@ func GetCommunityStats(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"total_ratings":  result.Count,
 		"average_rating": result.Average,
-		"item_type":      itemType,
 		"item_id":        itemId,
 	})
 }

@@ -8,15 +8,18 @@ type Rating struct {
 	gorm.Model
 	Grade    float32 `json:"grade"`
 	Note     string  `json:"note"`
-	
+
 	// User association with CASCADE deletion
 	UserID int  `json:"user_id"`
 	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
-	
-	// Item association (polymorphic)
-	ItemID   int    `json:"item_id"`
-	ItemType string `json:"item_type"`
-	
+
+	// Item association with FK + CASCADE
+	ItemID int  `json:"item_id"`
+	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE" json:"item,omitempty"`
+
+	// Keep ItemType as gorm:"-" to prevent AutoMigrate from dropping column prematurely
+	ItemType string `gorm:"-" json:"item_type,omitempty"`
+
 	// Privacy - users who can see this rating
 	Viewers []User `gorm:"many2many:rating_viewers;" json:"viewers,omitempty"`
 }

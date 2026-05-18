@@ -39,7 +39,7 @@ class ApiConfig {
   static const String ratingNew = '/api/rating/new';
   static String ratingByAuthor(int id) => '/api/rating/author/$id';
   static String ratingByViewer(int id) => '/api/rating/viewer/$id';
-  static String ratingByItem(String type, int id) => '/api/rating/$type/$id';
+  static String ratingByItem(int id) => '/api/rating/$id';
   static String ratingEdit(int id) => '/api/rating/$id';
   static String ratingShare(int id) => '/api/rating/$id/share';
   static String ratingHide(int id) => '/api/rating/$id/hide';
@@ -51,8 +51,7 @@ class ApiConfig {
       '/api/rating/bulk/unshare/$userId';
 
   // Community statistics endpoints (anonymous aggregate data)
-  static String communityStats(String type, int id) =>
-      '/api/stats/community/$type/$id';
+  static String communityStats(int id) => '/api/stats/community/$id';
 
   // HTTP headers
   static const Map<String, String> defaultHeaders = {

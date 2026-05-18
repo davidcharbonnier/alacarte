@@ -440,10 +440,9 @@ abstract class ApiService {
   static const Duration _statsCacheExpiry = Duration(minutes: 5);
 
   Future<ApiResponse<Map<String, dynamic>>> getCommunityStats(
-    String itemType,
     int itemId,
   ) async {
-    final cacheKey = '$itemType-$itemId';
+    final cacheKey = '$itemId';
 
     // Check cache first
     if (_communityStatsCache.containsKey(cacheKey) &&
@@ -458,7 +457,7 @@ abstract class ApiService {
 
     // Fetch from API
     final response = await handleResponse<Map<String, dynamic>>(
-      get(ApiConfig.communityStats(itemType, itemId)),
+      get(ApiConfig.communityStats(itemId)),
       (data) => data as Map<String, dynamic>,
     );
 
@@ -472,9 +471,9 @@ abstract class ApiService {
   }
 
   /// Clear community stats cache (useful after rating changes)
-  void clearCommunityStatsCache({String? itemType, int? itemId}) {
-    if (itemType != null && itemId != null) {
-      final cacheKey = '$itemType-$itemId';
+  void clearCommunityStatsCache({int? itemId}) {
+    if (itemId != null) {
+      final cacheKey = '$itemId';
       _communityStatsCache.remove(cacheKey);
       _communityStatsCacheTime.remove(cacheKey);
     } else {

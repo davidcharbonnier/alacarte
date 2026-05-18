@@ -42,6 +42,14 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   // Cache the last loaded item IDs to prevent infinite provider refreshes
   List<int>? _lastLoadedItemIds;
 
+  /// Get all item IDs for the current item type (replaces itemType filter on ratings)
+  Set<int> get _itemIdsForType {
+    return ItemProviderHelper.getItems(ref, widget.itemType)
+        .where((i) => i.id != null)
+        .map((i) => i.id!)
+        .toSet();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -207,7 +215,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       final userRatings = ratingState.ratings;
 
       final ratedItemIds = userRatings
-          .where((r) => r.itemType == widget.itemType)
+          .where((r) => _itemIdsForType.contains(r.itemId))
           .map((r) => r.itemId)
           .toSet();
 
@@ -262,7 +270,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         // For recommendations filter, we need to start with all items that have ratings
         if (ratingSourceFilter == 'recommendations') {
           final allRatedItemIds = userRatings
-              .where((r) => r.itemType == widget.itemType)
+              .where((r) => _itemIdsForType.contains(r.itemId))
               .map((r) => r.itemId)
               .toSet();
 
@@ -301,7 +309,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           final personalRatedItemIds = userRatings
               .where(
                 (r) =>
-                    r.itemType == widget.itemType &&
+                    _itemIdsForType.contains(r.itemId) &&
                     r.authorId == currentUserId,
               )
               .map((r) => r.itemId)
@@ -354,7 +362,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       final personalRatings = userRatings
           .where(
             (r) =>
-                r.itemType == widget.itemType &&
+                _itemIdsForType.contains(r.itemId) &&
                 r.authorId == currentUserId &&
                 filteredBaseItems.any((item) => item.id == r.itemId),
           )
@@ -363,7 +371,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       final sharedRatings = userRatings
           .where(
             (r) =>
-                r.itemType == widget.itemType &&
+                _itemIdsForType.contains(r.itemId) &&
                 r.authorId != currentUserId &&
                 filteredBaseItems.any((item) => item.id == r.itemId),
           )
@@ -567,7 +575,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final idsToLoad = _lastLoadedItemIds ?? itemIds;
     final batchStatsAsync = ref.watch(
       communityStatsProvider(
-        CommunityStatsParams(itemType: widget.itemType, itemIds: idsToLoad),
+        CommunityStatsParams(itemIds: idsToLoad),
       ),
     );
 
@@ -645,7 +653,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       // For recommendations filter, we need to start with all items that have ratings
       if (ratingSourceFilter == 'recommendations') {
         final allRatedItemIds = userRatings
-            .where((r) => r.itemType == widget.itemType)
+            .where((r) => _itemIdsForType.contains(r.itemId))
             .map((r) => r.itemId)
             .toSet();
 
@@ -684,7 +692,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         final personalRatedItemIds = userRatings
             .where(
               (r) =>
-                  r.itemType == widget.itemType && r.authorId == currentUserId,
+                  _itemIdsForType.contains(r.itemId) && r.authorId == currentUserId,
             )
             .map((r) => r.itemId)
             .toSet();
@@ -735,7 +743,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         final personalRatings = userRatings
             .where(
               (r) =>
-                  r.itemType == widget.itemType &&
+                  _itemIdsForType.contains(r.itemId) &&
                   r.authorId == currentUserId &&
                   filteredBaseItems.any((item) => item.id == r.itemId),
             )
@@ -778,7 +786,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                     final itemRecommendations = userRatings
                         .where(
                           (r) =>
-                              r.itemType == widget.itemType &&
+                              _itemIdsForType.contains(r.itemId) &&
                               r.authorId != currentUserId &&
                               r.isVisibleToUser(currentUserId ?? 0) &&
                               r.itemId == item.id,
@@ -800,7 +808,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final personalRatings = userRatings
         .where(
           (r) =>
-              r.itemType == widget.itemType &&
+              _itemIdsForType.contains(r.itemId) &&
               r.authorId == currentUserId &&
               filteredBaseItems.any((item) => item.id == r.itemId),
         )
@@ -809,7 +817,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final sharedRatings = userRatings
         .where(
           (r) =>
-              r.itemType == widget.itemType &&
+              _itemIdsForType.contains(r.itemId) &&
               r.authorId != currentUserId &&
               filteredBaseItems.any((item) => item.id == r.itemId),
         )
@@ -934,7 +942,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       itemBuilder: (context, index) {
         final item = items[index];
         final itemRatings = allRatings
-            .where((r) => r.itemId == item.id && r.itemType == widget.itemType)
+            .where((r) => r.itemId == item.id && _itemIdsForType.contains(r.itemId))
             .toList();
         final currentUserId = ref.watch(authProvider).user?.id;
         final myRating = itemRatings

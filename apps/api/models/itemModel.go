@@ -16,7 +16,7 @@ type Item struct {
 	Schema          ItemTypeSchema   `gorm:"foreignKey:SchemaID;constraint:OnDelete:CASCADE" json:"-"`
 	User            User             `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"-"`
 	FieldValuesRows []ItemFieldValue `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE" json:"-"`
-	Ratings         []Rating         `gorm:"polymorphic:Item;" json:"ratings,omitempty"`
+	Ratings         []Rating         `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE" json:"ratings,omitempty"`
 }
 
 func (Item) TableName() string {

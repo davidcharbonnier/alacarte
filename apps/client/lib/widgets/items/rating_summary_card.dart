@@ -38,7 +38,6 @@ class _RatingSummaryCardState extends ConsumerState<RatingSummaryCard> {
     final statsAsync = ref.watch(
       communityStatsProvider(
         CommunityStatsParams(
-          itemType: widget.itemType,
           itemIds: _itemIds, // Use cached list
         ),
       ),

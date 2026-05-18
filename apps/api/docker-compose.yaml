@@ -1,6 +1,6 @@
 services:
   api:
-    image: cosmtrek/air
+    image: cosmtrek/air:latest
     restart: unless-stopped
     working_dir: /project
     ports:

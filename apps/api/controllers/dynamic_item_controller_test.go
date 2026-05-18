@@ -369,8 +369,12 @@ func TestDynamicItemDeleteImpact(t *testing.T) {
 
 	var impact map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &impact)
-	if impact["rating_count"] != float64(1) {
-		t.Errorf("expected rating_count 1, got %v", impact["rating_count"])
+	impactData, ok := impact["impact"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected impact to be a map, got %T", impact["impact"])
+	}
+	if impactData["ratings_count"] != float64(1) {
+		t.Errorf("expected ratings_count 1, got %v", impactData["ratings_count"])
 	}
 }
 
