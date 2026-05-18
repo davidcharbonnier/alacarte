@@ -138,17 +138,17 @@ class RatingService extends ApiService {
     return response;
   }
   
-  /// Get ratings by item (e.g., all ratings for a specific cheese)
-  Future<ApiResponse<List<Rating>>> getRatingsByItem(String itemType, int itemId) async {
+  /// Get ratings by item (e.g., all ratings for a specific item)
+  Future<ApiResponse<List<Rating>>> getRatingsByItem(int itemId) async {
     return handleListResponse<Rating>(
-      get(ApiConfig.ratingByItem(itemType, itemId)),
+      get(ApiConfig.ratingByItem(itemId)),
       (json) => Rating.fromJson(json),
     );
   }
   
   /// Get all ratings for a specific cheese
   Future<ApiResponse<List<Rating>>> getCheeseRatings(int cheeseId) async {
-    return getRatingsByItem('cheese', cheeseId);
+    return getRatingsByItem(cheeseId);
   }
   
   /// Get ratings created by a user that are visible to another user
@@ -168,8 +168,8 @@ class RatingService extends ApiService {
   }
   
   /// Calculate average rating for a specific item
-  Future<ApiResponse<Map<String, dynamic>>> getItemRatingStats(String itemType, int itemId) async {
-    final response = await getRatingsByItem(itemType, itemId);
+  Future<ApiResponse<Map<String, dynamic>>> getItemRatingStats(int itemId) async {
+    final response = await getRatingsByItem(itemId);
     return response.when(
       success: (ratings, message) {
         if (ratings.isEmpty) {
@@ -197,7 +197,7 @@ class RatingService extends ApiService {
   
   /// Get average rating for a cheese
   Future<ApiResponse<Map<String, dynamic>>> getCheeseRatingStats(int cheeseId) async {
-    return getItemRatingStats('cheese', cheeseId);
+    return getItemRatingStats(cheeseId);
   }
   
   /// Search ratings by note content
@@ -265,10 +265,6 @@ class RatingService extends ApiService {
     
     if (rating.authorId <= 0) {
       errors.add('Valid author is required');
-    }
-    
-    if (rating.itemType.trim().isEmpty) {
-      errors.add('Item type is required');
     }
     
     if (rating.itemId <= 0) {

@@ -219,7 +219,6 @@ class RatingNotifier extends StateNotifier<RatingState> {
   Future<bool> createRating({
     required double grade,
     required String note,
-    required String itemType,
     required int itemId,
   }) async {
     final authState = _ref.read(authProvider);
@@ -235,7 +234,6 @@ class RatingNotifier extends StateNotifier<RatingState> {
       grade: grade,
       note: note.trim(),
       authorId: authState.user!.id!,
-      itemType: itemType,
       itemId: itemId,
     );
 
@@ -255,7 +253,7 @@ class RatingNotifier extends StateNotifier<RatingState> {
       success: (createdRating, _) {
         // Clear caches since ratings changed
         final apiService = _ref.read(apiServiceProvider);
-        apiService.clearCommunityStatsCache(itemType: itemType, itemId: itemId);
+        apiService.clearCommunityStatsCache(itemId: itemId);
         _ratingService.clearCache(viewerId: authState.user!.id); // Clear ratings cache
         
         // Add to rating list
@@ -287,7 +285,6 @@ class RatingNotifier extends StateNotifier<RatingState> {
     return createRating(
       grade: grade,
       note: note,
-      itemType: 'cheese',
       itemId: cheeseId,
     );
   }
@@ -324,7 +321,7 @@ class RatingNotifier extends StateNotifier<RatingState> {
       success: (rating, _) {
         // Clear caches since ratings changed
         final apiService = _ref.read(apiServiceProvider);
-        apiService.clearCommunityStatsCache(itemType: existingRating.itemType, itemId: existingRating.itemId);
+        apiService.clearCommunityStatsCache(itemId: existingRating.itemId);
         
         final authState = _ref.read(authProvider);
         if (authState.user?.id != null) {
@@ -368,10 +365,7 @@ class RatingNotifier extends StateNotifier<RatingState> {
         // Clear caches since ratings changed
         if (existingRating != null) {
           final apiService = _ref.read(apiServiceProvider);
-          apiService.clearCommunityStatsCache(
-            itemType: existingRating.itemType,
-            itemId: existingRating.itemId,
-          );
+          apiService.clearCommunityStatsCache(itemId: existingRating.itemId);
           
           final authState = _ref.read(authProvider);
           if (authState.user?.id != null) {
@@ -629,12 +623,6 @@ class RatingNotifier extends StateNotifier<RatingState> {
     );
   }
 }
-
-/// Computed provider for user's cheese ratings only
-final cheeseRatingsProvider = Provider<List<Rating>>((ref) {
-  final ratingState = ref.watch(ratingProvider);
-  return ratingState.ratings.where((r) => r.isCheeseRating).toList();
-});
 
 /// Computed provider for checking if user has ratings
 final hasRatingsProvider = Provider<bool>((ref) {

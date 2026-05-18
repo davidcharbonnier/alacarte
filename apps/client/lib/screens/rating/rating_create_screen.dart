@@ -103,7 +103,6 @@ class _RatingCreateScreenState extends ConsumerState<RatingCreateScreen> {
         .createRating(
           grade: _selectedRating,
           note: _noteController.text.trim(),
-          itemType: widget.itemType,
           itemId: widget.itemId,
         );
 

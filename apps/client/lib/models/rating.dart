@@ -5,7 +5,6 @@ class Rating {
   final String note; // Go: Note (string)
   final int authorId; // Go: AuthorID
   final int itemId; // Go: ItemID
-  final String itemType; // Go: ItemType
   // Populated relations (when available from backend) - using dynamic to avoid circular imports
   final dynamic author; // Will be User when populated
   final dynamic viewers; // Will be List<User> when populated
@@ -17,7 +16,6 @@ class Rating {
     required this.note,
     required this.authorId,
     required this.itemId,
-    required this.itemType,
     this.author,
     this.viewers,
     this.cheese,
@@ -32,7 +30,6 @@ class Rating {
         note: (json['note'] ?? '') as String,
         authorId: json['user_id'] as int,
         itemId: json['item_id'] as int,
-        itemType: json['item_type'] as String,
         author: json['user'] ?? json['User'], // Go backend sends 'user' (lowercase) with OAuth
         viewers: json['viewers'],
         cheese: json['cheese'],
@@ -51,7 +48,6 @@ class Rating {
       'note': note,
       'author_id': authorId,
       'item_id': itemId,
-      'item_type': itemType,
       'author': author, // Keep as-is since backend sends it as JSON
       'viewers': viewers, // Keep as-is since backend sends it as JSON
       'cheese': cheese, // Keep as-is since backend sends it as JSON
@@ -64,7 +60,6 @@ class Rating {
       'grade': grade,
       'note': note,
       'item_id': itemId,
-      'item_type': itemType,
     };
   }
 
@@ -74,7 +69,6 @@ class Rating {
       'grade': grade,
       'note': note,
       'item_id': itemId,
-      'item_type': itemType,
     };
   }
 
@@ -85,7 +79,6 @@ class Rating {
     String? note,
     int? authorId,
     int? itemId,
-    String? itemType,
     dynamic author,
     dynamic viewers,
     dynamic cheese,
@@ -96,7 +89,6 @@ class Rating {
       note: note ?? this.note,
       authorId: authorId ?? this.authorId,
       itemId: itemId ?? this.itemId,
-      itemType: itemType ?? this.itemType,
       author: author ?? this.author,
       viewers: viewers ?? this.viewers,
       cheese: cheese ?? this.cheese,
@@ -111,18 +103,17 @@ class Rating {
         other.grade == grade &&
         other.note == note &&
         other.authorId == authorId &&
-        other.itemId == itemId &&
-        other.itemType == itemType;
+        other.itemId == itemId;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, grade, note, authorId, itemId, itemType);
+    return Object.hash(id, grade, note, authorId, itemId);
   }
 
   @override
   String toString() {
-    return 'Rating(id: $id, grade: $grade, note: $note, authorId: $authorId, itemId: $itemId, itemType: $itemType)';
+    return 'Rating(id: $id, grade: $grade, note: $note, authorId: $authorId, itemId: $itemId)';
   }
 }
 
@@ -136,27 +127,6 @@ extension RatingExtension on Rating {
 
   /// Get star rating as integer (for UI display)
   int get starRating => grade.round();
-
-  /// Check if rating is for a cheese
-  bool get isCheeseRating => itemType.toLowerCase() == 'cheese';
-
-  /// Get display title based on item type
-  String get displayTitle {
-    if (cheese != null && cheese is Map<String, dynamic>) {
-      final cheeseName = cheese['name'] as String?;
-      final cheeseType = cheese['type'] as String?;
-      if (cheeseName != null) {
-        // Include type if available, otherwise just name
-        if (cheeseType != null && cheeseType.isNotEmpty) {
-          return '$cheeseName ($cheeseType)';
-        } else {
-          return cheeseName;
-        }
-      }
-    }
-    // Fallback - this should be localized at the UI level
-    return 'Rating for $itemType #$itemId';
-  }
 
   /// Get author display name (privacy-safe)
   String get authorName {
@@ -208,14 +178,12 @@ class RatingBuilder {
     required double grade,
     required String note,
     required int authorId,
-    required String itemType,
     required int itemId,
   }) {
     return Rating(
       grade: grade,
       note: note,
       authorId: authorId,
-      itemType: itemType,
       itemId: itemId,
     );
   }
@@ -230,7 +198,6 @@ class RatingBuilder {
       grade: grade,
       note: note,
       authorId: authorId,
-      itemType: 'cheese',
       itemId: cheeseId,
     );
   }

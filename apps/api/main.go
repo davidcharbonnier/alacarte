@@ -215,7 +215,7 @@ func main() {
 			rating.POST("/new", controllers.RatingCreate)
 			rating.GET("/author/:id", controllers.RatingByAuthor)
 			rating.GET("/viewer/:id", controllers.RatingByViewer)
-			rating.GET("/:type/:id", controllers.RatingByItem)
+			rating.GET("/:id", controllers.RatingByItem)
 			rating.PUT("/:id", controllers.RatingEdit)
 			rating.PUT("/:id/share", controllers.RatingShare)
 			rating.PUT("/:id/hide", controllers.RatingHide)
@@ -229,7 +229,7 @@ func main() {
 		// Community statistics (anonymous aggregate data)
 		stats := api.Group("/stats")
 		{
-			stats.GET("/community/:type/:id", controllers.GetCommunityStats)
+			stats.GET("/community/:id", controllers.GetCommunityStats)
 		}
 
 		// Dynamic items

@@ -484,18 +484,63 @@ func (qb *EAVQueryBuilder) GetDeleteImpact(schemaName string, itemID uint) (map[
 		return nil, fmt.Errorf("failed to get item: %w", err)
 	}
 
-	var ratingCount int64
-	utils.DB.Model(&models.Rating{}).Where("item_id = ? AND item_type = ?", itemID, schemaName).Count(&ratingCount)
+	// Get all ratings for this item with user data
+	var ratings []models.Rating
+	utils.DB.Preload("User").Where("item_id = ?", itemID).Find(&ratings)
 
-	var userCount int64
-	utils.DB.Model(&models.Rating{}).
-		Where("item_id = ? AND item_type = ?", itemID, schemaName).
-		Distinct("user_id").
-		Count(&userCount)
+	// Count unique users affected and build user details
+	userMap := make(map[uint]bool)
+	userDetails := make(map[uint]struct {
+		ID           uint
+		DisplayName  string
+		RatingsCount int
+	})
+
+	var sharingsCount int64
+	for _, rating := range ratings {
+		userMap[uint(rating.UserID)] = true
+		if user, exists := userDetails[uint(rating.UserID)]; exists {
+			user.RatingsCount++
+			userDetails[uint(rating.UserID)] = user
+		} else {
+			userDetails[uint(rating.UserID)] = struct {
+				ID           uint
+				DisplayName  string
+				RatingsCount int
+			}{
+				ID:           rating.User.ID,
+				DisplayName:  rating.User.DisplayName,
+				RatingsCount: 1,
+			}
+		}
+
+		var count int64
+		utils.DB.Table("rating_viewers").Where("rating_id = ?", rating.ID).Count(&count)
+		sharingsCount += count
+	}
+
+	// Build affected users list
+	affectedUsers := []map[string]interface{}{}
+	for _, user := range userDetails {
+		affectedUsers = append(affectedUsers, map[string]interface{}{
+			"id":            user.ID,
+			"display_name":  user.DisplayName,
+			"ratings_count": user.RatingsCount,
+		})
+	}
 
 	return map[string]interface{}{
-		"rating_count":       ratingCount,
-		"unique_users_count": userCount,
+		"can_delete": true,
+		"warnings": []string{
+			"This will permanently delete all ratings for this item",
+			"Users who rated this item will lose their ratings",
+		},
+		"impact": map[string]interface{}{
+			"ratings_count":  len(ratings),
+			"users_affected": len(userMap),
+			"sharings_count": sharingsCount,
+			"affected_users": affectedUsers,
+		},
 	}, nil
 }
 

@@ -15,7 +15,7 @@ import '../models/api_response.dart';
 /// // Single item (detail page)
 /// final statsAsync = ref.watch(
 ///   communityStatsProvider(
-///     CommunityStatsParams(itemType: 'cheese', itemIds: [1])
+///     CommunityStatsParams(itemIds: [1])
 ///   )
 /// );
 /// final stats = statsAsync.maybeWhen(
@@ -26,7 +26,7 @@ import '../models/api_response.dart';
 /// // Multiple items (list page)
 /// final statsAsync = ref.watch(
 ///   communityStatsProvider(
-///     CommunityStatsParams(itemType: 'cheese', itemIds: [1, 2, 3, 4, 5])
+///     CommunityStatsParams(itemIds: [1, 2, 3, 4, 5])
 ///   )
 /// );
 /// ```
@@ -41,7 +41,7 @@ final communityStatsProvider = FutureProvider.family<Map<int, Map<String, dynami
     // Fire all requests in parallel
     // HTTP/2 automatically multiplexes them over a single connection
     final futures = params.itemIds.map((itemId) {
-      return apiService.getCommunityStats(params.itemType, itemId);
+      return apiService.getCommunityStats(itemId);
     });
     
     // Wait for all responses
@@ -67,11 +67,9 @@ final communityStatsProvider = FutureProvider.family<Map<int, Map<String, dynami
 
 /// Parameters for community stats provider
 class CommunityStatsParams {
-  final String itemType;
   final List<int> itemIds;
 
   const CommunityStatsParams({
-    required this.itemType,
     required this.itemIds,
   });
 
@@ -80,11 +78,10 @@ class CommunityStatsParams {
       identical(this, other) ||
       other is CommunityStatsParams &&
           runtimeType == other.runtimeType &&
-          itemType == other.itemType &&
           _listEquals(itemIds, other.itemIds);
 
   @override
-  int get hashCode => itemType.hashCode ^ itemIds.hashCode;
+  int get hashCode => itemIds.hashCode;
   
   bool _listEquals(List<int> a, List<int> b) {
     if (a.length != b.length) return false;
@@ -102,9 +99,6 @@ extension CommunityStatsMapExtension on Map<String, dynamic> {
   
   /// Get average rating as double, defaulting to 0.0 if not present
   double get averageRating => (this['average_rating'] as num?)?.toDouble() ?? 0.0;
-  
-  /// Get item type string
-  String get itemType => (this['item_type'] as String?) ?? '';
   
   /// Get item ID
   int get itemId => (this['item_id'] as int?) ?? 0;

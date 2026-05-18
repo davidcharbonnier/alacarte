@@ -102,6 +102,18 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
         _noteController.text.trim() != _existingRating!.note;
   }
 
+  /// Derive item type from item ID by searching all loaded item providers
+  String? _getItemTypeForItemId(int itemId) {
+    final knownTypes = ['cheese', 'gin', 'wine', 'coffee', 'chili-sauce'];
+    for (final type in knownTypes) {
+      final items = ItemProviderHelper.getItems(ref, type);
+      if (items.any((item) => item.id == itemId)) {
+        return type;
+      }
+    }
+    return null;
+  }
+
   Future<void> _submitRating() async {
     if (!_canSubmit) return;
 
@@ -129,9 +141,10 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
       // Use a delay to ensure the snackbar is shown before navigation
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
+      final itemType = _getItemTypeForItemId(_existingRating!.itemId);
       SafeNavigation.goBackFromRatingEdit(
         context,
-        _existingRating!.itemType,
+        itemType ?? 'unknown',
         _existingRating!.itemId,
       );
     } else {
@@ -184,17 +197,19 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
       );
     }
 
+    final itemType = _getItemTypeForItemId(_existingRating!.itemId);
+
     return FormScaffold(
       title: context.l10n.editRating,
       isLoading: ratingState.isLoading,
       onBack: () => SafeNavigation.goBackFromRatingEdit(
         context,
-        _existingRating!.itemType,
+        itemType ?? 'unknown',
         _existingRating!.itemId,
       ),
       onCancel: () => SafeNavigation.goBackFromRatingEdit(
         context,
-        _existingRating!.itemType,
+        itemType ?? 'unknown',
         _existingRating!.itemId,
       ),
       onSubmit: _hasChanges ? _submitRating : null,
@@ -262,20 +277,25 @@ class _RatingEditScreenState extends ConsumerState<RatingEditScreen> {
     String itemDisplayName = 'Unknown Item';
 
     // Try to get item from cache/provider
-    final items = ItemProviderHelper.getItems(ref, _existingRating!.itemType);
-    final item = items
-        .where((item) => item.id == _existingRating!.itemId)
-        .firstOrNull;
-    
-    if (item != null) {
-      itemDisplayName = item.name;
+    final itemType = _getItemTypeForItemId(_existingRating!.itemId);
+    if (itemType != null) {
+      final items = ItemProviderHelper.getItems(ref, itemType);
+      final item = items
+          .where((item) => item.id == _existingRating!.itemId)
+          .firstOrNull;
+      
+      if (item != null) {
+        itemDisplayName = item.name;
+      } else {
+        // Fallback to item type + ID if not found in cache
+        final localizedType = ItemTypeLocalizer.getLocalizedItemType(
+          context,
+          itemType,
+        );
+        itemDisplayName = '$localizedType #${_existingRating!.itemId}';
+      }
     } else {
-      // Fallback to item type + ID if not found in cache
-      final localizedType = ItemTypeLocalizer.getLocalizedItemType(
-        context,
-        _existingRating!.itemType,
-      );
-      itemDisplayName = '$localizedType #${_existingRating!.itemId}';
+      itemDisplayName = 'Item #${_existingRating!.itemId}';
     }
 
     return Card(

@@ -568,11 +568,15 @@ func TestEAVQueryBuilder_Impact(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get delete impact: %v", err)
 	}
-	if impact["rating_count"] != int64(1) {
-		t.Errorf("expected rating_count 1, got %v", impact["rating_count"])
+	impactData, ok := impact["impact"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected impact to be a map, got %T", impact["impact"])
 	}
-	if impact["unique_users_count"] != int64(1) {
-		t.Errorf("expected unique_users_count 1, got %v", impact["unique_users_count"])
+	if impactData["ratings_count"] != int(1) {
+		t.Errorf("expected ratings_count 1, got %v", impactData["ratings_count"])
+	}
+	if impactData["users_affected"] != int(1) {
+		t.Errorf("expected users_affected 1, got %v", impactData["users_affected"])
 	}
 }
 

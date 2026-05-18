@@ -7,6 +7,7 @@ import '../../utils/localization_utils.dart';
 class RatingItemCard extends StatelessWidget {
   final Rating rating;
   final String Function(Rating) getDisplayTitle;
+  final String? Function(Rating) getItemType;
   final String Function(String) getItemTypeDisplayName;
   final VoidCallback onManageSharing;
 
@@ -14,6 +15,7 @@ class RatingItemCard extends StatelessWidget {
     super.key,
     required this.rating,
     required this.getDisplayTitle,
+    required this.getItemType,
     required this.getItemTypeDisplayName,
     required this.onManageSharing,
   });
@@ -81,7 +83,7 @@ class RatingItemCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppConstants.radiusXS),
                       ),
                       child: Text(
-                        getItemTypeDisplayName(rating.itemType).toUpperCase(),
+                        getItemTypeDisplayName(getItemType(rating) ?? 'unknown').toUpperCase(),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                           fontWeight: FontWeight.w600,

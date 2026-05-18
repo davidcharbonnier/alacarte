@@ -91,8 +91,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           // Filter to only ratings for this specific item
           _itemRatings = viewerRatingsResponse.data
               .where(
-                (r) =>
-                    r.itemType == widget.itemType && r.itemId == widget.itemId,
+                (r) => r.itemId == widget.itemId,
               )
               .toList();
         } else if (viewerRatingsResponse is ApiError<List<Rating>>) {

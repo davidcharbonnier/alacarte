@@ -43,8 +43,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   int _getUniqueItemCount(List<dynamic> ratings, String itemType) {
+    // Get all item IDs for this schema type from the loaded items
+    final items = ref.read(dynamicItemProvider).getItems(itemType);
+    final itemIdsForType = items.map((i) => i.id).toSet();
+
     final itemIds = ratings
-        .where((r) => r.itemType == itemType)
+        .where((r) => itemIdsForType.contains(r.itemId))
         .map((r) => r.itemId)
         .toSet();
     return itemIds.length;
