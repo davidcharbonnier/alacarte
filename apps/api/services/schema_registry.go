@@ -174,11 +174,11 @@ func (r *SchemaRegistry) RefreshSchema(name string) error {
 		fields[j] = &schema.Fields[j]
 	}
 
-	var activeVersion *models.SchemaVersion
+	var activeVersion models.SchemaVersion
 	var versionHash string
-	err := utils.DB.Where("schema_id = ? AND is_active = 1", schema.ID).Order("version DESC").Limit(1).First(activeVersion).Error
+	err := utils.DB.Where("schema_id = ? AND is_active = 1", schema.ID).Order("version DESC").Limit(1).First(&activeVersion).Error
 	if err == nil {
-		versionHash = generateVersionHash(activeVersion)
+		versionHash = generateVersionHash(&activeVersion)
 	}
 
 	var uniqueFields []string
@@ -186,13 +186,13 @@ func (r *SchemaRegistry) RefreshSchema(name string) error {
 		json.Unmarshal([]byte(schema.UniqueFields), &uniqueFields)
 	}
 
-	r.schemas[name] = &CachedSchema{
-		Schema:       &schema,
-		Fields:       fields,
-		Version:      activeVersion,
-		VersionHash:  versionHash,
-		UniqueFields: uniqueFields,
-	}
+		r.schemas[name] = &CachedSchema{
+			Schema:       &schema,
+			Fields:       fields,
+			Version:      &activeVersion,
+			VersionHash:  versionHash,
+			UniqueFields: uniqueFields,
+		}
 
 	return nil
 }
