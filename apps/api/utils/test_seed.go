@@ -214,10 +214,12 @@ func SeedDefaultSchemas(db *gorm.DB) error {
 				FieldType:  f.fieldType,
 				Required:   f.required,
 				Order:      f.order,
-				Group:      &group,
-				Validation: validation,
-				Options:    options,
 			}
+			if group != "" {
+				field.Group = &group
+			}
+			field.Validation = validation
+			field.Options = options
 
 			if err := db.Create(&field).Error; err != nil {
 				log.Printf("Failed to create field '%s' for schema '%s': %v", f.key, s.name, err)

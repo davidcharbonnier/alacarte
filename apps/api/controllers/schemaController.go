@@ -667,7 +667,6 @@ func SchemaVersionHistory(c *gin.Context) {
 		"version":     schemaVersion.Version,
 		"fields":      fields,
 		"is_active":   schemaVersion.IsActive,
-		"migrated_at": schemaVersion.MigratedAt,
 		"created_at":  schemaVersion.CreatedAt,
 	})
 }

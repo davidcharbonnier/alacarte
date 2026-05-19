@@ -61,7 +61,6 @@ type SchemaVersion struct {
 	Version    int             `gorm:"not null;uniqueIndex:uk_schema_version" json:"version"`
 	Fields     string          `gorm:"type:json;not null" json:"fields"`
 	IsActive   bool            `gorm:"default:true" json:"is_active"`
-	MigratedAt *gorm.DeletedAt `gorm:"index" json:"migrated_at,omitempty"`
 	Schema     ItemTypeSchema  `gorm:"foreignKey:SchemaID;constraint:OnDelete:CASCADE" json:"-"`
 }
 
