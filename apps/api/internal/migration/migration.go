@@ -217,7 +217,9 @@ func createField(schemaID uint, def *fieldDef) error {
 		FieldType: def.fieldType,
 		Required:  def.required,
 		Order:     def.order,
-		Group:     &group,
+	}
+	if group != "" {
+		field.Group = &group
 	}
 	if def.validation != "" {
 		field.Validation = &def.validation

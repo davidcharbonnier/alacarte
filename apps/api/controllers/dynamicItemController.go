@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/davidcharbonnier/alacarte-api/models"
 	"github.com/davidcharbonnier/alacarte-api/services"
 	"github.com/davidcharbonnier/alacarte-api/utils"
 	"github.com/gin-gonic/gin"
@@ -252,6 +253,11 @@ func DynamicItemUploadImage(c *gin.Context) {
 		return
 	}
 
+	if uint(item.(*models.Item).UserID) != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only manage images for your own items"})
+		return
+	}
+
 	processAndSaveImage(c, item, schemaType)
 }
 
@@ -274,6 +280,11 @@ func DynamicItemDeleteImage(c *gin.Context) {
 	item, err := utils.GetDynamicItem(schemaType, uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
+		return
+	}
+
+	if uint(item.(*models.Item).UserID) != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only manage images for your own items"})
 		return
 	}
 
@@ -475,7 +486,7 @@ func DynamicItemValidate(c *gin.Context) {
 		if !validationResult.Valid {
 			result.Valid = false
 			for _, err := range validationResult.Errors {
-				result.Errors = append(result.Errors, fmt.Sprintf("Item %d: %v", i+1, err))
+				result.Errors = append(result.Errors, fmt.Sprintf("Item %d: %s", i+1, err.Message))
 			}
 		}
 
