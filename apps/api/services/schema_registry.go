@@ -93,7 +93,7 @@ func (r *SchemaRegistry) LoadSchemas() error {
 		var activeVersion *models.SchemaVersion
 		if v, exists := versionMap[schema.ID]; exists {
 			activeVersion = v
-			versionHash = generateVersionHash(activeVersion)
+			versionHash = GenerateVersionHash(activeVersion)
 		}
 
 		var uniqueFields []string
@@ -179,7 +179,7 @@ func (r *SchemaRegistry) RefreshSchema(name string) error {
 	var versionHash string
 	err := utils.DB.Where("schema_id = ? AND is_active = 1", schema.ID).Order("version DESC").Limit(1).First(&activeVersion).Error
 	if err == nil {
-		versionHash = generateVersionHash(&activeVersion)
+		versionHash = GenerateVersionHash(&activeVersion)
 	}
 
 	var uniqueFields []string
@@ -223,7 +223,7 @@ func (r *SchemaRegistry) GetFieldByKey(schemaName, fieldKey string) (*models.Ite
 	return nil, false
 }
 
-func generateVersionHash(version *models.SchemaVersion) string {
+func GenerateVersionHash(version *models.SchemaVersion) string {
 	if version == nil {
 		return ""
 	}

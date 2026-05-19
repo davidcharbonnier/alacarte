@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -276,8 +275,7 @@ func buildSchemaDetailResponse(schema *models.ItemTypeSchema, fields []models.It
 	var schemaVersion models.SchemaVersion
 	if err := utils.DB.Where("schema_id = ? AND is_active = ?", schema.ID, true).First(&schemaVersion).Error; err == nil {
 		version = schemaVersion.Version
-		hashData := fmt.Sprintf("%d-%d-%s", schemaVersion.SchemaID, schemaVersion.Version, schemaVersion.Fields)
-		versionHash = fmt.Sprintf("%x", hashData)
+		versionHash = services.GenerateVersionHash(&schemaVersion)
 	}
 
 	var itemCount int64
@@ -439,14 +437,14 @@ func SchemaUpdate(c *gin.Context) {
 			return
 		}
 
-		processSchemaUpdate(c, schema.ID, schema.Name, true)
+		processSchemaUpdate(c, schema.ID, schema.Name)
 		return
 	}
 
-	processSchemaUpdate(c, cached.Schema.ID, cached.Schema.Name, false)
+	processSchemaUpdate(c, cached.Schema.ID, cached.Schema.Name)
 }
 
-func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string, isInactive bool) {
+func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 	var body struct {
 		DisplayName  string                   `json:"display_name"`
 		PluralName   string                   `json:"plural_name"`

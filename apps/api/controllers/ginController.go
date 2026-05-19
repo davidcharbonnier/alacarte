@@ -148,12 +148,26 @@ func GetGinDeleteImpact(c *gin.Context) {
 		}
 	}
 
-	// Count total sharings
+	// Count total sharings (batch query to avoid N+1)
+	ratingIDs := make([]uint, len(ratings))
+	for i, rating := range ratings {
+		ratingIDs[i] = rating.ID
+	}
+
+	type sharingCount struct {
+		RatingID uint
+		Count    int64
+	}
+	var sharingCounts []sharingCount
+	utils.DB.Table("rating_viewers").
+		Select("rating_id, COUNT(*) as count").
+		Where("rating_id IN (?)", ratingIDs).
+		Group("rating_id").
+		Find(&sharingCounts)
+
 	var sharingsCount int64
-	for _, rating := range ratings {
-		var count int64
-		utils.DB.Table("rating_viewers").Where("rating_id = ?", rating.ID).Count(&count)
-		sharingsCount += count
+	for _, sc := range sharingCounts {
+		sharingsCount += sc.Count
 	}
 
 	// Build affected users list
@@ -238,12 +252,13 @@ func SeedGins(c *gin.Context) {
 
 	userID := utils.GetCurrentUserID(c)
 	if userID == 0 {
-		userID = 1 // System user for seeding
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
 	}
 
 	result := utils.SeedResult{Errors: []string{}}
 
-	cached, ok := schemaRegistryItems.GetSchema("gin")
+	cached, ok := schemaRegistry.GetSchema("gin")
 	if !ok {
 		result.Errors = append(result.Errors, "Schema 'gin' not found")
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Errors[0]})
@@ -263,16 +278,20 @@ func SeedGins(c *gin.Context) {
 			}
 		}
 
-		existingItems, _ := queryBuilderItems.BuildListQuery(services.QueryParams{
+		existingItems, err := queryBuilder.BuildListQuery(services.QueryParams{
 			SchemaName: "gin",
 			Filters:    filters,
 		})
+		if err != nil {
+			result.Errors = append(result.Errors, fmt.Sprintf("Failed to check duplicates: %v", err))
+			continue
+		}
 		if existingItems.Total > 0 {
 			result.Skipped++
 			continue
 		}
 
-		_, err := queryBuilderItems.CreateItem("gin", userID, fields)
+		_, err = queryBuilder.CreateItem("gin", userID, fields)
 		if err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("Failed to create %v: %v", ginItem["name"], err))
 			continue
