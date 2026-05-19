@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -604,5 +605,55 @@ func TestEAVQueryBuilder_FieldValuesJSONCoercion(t *testing.T) {
 	jsonStr := BuildFieldValuesJSON(fieldValues, schema.Fields)
 	if jsonStr == "" || jsonStr == "{}" {
 		t.Error("expected non-empty field values JSON")
+	}
+}
+
+func TestEAVQueryBuilder_PartialUpdatePreservesFieldValues(t *testing.T) {
+	qb, cleanup := setupQueryBuilderTest(t)
+	defer cleanup()
+
+	user := createTestUser(t)
+
+	// Create item with multiple fields
+	item, err := qb.CreateItem("cheese", uint(user.ID), map[string]interface{}{
+		"name":        "Brie",
+		"type":        "Soft",
+		"origin":      "France",
+		"description": "A classic French cheese",
+	})
+	if err != nil {
+		t.Fatalf("failed to create item: %v", err)
+	}
+
+	// Partial update: only update name
+	_, err = qb.UpdateItem("cheese", item.ID, uint(user.ID), map[string]interface{}{
+		"name": "Updated Brie",
+	})
+	if err != nil {
+		t.Fatalf("failed to update item: %v", err)
+	}
+
+	// Verify field_values JSON still contains all fields
+	var dbItem models.Item
+	if err := utils.DB.First(&dbItem, item.ID).Error; err != nil {
+		t.Fatalf("failed to fetch item from db: %v", err)
+	}
+
+	var fieldValues map[string]interface{}
+	if err := json.Unmarshal([]byte(dbItem.FieldValues), &fieldValues); err != nil {
+		t.Fatalf("failed to unmarshal field_values: %v", err)
+	}
+
+	if fieldValues["name"] != "Updated Brie" {
+		t.Errorf("expected name 'Updated Brie', got %v", fieldValues["name"])
+	}
+	if fieldValues["type"] != "Soft" {
+		t.Errorf("expected type 'Soft' to be preserved, got %v", fieldValues["type"])
+	}
+	if fieldValues["origin"] != "France" {
+		t.Errorf("expected origin 'France' to be preserved, got %v", fieldValues["origin"])
+	}
+	if fieldValues["description"] != "A classic French cheese" {
+		t.Errorf("expected description to be preserved, got %v", fieldValues["description"])
 	}
 }

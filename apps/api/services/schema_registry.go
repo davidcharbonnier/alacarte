@@ -1,6 +1,7 @@
 package services
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -227,7 +228,8 @@ func generateVersionHash(version *models.SchemaVersion) string {
 		return ""
 	}
 	hashData := fmt.Sprintf("%d-%d-%s", version.SchemaID, version.Version, version.Fields)
-	return fmt.Sprintf("%x", hashData)
+	hash := sha256.Sum256([]byte(hashData))
+	return fmt.Sprintf("%x", hash)
 }
 
 func ParseFieldOptions(field *models.ItemTypeField) ([]string, error) {

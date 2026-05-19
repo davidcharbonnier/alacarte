@@ -16,6 +16,7 @@ var (
 	MigratedItems   int
 	MigratedRatings int
 	ErrorItems      int
+	migrationUserID int
 )
 
 // getBatchSize returns the batch size from env var or default
@@ -493,15 +494,24 @@ func migrateItemToDynamic(name string, imageURL *string, schemaID, versionID uin
 		return nil // Already migrated, skip
 	}
 
+	// Look up migration user on first use
+	if migrationUserID == 0 {
+		var migrationUser models.User
+		if err := utils.DB.First(&migrationUser).Error; err != nil {
+			return fmt.Errorf("no users found in database, cannot migrate items: %w", err)
+		}
+		migrationUserID = int(migrationUser.ID)
+	}
+
 	// Marshal field values
 	fieldValuesJSON, _ := json.Marshal(fieldValues)
-	
+
 	newItem := models.Item{
 		Name:            name,
 		SchemaID:        schemaID,
 		ImageURL:        imageURL,
 		FieldValues:     string(fieldValuesJSON),
-		UserID:          1,
+		UserID:          migrationUserID,
 		SchemaVersionID: &versionID,
 	}
 
