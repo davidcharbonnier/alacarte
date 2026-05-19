@@ -382,11 +382,6 @@ func (qb *EAVQueryBuilder) UpdateItem(schemaName string, itemID uint, userID uin
 
 	tx := utils.DB.Begin()
 
-	if err := tx.Save(&item).Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed to update item: %w", err)
-	}
-
 	for _, field := range cached.Fields {
 		if value, exists := fields[field.Key]; exists {
 			var valueStr *string
@@ -426,13 +421,16 @@ func (qb *EAVQueryBuilder) UpdateItem(schemaName string, itemID uint, userID uin
 		}
 	}
 
-	fieldValuesJSON, err := json.Marshal(fields)
-	if err == nil {
-		item.FieldValues = string(fieldValuesJSON)
-		if err := tx.Save(&item).Error; err != nil {
-			tx.Rollback()
-			return nil, fmt.Errorf("failed to update field values JSON: %w", err)
-		}
+	// Rebuild field_values JSON from all EAV rows to ensure completeness after partial updates
+	var allFieldValues []models.ItemFieldValue
+	if err := tx.Where("item_id = ?", item.ID).Find(&allFieldValues).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to read field values: %w", err)
+	}
+	item.FieldValues = BuildFieldValuesJSON(allFieldValues, cached.Fields)
+	if err := tx.Save(&item).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to update item: %w", err)
 	}
 
 	if err := tx.Commit().Error; err != nil {

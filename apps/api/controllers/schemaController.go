@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -421,6 +422,7 @@ func SchemaCreate(c *gin.Context) {
 	}
 
 	if err := schemaRegistry.RefreshSchema(body.Name); err != nil {
+		log.Printf("WARNING: failed to refresh schema cache for '%s': %v", body.Name, err)
 	}
 
 	c.JSON(http.StatusOK, schema)
@@ -576,6 +578,7 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string, isIna
 
 	schemaRegistry.InvalidateSchema(schemaName)
 	if err := schemaRegistry.RefreshSchema(schemaName); err != nil {
+		log.Printf("WARNING: failed to refresh schema cache for '%s': %v", schemaName, err)
 	}
 
 	var updatedSchema models.ItemTypeSchema
