@@ -203,7 +203,18 @@ func (qb *EAVQueryBuilder) buildItemMap(item *models.Item, cached *CachedSchema)
 		for _, field := range cached.Fields {
 			if field.ID == fv.FieldID && fv.Value != nil {
 				if _, exists := result[field.Key]; !exists {
-					result[field.Key] = *fv.Value
+					switch field.FieldType {
+					case models.FieldTypeNumber:
+						if num, err := strconv.ParseFloat(*fv.Value, 64); err == nil {
+							result[field.Key] = num
+						} else {
+							result[field.Key] = *fv.Value
+						}
+					case models.FieldTypeCheckbox:
+						result[field.Key] = *fv.Value == "true" || *fv.Value == "1"
+					default:
+						result[field.Key] = *fv.Value
+					}
 				}
 			}
 		}

@@ -240,6 +240,11 @@ func SchemaDetails(c *gin.Context) {
 		response["version"] = cached.Version.Version
 	}
 
+	if c.GetHeader("If-None-Match") == cached.VersionHash {
+		c.Status(http.StatusNotModified)
+		return
+	}
+
 	c.Header("Cache-Control", "public, max-age=300")
 	c.Header("ETag", cached.VersionHash)
 	c.JSON(http.StatusOK, response)
@@ -652,9 +657,14 @@ func SchemaVersionHistory(c *gin.Context) {
 		return
 	}
 
+	var fields []map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaVersion.Fields), &fields); err != nil {
+		fields = []map[string]interface{}{}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"version":     schemaVersion.Version,
-		"fields":      schemaVersion.Fields,
+		"fields":      fields,
 		"is_active":   schemaVersion.IsActive,
 		"migrated_at": schemaVersion.MigratedAt,
 		"created_at":  schemaVersion.CreatedAt,

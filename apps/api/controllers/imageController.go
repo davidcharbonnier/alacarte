@@ -26,12 +26,6 @@ func UploadItemImage(c *gin.Context) {
 }
 
 func processAndSaveImage(c *gin.Context, item utils.ItemWithImage, itemType string) {
-	// Validate item type
-	if !utils.ValidateItemType(itemType) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item type"})
-		return
-	}
-
 	// Get uploaded file
 	file, header, err := c.Request.FormFile("image")
 	if err != nil {

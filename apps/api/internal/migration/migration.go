@@ -480,7 +480,7 @@ func migrateChiliSauceItem(item *models.ChiliSauce, schemaID, versionID uint) er
 		"chilis":      item.Chilis,
 		"description": item.Description,
 	}
-	return migrateItemToDynamic(item.Name, item.ImageURL, schemaID, versionID, fieldValues, int(item.ID), "chili_sauces")
+	return migrateItemToDynamic(item.Name, item.ImageURL, schemaID, versionID, fieldValues, int(item.ID), "chili_sauce")
 }
 
 // migrateItemToDynamic migrates a single legacy item to the new dynamic schema
