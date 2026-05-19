@@ -505,6 +505,28 @@ func (qb *EAVQueryBuilder) GetDeleteImpact(schemaName string, itemID uint) (map[
 		RatingsCount int
 	})
 
+	// Batch query sharing counts to avoid N+1
+	ratingIDs := make([]uint, len(ratings))
+	for i, rating := range ratings {
+		ratingIDs[i] = rating.ID
+	}
+
+	type sharingCount struct {
+		RatingID uint
+		Count    int64
+	}
+	var sharingCounts []sharingCount
+	utils.DB.Table("rating_viewers").
+		Select("rating_id, COUNT(*) as count").
+		Where("rating_id IN (?)", ratingIDs).
+		Group("rating_id").
+		Find(&sharingCounts)
+
+	countMap := make(map[uint]int64, len(sharingCounts))
+	for _, sc := range sharingCounts {
+		countMap[sc.RatingID] = sc.Count
+	}
+
 	var sharingsCount int64
 	for _, rating := range ratings {
 		userMap[uint(rating.UserID)] = true
@@ -523,9 +545,7 @@ func (qb *EAVQueryBuilder) GetDeleteImpact(schemaName string, itemID uint) (map[
 			}
 		}
 
-		var count int64
-		utils.DB.Table("rating_viewers").Where("rating_id = ?", rating.ID).Count(&count)
-		sharingsCount += count
+		sharingsCount += countMap[rating.ID]
 	}
 
 	// Build affected users list

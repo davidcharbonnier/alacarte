@@ -13,14 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var schemaRegistryItems = services.GetSchemaRegistry()
-var validationEngineItems = services.NewValidationEngine(schemaRegistryItems)
-var queryBuilderItems = services.NewEAVQueryBuilder(schemaRegistryItems)
-
 func DynamicItemList(c *gin.Context) {
 	schemaType := c.Param("type")
 
-	if _, ok := schemaRegistryItems.GetSchema(schemaType); !ok {
+	if _, ok := schemaRegistry.GetSchema(schemaType); !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
 		return
 	}
@@ -47,7 +43,7 @@ func DynamicItemList(c *gin.Context) {
 		params.HasImage = &val
 	}
 
-	result, err := queryBuilderItems.BuildListQuery(params)
+	result, err := queryBuilder.BuildListQuery(params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -72,7 +68,7 @@ func DynamicItemDetails(c *gin.Context) {
 		return
 	}
 
-	item, err := queryBuilderItems.GetItem(schemaType, uint(id))
+	item, err := queryBuilder.GetItem(schemaType, uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -90,7 +86,7 @@ func DynamicItemCreate(c *gin.Context) {
 		return
 	}
 
-	cached, ok := schemaRegistryItems.GetSchema(schemaType)
+	cached, ok := schemaRegistry.GetSchema(schemaType)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
 		return
@@ -116,7 +112,7 @@ func DynamicItemCreate(c *gin.Context) {
 		fields["name"] = name
 	}
 
-	validationResult := validationEngineItems.ValidateCreate(schemaType, fields)
+	validationResult := validationEngine.ValidateCreate(schemaType, fields)
 	if !validationResult.Valid {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":  "validation_failed",
@@ -125,13 +121,13 @@ func DynamicItemCreate(c *gin.Context) {
 		return
 	}
 
-	item, err := queryBuilderItems.CreateItem(schemaType, userID, fields)
+	item, err := queryBuilder.CreateItem(schemaType, userID, fields)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	createdItem, _ := queryBuilderItems.GetItem(schemaType, item.ID)
+	createdItem, _ := queryBuilder.GetItem(schemaType, item.ID)
 	if createdItem != nil {
 		c.JSON(http.StatusOK, createdItem)
 	} else {
@@ -170,7 +166,7 @@ func DynamicItemUpdate(c *gin.Context) {
 		fields["name"] = name
 	}
 
-	validationResult := validationEngineItems.ValidateUpdate(schemaType, fields)
+	validationResult := validationEngine.ValidateUpdate(schemaType, fields)
 	if !validationResult.Valid {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":  "validation_failed",
@@ -179,7 +175,7 @@ func DynamicItemUpdate(c *gin.Context) {
 		return
 	}
 
-	item, err := queryBuilderItems.UpdateItem(schemaType, uint(id), userID, fields)
+	item, err := queryBuilder.UpdateItem(schemaType, uint(id), userID, fields)
 	if err != nil {
 		if err.Error() == "unauthorized" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "You can only update your own items"})
@@ -189,7 +185,7 @@ func DynamicItemUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedItem, _ := queryBuilderItems.GetItem(schemaType, item.ID)
+	updatedItem, _ := queryBuilder.GetItem(schemaType, item.ID)
 	if updatedItem != nil {
 		c.JSON(http.StatusOK, updatedItem)
 	} else {
@@ -219,7 +215,7 @@ func DynamicItemDelete(c *gin.Context) {
 		isAdmin = utils.IsUserAdmin(user)
 	}
 
-	if err := queryBuilderItems.DeleteItem(schemaType, uint(id), userID, isAdmin); err != nil {
+	if err := queryBuilder.DeleteItem(schemaType, uint(id), userID, isAdmin); err != nil {
 		if err.Error() == "unauthorized" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own items"})
 			return
@@ -321,7 +317,7 @@ func DynamicItemDeleteImpact(c *gin.Context) {
 		return
 	}
 
-	impact, err := queryBuilderItems.GetDeleteImpact(schemaType, uint(id))
+	impact, err := queryBuilder.GetDeleteImpact(schemaType, uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -333,7 +329,7 @@ func DynamicItemDeleteImpact(c *gin.Context) {
 func DynamicItemSeed(c *gin.Context) {
 	schemaType := c.Param("type")
 
-	cached, ok := schemaRegistryItems.GetSchema(schemaType)
+	cached, ok := schemaRegistry.GetSchema(schemaType)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
 		return
@@ -394,23 +390,27 @@ func DynamicItemSeed(c *gin.Context) {
 		}
 
 		if len(filters) > 0 {
-			existingItems, _ := queryBuilderItems.BuildListQuery(services.QueryParams{
+			existingItems, err := queryBuilder.BuildListQuery(services.QueryParams{
 				SchemaName: schemaType,
 				Filters:    filters,
 			})
+			if err != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("Failed to check duplicates: %v", err))
+				continue
+			}
 			if existingItems.Total > 0 {
 				result.Skipped++
 				continue
 			}
 		}
 
-		validationResult := validationEngineItems.ValidateCreate(schemaType, itemData)
+		validationResult := validationEngine.ValidateCreate(schemaType, itemData)
 		if !validationResult.Valid {
 			result.Errors = append(result.Errors, fmt.Sprintf("Validation failed: %v", validationResult.Errors))
 			continue
 		}
 
-		_, err := queryBuilderItems.CreateItem(schemaType, userID, itemData)
+		_, err := queryBuilder.CreateItem(schemaType, userID, itemData)
 		if err != nil {
 			nameVal := "unknown"
 			if name, ok := itemData["name"].(string); ok {
@@ -432,7 +432,7 @@ func DynamicItemSeed(c *gin.Context) {
 func DynamicItemValidate(c *gin.Context) {
 	schemaType := c.Param("type")
 
-	cached, ok := schemaRegistryItems.GetSchema(schemaType)
+	cached, ok := schemaRegistry.GetSchema(schemaType)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
 		return
@@ -482,7 +482,7 @@ func DynamicItemValidate(c *gin.Context) {
 	}
 
 	for i, itemData := range items {
-		validationResult := validationEngineItems.ValidateCreate(schemaType, itemData)
+		validationResult := validationEngine.ValidateCreate(schemaType, itemData)
 		if !validationResult.Valid {
 			result.Valid = false
 			for _, err := range validationResult.Errors {
