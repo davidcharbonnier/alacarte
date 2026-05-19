@@ -240,7 +240,8 @@ func SchemaDetails(c *gin.Context) {
 		response["version"] = cached.Version.Version
 	}
 
-	if c.GetHeader("If-None-Match") == cached.VersionHash {
+	etagHeader := c.GetHeader("If-None-Match")
+	if etagHeader != "" && etagHeader == cached.VersionHash {
 		c.Status(http.StatusNotModified)
 		return
 	}
