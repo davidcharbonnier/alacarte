@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/davidcharbonnier/alacarte-api/models"
 	"github.com/davidcharbonnier/alacarte-api/utils"
@@ -448,10 +449,7 @@ func migrateWineItem(item *models.Wine, schemaID, versionID uint) error {
 }
 
 func migrateCoffeeItem(item *models.Coffee, schemaID, versionID uint) error {
-	tastingNotes := ""
-	if len(item.TastingNotes) > 0 {
-		tastingNotes = item.TastingNotes[0]
-	}
+	tastingNotes := strings.Join(item.TastingNotes, ", ")
 	fieldValues := map[string]interface{}{
 		"name":              item.Name,
 		"roaster":           item.Roaster,
@@ -515,8 +513,40 @@ func migrateItemToDynamic(name string, imageURL *string, schemaID, versionID uin
 		SchemaVersionID: &versionID,
 	}
 
-	if err := utils.DB.Create(&newItem).Error; err != nil {
+	tx := utils.DB.Begin()
+
+	if err := tx.Create(&newItem).Error; err != nil {
+		tx.Rollback()
 		return fmt.Errorf("failed to create item: %w", err)
+	}
+
+	// Create EAV field value rows for filtering/sorting
+	var fields []models.ItemTypeField
+	if err := tx.Where("schema_id = ?", schemaID).Find(&fields).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to load fields for schema %d: %w", schemaID, err)
+	}
+	for _, field := range fields {
+		if value, exists := fieldValues[field.Key]; exists {
+			var valueStr *string
+			if value != nil {
+				str := fmt.Sprintf("%v", value)
+				valueStr = &str
+			}
+			fv := models.ItemFieldValue{
+				ItemID:  newItem.ID,
+				FieldID: field.ID,
+				Value:   valueStr,
+			}
+			if err := tx.Create(&fv).Error; err != nil {
+				tx.Rollback()
+				return fmt.Errorf("failed to create field value: %w", err)
+			}
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return fmt.Errorf("failed to commit migration transaction: %w", err)
 	}
 	MigratedItems++
 
