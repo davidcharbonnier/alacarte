@@ -602,7 +602,10 @@ func TestEAVQueryBuilder_FieldValuesJSONCoercion(t *testing.T) {
 		t.Fatalf("failed to fetch field values: %v", err)
 	}
 
-	jsonStr := BuildFieldValuesJSON(fieldValues, schema.Fields)
+	jsonStr, err := BuildFieldValuesJSON(fieldValues, schema.Fields)
+	if err != nil {
+		t.Fatalf("BuildFieldValuesJSON failed: %v", err)
+	}
 	if jsonStr == "" || jsonStr == "{}" {
 		t.Error("expected non-empty field values JSON")
 	}

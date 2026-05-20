@@ -340,7 +340,11 @@ func SchemaCreate(c *gin.Context) {
 	}
 
 	if len(body.UniqueFields) > 0 {
-		uniqueFieldsJSON, _ := json.Marshal(body.UniqueFields)
+		uniqueFieldsJSON, err := json.Marshal(body.UniqueFields)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process unique fields"})
+			return
+		}
 		schema.UniqueFields = string(uniqueFieldsJSON)
 	} else {
 		schema.UniqueFields = "[]"
@@ -409,7 +413,12 @@ func SchemaCreate(c *gin.Context) {
 		IsActive: true,
 	}
 
-	fieldsJSON, _ := json.Marshal(body.Fields)
+	fieldsJSON, err := json.Marshal(body.Fields)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process schema fields"})
+		return
+	}
 	version.Fields = string(fieldsJSON)
 
 	if err := tx.Create(&version).Error; err != nil {
@@ -467,24 +476,37 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 
 	tx := utils.DB.Begin()
 
+	updates := map[string]interface{}{}
 	if body.DisplayName != "" {
-		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("display_name", body.DisplayName)
+		updates["display_name"] = body.DisplayName
 	}
 	if body.PluralName != "" {
-		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("plural_name", body.PluralName)
+		updates["plural_name"] = body.PluralName
 	}
 	if body.Icon != "" {
-		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("icon", body.Icon)
+		updates["icon"] = body.Icon
 	}
 	if body.Color != "" {
-		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("color", body.Color)
+		updates["color"] = body.Color
 	}
 	if body.IsActive != nil {
-		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("is_active", *body.IsActive)
+		updates["is_active"] = *body.IsActive
 	}
 	if body.UniqueFields != nil {
-		uniqueFieldsJSON, _ := json.Marshal(body.UniqueFields)
-		tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Update("unique_fields", string(uniqueFieldsJSON))
+		uniqueFieldsJSON, err := json.Marshal(body.UniqueFields)
+		if err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process unique fields"})
+			return
+		}
+		updates["unique_fields"] = string(uniqueFieldsJSON)
+	}
+	if len(updates) > 0 {
+		if err := tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Updates(updates).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update schema"})
+			return
+		}
 	}
 
 	if body.Fields != nil {
@@ -508,7 +530,12 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 				IsActive: true,
 			}
 
-			fieldsJSON, _ := json.Marshal(body.Fields)
+			fieldsJSON, err := json.Marshal(body.Fields)
+			if err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process schema fields"})
+				return
+			}
 			version.Fields = string(fieldsJSON)
 
 			if err := tx.Create(&version).Error; err != nil {
