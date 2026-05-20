@@ -39,10 +39,24 @@ type ListResult struct {
 	TotalPages int
 }
 
-func (qb *EAVQueryBuilder) BuildListQuery(params QueryParams) (*ListResult, error) {
-	cached, ok := qb.registry.GetSchema(params.SchemaName)
+func (qb *EAVQueryBuilder) getCachedSchema(schemaName string) (*CachedSchema, error) {
+	cached, ok := qb.registry.GetSchema(schemaName)
 	if !ok {
-		return nil, fmt.Errorf("schema '%s' not found", params.SchemaName)
+		if err := qb.registry.RefreshSchema(schemaName); err != nil {
+			return nil, fmt.Errorf("schema '%s' not found", schemaName)
+		}
+		cached, ok = qb.registry.GetSchema(schemaName)
+		if !ok {
+			return nil, fmt.Errorf("schema '%s' not found", schemaName)
+		}
+	}
+	return cached, nil
+}
+
+func (qb *EAVQueryBuilder) BuildListQuery(params QueryParams) (*ListResult, error) {
+	cached, err := qb.getCachedSchema(params.SchemaName)
+	if err != nil {
+		return nil, err
 	}
 
 	if params.Page < 1 {
@@ -55,89 +69,98 @@ func (qb *EAVQueryBuilder) BuildListQuery(params QueryParams) (*ListResult, erro
 		params.PerPage = 100
 	}
 
-	var items []models.Item
-	query := utils.DB.Model(&models.Item{}).Where("schema_id = ?", cached.Schema.ID)
-
-	if params.HasImage != nil {
-		if *params.HasImage {
-			query = query.Where("image_url IS NOT NULL AND image_url != ''")
-		} else {
-			query = query.Where("image_url IS NULL OR image_url = ''")
-		}
-	}
-
-	if params.Search != "" {
-		searchTerm := strings.ToLower(params.Search)
-		eavSubquery := utils.DB.Model(&models.ItemFieldValue{}).
-			Select("item_id").
-			Where("field_id IN (?)",
-				utils.DB.Model(&models.ItemTypeField{}).
-					Select("id").
-					Where("schema_id = ? AND display LIKE ?", cached.Schema.ID, "%\"searchable\":true%"))
-		query = query.Where("id IN (?) OR LOWER(field_values) LIKE ?", eavSubquery, "%"+searchTerm+"%")
-	}
-
-	if params.Filters != nil {
-		for key, value := range params.Filters {
-			field, found := qb.registry.GetFieldByKey(params.SchemaName, key)
-			if !found {
-				continue
-			}
-
-			eavQuery := utils.DB.Model(&models.ItemFieldValue{}).
-				Select("item_id").
-				Where("field_id = ?", field.ID)
-
-			switch v := value.(type) {
-			case string:
-				if v != "" {
-					eavQuery = eavQuery.Where("value = ?", v)
-				}
-			case []string:
-				if len(v) > 0 {
-					eavQuery = eavQuery.Where("value IN (?)", v)
-				}
-			default:
-				eavQuery = eavQuery.Where("value = ?", fmt.Sprintf("%v", v))
-			}
-
-			query = query.Where("id IN (?)", eavQuery)
-		}
-	}
-
 	var total int64
-	if err := query.Count(&total).Error; err != nil {
-		return nil, fmt.Errorf("failed to count items: %w", err)
-	}
+	var items []models.Item
 
-	sortField := "name"
-	sortDir := "ASC"
-	if params.Sort != "" {
-		if strings.HasPrefix(params.Sort, "-") {
-			sortDir = "DESC"
-			sortField = strings.TrimPrefix(params.Sort, "-")
-		} else {
-			sortField = params.Sort
+	err = utils.DB.Transaction(func(tx *gorm.DB) error {
+		query := tx.Model(&models.Item{}).Where("schema_id = ?", cached.Schema.ID)
+
+		if params.HasImage != nil {
+			if *params.HasImage {
+				query = query.Where("image_url IS NOT NULL AND image_url != ''")
+			} else {
+				query = query.Where("image_url IS NULL OR image_url = ''")
+			}
 		}
-	}
 
-	switch sortField {
-	case "created_at", "updated_at", "name":
-		query = query.Order(fmt.Sprintf("%s %s", sortField, sortDir))
-	default:
-		if field, found := qb.registry.GetFieldByKey(params.SchemaName, sortField); found {
-			query = query.
-				Joins("LEFT JOIN item_field_values ON items.id = item_field_values.item_id AND item_field_values.field_id = ?", field.ID).
-				Order(fmt.Sprintf("item_field_values.value %s", sortDir))
-		} else {
-			query = query.Order("name ASC")
+		if params.Search != "" {
+			searchTerm := strings.ToLower(params.Search)
+			eavSubquery := tx.Model(&models.ItemFieldValue{}).
+				Select("item_id").
+				Where("field_id IN (?)",
+					tx.Model(&models.ItemTypeField{}).
+						Select("id").
+						Where("schema_id = ? AND display LIKE ?", cached.Schema.ID, "%\"searchable\":true%"))
+			query = query.Where("id IN (?) OR LOWER(field_values) LIKE ?", eavSubquery, "%"+searchTerm+"%")
 		}
-	}
 
-	offset := (params.Page - 1) * params.PerPage
-	query = query.Offset(offset).Limit(params.PerPage)
+		if params.Filters != nil {
+			for key, value := range params.Filters {
+				field, found := qb.registry.GetFieldByKey(params.SchemaName, key)
+				if !found {
+					continue
+				}
 
-	if err := query.Preload("FieldValuesRows").Find(&items).Error; err != nil {
+				eavQuery := tx.Model(&models.ItemFieldValue{}).
+					Select("item_id").
+					Where("field_id = ?", field.ID)
+
+				switch v := value.(type) {
+				case string:
+					if v != "" {
+						eavQuery = eavQuery.Where("value = ?", v)
+					}
+				case []string:
+					if len(v) > 0 {
+						eavQuery = eavQuery.Where("value IN (?)", v)
+					}
+				default:
+					eavQuery = eavQuery.Where("value = ?", fmt.Sprintf("%v", v))
+				}
+
+				query = query.Where("id IN (?)", eavQuery)
+			}
+		}
+
+		if err := query.Count(&total).Error; err != nil {
+			return err
+		}
+
+		sortField := "name"
+		sortDir := "ASC"
+		if params.Sort != "" {
+			if strings.HasPrefix(params.Sort, "-") {
+				sortDir = "DESC"
+				sortField = strings.TrimPrefix(params.Sort, "-")
+			} else {
+				sortField = params.Sort
+			}
+		}
+
+		switch sortField {
+		case "created_at", "updated_at", "name":
+			query = query.Order(fmt.Sprintf("%s %s", sortField, sortDir))
+		default:
+			if field, found := qb.registry.GetFieldByKey(params.SchemaName, sortField); found {
+				query = query.
+					Joins("LEFT JOIN item_field_values ON items.id = item_field_values.item_id AND item_field_values.field_id = ?", field.ID).
+					Order(fmt.Sprintf("item_field_values.value %s", sortDir))
+			} else {
+				query = query.Order("name ASC")
+			}
+		}
+
+		offset := (params.Page - 1) * params.PerPage
+		query = query.Offset(offset).Limit(params.PerPage)
+
+		if err := query.Preload("FieldValuesRows").Find(&items).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return nil, fmt.Errorf("failed to query items: %w", err)
 	}
 
@@ -161,9 +184,9 @@ func (qb *EAVQueryBuilder) BuildListQuery(params QueryParams) (*ListResult, erro
 }
 
 func (qb *EAVQueryBuilder) GetItem(schemaName string, itemID uint) (*map[string]interface{}, error) {
-	cached, ok := qb.registry.GetSchema(schemaName)
-	if !ok {
-		return nil, fmt.Errorf("schema '%s' not found", schemaName)
+	cached, err := qb.getCachedSchema(schemaName)
+	if err != nil {
+		return nil, err
 	}
 
 	var item models.Item
@@ -275,9 +298,9 @@ func (qb *EAVQueryBuilder) checkUniqueness(cached *CachedSchema, fields map[stri
 }
 
 func (qb *EAVQueryBuilder) CreateItem(schemaName string, userID uint, fields map[string]interface{}) (*models.Item, error) {
-	cached, ok := qb.registry.GetSchema(schemaName)
-	if !ok {
-		return nil, fmt.Errorf("schema '%s' not found", schemaName)
+	cached, err := qb.getCachedSchema(schemaName)
+	if err != nil {
+		return nil, err
 	}
 
 	unique, err := qb.checkUniqueness(cached, fields, nil)
@@ -347,9 +370,9 @@ func (qb *EAVQueryBuilder) CreateItem(schemaName string, userID uint, fields map
 }
 
 func (qb *EAVQueryBuilder) UpdateItem(schemaName string, itemID uint, userID uint, fields map[string]interface{}) (*models.Item, error) {
-	cached, ok := qb.registry.GetSchema(schemaName)
-	if !ok {
-		return nil, fmt.Errorf("schema '%s' not found", schemaName)
+	cached, err := qb.getCachedSchema(schemaName)
+	if err != nil {
+		return nil, err
 	}
 
 	var item models.Item
@@ -442,9 +465,9 @@ func (qb *EAVQueryBuilder) UpdateItem(schemaName string, itemID uint, userID uin
 }
 
 func (qb *EAVQueryBuilder) DeleteItem(schemaName string, itemID uint, userID uint, isAdmin bool) error {
-	cached, ok := qb.registry.GetSchema(schemaName)
-	if !ok {
-		return fmt.Errorf("schema '%s' not found", schemaName)
+	cached, err := qb.getCachedSchema(schemaName)
+	if err != nil {
+		return err
 	}
 
 	var item models.Item
@@ -480,9 +503,9 @@ func (qb *EAVQueryBuilder) DeleteItem(schemaName string, itemID uint, userID uin
 }
 
 func (qb *EAVQueryBuilder) GetDeleteImpact(schemaName string, itemID uint) (map[string]interface{}, error) {
-	cached, ok := qb.registry.GetSchema(schemaName)
-	if !ok {
-		return nil, fmt.Errorf("schema '%s' not found", schemaName)
+	cached, err := qb.getCachedSchema(schemaName)
+	if err != nil {
+		return nil, err
 	}
 
 	var item models.Item
