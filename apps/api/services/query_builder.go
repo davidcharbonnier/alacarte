@@ -450,7 +450,12 @@ func (qb *EAVQueryBuilder) UpdateItem(schemaName string, itemID uint, userID uin
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to read field values: %w", err)
 	}
-	item.FieldValues = BuildFieldValuesJSON(allFieldValues, cached.Fields)
+	fieldValuesJSON, err := BuildFieldValuesJSON(allFieldValues, cached.Fields)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("failed to build field values JSON: %w", err)
+	}
+	item.FieldValues = fieldValuesJSON
 	if err := tx.Save(&item).Error; err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to update item: %w", err)
@@ -596,7 +601,7 @@ func (qb *EAVQueryBuilder) GetDeleteImpact(schemaName string, itemID uint) (map[
 	}, nil
 }
 
-func BuildFieldValuesJSON(fieldValues []models.ItemFieldValue, fields []*models.ItemTypeField) string {
+func BuildFieldValuesJSON(fieldValues []models.ItemFieldValue, fields []*models.ItemTypeField) (string, error) {
 	result := make(map[string]interface{})
 
 	fieldMap := make(map[uint]*models.ItemTypeField)
@@ -621,6 +626,9 @@ func BuildFieldValuesJSON(fieldValues []models.ItemFieldValue, fields []*models.
 		}
 	}
 
-	jsonBytes, _ := json.Marshal(result)
-	return string(jsonBytes)
+	jsonBytes, err := json.Marshal(result)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBytes), nil
 }
