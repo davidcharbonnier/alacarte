@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,10 +14,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func getOrRefreshSchema(schemaType string) (*services.CachedSchema, bool) {
+	cached, ok := schemaRegistry.GetSchema(schemaType)
+	if !ok {
+		if err := schemaRegistry.RefreshSchema(schemaType); err != nil {
+			log.Printf("WARNING: failed to refresh schema cache for '%s': %v", schemaType, err)
+			return nil, false
+		}
+		cached, ok = schemaRegistry.GetSchema(schemaType)
+	}
+	return cached, ok
+}
+
 func DynamicItemList(c *gin.Context) {
 	schemaType := c.Param("type")
 
-	if _, ok := schemaRegistry.GetSchema(schemaType); !ok {
+	if _, ok := getOrRefreshSchema(schemaType); !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
 		return
 	}
@@ -86,7 +99,7 @@ func DynamicItemCreate(c *gin.Context) {
 		return
 	}
 
-	cached, ok := schemaRegistry.GetSchema(schemaType)
+	cached, ok := getOrRefreshSchema(schemaType)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
 		return
@@ -127,7 +140,10 @@ func DynamicItemCreate(c *gin.Context) {
 		return
 	}
 
-	createdItem, _ := queryBuilder.GetItem(schemaType, item.ID)
+	createdItem, err := queryBuilder.GetItem(schemaType, item.ID)
+	if err != nil {
+		log.Printf("WARNING: failed to fetch item %d after create: %v", item.ID, err)
+	}
 	if createdItem != nil {
 		c.JSON(http.StatusOK, createdItem)
 	} else {
@@ -185,7 +201,10 @@ func DynamicItemUpdate(c *gin.Context) {
 		return
 	}
 
-	updatedItem, _ := queryBuilder.GetItem(schemaType, item.ID)
+	updatedItem, err := queryBuilder.GetItem(schemaType, item.ID)
+	if err != nil {
+		log.Printf("WARNING: failed to fetch item %d after update: %v", item.ID, err)
+	}
 	if updatedItem != nil {
 		c.JSON(http.StatusOK, updatedItem)
 	} else {
@@ -329,7 +348,7 @@ func DynamicItemDeleteImpact(c *gin.Context) {
 func DynamicItemSeed(c *gin.Context) {
 	schemaType := c.Param("type")
 
-	cached, ok := schemaRegistry.GetSchema(schemaType)
+	cached, ok := getOrRefreshSchema(schemaType)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
 		return
@@ -432,7 +451,7 @@ func DynamicItemSeed(c *gin.Context) {
 func DynamicItemValidate(c *gin.Context) {
 	schemaType := c.Param("type")
 
-	cached, ok := schemaRegistry.GetSchema(schemaType)
+	cached, ok := getOrRefreshSchema(schemaType)
 	if !ok {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
 		return

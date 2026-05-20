@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/davidcharbonnier/alacarte-api/models"
 	"github.com/davidcharbonnier/alacarte-api/services"
@@ -349,6 +350,10 @@ func SchemaCreate(c *gin.Context) {
 
 	if err := tx.Create(&schema).Error; err != nil {
 		tx.Rollback()
+		if strings.Contains(err.Error(), "Duplicate") || strings.Contains(err.Error(), "UNIQUE") {
+			c.JSON(http.StatusConflict, gin.H{"error": "A schema with this name already exists"})
+			return
+		}
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create schema"})
 		return
 	}
@@ -483,85 +488,105 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 	}
 
 	if body.Fields != nil {
-		var currentVersion int
-		tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Select("MAX(version)").Scan(&currentVersion)
-		newVersion := currentVersion + 1
+		if len(body.Fields) == 0 {
+			// Empty fields array: delete all existing fields for this schema
+			if err := tx.Where("schema_id = ?", schemaID).Delete(&models.ItemTypeField{}).Error; err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to delete existing fields"})
+				return
+			}
+		} else {
+			var currentVersion int
+			tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Select("MAX(version)").Scan(&currentVersion)
+			newVersion := currentVersion + 1
 
-		tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Update("is_active", false)
+			tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Update("is_active", false)
 
-		version := models.SchemaVersion{
-			SchemaID: schemaID,
-			Version:  newVersion,
-			IsActive: true,
-		}
-
-		fieldsJSON, _ := json.Marshal(body.Fields)
-		version.Fields = string(fieldsJSON)
-
-		if err := tx.Create(&version).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create schema version"})
-			return
-		}
-
-		for i, fieldData := range body.Fields {
-			fieldKey := getStringField(fieldData, "key")
-
-			var existingField models.ItemTypeField
-			err := tx.Where("schema_id = ? AND `key` = ?", schemaID, fieldKey).First(&existingField).Error
-
-			field := models.ItemTypeField{
-				SchemaID:  schemaID,
-				Key:       fieldKey,
-				Label:     getStringField(fieldData, "label"),
-				FieldType: models.FieldType(getStringField(fieldData, "field_type")),
-				Required:  getBoolField(fieldData, "required"),
-				Order:     i,
+			version := models.SchemaVersion{
+				SchemaID: schemaID,
+				Version:  newVersion,
+				IsActive: true,
 			}
 
-			if validation, ok := fieldData["validation"].(map[string]interface{}); ok {
-				validationJSON, _ := json.Marshal(validation)
-				s := string(validationJSON)
-				field.Validation = &s
+			fieldsJSON, _ := json.Marshal(body.Fields)
+			version.Fields = string(fieldsJSON)
+
+			if err := tx.Create(&version).Error; err != nil {
+				tx.Rollback()
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create schema version"})
+				return
 			}
 
-			if display, ok := fieldData["display"].(map[string]interface{}); ok {
-				displayJSON, _ := json.Marshal(display)
-				s := string(displayJSON)
-				field.Display = &s
-			}
+			newKeys := make([]string, len(body.Fields))
+			for i, fieldData := range body.Fields {
+				fieldKey := getStringField(fieldData, "key")
+				newKeys[i] = fieldKey
 
-			if options, ok := fieldData["options"].([]interface{}); ok {
-				optionsStr := make([]string, len(options))
-				for j, opt := range options {
-					if str, ok := opt.(string); ok {
-						optionsStr[j] = str
+				var existingField models.ItemTypeField
+				err := tx.Where("schema_id = ? AND `key` = ?", schemaID, fieldKey).First(&existingField).Error
+
+				field := models.ItemTypeField{
+					SchemaID:  schemaID,
+					Key:       fieldKey,
+					Label:     getStringField(fieldData, "label"),
+					FieldType: models.FieldType(getStringField(fieldData, "field_type")),
+					Required:  getBoolField(fieldData, "required"),
+					Order:     i,
+				}
+
+				if validation, ok := fieldData["validation"].(map[string]interface{}); ok {
+					validationJSON, _ := json.Marshal(validation)
+					s := string(validationJSON)
+					field.Validation = &s
+				}
+
+				if display, ok := fieldData["display"].(map[string]interface{}); ok {
+					displayJSON, _ := json.Marshal(display)
+					s := string(displayJSON)
+					field.Display = &s
+				}
+
+				if options, ok := fieldData["options"].([]interface{}); ok {
+					optionsStr := make([]string, len(options))
+					for j, opt := range options {
+						if str, ok := opt.(string); ok {
+							optionsStr[j] = str
+						}
+					}
+					optionsJSON, _ := json.Marshal(optionsStr)
+					s := string(optionsJSON)
+					field.Options = &s
+				}
+
+				if group, ok := fieldData["group"].(string); ok {
+					field.Group = &group
+				}
+
+				if err == nil {
+					tx.Model(&existingField).Updates(map[string]interface{}{
+						"label":      field.Label,
+						"field_type": field.FieldType,
+						"required":   field.Required,
+						"order":      field.Order,
+						"validation": field.Validation,
+						"display":    field.Display,
+						"options":    field.Options,
+						"group":      field.Group,
+					})
+				} else {
+					if err := tx.Create(&field).Error; err != nil {
+						tx.Rollback()
+						c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create field: " + field.Key})
+						return
 					}
 				}
-				optionsJSON, _ := json.Marshal(optionsStr)
-				s := string(optionsJSON)
-				field.Options = &s
 			}
 
-			if group, ok := fieldData["group"].(string); ok {
-				field.Group = &group
-			}
-
-			if err == nil {
-				tx.Model(&existingField).Updates(map[string]interface{}{
-					"label":      field.Label,
-					"field_type": field.FieldType,
-					"required":   field.Required,
-					"order":      field.Order,
-					"validation": field.Validation,
-					"display":    field.Display,
-					"options":    field.Options,
-					"group":      field.Group,
-				})
-			} else {
-				if err := tx.Create(&field).Error; err != nil {
+			// Delete orphaned fields not present in the new field set
+			if len(newKeys) > 0 {
+				if err := tx.Where("schema_id = ? AND `key` NOT IN ?", schemaID, newKeys).Delete(&models.ItemTypeField{}).Error; err != nil {
 					tx.Rollback()
-					c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create field: " + field.Key})
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to delete orphaned fields"})
 					return
 				}
 			}
@@ -574,7 +599,6 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 		return
 	}
 
-	schemaRegistry.InvalidateSchema(schemaName)
 	if err := schemaRegistry.RefreshSchema(schemaName); err != nil {
 		log.Printf("WARNING: failed to refresh schema cache for '%s': %v", schemaName, err)
 	}
