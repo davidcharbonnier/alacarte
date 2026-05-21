@@ -258,7 +258,7 @@ func SeedGins(c *gin.Context) {
 
 	result := utils.SeedResult{Errors: []string{}}
 
-	cached, ok := schemaRegistry.GetSchema("gin")
+	cached, ok := schemaRegistry.GetActiveSchema("gin")
 	if !ok {
 		result.Errors = append(result.Errors, "Schema 'gin' not found")
 		c.JSON(http.StatusBadRequest, gin.H{"error": result.Errors[0]})

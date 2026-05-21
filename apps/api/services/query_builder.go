@@ -40,12 +40,12 @@ type ListResult struct {
 }
 
 func (qb *EAVQueryBuilder) getCachedSchema(schemaName string) (*CachedSchema, error) {
-	cached, ok := qb.registry.GetSchema(schemaName)
+	cached, ok := qb.registry.GetActiveSchema(schemaName)
 	if !ok {
 		if err := qb.registry.RefreshSchema(schemaName); err != nil {
 			return nil, fmt.Errorf("schema '%s' not found", schemaName)
 		}
-		cached, ok = qb.registry.GetSchema(schemaName)
+		cached, ok = qb.registry.GetActiveSchema(schemaName)
 		if !ok {
 			return nil, fmt.Errorf("schema '%s' not found", schemaName)
 		}

@@ -15,13 +15,13 @@ import (
 )
 
 func getOrRefreshSchema(schemaType string) (*services.CachedSchema, bool) {
-	cached, ok := schemaRegistry.GetSchema(schemaType)
+	cached, ok := schemaRegistry.GetActiveSchema(schemaType)
 	if !ok {
 		if err := schemaRegistry.RefreshSchema(schemaType); err != nil {
 			log.Printf("WARNING: failed to refresh schema cache for '%s': %v", schemaType, err)
 			return nil, false
 		}
-		cached, ok = schemaRegistry.GetSchema(schemaType)
+		cached, ok = schemaRegistry.GetActiveSchema(schemaType)
 	}
 	return cached, ok
 }

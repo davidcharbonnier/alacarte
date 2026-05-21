@@ -51,7 +51,7 @@ func (r *SchemaRegistry) LoadSchemas() error {
 	var schemas []models.ItemTypeSchema
 	if err := utils.DB.Preload("Fields", func(db *gorm.DB) *gorm.DB {
 		return db.Order("`order` ASC")
-	}).Where("is_active = ?", true).Order("name ASC").Find(&schemas).Error; err != nil {
+	}).Order("name ASC").Find(&schemas).Error; err != nil {
 		return fmt.Errorf("failed to load schemas: %w", err)
 	}
 
@@ -64,7 +64,7 @@ func (r *SchemaRegistry) LoadSchemas() error {
 	var versionResults []schemaVersionResult
 	if err := utils.DB.Model(&models.SchemaVersion{}).
 		Select("schema_id, version, fields").
-		Where("is_active = 1 AND schema_id IN (SELECT id FROM item_type_schemas WHERE is_active = 1)").
+		Where("is_active = 1 AND schema_id IN (SELECT id FROM item_type_schemas)").
 		Order("version DESC").
 		Find(&versionResults).Error; err != nil {
 		return fmt.Errorf("failed to load schema versions: %w", err)
@@ -127,6 +127,14 @@ func (r *SchemaRegistry) GetSchema(name string) (*CachedSchema, bool) {
 	return schema, ok
 }
 
+func (r *SchemaRegistry) GetActiveSchema(name string) (*CachedSchema, bool) {
+	cached, ok := r.GetSchema(name)
+	if !ok || !cached.Schema.IsActive {
+		return nil, false
+	}
+	return cached, true
+}
+
 func (r *SchemaRegistry) GetAllSchemas() []*CachedSchema {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -139,14 +147,6 @@ func (r *SchemaRegistry) GetAllSchemas() []*CachedSchema {
 		return result[i].Schema.Name < result[j].Schema.Name
 	})
 	return result
-}
-
-func (r *SchemaRegistry) GetAllSchemasIncludingInactive() ([]models.ItemTypeSchema, error) {
-	var schemas []models.ItemTypeSchema
-	if err := utils.DB.Order("name ASC").Find(&schemas).Error; err != nil {
-		return nil, fmt.Errorf("failed to load schemas: %w", err)
-	}
-	return schemas, nil
 }
 
 func (r *SchemaRegistry) InvalidateSchema(name string) {
@@ -162,7 +162,7 @@ func (r *SchemaRegistry) RefreshSchema(name string) error {
 	var schema models.ItemTypeSchema
 	if err := utils.DB.Preload("Fields", func(db *gorm.DB) *gorm.DB {
 		return db.Order("`order` ASC")
-	}).Where("name = ? AND is_active = ?", name, true).First(&schema).Error; err != nil {
+	}).Where("name = ?", name).First(&schema).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			delete(r.schemas, name)
 			return nil
