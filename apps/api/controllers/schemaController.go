@@ -89,93 +89,48 @@ func SchemaList(c *gin.Context) {
 		}
 	}
 
-	if includeInactive {
-		schemas, err := schemaRegistry.GetAllSchemasIncludingInactive()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load schemas"})
-			return
+	schemas := schemaRegistry.GetAllSchemas()
+
+	for _, cached := range schemas {
+		if !includeInactive && !cached.Schema.IsActive {
+			continue
 		}
 
-		for _, schema := range schemas {
-			var fields []models.ItemTypeField
-			utils.DB.Where("schema_id = ?", schema.ID).Order("`order` ASC").Find(&fields)
-
-			fieldsData := make([]map[string]interface{}, 0, len(fields))
-			for _, field := range fields {
-				fieldData := map[string]interface{}{
-					"key":        field.Key,
-					"label":      field.Label,
-					"field_type": field.FieldType,
-					"required":   field.Required,
-					"order":      field.Order,
-					"options":    parseFieldOptionsValue(field.Options),
-					"validation": parseFieldValidationValue(field.Validation),
-					"display":    parseFieldDisplayValue(field.Display),
-				}
-				if field.Group != nil {
-					fieldData["group"] = *field.Group
-				}
-				fieldsData = append(fieldsData, fieldData)
+		fields := make([]map[string]interface{}, 0, len(cached.Fields))
+		for _, field := range cached.Fields {
+			fieldData := map[string]interface{}{
+				"key":        field.Key,
+				"label":      field.Label,
+				"field_type": field.FieldType,
+				"required":   field.Required,
+				"order":      field.Order,
+				"options":    parseFieldOptionsValue(field.Options),
+				"validation": parseFieldValidationValue(field.Validation),
+				"display":    parseFieldDisplayValue(field.Display),
 			}
-
-			schemaData := map[string]interface{}{
-				"id":            schema.ID,
-				"name":          schema.Name,
-				"display_name":  schema.DisplayName,
-				"plural_name":   schema.PluralName,
-				"icon":          schema.Icon,
-				"color":         schema.Color,
-				"is_active":     schema.IsActive,
-				"unique_fields": parseUniqueFields(schema.UniqueFields),
-				"fields":        fieldsData,
+			if field.Group != nil {
+				fieldData["group"] = *field.Group
 			}
-
-			if includeCounts {
-				schemaData["item_count"] = countMap[schema.ID]
-			}
-
-			response = append(response, schemaData)
+			fields = append(fields, fieldData)
 		}
-	} else {
-		schemas := schemaRegistry.GetAllSchemas()
 
-		for _, cached := range schemas {
-			fields := make([]map[string]interface{}, 0, len(cached.Fields))
-			for _, field := range cached.Fields {
-				fieldData := map[string]interface{}{
-					"key":        field.Key,
-					"label":      field.Label,
-					"field_type": field.FieldType,
-					"required":   field.Required,
-					"order":      field.Order,
-					"options":    parseFieldOptionsValue(field.Options),
-					"validation": parseFieldValidationValue(field.Validation),
-					"display":    parseFieldDisplayValue(field.Display),
-				}
-				if field.Group != nil {
-					fieldData["group"] = *field.Group
-				}
-				fields = append(fields, fieldData)
-			}
-
-			schemaData := map[string]interface{}{
-				"id":            cached.Schema.ID,
-				"name":          cached.Schema.Name,
-				"display_name":  cached.Schema.DisplayName,
-				"plural_name":   cached.Schema.PluralName,
-				"icon":          cached.Schema.Icon,
-				"color":         cached.Schema.Color,
-				"is_active":     cached.Schema.IsActive,
-				"unique_fields": parseUniqueFields(cached.Schema.UniqueFields),
-				"fields":        fields,
-			}
-
-			if includeCounts {
-				schemaData["item_count"] = countMap[cached.Schema.ID]
-			}
-
-			response = append(response, schemaData)
+		schemaData := map[string]interface{}{
+			"id":            cached.Schema.ID,
+			"name":          cached.Schema.Name,
+			"display_name":  cached.Schema.DisplayName,
+			"plural_name":   cached.Schema.PluralName,
+			"icon":          cached.Schema.Icon,
+			"color":         cached.Schema.Color,
+			"is_active":     cached.Schema.IsActive,
+			"unique_fields": parseUniqueFields(cached.Schema.UniqueFields),
+			"fields":        fields,
 		}
+
+		if includeCounts {
+			schemaData["item_count"] = countMap[cached.Schema.ID]
+		}
+
+		response = append(response, schemaData)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"schemas": response})

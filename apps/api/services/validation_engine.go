@@ -35,7 +35,7 @@ func NewValidationEngine(registry *SchemaRegistry) *ValidationEngine {
 func (e *ValidationEngine) ValidateCreate(schemaName string, fields map[string]interface{}) *ValidationResult {
 	result := &ValidationResult{Valid: true, Errors: []ValidationError{}}
 
-	cached, ok := e.registry.GetSchema(schemaName)
+	cached, ok := e.registry.GetActiveSchema(schemaName)
 	if !ok {
 		result.Valid = false
 		result.Errors = append(result.Errors, ValidationError{
@@ -116,7 +116,7 @@ func (e *ValidationEngine) ValidateCreate(schemaName string, fields map[string]i
 func (e *ValidationEngine) ValidateUpdate(schemaName string, fields map[string]interface{}) *ValidationResult {
 	result := &ValidationResult{Valid: true, Errors: []ValidationError{}}
 
-	cached, ok := e.registry.GetSchema(schemaName)
+	cached, ok := e.registry.GetActiveSchema(schemaName)
 	if !ok {
 		result.Valid = false
 		result.Errors = append(result.Errors, ValidationError{
