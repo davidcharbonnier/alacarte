@@ -14,6 +14,7 @@ func createTestRegistry() *SchemaRegistry {
 		Schema: &models.ItemTypeSchema{
 			Name:        "cheese",
 			DisplayName: "Cheese",
+			IsActive:    true,
 		},
 		Fields: []*models.ItemTypeField{
 			{Key: "name", Label: "Name", FieldType: models.FieldTypeText, Required: true},
