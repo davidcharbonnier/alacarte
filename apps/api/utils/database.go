@@ -61,8 +61,16 @@ func MySQLConnect() {
 func RunMigrations() {
 	log.Println("Running database migrations...")
 
+	// TODO: Remove this workaround once legacy schemas (cheese, gin, wine, coffee,
+	// chili_sauce) are dropped and all data has been migrated through the self-healing
+	// migration. FK checks are disabled to allow AutoMigrate to add fk_items_ratings on
+	// databases restored from pre-migration backups where ratings.item_id still references
+	// legacy table IDs.
+	DB.Exec("SET FOREIGN_KEY_CHECKS = 0")
+	defer DB.Exec("SET FOREIGN_KEY_CHECKS = 1")
+
 	// Safe additive migrations - only adds new tables/columns, never removes
-		err := DB.AutoMigrate(
+	err := DB.AutoMigrate(
 		&models.User{},
 		&models.Cheese{},
 		&models.Gin{},
