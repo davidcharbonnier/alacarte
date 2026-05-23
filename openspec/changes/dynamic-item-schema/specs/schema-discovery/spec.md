@@ -255,3 +255,66 @@ Response: 200 OK
   "migrated_at": null
 }
 ```
+
+### Get Type Stats
+
+```
+GET /api/stats/type/:type
+Authorization: required
+
+Response: 200 OK
+{
+  "total_items": 150,
+  "user_rated_count": 42
+}
+```
+
+## ADDED Requirements (Pagination Support)
+
+### Requirement: Type Stats Endpoint
+
+The system SHALL provide an endpoint returning item count and user-rated count for a given schema type.
+
+#### Scenario: Authenticated user requests type stats
+
+- **GIVEN** schema "cheese" has 150 total items
+- **AND** the authenticated user has rated 42 distinct cheese items
+- **WHEN** the user requests GET /api/stats/type/cheese
+- **THEN** the system SHALL return `{ "total_items": 150, "user_rated_count": 42 }`
+
+#### Scenario: Stats for empty type
+
+- **GIVEN** schema "beer" has 0 items
+- **WHEN** the user requests GET /api/stats/type/beer
+- **THEN** the system SHALL return `{ "total_items": 0, "user_rated_count": 0 }`
+
+#### Scenario: Unauthenticated request denied
+
+- **GIVEN** no valid auth token
+- **WHEN** the user requests GET /api/stats/type/cheese
+- **THEN** the system SHALL return 401 Unauthorized
+
+#### Scenario: Stats for unknown type
+
+- **GIVEN** no schema exists with name "nonexistent"
+- **WHEN** the user requests GET /api/stats/type/nonexistent
+- **THEN** the system SHALL return 404 Not Found
+
+### Requirement: Schema Fields Provide Filter Options
+
+Schema select and enum field definitions SHALL be used by the Flutter client as the source of truth for filter option values, replacing the prior approach of scanning loaded items.
+
+#### Scenario: Client uses schema for filter chip options
+
+- **GIVEN** schema "cheese" has field "milk_type" (enum) with options ["Cow", "Goat", "Sheep", "Buffalo"]
+- **WHEN** the Flutter client builds the cheese listing filter UI
+- **THEN** the filter chip options SHALL be ["Cow", "Goat", "Sheep", "Buffalo"]
+- **AND** the client SHALL NOT scan loaded items to derive these options
+
+#### Scenario: Schema field options are authoritative
+
+- **GIVEN** schema "gin" has field "style" (select) with options ["London Dry", "Old Tom", "Plymouth"]
+- **AND** only "London Dry" gins exist in the first page of results
+- **WHEN** the Flutter client builds the gin listing filter UI
+- **THEN** all three options SHALL be displayed ("London Dry", "Old Tom", "Plymouth")
+- **AND** the filter SHALL work correctly when "Old Tom" is selected (server-side filter, not client-side)

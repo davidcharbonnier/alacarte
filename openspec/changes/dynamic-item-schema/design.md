@@ -597,6 +597,73 @@ After:   GET  /api/rating/:id                → RatingByItem
    - Not required for initial implementation
 
 4. **Rate limiting for schema discovery endpoint?**
-   - Implement standard rate limiting
-   - Consider higher limits for authenticated users
-   - Monitor usage patterns
+    - Implement standard rate limiting
+    - Consider higher limits for authenticated users
+    - Monitor usage patterns
+
+### Decision 10: Client-Side Pagination Architecture
+
+**Problem:** The Flutter client calls `GET /api/items/:type` with no query parameters, receiving a default 20-item page. Search and category filters run locally on those 20 items. Filter options are derived by scanning loaded items, which only sees the first page. The home screen loads full item lists just to count them. With datasets exceeding 20 items, the current approach is broken.
+
+**Choice:** Server-side pagination with infinite scroll, server-side search/filter, schema-based filter discovery, and a dedicated stats endpoint for home screen counts.
+
+**Alternatives Considered:**
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Client-side pagination** | Works offline, faster page flips | Still loads everything, defeats purpose |
+| **Cursor-based pagination** | Stable under concurrent inserts | More complex, no "page N" semantics |
+| **Offset/page-based (chosen)** | Simple, API already supports it, matches common patterns | Items can shift between pages during concurrent edits |
+
+**Rationale:**
+
+1. **API already supports it.** The backend returns `{ items, total, page, per_page, total_pages }` — the client just ignores this envelope. Minimal backend changes needed.
+
+2. **Infinite scroll** over a manual "Load More" button because:
+   - Natural mobile UX pattern (swipe to browse)
+   - Already used in the ratings/community feed
+   - 200px pre-fetch threshold for smooth scrolling
+
+3. **Server-side search and filters** because:
+   - Client-side filtering on 20 items is fundamentally broken
+   - API already supports `?search=` and `?filter[key]=value` query params
+   - Enables large datasets without loading everything
+
+4. **Schema-based filter option discovery** instead of scanning loaded items because:
+   - Scanning only sees values in current page (max 20)
+   - Schema already defines select/enum options server-side
+   - More correct: shows all possible filter values, not just those present in first 20 items
+   - `ItemFilterHelper.getAvailableFilters()` changes from `(List<T> items, String itemType)` to `(ItemSchema schema)`
+
+5. **Dedicated stats endpoint** (`GET /api/stats/type/:type`) because:
+   - Returns `{ total_items, user_rated_count }` in one request
+   - Home screen needs both counts per type
+   - Decouples item counting from item loading
+   - `user_rated_count` requires auth context (distinct user-rated items per type)
+   - Note: `total_items` overlaps with `GET /api/schemas?include_counts=true` (already implemented), but bundling with `user_rated_count` avoids home screen making two requests per type
+
+6. **Debounce in the widget layer** (not provider) because:
+   - Provider stays stateless (no Timer management)
+   - 300ms debounce prevents API calls on every keystroke
+   - Widget already has lifecycle hooks (`dispose`) for cleanup
+
+**Cache Strategy:**
+- The 5-minute TTL cache in `DynamicItemService` is **removed entirely**. The provider's `DynamicItemState` becomes the single source of truth.
+- `forceRefresh: true` clears accumulated items and fetches from page 1.
+
+**Filter + Pagination Interplay:**
+```
+Applying any filter (search or category) → resets to page 1 with filtered results
+Removing all filters → resets to page 1 with unfiltered results
+User scrolls → appends next page within current filter context
+Pull-to-refresh → page 1, maintains current filters
+```
+
+**State machine:**
+```
+Initial:    items=[], page=0, total=0, totalPages=0, loading=true
+loadItems() → page 1:  items=[1..20], page=1, total=150, totalPages=8
+loadMoreItems() → page 2: items=[1..40], page=2, total=150, totalPages=8
+search("brie") → page 1: items=[matching 1..N], page=1, total=N, totalPages=ceil(N/20)
+setFilter(type=Soft) → page 1: items=[filtered 1..M], page=1, total=M
+refreshItems() → same as loadItems, clears accumulated first
+```
