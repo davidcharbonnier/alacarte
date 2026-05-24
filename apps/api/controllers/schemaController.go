@@ -193,7 +193,7 @@ func SchemaDetails(c *gin.Context) {
 		"version_hash":  cached.VersionHash,
 		"item_count":    itemCount,
 		"fields":        fields,
-		"versions":      allVersions,
+		"versions":      serializeVersions(allVersions),
 	}
 
 	if cached.Version != nil {
@@ -261,7 +261,7 @@ func buildSchemaDetailResponse(schema *models.ItemTypeSchema, fields []models.It
 		"version_hash":  versionHash,
 		"item_count":    itemCount,
 		"fields":        fieldsData,
-		"versions":      allVersions,
+		"versions":      serializeVersions(allVersions),
 	}
 }
 
@@ -698,6 +698,26 @@ func SchemaVersionHistory(c *gin.Context) {
 		"is_active":   schemaVersion.IsActive,
 		"created_at":  schemaVersion.CreatedAt,
 	})
+}
+
+func serializeVersions(versions []models.SchemaVersion) []map[string]interface{} {
+	result := make([]map[string]interface{}, len(versions))
+	for i, v := range versions {
+		var fields []map[string]interface{}
+		if err := json.Unmarshal([]byte(v.Fields), &fields); err != nil {
+			fields = []map[string]interface{}{}
+		}
+		result[i] = map[string]interface{}{
+			"id":         v.ID,
+			"schema_id":  v.SchemaID,
+			"version":    v.Version,
+			"fields":     fields,
+			"is_active":  v.IsActive,
+			"created_at": v.CreatedAt,
+			"updated_at": v.UpdatedAt,
+		}
+	}
+	return result
 }
 
 func getStringField(data map[string]interface{}, key string) string {

@@ -63,6 +63,14 @@
 - [x] 4.12 Implement schema activation/deactivation
 - [x] 4.13 Implement schema version history view
 - [x] 4.14 Fix API to return versions list — SchemaDetails and buildSchemaDetailResponse missing `versions` field
+- [x] 4.15 Serialize SchemaVersion response fields with proper JSON keys
+      - Map gorm.Model.CreatedAt/CreatedAt → "created_at"/"updated_at" (snake_case)
+      - Parse Fields from JSON string to array of field objects
+      - Use serializer in both SchemaDetails() and buildSchemaDetailResponse()
+- [x] 4.16 Add field diff display to SchemaVersionHistory component
+      - Compare adjacent versions to detect added (+), removed (-), modified (~) fields
+      - Show field key, type, and required status per change (not just field count)
+- [x] 4.17 Verify version history tab: timestamps display correctly, field count accurate, diff indicators render
 
 ## 5. Admin Panel - Dynamic Item Management
 
