@@ -173,13 +173,54 @@ The Flutter client SHALL derive available filter options from schema field defin
 - **WHEN** the wine listing screen builds its filter UI
 - **THEN** no category filters SHALL be displayed (only search + hasImage)
 
-### Requirement: My List Tab Pagination
+### Requirement: My List Items Data Source
 
-The "My List" tab SHALL support the same infinite scroll pagination as the "All Items" tab.
+The Flutter client SHALL fetch My List items using a server-side `rated` filter, ensuring
+the item pool is scoped to only items where the authenticated user has a rating.
 
-#### Scenario: My List supports loadMore
+#### Scenario: My List uses server-side rated filter
 
-- **GIVEN** the user is on the My List tab with filtered+rated items
-- **WHEN** the user scrolls near the bottom
-- **THEN** loadMoreItems SHALL be triggered using the same ScrollController
-- **AND** the same loading indicator and "All items loaded" states SHALL apply
+- **GIVEN** user has rated items A (alphabetically early), B (alphabetically early), and Z
+  (alphabetically late) in a 100-item cheese catalog
+- **WHEN** the user opens the My List tab
+- **THEN** the client SHALL fetch GET /api/items/cheese?rated=true&page=1&per_page=20
+- **AND** all 3 rated items (A, B, Z) SHALL appear in the result
+- **AND** alphabetically-intermediate items the user has NOT rated SHALL NOT appear
+- **AND** the total count returned by the server SHALL be 3
+
+#### Scenario: My List includes items shared with the user
+
+- **GIVEN** another user shared their rating of item X with the current user
+- **WHEN** the client requests GET /api/items/cheese?rated=true
+- **THEN** item X SHALL be included (user is a viewer in rating_viewers table)
+- **AND** item X SHALL appear alongside the user's own rated items
+
+#### Scenario: My List pagination is independent of All Items
+
+- **GIVEN** the All Items tab has loaded pages 1-3 of cheese items (60 items)
+- **WHEN** the user switches to the My List tab
+- **THEN** My List SHALL use its own pagination state (userRatedCurrentPageByType)
+- **AND** My List SHALL NOT inherit loaded items or page number from All Items
+
+#### Scenario: My List supports infinite scroll
+
+- **GIVEN** the user has 25 rated items and My List shows page 1 (20 items)
+- **AND** the My List ScrollController detects scroll within 200px of bottom
+- **WHEN** the scroll threshold is crossed
+- **THEN** loadMoreUserRatedItems SHALL fetch GET /api/items/cheese?rated=true&page=2&per_page=20
+- **AND** items SHALL be appended to the existing list
+- **AND** "All items loaded" SHALL display when all pages are loaded
+
+### Requirement: Schema Refresh on Item List Pull-to-Refresh
+
+The system SHALL refresh the current item type schema when the user pulls to refresh on the
+item list screen, eliminating the need to return to the home screen to see schema changes.
+
+#### Scenario: Schema refresh on item list pull-to-refresh
+
+- **GIVEN** an admin has modified the cheese schema (e.g., added a new field or updated
+  filter options)
+- **WHEN** the user pulls to refresh on the cheese item list screen
+- **THEN** the client SHALL refresh the current schema via GET /api/schemas/cheese
+- **AND** the updated schema SHALL be used for filter options and item display
+- **AND** returning to the home screen is NOT required to see schema changes

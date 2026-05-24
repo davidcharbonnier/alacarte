@@ -506,6 +506,7 @@ After:   GET  /api/rating/:id                → RatingByItem
 - Schema version included in API responses
 - Client can force refresh schemas
 - Validation errors include current schema version
+- Pull-to-refresh on the item list screen explicitly refreshes the current schema via `SchemaNotifier.refreshSchema(type)`, not just on the home screen
 
 ### Risk 4: Breaking Changes for Existing Users
 **Risk:** Migration removes existing item type models, breaking existing workflows.
@@ -667,3 +668,79 @@ search("brie") → page 1: items=[matching 1..N], page=1, total=N, totalPages=ce
 setFilter(type=Soft) → page 1: items=[filtered 1..M], page=1, total=M
 refreshItems() → same as loadItems, clears accumulated first
 ```
+
+### Decision 11: Personal Items Data Source
+
+**Problem:** The "My List" tab shows personal items by client-side filtering of `itemsByType`,
+loaded via `GET /api/items/:type?page=N` which paginates ALL items alphabetically. If a user's
+rated items fall outside the first page(s) (e.g., user rated items A, B, K — K is on page 3+),
+they are invisible in My List except via text search.
+
+**Choice:** Add a `rated` boolean query parameter to `GET /api/items/:type`. When `true`,
+the backend derives the user ID from the JWT token and filters items to only those where the
+authenticated user has a rating (as author OR viewer). The client tracks this as a separate
+item pool with independent pagination state.
+
+**Alternatives Considered:**
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Auto-load all pages of all items** | No backend changes | O(n) requests, slow for large datasets |
+| **Fetch missing items by ID** | No backend changes | N+1 requests, fragile |
+| **Client sends `rated_by=<id>`** | Explicit | Passes user ID in URL, security risk |
+| **Boolean `rated` flag (chosen)** | Clean URL, JWT-enforced | Requires auth context on list endpoint |
+
+**Rationale:**
+1. Using a boolean flag (`?rated=true`) avoids leaking user IDs in URLs.
+2. The backend derives the authenticated user from the JWT token — the parameter is a signal,
+   not a data value. If the request has no valid JWT, the flag is silently ignored (public
+   listing behavior).
+3. Pagination of this filtered set is correct — all user's rated items are within scope.
+4. The client still applies `rating_source` sub-filters (personal vs recommendations)
+   client-side on the correctly-scoped item pool.
+5. Separate state in `DynamicItemState` (`userRatedItemsByType`, etc.) prevents switching
+   tabs from losing scroll position or mixing data sources.
+
+**Implementation:**
+
+Backend subquery in `BuildListQuery`:
+```sql
+-- Items where user has a rating (author OR viewer), excluding soft-deleted ratings
+SELECT DISTINCT r.item_id
+FROM ratings r
+LEFT JOIN rating_viewers rv ON rv.rating_id = r.id
+WHERE r.deleted_at IS NULL
+  AND (r.user_id = ? OR rv.user_id = ?)
+```
+
+State separation in Flutter client:
+```
+DynamicItemState
+├── itemsByType          ← "All Items" tab (no rated flag)
+├── currentPageByType    ← independent pagination
+├── totalPagesByType
+├── ...
+├── userRatedItemsByType ← "My List" tab (?rated=true)
+├── userRatedCurrentPageByType  ← independent pagination
+├── userRatedTotalPagesByType
+└── ...
+```
+
+Architecture flow for My List:
+```
+User opens My List tab
+  → ItemTypeScreen calls loadUserRatedItems(type)
+     → DynamicItemNotifier.loadUserRatedItems()
+        → DynamicItemService.getItemsByType(type, rated: true)
+           → GET /api/items/cheese?rated=true&page=1&per_page=20
+              → Backend: JWT → user ID → subquery filter
+              → Response: paginated rated-only items
+        → stored in userRatedItemsByType["cheese"]
+  → _buildMyListTab reads userRatedItemsByType["cheese"]
+  → client-side splits into personal vs recommendations
+  → Separate ScrollController triggers loadMoreUserRatedItems on scroll
+```
+
+**Security note:** The `rated` parameter is a boolean signal — the backend NEVER trusts a
+client-provided user ID. It always derives the identity from the JWT token. An
+unauthenticated request with `?rated=true` is treated as a regular public listing (the
+flag is silently ignored).
