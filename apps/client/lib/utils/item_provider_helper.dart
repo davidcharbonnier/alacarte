@@ -139,4 +139,44 @@ class ItemProviderHelper {
   static void invalidateItem(WidgetRef ref, String itemType, int itemId) {
     ref.read(dynamicItemProvider.notifier).invalidateItem(itemType, itemId);
   }
+
+  static List<RateableItem> getUserRatedItems(
+      WidgetRef ref, String itemType) {
+    return ref
+        .watch(dynamicItemProvider)
+        .getUserRatedItems(itemType)
+        .cast<RateableItem>();
+  }
+
+  static bool userRatedHasMore(WidgetRef ref, String itemType) {
+    return ref.watch(dynamicItemProvider).userRatedHasMore(itemType);
+  }
+
+  static bool userRatedIsLoadingMore(WidgetRef ref, String itemType) {
+    return ref.watch(dynamicItemProvider).isUserRatedLoadingMore(itemType);
+  }
+
+  static int userRatedTotalItems(WidgetRef ref, String itemType) {
+    return ref.watch(dynamicItemProvider).userRatedTotalForType(itemType);
+  }
+
+  static Future<void> loadUserRatedItems(WidgetRef ref, String itemType) async {
+    await ref
+        .read(dynamicItemProvider.notifier)
+        .loadUserRatedItems(itemType);
+  }
+
+  static Future<void> loadMoreUserRatedItems(
+      WidgetRef ref, String itemType) async {
+    await ref
+        .read(dynamicItemProvider.notifier)
+        .loadMoreUserRatedItems(itemType);
+  }
+
+  static Future<void> refreshUserRatedItems(
+      WidgetRef ref, String itemType) async {
+    await ref
+        .read(dynamicItemProvider.notifier)
+        .refreshUserRatedItems(itemType);
+  }
 }

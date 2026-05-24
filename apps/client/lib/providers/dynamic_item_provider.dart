@@ -20,6 +20,13 @@ class DynamicItemState {
   final Map<String, bool> isLoadingMoreByType;
   final Map<String, Map<String, dynamic>?> typeStatsByType;
 
+  final Map<String, List<DynamicItem>> userRatedItemsByType;
+  final Map<String, bool> userRatedLoadingByType;
+  final Map<String, int> userRatedCurrentPageByType;
+  final Map<String, int> userRatedTotalPagesByType;
+  final Map<String, int> userRatedTotalByType;
+  final Map<String, bool> userRatedIsLoadingMoreByType;
+
   const DynamicItemState({
     this.itemsByType = const {},
     this.loadingByType = const {},
@@ -32,6 +39,12 @@ class DynamicItemState {
     this.totalPagesByType = const {},
     this.isLoadingMoreByType = const {},
     this.typeStatsByType = const {},
+    this.userRatedItemsByType = const {},
+    this.userRatedLoadingByType = const {},
+    this.userRatedCurrentPageByType = const {},
+    this.userRatedTotalPagesByType = const {},
+    this.userRatedTotalByType = const {},
+    this.userRatedIsLoadingMoreByType = const {},
   });
 
   DynamicItemState copyWith({
@@ -46,6 +59,12 @@ class DynamicItemState {
     Map<String, int>? totalPagesByType,
     Map<String, bool>? isLoadingMoreByType,
     Map<String, Map<String, dynamic>?>? typeStatsByType,
+    Map<String, List<DynamicItem>>? userRatedItemsByType,
+    Map<String, bool>? userRatedLoadingByType,
+    Map<String, int>? userRatedCurrentPageByType,
+    Map<String, int>? userRatedTotalPagesByType,
+    Map<String, int>? userRatedTotalByType,
+    Map<String, bool>? userRatedIsLoadingMoreByType,
   }) {
     return DynamicItemState(
       itemsByType: itemsByType ?? this.itemsByType,
@@ -60,6 +79,17 @@ class DynamicItemState {
       totalPagesByType: totalPagesByType ?? this.totalPagesByType,
       isLoadingMoreByType: isLoadingMoreByType ?? this.isLoadingMoreByType,
       typeStatsByType: typeStatsByType ?? this.typeStatsByType,
+      userRatedItemsByType: userRatedItemsByType ?? this.userRatedItemsByType,
+      userRatedLoadingByType:
+          userRatedLoadingByType ?? this.userRatedLoadingByType,
+      userRatedCurrentPageByType:
+          userRatedCurrentPageByType ?? this.userRatedCurrentPageByType,
+      userRatedTotalPagesByType:
+          userRatedTotalPagesByType ?? this.userRatedTotalPagesByType,
+      userRatedTotalByType:
+          userRatedTotalByType ?? this.userRatedTotalByType,
+      userRatedIsLoadingMoreByType:
+          userRatedIsLoadingMoreByType ?? this.userRatedIsLoadingMoreByType,
     );
   }
 
@@ -88,6 +118,24 @@ class DynamicItemState {
   }
 
   Map<String, dynamic>? typeStats(String type) => typeStatsByType[type];
+
+  List<DynamicItem> getUserRatedItems(String type) =>
+      userRatedItemsByType[type] ?? [];
+
+  bool isUserRatedLoading(String type) =>
+      userRatedLoadingByType[type] ?? false;
+
+  bool isUserRatedLoadingMore(String type) =>
+      userRatedIsLoadingMoreByType[type] ?? false;
+
+  int userRatedTotalForType(String type) =>
+      userRatedTotalByType[type] ?? 0;
+
+  bool userRatedHasMore(String type) {
+    final currentPage = userRatedCurrentPageByType[type] ?? 0;
+    final totalPages = userRatedTotalPagesByType[type] ?? 0;
+    return currentPage < totalPages;
+  }
 
   bool hasActiveFilters(String type) {
     final searchQuery = getSearchQuery(type);
@@ -154,6 +202,143 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
 
   Future<void> refreshItems(String type) async {
     await loadItems(type, forceRefresh: true);
+  }
+
+  Future<void> loadUserRatedItems(String type) async {
+    if (state.isUserRatedLoading(type)) return;
+
+    state = state.copyWith(
+      userRatedLoadingByType: {
+        ...state.userRatedLoadingByType,
+        type: true,
+      },
+    );
+
+    final schema = _getSchema(type);
+
+    final response = await _itemService.getItemsByType(
+      type,
+      schema: schema,
+      page: 1,
+      rated: true,
+    );
+
+    response.when(
+      success: (paginated, _) {
+        state = state.copyWith(
+          userRatedItemsByType: {
+            ...state.userRatedItemsByType,
+            type: paginated.items,
+          },
+          userRatedLoadingByType: {
+            ...state.userRatedLoadingByType,
+            type: false,
+          },
+          userRatedTotalByType: {
+            ...state.userRatedTotalByType,
+            type: paginated.total,
+          },
+          userRatedCurrentPageByType: {
+            ...state.userRatedCurrentPageByType,
+            type: paginated.page,
+          },
+          userRatedTotalPagesByType: {
+            ...state.userRatedTotalPagesByType,
+            type: paginated.totalPages,
+          },
+        );
+      },
+      error: (message, statusCode, errorCode, details) {
+        state = state.copyWith(
+          userRatedLoadingByType: {
+            ...state.userRatedLoadingByType,
+            type: false,
+          },
+        );
+      },
+      loading: () {},
+    );
+  }
+
+  Future<void> loadMoreUserRatedItems(String type) async {
+    if (state.isUserRatedLoading(type) || state.isUserRatedLoadingMore(type)) {
+      return;
+    }
+    if (!state.userRatedHasMore(type)) return;
+
+    final currentPage = state.userRatedCurrentPageByType[type] ?? 0;
+
+    state = state.copyWith(
+      userRatedIsLoadingMoreByType: {
+        ...state.userRatedIsLoadingMoreByType,
+        type: true,
+      },
+    );
+
+    final schema = _getSchema(type);
+
+    final response = await _itemService.getItemsByType(
+      type,
+      schema: schema,
+      page: currentPage + 1,
+      rated: true,
+    );
+
+    response.when(
+      success: (paginated, _) {
+        final existingItems = state.getUserRatedItems(type);
+        final updatedItems = [...existingItems, ...paginated.items];
+        state = state.copyWith(
+          userRatedItemsByType: {
+            ...state.userRatedItemsByType,
+            type: updatedItems,
+          },
+          userRatedIsLoadingMoreByType: {
+            ...state.userRatedIsLoadingMoreByType,
+            type: false,
+          },
+          userRatedCurrentPageByType: {
+            ...state.userRatedCurrentPageByType,
+            type: paginated.page,
+          },
+          userRatedTotalByType: {
+            ...state.userRatedTotalByType,
+            type: paginated.total,
+          },
+          userRatedTotalPagesByType: {
+            ...state.userRatedTotalPagesByType,
+            type: paginated.totalPages,
+          },
+        );
+      },
+      error: (message, statusCode, errorCode, details) {
+        state = state.copyWith(
+          userRatedIsLoadingMoreByType: {
+            ...state.userRatedIsLoadingMoreByType,
+            type: false,
+          },
+        );
+      },
+      loading: () {},
+    );
+  }
+
+  Future<void> refreshUserRatedItems(String type) async {
+    state = state.copyWith(
+      userRatedItemsByType: {
+        ...state.userRatedItemsByType,
+        type: [],
+      },
+      userRatedCurrentPageByType: {
+        ...state.userRatedCurrentPageByType,
+        type: 0,
+      },
+      userRatedTotalPagesByType: {
+        ...state.userRatedTotalPagesByType,
+        type: 0,
+      },
+    );
+    await loadUserRatedItems(type);
   }
 
   Future<void> loadMoreItems(String type) async {
@@ -408,4 +593,21 @@ final hasMoreProvider = Provider.family<bool, String>((ref, type) {
 final isLoadingMoreProvider = Provider.family<bool, String>((ref, type) {
   final itemState = ref.watch(dynamicItemProvider);
   return itemState.isLoadingMore(type);
+});
+
+final userRatedItemsForTypeProvider =
+    Provider.family<List<DynamicItem>, String>((ref, type) {
+  final itemState = ref.watch(dynamicItemProvider);
+  return itemState.getUserRatedItems(type);
+});
+
+final userRatedHasMoreProvider = Provider.family<bool, String>((ref, type) {
+  final itemState = ref.watch(dynamicItemProvider);
+  return itemState.userRatedHasMore(type);
+});
+
+final userRatedIsLoadingMoreProvider =
+    Provider.family<bool, String>((ref, type) {
+  final itemState = ref.watch(dynamicItemProvider);
+  return itemState.isUserRatedLoadingMore(type);
 });
