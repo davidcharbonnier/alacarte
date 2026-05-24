@@ -62,7 +62,7 @@ The system SHALL allow administrators to define fields for each schema including
   - Key: "style"
   - Label: "Beer Style"
   - Type: "select"
-  - Options: ["IPA", "Stout", "Pilsner", "Lager", "Ale"]
+  - Options: [{value: "IPA", label: "IPA"}, {value: "Stout", label: "Stout"}, {value: "Pilsner", label: "Pilsner"}, {value: "Lager", label: "Lager"}, {value: "Ale", label: "Ale"}]
 - **THEN** the system SHALL save the field with options
 - **AND** the options SHALL be available for selection in forms
 
@@ -314,9 +314,9 @@ Unique constraint: (schema_id, version)
 | text | Single-line text | maxLength, minLength, pattern |
 | textarea | Multi-line text | maxLength, minLength |
 | number | Numeric value | min, max |
-| select | Single selection | options (array) |
+| select | Single selection | options (array of {value, label} objects) |
 | checkbox | Boolean | none |
-| enum | Enumerated values | options (array) |
+| enum | Enumerated values | options (array of {value, label} objects) |
 
 ### Validation Rules Schema
 
