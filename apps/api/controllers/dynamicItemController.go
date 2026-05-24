@@ -381,17 +381,6 @@ func DynamicItemSeed(c *gin.Context) {
 				items = append(items, itemMap)
 			}
 		}
-	} else {
-		for _, key := range []string{"gins", "wines", "cheeses", "coffees", "chili_sauces", "chili-sauces"} {
-			if itemsData, ok := rawData[key].([]interface{}); ok {
-				for _, item := range itemsData {
-					if itemMap, ok := item.(map[string]interface{}); ok {
-						items = append(items, itemMap)
-					}
-				}
-				break
-			}
-		}
 	}
 
 	if len(items) == 0 {
@@ -482,17 +471,6 @@ func DynamicItemValidate(c *gin.Context) {
 		for _, item := range itemsData {
 			if itemMap, ok := item.(map[string]interface{}); ok {
 				items = append(items, itemMap)
-			}
-		}
-	} else {
-		for _, key := range []string{"gins", "wines", "cheeses", "coffees", "chili_sauces", "chili-sauces"} {
-			if itemsData, ok := rawData[key].([]interface{}); ok {
-				for _, item := range itemsData {
-					if itemMap, ok := item.(map[string]interface{}); ok {
-						items = append(items, itemMap)
-					}
-				}
-				break
 			}
 		}
 	}

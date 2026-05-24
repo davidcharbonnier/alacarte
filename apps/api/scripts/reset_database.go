@@ -31,16 +31,25 @@ func main() {
 		fmt.Printf("Note: Could not drop rating_viewers table: %v\n", err)
 	}
 
-	if err := utils.DB.Migrator().DropTable(&models.User{}); err != nil {
+if err := utils.DB.Migrator().DropTable(&models.User{}); err != nil {
 		fmt.Printf("Note: Could not drop users table: %v\n", err)
 	}
 
-	if err := utils.DB.Migrator().DropTable(&models.Cheese{}); err != nil {
-		fmt.Printf("Note: Could not drop cheeses table: %v\n", err)
+	// Drop dynamic and legacy tables
+	if err := utils.DB.Migrator().DropTable(&models.ItemFieldValue{}); err != nil {
+		fmt.Printf("Note: Could not drop item_field_values table: %v\n", err)
 	}
-
-	if err := utils.DB.Migrator().DropTable(&models.Gin{}); err != nil {
-		fmt.Printf("Note: Could not drop gins table: %v\n", err)
+	if err := utils.DB.Migrator().DropTable(&models.Item{}); err != nil {
+		fmt.Printf("Note: Could not drop items table: %v\n", err)
+	}
+	if err := utils.DB.Migrator().DropTable(&models.SchemaVersion{}); err != nil {
+		fmt.Printf("Note: Could not drop schema_versions table: %v\n", err)
+	}
+	if err := utils.DB.Migrator().DropTable(&models.ItemTypeField{}); err != nil {
+		fmt.Printf("Note: Could not drop item_type_fields table: %v\n", err)
+	}
+	if err := utils.DB.Migrator().DropTable(&models.ItemTypeSchema{}); err != nil {
+		fmt.Printf("Note: Could not drop item_type_schemas table: %v\n", err)
 	}
 
 	if err := utils.DB.Migrator().DropTable("sharing_relationships"); err != nil {
@@ -48,5 +57,4 @@ func main() {
 	}
 
 	fmt.Println("✅ Tables dropped - restart your app to recreate schema via AutoMigrate")
-	fmt.Println("💡 Then run 'go run scripts/seed.go' to add test data")
 }

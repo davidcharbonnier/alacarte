@@ -555,11 +555,10 @@ func TestEAVQueryBuilder_Impact(t *testing.T) {
 
 	// Create a rating for the item
 	rating := models.Rating{
-		Grade:    5.0,
-		Note:     "Great cheese",
-		UserID:   int(user.ID),
-		ItemID:   int(item.ID),
-		ItemType: "cheese",
+		Grade:  5.0,
+		Note:   "Great cheese",
+		UserID: int(user.ID),
+		ItemID: int(item.ID),
 	}
 	if err := utils.DB.Create(&rating).Error; err != nil {
 		t.Fatalf("failed to create rating: %v", err)

@@ -12,43 +12,14 @@ type ItemWithImage interface {
 	SetImageURL(url *string)
 }
 
-// Compile-time interface checks to ensure models implement ItemWithImage
-var (
-	_ ItemWithImage = (*models.Cheese)(nil)
-	_ ItemWithImage = (*models.Gin)(nil)
-	_ ItemWithImage = (*models.Wine)(nil)
-	_ ItemWithImage = (*models.Coffee)(nil)
-	_ ItemWithImage = (*models.ChiliSauce)(nil)
-)
-
-// GetItemByType fetches an item by type and ID
-// Returns the item and any error
+// GetItemByType fetches a dynamic item by schema name and item ID string.
+// This replaces the old switch-case that looked up legacy models.
 func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
-	var item ItemWithImage
-	var model interface{}
-
-	switch itemType {
-	case "cheese":
-		model = &models.Cheese{}
-	case "gin":
-		model = &models.Gin{}
-	case "wine":
-		model = &models.Wine{}
-	case "coffee":
-		model = &models.Coffee{}
-	case "chili-sauce":
-		model = &models.ChiliSauce{}
-	default:
-		return nil, fmt.Errorf("invalid item type: %s", itemType)
+	var id uint
+	if _, err := fmt.Sscanf(itemID, "%d", &id); err != nil {
+		return nil, fmt.Errorf("invalid item ID: %s", itemID)
 	}
-
-	// Fetch from database
-	if err := DB.First(model, itemID).Error; err != nil {
-		return nil, err
-	}
-
-	item = model.(ItemWithImage)
-	return item, nil
+	return GetDynamicItem(itemType, id)
 }
 
 // GetDynamicItem fetches a dynamic item by schema name and ID
@@ -70,14 +41,9 @@ func SaveItem(item ItemWithImage) error {
 	return DB.Save(item).Error
 }
 
-// ValidateItemType checks if item type is supported
+// ValidateItemType checks if item type is supported via schema lookup
 func ValidateItemType(itemType string) bool {
-	validTypes := map[string]bool{
-		"cheese":      true,
-		"gin":         true,
-		"wine":        true,
-		"coffee":      true,
-		"chili-sauce": true,
-	}
-	return validTypes[itemType]
+	var count int64
+	DB.Model(&models.ItemTypeSchema{}).Where("name = ? AND is_active = ?", itemType, true).Count(&count)
+	return count > 0
 }
