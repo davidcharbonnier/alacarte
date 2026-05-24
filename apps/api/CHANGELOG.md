@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/davidcharbonnier/alacarte/compare/api-v2.2.0...api-v2.2.1) (2026-05-24)
+
+
+### Bug Fixes
+
+* **api:** accept {value, label} objects for select/enum options ([cd3efea](https://github.com/davidcharbonnier/alacarte/commit/cd3efeafb6f6bbe3779ee7d7e6a7d82b46095623))
+
 # [2.2.0](https://github.com/davidcharbonnier/alacarte/compare/api-v2.1.0...api-v2.2.0) (2026-05-24)
 
 
