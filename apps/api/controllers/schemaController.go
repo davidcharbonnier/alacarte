@@ -340,16 +340,23 @@ func SchemaCreate(c *gin.Context) {
 		}
 
 		if options, ok := fieldData["options"].([]interface{}); ok {
-			optionsStr := make([]string, len(options))
-			for j, opt := range options {
-				if str, ok := opt.(string); ok {
-					optionsStr[j] = str
+				optionsStr := make([]string, 0, len(options))
+				for _, opt := range options {
+					switch v := opt.(type) {
+					case string:
+						optionsStr = append(optionsStr, v)
+					case map[string]interface{}:
+						if val, found := v["value"]; found {
+							if str, ok := val.(string); ok {
+								optionsStr = append(optionsStr, str)
+							}
+						}
+					}
 				}
+				optionsJSON, _ := json.Marshal(optionsStr)
+				s := string(optionsJSON)
+				field.Options = &s
 			}
-			optionsJSON, _ := json.Marshal(optionsStr)
-			s := string(optionsJSON)
-			field.Options = &s
-		}
 
 		if group, ok := fieldData["group"].(string); ok {
 			field.Group = &group
@@ -529,10 +536,17 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 				}
 
 				if options, ok := fieldData["options"].([]interface{}); ok {
-					optionsStr := make([]string, len(options))
-					for j, opt := range options {
-						if str, ok := opt.(string); ok {
-							optionsStr[j] = str
+					optionsStr := make([]string, 0, len(options))
+					for _, opt := range options {
+						switch v := opt.(type) {
+						case string:
+							optionsStr = append(optionsStr, v)
+						case map[string]interface{}:
+							if val, found := v["value"]; found {
+								if str, ok := val.(string); ok {
+									optionsStr = append(optionsStr, str)
+								}
+							}
 						}
 					}
 					optionsJSON, _ := json.Marshal(optionsStr)
