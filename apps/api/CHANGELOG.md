@@ -1,3 +1,11 @@
+## [2.2.2](https://github.com/davidcharbonnier/alacarte/compare/api-v2.2.1...api-v2.2.2) (2026-05-24)
+
+
+### Bug Fixes
+
+* **api:** return versions list in schema detail response ([1e7db20](https://github.com/davidcharbonnier/alacarte/commit/1e7db201526d47048278e7bc2c6e0717f1f5e3a5))
+* **api:** serialize schema version fields and add diff display in admin ([a3db7cf](https://github.com/davidcharbonnier/alacarte/commit/a3db7cfcab7d179274cb30092d394aa8054c31a4))
+
 ## [2.2.1](https://github.com/davidcharbonnier/alacarte/compare/api-v2.2.0...api-v2.2.1) (2026-05-24)
 
 
