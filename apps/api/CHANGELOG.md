@@ -1,3 +1,11 @@
+# [2.1.0](https://github.com/davidcharbonnier/alacarte/compare/api-v2.0.0...api-v2.1.0) (2026-05-24)
+
+
+### Features
+
+* **api:** add GetTypeStats endpoint with pagination support ([9a536c3](https://github.com/davidcharbonnier/alacarte/commit/9a536c3beecb01abb673a0a47b43c6b475703e27))
+* **client:** implement server-side pagination, search, and type stats ([952d392](https://github.com/davidcharbonnier/alacarte/commit/952d3927daa19d2022080e5a68235fda48ccc1db))
+
 # [1.4.0](https://github.com/davidcharbonnier/alacarte/compare/api-v1.3.1...api-v1.4.0) (2026-05-22)
 
 
