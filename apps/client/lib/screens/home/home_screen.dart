@@ -7,6 +7,7 @@ import '../../providers/dynamic_item_provider.dart';
 import '../../utils/constants.dart';
 import '../../utils/localization_utils.dart';
 import '../../utils/appbar_helper.dart';
+import '../../utils/item_provider_helper.dart';
 import '../../utils/schema_icon_utils.dart';
 import '../../routes/route_names.dart';
 
@@ -19,7 +20,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasLoadedSchemas = false;
-  final Set<String> _loadedSchemaTypes = {};
+  bool _hasLoadedStats = false;
 
   @override
   void initState() {
@@ -38,20 +39,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _navigateToItemType(BuildContext context, String itemType) {
-    GoRouter.of(context).go('${RouteNames.itemType}/$itemType');
+  void _loadTypeStats() {
+    if (_hasLoadedStats) return;
+    final schemaState = ref.read(schemaProvider);
+    for (final schema in schemaState.schemas) {
+      if (schema.isActive) {
+        ref.read(dynamicItemProvider.notifier).loadTypeStats(schema.name);
+      }
+    }
+    _hasLoadedStats = true;
   }
 
-  int _getUniqueItemCount(List<dynamic> ratings, String itemType) {
-    // Get all item IDs for this schema type from the loaded items
-    final items = ref.read(dynamicItemProvider).getItems(itemType);
-    final itemIdsForType = items.map((i) => i.id).toSet();
-
-    final itemIds = ratings
-        .where((r) => itemIdsForType.contains(r.itemId))
-        .map((r) => r.itemId)
-        .toSet();
-    return itemIds.length;
+  void _navigateToItemType(BuildContext context, String itemType) {
+    GoRouter.of(context).go('${RouteNames.itemType}/$itemType');
   }
 
   @override
@@ -71,13 +71,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       });
     }
 
-    for (final schema in schemaState.schemas) {
-      if (schema.isActive && !_loadedSchemaTypes.contains(schema.name)) {
-        _loadedSchemaTypes.add(schema.name);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(dynamicItemProvider.notifier).loadItems(schema.name);
-        });
-      }
+    if (schemaState.schemas.isNotEmpty && !_hasLoadedStats) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadTypeStats();
+      });
     }
 
     final activeSchemas = schemaState.schemas.where((s) => s.isActive).toList();
@@ -95,11 +92,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: RefreshIndicator(
         onRefresh: () async {
           await ref.read(schemaProvider.notifier).refreshSchemas();
-          for (final schema in activeSchemas) {
-            await ref
-                .read(dynamicItemProvider.notifier)
-                .refreshItems(schema.name);
-          }
+          _hasLoadedStats = false;
+          _loadTypeStats();
           await ref.read(ratingProvider.notifier).refreshRatings();
         },
         child: schemaState.isLoading && activeSchemas.isEmpty
@@ -143,7 +137,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         const SizedBox(height: AppConstants.spacingM),
                         ...activeSchemas.map((schema) {
-                          final items = dynamicItemState.getItems(schema.name);
+                          final stats = dynamicItemState.typeStats(schema.name);
+                          final totalItems =
+                              stats?['total_items'] as int? ?? 0;
+                          final userRatedCount =
+                              stats?['user_rated_count'] as int? ?? 0;
                           return Padding(
                             padding: const EdgeInsets.only(
                               bottom: AppConstants.spacingM,
@@ -154,11 +152,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               schema.displayName,
                               schema.icon,
                               schema.color,
-                              items.length,
-                              _getUniqueItemCount(
-                                ratingState.ratings,
-                                schema.name,
-                              ),
+                              totalItems,
+                              userRatedCount,
                             ),
                           );
                         }),

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../models/api_response.dart';
 import '../models/dynamic_item.dart';
 import '../models/item_schema.dart';
+import '../models/paginated_response.dart';
 import 'dio_client.dart';
 
 class DynamicItemService {
@@ -11,55 +12,66 @@ class DynamicItemService {
 
   final Dio _dio = DioClient.instance.dio;
 
-  final Map<String, List<DynamicItem>> _itemCache = {};
-  final Map<String, DateTime> _cacheTimestamp = {};
-  static const Duration _cacheExpiry = Duration(minutes: 5);
-
-  Future<ApiResponse<List<DynamicItem>>> getItemsByType(
+  Future<ApiResponse<PaginatedResponse<DynamicItem>>> getItemsByType(
     String type, {
     ItemSchema? schema,
-    bool forceRefresh = false,
+    int page = 1,
+    int perPage = 20,
+    String? search,
+    Map<String, String>? filters,
   }) async {
-    if (!forceRefresh && _isCacheValid(type)) {
-      return ApiResponseHelper.success(_itemCache[type] ?? []);
-    }
-
     try {
-      final response = await _dio.get('/api/items/$type');
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'per_page': perPage,
+      };
+
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+
+      if (filters != null && filters.isNotEmpty) {
+        for (final entry in filters.entries) {
+          if (entry.key == 'has_picture') {
+            queryParams['filter[has_image]'] = entry.value;
+          } else {
+            queryParams['filter[${entry.key}]'] = entry.value;
+          }
+        }
+      }
+
+      final response = await _dio.get(
+        '/api/items/$type',
+        queryParameters: queryParams,
+      );
 
       if (response.statusCode != null &&
           response.statusCode! >= 200 &&
           response.statusCode! < 300) {
-        final data = response.data;
+        final data = response.data as Map<String, dynamic>;
 
-        List<DynamicItem> items = [];
-        if (data is Map<String, dynamic>) {
-          final itemsList = data['items'] ?? data['data'];
-          if (itemsList is List) {
-            items = itemsList
-                .map(
-                  (item) => DynamicItem.fromJson(
-                    item as Map<String, dynamic>,
-                    schema: schema,
-                  ),
-                )
-                .toList();
-          }
-        } else if (data is List) {
-          items = data
-              .map(
-                (item) => DynamicItem.fromJson(
+        final itemsList = data['items'] as List? ?? [];
+        final items = itemsList
+            .map((item) => DynamicItem.fromJson(
                   item as Map<String, dynamic>,
                   schema: schema,
-                ),
-              )
-              .toList();
-        }
+                ))
+            .toList();
 
-        _itemCache[type] = items;
-        _cacheTimestamp[type] = DateTime.now();
+        final total = (data['total'] as num?)?.toInt() ?? 0;
+        final responsePage = (data['page'] as num?)?.toInt() ?? 1;
+        final perPageResponse = (data['per_page'] as num?)?.toInt() ?? 20;
+        final totalPages = (data['total_pages'] as num?)?.toInt() ?? 0;
 
-        return ApiResponseHelper.success(items);
+        return ApiResponseHelper.success(
+          PaginatedResponse(
+            items: items,
+            total: total,
+            page: responsePage,
+            perPage: perPageResponse,
+            totalPages: totalPages,
+          ),
+        );
       } else {
         return ApiResponseHelper.error(
           'Request failed with status: ${response.statusCode}',
@@ -112,7 +124,6 @@ class DynamicItemService {
           response.statusCode! < 300) {
         final data = response.data as Map<String, dynamic>;
         final createdItem = DynamicItem.fromJson(data);
-        _invalidateCache(type);
         return ApiResponseHelper.success(createdItem);
       } else {
         return ApiResponseHelper.error(
@@ -143,7 +154,6 @@ class DynamicItemService {
           response.statusCode! < 300) {
         final data = response.data as Map<String, dynamic>;
         final updatedItem = DynamicItem.fromJson(data);
-        _invalidateCache(type);
         return ApiResponseHelper.success(updatedItem);
       } else {
         return ApiResponseHelper.error(
@@ -165,8 +175,29 @@ class DynamicItemService {
       if (response.statusCode != null &&
           response.statusCode! >= 200 &&
           response.statusCode! < 300) {
-        _invalidateCache(type);
         return ApiResponseHelper.success(true);
+      } else {
+        return ApiResponseHelper.error(
+          'Request failed with status: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      return _handleDioError(e);
+    } catch (e) {
+      return ApiResponseHelper.error('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  Future<ApiResponse<Map<String, dynamic>>> getTypeStats(String type) async {
+    try {
+      final response = await _dio.get('/api/stats/type/$type');
+
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        final data = response.data as Map<String, dynamic>;
+        return ApiResponseHelper.success(data);
       } else {
         return ApiResponseHelper.error(
           'Request failed with status: ${response.statusCode}',
@@ -256,23 +287,4 @@ class DynamicItemService {
         return ApiResponseHelper.error<T>('Unknown error occurred');
     }
   }
-
-  bool _isCacheValid(String type) {
-    if (!_itemCache.containsKey(type)) return false;
-    final timestamp = _cacheTimestamp[type];
-    if (timestamp == null) return false;
-    return DateTime.now().difference(timestamp) < _cacheExpiry;
-  }
-
-  void _invalidateCache(String type) {
-    _itemCache.remove(type);
-    _cacheTimestamp.remove(type);
-  }
-
-  void clearCache() {
-    _itemCache.clear();
-    _cacheTimestamp.clear();
-  }
-
-  List<DynamicItem>? getCachedItems(String type) => _itemCache[type];
 }

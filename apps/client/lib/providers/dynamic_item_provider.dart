@@ -1,4 +1,3 @@
-import 'package:diacritic/diacritic.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../models/api_response.dart';
@@ -14,7 +13,12 @@ class DynamicItemState {
   final bool hasLoadedOnce;
   final Map<String, String> searchQueriesByType;
   final Map<String, Map<String, String>> categoryFiltersByType;
-  final Map<String, Map<String, List<String>>> filterOptionsByType;
+
+  final Map<String, int> totalByType;
+  final Map<String, int> currentPageByType;
+  final Map<String, int> totalPagesByType;
+  final Map<String, bool> isLoadingMoreByType;
+  final Map<String, Map<String, dynamic>?> typeStatsByType;
 
   const DynamicItemState({
     this.itemsByType = const {},
@@ -23,7 +27,11 @@ class DynamicItemState {
     this.hasLoadedOnce = false,
     this.searchQueriesByType = const {},
     this.categoryFiltersByType = const {},
-    this.filterOptionsByType = const {},
+    this.totalByType = const {},
+    this.currentPageByType = const {},
+    this.totalPagesByType = const {},
+    this.isLoadingMoreByType = const {},
+    this.typeStatsByType = const {},
   });
 
   DynamicItemState copyWith({
@@ -33,7 +41,11 @@ class DynamicItemState {
     bool? hasLoadedOnce,
     Map<String, String>? searchQueriesByType,
     Map<String, Map<String, String>>? categoryFiltersByType,
-    Map<String, Map<String, List<String>>>? filterOptionsByType,
+    Map<String, int>? totalByType,
+    Map<String, int>? currentPageByType,
+    Map<String, int>? totalPagesByType,
+    Map<String, bool>? isLoadingMoreByType,
+    Map<String, Map<String, dynamic>?>? typeStatsByType,
   }) {
     return DynamicItemState(
       itemsByType: itemsByType ?? this.itemsByType,
@@ -43,13 +55,19 @@ class DynamicItemState {
       searchQueriesByType: searchQueriesByType ?? this.searchQueriesByType,
       categoryFiltersByType:
           categoryFiltersByType ?? this.categoryFiltersByType,
-      filterOptionsByType: filterOptionsByType ?? this.filterOptionsByType,
+      totalByType: totalByType ?? this.totalByType,
+      currentPageByType: currentPageByType ?? this.currentPageByType,
+      totalPagesByType: totalPagesByType ?? this.totalPagesByType,
+      isLoadingMoreByType: isLoadingMoreByType ?? this.isLoadingMoreByType,
+      typeStatsByType: typeStatsByType ?? this.typeStatsByType,
     );
   }
 
   List<DynamicItem> getItems(String type) => itemsByType[type] ?? [];
 
   bool isLoading(String type) => loadingByType[type] ?? false;
+
+  bool isLoadingMore(String type) => isLoadingMoreByType[type] ?? false;
 
   String? getError(String type) => errorsByType[type];
 
@@ -61,53 +79,15 @@ class DynamicItemState {
   Map<String, String> getCategoryFilters(String type) =>
       categoryFiltersByType[type] ?? {};
 
-  Map<String, List<String>> getFilterOptions(String type) =>
-      filterOptionsByType[type] ?? {};
+  int totalForType(String type) => totalByType[type] ?? 0;
 
-  List<DynamicItem> getFilteredItems(String type) {
-    var filtered = getItems(type);
-    final searchQuery = getSearchQuery(type);
-    final categoryFilters = getCategoryFilters(type);
-
-    if (searchQuery.isNotEmpty) {
-      filtered = filtered
-          .where(
-            (item) =>
-                item.name.toLowerCase().contains(searchQuery.toLowerCase()),
-          )
-          .toList();
-    }
-
-    for (final entry in categoryFilters.entries) {
-      if (entry.key == 'has_picture') {
-        final hasPictureFilter = entry.value.toLowerCase() == 'true';
-        filtered = filtered.where((item) {
-          final imageUrl = item.imageUrl;
-          return hasPictureFilter
-              ? imageUrl != null && imageUrl.isNotEmpty
-              : imageUrl == null || imageUrl.isEmpty;
-        }).toList();
-        continue;
-      }
-
-      filtered = filtered
-          .where(
-            (item) =>
-                item.categories[entry.key]?.toLowerCase() ==
-                entry.value.toLowerCase(),
-          )
-          .toList();
-    }
-
-    filtered.sort((a, b) => _compareLocaleAware(a.name, b.name));
-    return filtered;
+  bool hasMore(String type) {
+    final currentPage = currentPageByType[type] ?? 0;
+    final totalPages = totalPagesByType[type] ?? 0;
+    return currentPage < totalPages;
   }
 
-  static int _compareLocaleAware(String a, String b) {
-    return removeDiacritics(
-      a,
-    ).toLowerCase().compareTo(removeDiacritics(b).toLowerCase());
-  }
+  Map<String, dynamic>? typeStats(String type) => typeStatsByType[type];
 
   bool hasActiveFilters(String type) {
     final searchQuery = getSearchQuery(type);
@@ -140,16 +120,27 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
     );
 
     final schema = _getSchema(type);
-    final response = await _itemService.getItemsByType(type, schema: schema);
+    final search = state.getSearchQuery(type);
+    final filters = state.getCategoryFilters(type);
+
+    final response = await _itemService.getItemsByType(
+      type,
+      schema: schema,
+      page: 1,
+      search: search.isNotEmpty ? search : null,
+      filters: filters.isNotEmpty ? filters : null,
+    );
 
     response.when(
-      success: (items, _) {
+      success: (paginated, _) {
         state = state.copyWith(
-          itemsByType: {...state.itemsByType, type: items},
+          itemsByType: {...state.itemsByType, type: paginated.items},
           loadingByType: {...state.loadingByType, type: false},
           hasLoadedOnce: true,
+          totalByType: {...state.totalByType, type: paginated.total},
+          currentPageByType: {...state.currentPageByType, type: paginated.page},
+          totalPagesByType: {...state.totalPagesByType, type: paginated.totalPages},
         );
-        _refreshFilterOptions(type);
       },
       error: (message, statusCode, errorCode, details) {
         state = state.copyWith(
@@ -165,6 +156,64 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
     await loadItems(type, forceRefresh: true);
   }
 
+  Future<void> loadMoreItems(String type) async {
+    if (state.isLoading(type) || state.isLoadingMore(type)) return;
+    if (!state.hasMore(type)) return;
+
+    final currentPage = state.currentPageByType[type] ?? 0;
+
+    state = state.copyWith(
+      isLoadingMoreByType: {...state.isLoadingMoreByType, type: true},
+    );
+
+    final schema = _getSchema(type);
+    final search = state.getSearchQuery(type);
+    final filters = state.getCategoryFilters(type);
+
+    final response = await _itemService.getItemsByType(
+      type,
+      schema: schema,
+      page: currentPage + 1,
+      search: search.isNotEmpty ? search : null,
+      filters: filters.isNotEmpty ? filters : null,
+    );
+
+    response.when(
+      success: (paginated, _) {
+        final existingItems = state.getItems(type);
+        final updatedItems = [...existingItems, ...paginated.items];
+        state = state.copyWith(
+          itemsByType: {...state.itemsByType, type: updatedItems},
+          isLoadingMoreByType: {...state.isLoadingMoreByType, type: false},
+          currentPageByType: {...state.currentPageByType, type: paginated.page},
+          totalByType: {...state.totalByType, type: paginated.total},
+          totalPagesByType: {...state.totalPagesByType, type: paginated.totalPages},
+        );
+      },
+      error: (message, statusCode, errorCode, details) {
+        state = state.copyWith(
+          isLoadingMoreByType: {...state.isLoadingMoreByType, type: false},
+          errorsByType: {...state.errorsByType, type: message},
+        );
+      },
+      loading: () {},
+    );
+  }
+
+  Future<void> loadTypeStats(String type) async {
+    final response = await _itemService.getTypeStats(type);
+
+    response.when(
+      success: (stats, _) {
+        state = state.copyWith(
+          typeStatsByType: {...state.typeStatsByType, type: stats},
+        );
+      },
+      error: (message, statusCode, errorCode, details) {},
+      loading: () {},
+    );
+  }
+
   Future<ApiResponse<DynamicItem>> createItem(
     String type,
     DynamicItem item,
@@ -173,12 +222,11 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
 
     response.when(
       success: (createdItem, _) {
-        final items = state.getItems(type);
-        final updatedItems = [...items, createdItem];
         state = state.copyWith(
-          itemsByType: {...state.itemsByType, type: updatedItems},
+          totalByType: {...state.totalByType, type: 0},
+          currentPageByType: {...state.currentPageByType, type: 0},
+          totalPagesByType: {...state.totalPagesByType, type: 0},
         );
-        _refreshFilterOptions(type);
       },
       error: (message, statusCode, errorCode, details) {},
       loading: () {},
@@ -204,7 +252,6 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
           state = state.copyWith(
             itemsByType: {...state.itemsByType, type: updatedItems},
           );
-          _refreshFilterOptions(type);
         }
       },
       error: (message, statusCode, errorCode, details) {},
@@ -219,12 +266,11 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
 
     response.when(
       success: (deleteResult, _) {
-        final items = state.getItems(type);
-        final updatedItems = items.where((i) => i.id != id).toList();
         state = state.copyWith(
-          itemsByType: {...state.itemsByType, type: updatedItems},
+          totalByType: {...state.totalByType, type: 0},
+          currentPageByType: {...state.currentPageByType, type: 0},
+          totalPagesByType: {...state.totalPagesByType, type: 0},
         );
-        _refreshFilterOptions(type);
       },
       error: (message, statusCode, errorCode, details) {},
       loading: () {},
@@ -242,15 +288,17 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
     state = state.copyWith(errorsByType: {...state.errorsByType, type: null});
   }
 
-  void clearCache() {
-    _itemService.clearCache();
-    state = const DynamicItemState();
-  }
-
   void updateSearchQuery(String type, String query) {
     state = state.copyWith(
       searchQueriesByType: {...state.searchQueriesByType, type: query},
     );
+  }
+
+  void updateSearchAndLoad(String type, String query) {
+    state = state.copyWith(
+      searchQueriesByType: {...state.searchQueriesByType, type: query},
+    );
+    loadItems(type, forceRefresh: true);
   }
 
   void setCategoryFilter(String type, String key, String? value) {
@@ -268,6 +316,7 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
         type: updatedFilters,
       },
     );
+    loadItems(type, forceRefresh: true);
   }
 
   void clearFilters(String type) {
@@ -275,6 +324,7 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
       searchQueriesByType: {...state.searchQueriesByType, type: ''},
       categoryFiltersByType: {...state.categoryFiltersByType, type: {}},
     );
+    loadItems(type, forceRefresh: true);
   }
 
   void clearTabSpecificFilters(String type) {
@@ -292,10 +342,10 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
   }
 
   void invalidateItem(String type, int itemId) {
-    final items = state.getItems(type);
-    final updatedItems = items.where((i) => i.id != itemId).toList();
     state = state.copyWith(
-      itemsByType: {...state.itemsByType, type: updatedItems},
+      totalByType: {...state.totalByType, type: 0},
+      currentPageByType: {...state.currentPageByType, type: 0},
+      totalPagesByType: {...state.totalPagesByType, type: 0},
     );
   }
 
@@ -311,33 +361,14 @@ class DynamicItemNotifier extends StateNotifier<DynamicItemState> {
     }
     state = state.copyWith(
       itemsByType: {...state.itemsByType, type: updatedItems},
+      totalByType: {...state.totalByType, type: 0},
+      currentPageByType: {...state.currentPageByType, type: 0},
+      totalPagesByType: {...state.totalPagesByType, type: 0},
     );
   }
 
   void updateItemInCache(String type, DynamicItem item) {
     addItem(type, item);
-    _refreshFilterOptions(type);
-  }
-
-  void _refreshFilterOptions(String type) {
-    final items = state.getItems(type);
-    final allCategories = <String, Set<String>>{};
-
-    for (final item in items) {
-      for (final entry in item.categories.entries) {
-        allCategories.putIfAbsent(entry.key, () => <String>{}).add(entry.value);
-      }
-    }
-
-    final filterOptions = allCategories.map((key, valueSet) {
-      final sortedList = valueSet.toList();
-      sortedList.sort((a, b) => DynamicItemState._compareLocaleAware(a, b));
-      return MapEntry(key, sortedList);
-    });
-
-    state = state.copyWith(
-      filterOptionsByType: {...state.filterOptionsByType, type: filterOptions},
-    );
   }
 }
 
@@ -359,14 +390,22 @@ final itemsForTypeProvider = Provider.family<List<DynamicItem>, String>((
   return itemState.getItems(type);
 });
 
-final filteredItemsForTypeProvider = Provider.family<List<DynamicItem>, String>(
-  (ref, type) {
-    final itemState = ref.watch(dynamicItemProvider);
-    return itemState.getFilteredItems(type);
-  },
-);
-
 final isLoadingItemsProvider = Provider.family<bool, String>((ref, type) {
   final itemState = ref.watch(dynamicItemProvider);
   return itemState.isLoading(type);
+});
+
+final totalItemsProvider = Provider.family<int, String>((ref, type) {
+  final itemState = ref.watch(dynamicItemProvider);
+  return itemState.totalForType(type);
+});
+
+final hasMoreProvider = Provider.family<bool, String>((ref, type) {
+  final itemState = ref.watch(dynamicItemProvider);
+  return itemState.hasMore(type);
+});
+
+final isLoadingMoreProvider = Provider.family<bool, String>((ref, type) {
+  final itemState = ref.watch(dynamicItemProvider);
+  return itemState.isLoadingMore(type);
 });

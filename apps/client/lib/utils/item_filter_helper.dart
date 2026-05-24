@@ -1,6 +1,8 @@
 import 'package:diacritic/diacritic.dart';
 import '../models/rateable_item.dart';
 import '../models/rating.dart';
+import '../models/item_schema.dart';
+import '../models/schema_field.dart';
 
 /// Helper class for filtering items with rating context
 class ItemFilterHelper {
@@ -99,23 +101,22 @@ class ItemFilterHelper {
     return filtered;
   }
 
-  /// Get available filter options for an item type
-  static Map<String, List<String>> getAvailableFilters<T extends RateableItem>(
-    List<T> items,
-    String itemType,
-  ) {
+  /// Get available filter options from schema select/enum fields
+  static Map<String, List<String>> getAvailableFilters(ItemSchema schema) {
     final filterOptions = <String, Set<String>>{};
 
-    // Extract all unique values for each category
-    for (final item in items) {
-      for (final category in item.categories.entries) {
-        filterOptions
-            .putIfAbsent(category.key, () => <String>{})
-            .add(category.value);
+    for (final field in schema.fields) {
+      if ((field.fieldType == SchemaFieldType.select ||
+              field.fieldType == SchemaFieldType.enum_) &&
+          field.options != null &&
+          field.options!.isNotEmpty) {
+        filterOptions.putIfAbsent(field.key, () => <String>{});
+        for (final option in field.options!) {
+          filterOptions[field.key]!.add(option);
+        }
       }
     }
 
-    // Convert sets to sorted lists with locale-aware comparison
     return filterOptions.map((key, valueSet) {
       final sortedList = valueSet.toList();
       sortedList.sort((a, b) => _compareLocaleAware(a, b));

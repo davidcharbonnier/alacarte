@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -38,6 +39,8 @@ class ItemTypeScreen extends ConsumerStatefulWidget {
 class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  final ScrollController _scrollController = ScrollController();
+  Timer? _searchDebounce;
 
   // Cache the last loaded item IDs to prevent infinite provider refreshes
   List<int>? _lastLoadedItemIds;
@@ -79,12 +82,23 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadItemTypeData();
     });
+
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ItemProviderHelper.loadMoreItems(ref, widget.itemType);
+    }
   }
 
   void _loadItemTypeData() {
@@ -204,13 +218,12 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   }
 
   int _getTabSpecificTotalCount() {
-    final items = ItemProviderHelper.getItems(ref, widget.itemType);
-
     if (_tabController.index == 0) {
-      // "All Items" tab - show total available items
-      return items.length;
+      // "All Items" tab - show total available items from server
+      return ItemProviderHelper.totalItems(ref, widget.itemType);
     } else {
       // "My List" tab - show total items in personal list
+      final items = ItemProviderHelper.getItems(ref, widget.itemType);
       final ratingState = ref.read(ratingProvider);
       final userRatings = ratingState.ratings;
 
@@ -224,10 +237,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   }
 
   int _getTabSpecificFilteredCount() {
-    final filteredItems = ItemProviderHelper.getFilteredItems(
-      ref,
-      widget.itemType,
-    );
+    final items = ItemProviderHelper.getItems(ref, widget.itemType);
     final activeFilters = ItemProviderHelper.getActiveFilters(
       ref,
       widget.itemType,
@@ -236,153 +246,30 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final currentUserId = ref.read(authProvider).user?.id;
     final userRatings = ratingState.ratings;
 
-    if (_tabController.index == 0) {
-      // "All Items" tab - apply rating filters to get accurate count
-      var itemsToCount = filteredItems;
+    // Apply rating-based filters
+    var itemsToCount = items;
 
-      // Apply rating-based filters if any
-      if (activeFilters.containsKey('rating_status')) {
-        itemsToCount = ItemFilterHelper.filterItemsWithRatingContext(
-          itemsToCount,
-          userRatings,
-          currentUserId,
-          activeFilters,
-          false, // isPersonalListTab = false
-        );
-      }
-
-      return itemsToCount.length;
-    } else {
-      // "My List" tab - show filtered personal list count
-      final ratingSourceFilter = activeFilters['rating_source'];
-
-      // Apply search and filter to the base items first
-      var filteredBaseItems = filteredItems;
-
-      // Apply rating source filters if any (My Ratings vs Recommendations)
-      if (activeFilters.containsKey('rating_source')) {
-        final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
-        final searchQuery = ItemProviderHelper.getSearchQuery(
-          ref,
-          widget.itemType,
-        );
-
-        // For recommendations filter, we need to start with all items that have ratings
-        if (ratingSourceFilter == 'recommendations') {
-          final allRatedItemIds = userRatings
-              .where((r) => _itemIdsForType.contains(r.itemId))
-              .map((r) => r.itemId)
-              .toSet();
-
-          // Start with all items that have any ratings, then apply search/category filters
-          var allRatedItems = allItems
-              .where((item) => allRatedItemIds.contains(item.id))
-              .toList();
-
-          // Apply search query if present
-          if (searchQuery.isNotEmpty) {
-            allRatedItems = allRatedItems
-                .where(
-                  (item) =>
-                      item.searchableText.contains(searchQuery.toLowerCase()),
-                )
-                .toList();
-          }
-
-          // Apply category filters if present
-          for (final entry in activeFilters.entries) {
-            if (entry.key != 'rating_source') {
-              allRatedItems = allRatedItems
-                  .where(
-                    // ignore: unnecessary_null_aware_assignment
-                    (item) =>
-                        item.categories[entry.key]?.toLowerCase() ==
-                        entry.value.toLowerCase(),
-                  )
-                  .toList();
-            }
-          }
-
-          filteredBaseItems = allRatedItems;
-        } else if (ratingSourceFilter == 'personal') {
-          // For personal filter, start with items the user has rated
-          final personalRatedItemIds = userRatings
-              .where(
-                (r) =>
-                    _itemIdsForType.contains(r.itemId) &&
-                    r.authorId == currentUserId,
-              )
-              .map((r) => r.itemId)
-              .toSet();
-
-          // Start with all items that user has rated, then apply search/category filters
-          var personalRatedItems = allItems
-              .where((item) => personalRatedItemIds.contains(item.id))
-              .toList();
-
-          // Apply search query if present
-          if (searchQuery.isNotEmpty) {
-            personalRatedItems = personalRatedItems
-                .where(
-                  (item) =>
-                      item.searchableText.contains(searchQuery.toLowerCase()),
-                )
-                .toList();
-          }
-
-          // Apply category filters if present
-          for (final entry in activeFilters.entries) {
-            if (entry.key != 'rating_source') {
-              personalRatedItems = personalRatedItems
-                  .where(
-                    // ignore: unnecessary_null_aware_assignment
-                    (item) =>
-                        item.categories[entry.key]?.toLowerCase() ==
-                        entry.value.toLowerCase(),
-                  )
-                  .toList();
-            }
-          }
-
-          filteredBaseItems = personalRatedItems;
-        }
-
-        filteredBaseItems = ItemFilterHelper.filterItemsWithRatingContext(
-          filteredBaseItems,
-          userRatings,
-          currentUserId,
-          activeFilters,
-          true, // isPersonalListTab = true
-        );
-
-        // When rating filter is active, just return the filtered items count
-        return filteredBaseItems.length;
-      }
-
-      final personalRatings = userRatings
-          .where(
-            (r) =>
-                _itemIdsForType.contains(r.itemId) &&
-                r.authorId == currentUserId &&
-                filteredBaseItems.any((item) => item.id == r.itemId),
-          )
-          .toList();
-
-      final sharedRatings = userRatings
-          .where(
-            (r) =>
-                _itemIdsForType.contains(r.itemId) &&
-                r.authorId != currentUserId &&
-                filteredBaseItems.any((item) => item.id == r.itemId),
-          )
-          .toList();
-
-      final personalItemIds = personalRatings.map((r) => r.itemId).toSet();
-      final sharedItemIds = sharedRatings.map((r) => r.itemId).toSet();
-      final sharedOnlyItemIds = sharedItemIds.difference(personalItemIds);
-
-      return personalItemIds.length + sharedOnlyItemIds.length;
+    if (activeFilters.containsKey('rating_source')) {
+      itemsToCount = ItemFilterHelper.filterItemsWithRatingContext(
+        itemsToCount,
+        userRatings,
+        currentUserId,
+        activeFilters,
+        true,
+      );
     }
+
+    if (activeFilters.containsKey('rating_status')) {
+      itemsToCount = ItemFilterHelper.filterItemsWithRatingContext(
+        itemsToCount,
+        userRatings,
+        currentUserId,
+        activeFilters,
+        false,
+      );
+    }
+
+    return itemsToCount.length;
   }
 
   Widget _buildItemTypeSwitcher(BuildContext context) {
@@ -508,7 +395,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                   fontWeight: widget.itemType == 'chili-sauce'
                       ? FontWeight.bold
                       : FontWeight.normal,
-                  color: widget.itemType == 'chili-sauce' ? Colors.red : null,
+                  color:
+                      widget.itemType == 'chili-sauce' ? Colors.red : null,
                 ),
               ),
             ],
@@ -525,11 +413,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       return _buildComingSoonTab();
     }
 
-    final filteredItems = ItemProviderHelper.getFilteredItems(
-      ref,
-      widget.itemType,
-    );
-    final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
+    final items = ItemProviderHelper.getItems(ref, widget.itemType);
+    final allItems = items;
     final activeFilters = ItemProviderHelper.getActiveFilters(
       ref,
       widget.itemType,
@@ -537,17 +422,17 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final ratingState = ref.watch(ratingProvider);
     final currentUserId = ref.read(authProvider).user?.id;
 
-    // Start with provider's filtered items (search + category filters)
-    var itemsToShow = filteredItems;
+    // Start with provider's items (server-filtered)
+    var itemsToShow = List<RateableItem>.from(allItems);
 
-    // Apply rating-based filters if any
+    // Apply rating-based filters if any (client-side for rating context)
     if (activeFilters.containsKey('rating_status')) {
       itemsToShow = ItemFilterHelper.filterItemsWithRatingContext(
         itemsToShow,
         ratingState.ratings,
         currentUserId,
         activeFilters,
-        false, // isPersonalListTab = false
+        false,
       );
     }
 
@@ -579,6 +464,12 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       ),
     );
 
+    final hasMore = ItemProviderHelper.hasMore(ref, widget.itemType);
+    final isLoadingMore = ItemProviderHelper.isLoadingMore(
+      ref,
+      widget.itemType,
+    );
+
     return RefreshIndicator(
       onRefresh: () async {
         // Clear all caches for fresh data
@@ -605,13 +496,24 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                 ratingState.ratings,
                 statsMap: statsMap,
                 showAll: true,
+                hasMore: hasMore,
+                isLoadingMore: isLoadingMore,
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => _buildItemsList(
+                itemsToShow,
+                ratingState.ratings,
+                statsMap: {},
+                showAll: true,
+                hasMore: hasMore,
+                isLoadingMore: isLoadingMore,
+              ),
               error: (e, s) => _buildItemsList(
                 itemsToShow,
                 ratingState.ratings,
-                statsMap: {}, // Empty map on error - placeholders will show
+                statsMap: {},
                 showAll: true,
+                hasMore: hasMore,
+                isLoadingMore: isLoadingMore,
               ),
             ),
     );
@@ -624,10 +526,6 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       return _buildComingSoonTab();
     }
 
-    final filteredItems = ItemProviderHelper.getFilteredItems(
-      ref,
-      widget.itemType,
-    );
     final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
     final activeFilters = ItemProviderHelper.getActiveFilters(
       ref,
@@ -644,7 +542,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final userRatings = ratingState.ratings;
 
     // Apply search and filter to the base items first
-    var filteredBaseItems = filteredItems;
+    var filteredBaseItems = allItems;
 
     // Apply rating source filters if any (My Ratings vs Recommendations)
     if (activeFilters.containsKey('rating_source')) {
@@ -662,7 +560,6 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             .where((item) => allRatedItemIds.contains(item.id))
             .toList();
 
-        // Apply search query if present
         if (searchQuery.isNotEmpty) {
           allRatedItems = allRatedItems
               .where(
@@ -672,12 +569,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
               .toList();
         }
 
-        // Apply category filters if present
         for (final entry in activeFilters.entries) {
           if (entry.key != 'rating_source') {
             allRatedItems = allRatedItems
                 .where(
-                  // ignore: unnecessary_null_aware_assignment
                   (item) =>
                       item.categories[entry.key]?.toLowerCase() ==
                       entry.value.toLowerCase(),
@@ -688,21 +583,19 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
         filteredBaseItems = allRatedItems;
       } else if (ratingSourceFilter == 'personal') {
-        // For personal filter, start with items the user has rated
         final personalRatedItemIds = userRatings
             .where(
               (r) =>
-                  _itemIdsForType.contains(r.itemId) && r.authorId == currentUserId,
+                  _itemIdsForType.contains(r.itemId) &&
+                  r.authorId == currentUserId,
             )
             .map((r) => r.itemId)
             .toSet();
 
-        // Start with all items that user has rated, then apply search/category filters
         var personalRatedItems = allItems
             .where((item) => personalRatedItemIds.contains(item.id))
             .toList();
 
-        // Apply search query if present
         if (searchQuery.isNotEmpty) {
           personalRatedItems = personalRatedItems
               .where(
@@ -712,12 +605,10 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
               .toList();
         }
 
-        // Apply category filters if present
         for (final entry in activeFilters.entries) {
           if (entry.key != 'rating_source') {
             personalRatedItems = personalRatedItems
                 .where(
-                  // ignore: unnecessary_null_aware_assignment
                   (item) =>
                       item.categories[entry.key]?.toLowerCase() ==
                       entry.value.toLowerCase(),
@@ -734,12 +625,11 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         userRatings,
         currentUserId,
         activeFilters,
-        true, // isPersonalListTab = true
+        true,
       );
 
       // When rating source filter is active, use simplified logic
       if (ratingSourceFilter == 'personal') {
-        // Show only items user has rated personally
         final personalRatings = userRatings
             .where(
               (r) =>
@@ -766,7 +656,6 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                 ),
         );
       } else if (ratingSourceFilter == 'recommendations') {
-        // Show items that others have recommended (shared with current user)
         return RefreshIndicator(
           onRefresh: () async {
             await ref.read(ratingProvider.notifier).refreshRatings();
@@ -930,16 +819,44 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     List<Rating> allRatings, {
     Map<int, Map<String, dynamic>>? statsMap,
     required bool showAll,
+    bool hasMore = false,
+    bool isLoadingMore = false,
   }) {
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(
         AppConstants.spacingM,
         AppConstants.spacingM,
         AppConstants.spacingM,
-        96, // FAB height (56px) + FAB bottom margin (24px) + card spacing (16px)
+        96,
       ),
-      itemCount: items.length,
+      itemCount: items.length + (isLoadingMore || hasMore ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index >= items.length) {
+          if (isLoadingMore) {
+            return const Padding(
+              padding: EdgeInsets.all(AppConstants.spacingM),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (!hasMore && items.isNotEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(AppConstants.spacingM),
+              child: Center(
+                child: Text(
+                  'All items loaded',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
+
         final item = items[index];
         final itemRatings = allRatings
             .where((r) => r.itemId == item.id && _itemIdsForType.contains(r.itemId))
@@ -1365,23 +1282,26 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
   }
 
   Widget _buildSearchAndFilter() {
-    final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
+    final schemaState = ref.watch(schemaProvider);
+    final schema = schemaState.getSchema(widget.itemType);
     final activeFilters = ItemProviderHelper.getActiveFilters(
       ref,
       widget.itemType,
     );
     final searchQuery = ItemProviderHelper.getSearchQuery(ref, widget.itemType);
 
-    // Get available filter options for this item type
-    final availableFilters = ItemFilterHelper.getAvailableFilters(
-      allItems,
-      widget.itemType,
-    );
+    // Get available filter options from schema select/enum fields
+    final availableFilters = schema != null
+        ? ItemFilterHelper.getAvailableFilters(schema)
+        : <String, List<String>>{};
 
     return ItemSearchAndFilter(
       itemType: widget.itemType,
       onSearchChanged: (query) {
-        ItemProviderHelper.updateSearchQuery(ref, widget.itemType, query);
+        _searchDebounce?.cancel();
+        _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+          ItemProviderHelper.updateSearchQuery(ref, widget.itemType, query);
+        });
       },
       onFilterChanged: (categoryKey, value) {
         ItemProviderHelper.setCategoryFilter(
