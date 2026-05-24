@@ -62,6 +62,7 @@
 - [x] 4.11 Implement primary/secondary field designation
 - [x] 4.12 Implement schema activation/deactivation
 - [x] 4.13 Implement schema version history view
+- [x] 4.14 Fix API to return versions list — SchemaDetails and buildSchemaDetailResponse missing `versions` field
 
 ## 5. Admin Panel - Dynamic Item Management
 
