@@ -287,3 +287,47 @@
 - [x] 17.49 Test error handling: network error during `loadMoreItems` preserves existing items and state
 - [x] 17.50 Test empty states: search/filter with no results shows empty state, `hasMore` is false
 - [x] 17.51 Test inventory update: creating/deleting an item resets pagination to page 1
+
+## 18. Schema Refresh on Item List Pull-to-Refresh
+
+- [ ] 18.1 Add `ref.read(schemaProvider.notifier).refreshSchema(widget.itemType)` to all pull-to-refresh callbacks in `item_type_screen.dart`:
+  - _buildAllItemsTab
+  - _buildMyListTab — personal rating_source
+  - _buildMyListTab — recommendations rating_source
+  - _buildMyListTab — no rating_source filter
+- [ ] 18.2 Manual test: modify schema in admin, pull-to-refresh on item list, verify schema updates without returning to home screen
+
+## 19. Personal Items Data Source
+
+### Backend (API)
+
+- [ ] 19.1 Add `Rated bool` field to `QueryParams` struct in `services/query_builder.go`
+- [ ] 19.2 Add `RatedByUserID int` field to `QueryParams` struct (set by controller from JWT when `Rated` is true)
+- [ ] 19.3 Implement `rated` subquery filter in `BuildListQuery`: when `Rated` is true, filter items to those where user has a rating (author OR viewer via rating_viewers join), excluding soft-deleted ratings
+- [ ] 19.4 Parse `?rated=true` in `DynamicItemList` controller, extract user ID from JWT, set `params.Rated = true` and `params.RatedByUserID = <jwt_user_id>` — silently ignore if unauthenticated
+- [ ] 19.5 Write `TestEAVQueryBuilder_RatedBy` in `services/query_builder_test.go`: create items with/without ratings, verify `Rated=true` returns only rated, verify viewer-shared items included, verify pagination within subset
+- [ ] 19.6 Write `TestDynamicItemList_RatedBy` in `controllers/dynamic_item_controller_test.go`: integration test via httptest, verify auth required, verify correct items returned
+
+### Client Service
+
+- [ ] 19.7 Add optional `bool rated = false` parameter to `DynamicItemService.getItemsByType()`, append `rated=true` to query params when set
+
+### Client Provider
+
+- [ ] 19.8 Add user-rated state fields to `DynamicItemState`: `userRatedItemsByType`, `userRatedLoadingByType`, `userRatedCurrentPageByType`, `userRatedTotalPagesByType`, `userRatedTotalByType`, `userRatedIsLoadingMoreByType` with defaults, copyWith, and accessors
+- [ ] 19.9 Add `loadUserRatedItems(String type)` to `DynamicItemNotifier`: call `getItemsByType(type, rated: true, page: 1)`, store in user-rated maps
+- [ ] 19.10 Add `loadMoreUserRatedItems(String type)` to `DynamicItemNotifier`: fetch next page, append, guard against double-load/no-more
+- [ ] 19.11 Add `refreshUserRatedItems(String type)` to `DynamicItemNotifier`: force-refresh user-rated items from page 1
+- [ ] 19.12 Add user-rated convenience methods to `ItemProviderHelper`: `getUserRatedItems`, `userRatedHasMore`, `userRatedIsLoadingMore`, `userRatedTotalItems`, `loadUserRatedItems`, `loadMoreUserRatedItems`, `refreshUserRatedItems`
+- [ ] 19.13 Add user-rated family providers: `userRatedItemsForTypeProvider`, `userRatedHasMoreProvider`, `userRatedIsLoadingMoreProvider`
+
+### Client UI
+
+- [ ] 19.14 Add separate `ScrollController _myListScrollController` to `_ItemTypeScreenState`, attach scroll listener in initState, dispose in dispose
+- [ ] 19.15 Add `_onMyListScroll()` listener triggering `ItemProviderHelper.loadMoreUserRatedItems(ref, widget.itemType)` at 200px threshold
+- [ ] 19.16 Update `_buildMyListTab` to read from `userRatedItems` instead of `itemsByType`
+- [ ] 19.17 Replace plain `ListView` in My List with `ListView.builder` using `_myListScrollController` and load-more indicator
+- [ ] 19.18 Trigger `loadUserRatedItems` on My List tab activation (tab change listener or initState)
+- [ ] 19.19 Add loading, empty, and error states to My List user-rated data path
+- [ ] 19.20 Update My List pull-to-refresh handlers to call `refreshUserRatedItems` alongside ratings refresh and schema refresh
+- [ ] 19.21 Manual smoke test: rate items A, B, Z in 100-item catalog, verify all 3 visible in My List on first load

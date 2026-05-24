@@ -12,6 +12,7 @@ Adding a new item type currently requires coordinated changes across three codeb
 - Schema versioning to support safe field migrations
 - Server-driven validation rules stored in schema definitions
 - Client discovers supported item types at runtime via schema API
+- New `rated` query parameter on `GET /api/items/:type` for server-side filtering of items the authenticated user has rated or been shared (secured via JWT)
 
 ## Capabilities
 
@@ -46,6 +47,7 @@ Adding a new item type currently requires coordinated changes across three codeb
 - New widgets: `DynamicForm`, dynamic field renderers
 - Remove: Individual item models (CheeseItem, GinItem, WineItem, CoffeeItem, ChiliSauceItem)
 - Remove: Individual form strategies
+- Updated: `DynamicItemNotifier` gains separate state tracking for user-rated items vs all items, enabling the My List tab to have its own paginated data source
 
 **Database**:
 - New tables: `item_type_schemas`, `item_type_fields`, `items`, `item_field_values`, `schema_versions`
