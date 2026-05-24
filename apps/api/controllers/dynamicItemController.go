@@ -532,3 +532,36 @@ func parseFilterParams(c *gin.Context) map[string]interface{} {
 	}
 	return result
 }
+
+func GetTypeStats(c *gin.Context) {
+	schemaType := c.Param("type")
+
+	cached, ok := getOrRefreshSchema(schemaType)
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Schema not found"})
+		return
+	}
+
+	userID := utils.GetCurrentUserID(c)
+	if userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var totalItems int64
+	utils.DB.Model(&models.Item{}).
+		Where("schema_id = ?", cached.Schema.ID).
+		Count(&totalItems)
+
+	var userRatedCount int64
+	utils.DB.Model(&models.Rating{}).
+		Joins("JOIN items ON items.id = ratings.item_id").
+		Where("items.schema_id = ? AND ratings.user_id = ?", cached.Schema.ID, userID).
+		Distinct("ratings.item_id").
+		Count(&userRatedCount)
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_items":      totalItems,
+		"user_rated_count": userRatedCount,
+	})
+}
