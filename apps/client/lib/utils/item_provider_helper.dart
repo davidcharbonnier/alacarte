@@ -13,13 +13,6 @@ class ItemProviderHelper {
         .cast<RateableItem>();
   }
 
-  static List<RateableItem> getFilteredItems(WidgetRef ref, String itemType) {
-    return ref
-        .watch(dynamicItemProvider)
-        .getFilteredItems(itemType)
-        .cast<RateableItem>();
-  }
-
   static bool isLoading(WidgetRef ref, String itemType) {
     return ref.watch(dynamicItemProvider).isLoading(itemType);
   }
@@ -40,11 +33,20 @@ class ItemProviderHelper {
     return ref.watch(dynamicItemProvider).getCategoryFilters(itemType);
   }
 
-  static Map<String, List<String>> getFilterOptions(
-    WidgetRef ref,
-    String itemType,
-  ) {
-    return ref.watch(dynamicItemProvider).getFilterOptions(itemType);
+  static bool hasMore(WidgetRef ref, String itemType) {
+    return ref.watch(dynamicItemProvider).hasMore(itemType);
+  }
+
+  static bool isLoadingMore(WidgetRef ref, String itemType) {
+    return ref.watch(dynamicItemProvider).isLoadingMore(itemType);
+  }
+
+  static int totalItems(WidgetRef ref, String itemType) {
+    return ref.watch(dynamicItemProvider).totalForType(itemType);
+  }
+
+  static Map<String, dynamic>? typeStats(WidgetRef ref, String itemType) {
+    return ref.watch(dynamicItemProvider).typeStats(itemType);
   }
 
   static void loadItems(WidgetRef ref, String itemType) {
@@ -53,6 +55,14 @@ class ItemProviderHelper {
 
   static Future<void> refreshItems(WidgetRef ref, String itemType) async {
     await ref.read(dynamicItemProvider.notifier).refreshItems(itemType);
+  }
+
+  static Future<void> loadMoreItems(WidgetRef ref, String itemType) async {
+    await ref.read(dynamicItemProvider.notifier).loadMoreItems(itemType);
+  }
+
+  static Future<void> loadTypeStats(WidgetRef ref, String itemType) async {
+    await ref.read(dynamicItemProvider.notifier).loadTypeStats(itemType);
   }
 
   static void clearFilters(WidgetRef ref, String itemType) {
@@ -64,7 +74,7 @@ class ItemProviderHelper {
   }
 
   static void updateSearchQuery(WidgetRef ref, String itemType, String query) {
-    ref.read(dynamicItemProvider.notifier).updateSearchQuery(itemType, query);
+    ref.read(dynamicItemProvider.notifier).updateSearchAndLoad(itemType, query);
   }
 
   static void setCategoryFilter(
