@@ -199,16 +199,16 @@
 - [x] 15.9 Deploy admin to production
 - [x] 15.10 Deploy client to production
 - [x] 15.11 Monitor error rates and performance
-- [ ] 15.12 Remove old item type tables after verification
-- [ ] 15.13 Remove old API route registrations from `main.go` (old `/api/cheese/*`, `/api/gin/*`, etc.)
-- [ ] 15.14 Remove old API models (`cheeseModel.go`, `ginModel.go`, `wineModel.go`, `coffeeModel.go`, `chiliSauceModel.go`, `coffeeEnums.go`, `wineColor.go`)
-- [ ] 15.15 Remove old API controllers (`cheeseController.go`, `ginController.go`, `wineController.go`, `coffeeController.go`, `chiliSauceController.go`)
-- [ ] 15.16 Remove old model AutoMigrate entries from `database.go`
-- [ ] 15.17 Remove old item type switch-case from `item_helper.go`
-- [ ] 15.18 Remove old seeding from `seed.go`
-- [ ] 15.19 Remove old table drops from `reset_database.go`
-- [ ] 15.20 Remove legacy JSON key mapping from `dynamicItemController.go` seed/validate
-- [ ] 15.21 Remove old item type hardcoded config from admin `item-types.ts`
+- [x] 15.12 Remove old item type tables after verification (see `scripts/cleanup_migration.go`)
+- [x] 15.13 Remove old API route registrations from `main.go` (old `/api/cheese/*`, `/api/gin/*`, etc.)
+- [x] 15.14 Remove old API models (`cheeseModel.go`, `ginModel.go`, `wineModel.go`, `coffeeModel.go`, `chiliSauceModel.go`, `coffeeEnums.go`, `wineColor.go`)
+- [x] 15.15 Remove old API controllers (`cheeseController.go`, `ginController.go`, `wineController.go`, `coffeeController.go`, `chiliSauceController.go`)
+- [x] 15.16 Remove old model AutoMigrate entries from `database.go`
+- [x] 15.17 Remove old item type switch-case from `item_helper.go`
+- [x] 15.18 Remove old seeding from `seed.go`
+- [x] 15.19 Remove old table drops from `reset_database.go`
+- [x] 15.20 Remove legacy JSON key mapping from `dynamicItemController.go` seed/validate
+- [x] 15.21 Remove old item type hardcoded config from admin `item-types.ts`
 
 ## 16. Rating item_type Removal
 
@@ -238,10 +238,10 @@
 - [x] 16.24 Verify no orphaned ratings (all `item_id` values exist in `items` table)
 - [x] 16.25 Run full test suite: `go test ./...` in API, `flutter test` in client
 - [x] 16.26 Manual smoke test: create rating, edit rating, delete item (verify cascade), view community stats
-- [ ] 16.27 Drop composite index: `DROP INDEX idx_ratings_item ON ratings`
-- [ ] 16.28 Drop column: `ALTER TABLE ratings DROP COLUMN item_type`
-- [ ] 16.29 Remove `ItemType` `gorm:"-"` field from Rating struct
-- [ ] 16.30 Verify new indexes are in place: `idx_ratings_user_item (user_id, item_id)`, `idx_ratings_item (item_id)`
+- [x] 16.27 Drop composite index: `DROP INDEX idx_ratings_item ON ratings` (see `scripts/cleanup_migration.go`)
+- [x] 16.28 Drop column: `ALTER TABLE ratings DROP COLUMN item_type` (see `scripts/cleanup_migration.go`)
+- [x] 16.29 Remove `ItemType` `gorm:"-"` field from Rating struct
+- [x] 16.30 Verify new indexes are in place: `idx_ratings_user_item (user_id, item_id)`, `idx_ratings_item (item_id)` (see `scripts/cleanup_migration.go`)
 
 ## 17. Client Pagination & Server-Side Filtering
 
