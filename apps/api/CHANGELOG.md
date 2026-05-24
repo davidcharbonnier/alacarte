@@ -1,3 +1,11 @@
+# [2.2.0](https://github.com/davidcharbonnier/alacarte/compare/api-v2.1.0...api-v2.2.0) (2026-05-24)
+
+
+### Features
+
+* **api:** add rated query parameter for personal items data source ([18df02c](https://github.com/davidcharbonnier/alacarte/commit/18df02ca894e7196db070d8fa783dacf76664c34))
+* **client:** add user-rated items state and update My List tab ([d41a931](https://github.com/davidcharbonnier/alacarte/commit/d41a93114884178a9ff312e8e2aa0fb98b39f828))
+
 # [2.1.0](https://github.com/davidcharbonnier/alacarte/compare/api-v2.0.0...api-v2.1.0) (2026-05-24)
 
 
