@@ -19,12 +19,17 @@ class DynamicItemService {
     int perPage = 20,
     String? search,
     Map<String, String>? filters,
+    bool rated = false,
   }) async {
     try {
       final queryParams = <String, dynamic>{
         'page': page,
         'per_page': perPage,
       };
+
+      if (rated) {
+        queryParams['rated'] = 'true';
+      }
 
       if (search != null && search.isNotEmpty) {
         queryParams['search'] = search;

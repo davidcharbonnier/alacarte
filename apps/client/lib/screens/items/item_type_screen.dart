@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/rating_provider.dart';
 import '../../providers/community_stats_provider.dart';
 import '../../providers/schema_provider.dart';
+import '../../providers/dynamic_item_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/rating.dart';
 import '../../models/rateable_item.dart';
@@ -40,6 +41,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _myListScrollController = ScrollController();
   Timer? _searchDebounce;
 
   // Cache the last loaded item IDs to prevent infinite provider refreshes
@@ -47,10 +49,15 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
   /// Get all item IDs for the current item type (replaces itemType filter on ratings)
   Set<int> get _itemIdsForType {
-    return ItemProviderHelper.getItems(ref, widget.itemType)
+    final allIds = ItemProviderHelper.getItems(ref, widget.itemType)
         .where((i) => i.id != null)
         .map((i) => i.id!)
         .toSet();
+    final userIds = ItemProviderHelper.getUserRatedItems(ref, widget.itemType)
+        .where((i) => i.id != null)
+        .map((i) => i.id!)
+        .toSet();
+    return {...allIds, ...userIds};
   }
 
   @override
@@ -74,6 +81,9 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
           _tabController.index;
 
       _onTabChanged(); // Clear tab-specific filters
+      if (_tabController.index == 1) {
+        _loadUserRatedData();
+      }
       setState(() {
         // Rebuild to update FAB visibility
       });
@@ -84,12 +94,14 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     });
 
     _scrollController.addListener(_onScroll);
+    _myListScrollController.addListener(_onMyListScroll);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _scrollController.dispose();
+    _myListScrollController.dispose();
     _searchDebounce?.cancel();
     super.dispose();
   }
@@ -98,6 +110,13 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       ItemProviderHelper.loadMoreItems(ref, widget.itemType);
+    }
+  }
+
+  void _onMyListScroll() {
+    if (_myListScrollController.position.pixels >=
+        _myListScrollController.position.maxScrollExtent - 200) {
+      ItemProviderHelper.loadMoreUserRatedItems(ref, widget.itemType);
     }
   }
 
@@ -110,6 +129,16 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
     // Always refresh ratings as they can change more frequently
     ref.read(ratingProvider.notifier).refreshRatings();
+  }
+
+  void _loadUserRatedData() {
+    if (!ItemProviderHelper.userRatedHasMore(ref, widget.itemType) &&
+        ItemProviderHelper
+            .getUserRatedItems(ref, widget.itemType)
+            .isNotEmpty) {
+      return;
+    }
+    ItemProviderHelper.loadUserRatedItems(ref, widget.itemType);
   }
 
   void _onTabChanged() {
@@ -479,6 +508,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         final ratingService = ref.read(ratingServiceProvider);
         ratingService.clearCache(); // Clear all ratings cache
 
+        await ref.read(schemaProvider.notifier).refreshSchema(widget.itemType);
         await ItemProviderHelper.refreshItems(ref, widget.itemType);
         ref.read(ratingProvider.notifier).refreshRatings();
         // Invalidate batch stats to force refresh
@@ -526,7 +556,8 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
       return _buildComingSoonTab();
     }
 
-    final allItems = ItemProviderHelper.getItems(ref, widget.itemType);
+    final allItems = ItemProviderHelper.getUserRatedItems(ref, widget.itemType);
+    final isUserLoading = ref.watch(dynamicItemProvider).isUserRatedLoading(widget.itemType);
     final activeFilters = ItemProviderHelper.getActiveFilters(
       ref,
       widget.itemType,
@@ -535,7 +566,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     final ratingState = ref.watch(ratingProvider);
     final currentUserId = ref.read(authProvider).user?.id;
 
-    if (isLoading) {
+    if (isLoading || isUserLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -639,32 +670,56 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
             )
             .toList();
 
+        final hasMore = ItemProviderHelper.userRatedHasMore(ref, widget.itemType);
+        final isLoadingMore = ItemProviderHelper.userRatedIsLoadingMore(ref, widget.itemType);
+
         return RefreshIndicator(
           onRefresh: () async {
+            await ref.read(schemaProvider.notifier).refreshSchema(widget.itemType);
+            await ItemProviderHelper.refreshUserRatedItems(ref, widget.itemType);
             await ref.read(ratingProvider.notifier).refreshRatings();
           },
           child: filteredBaseItems.isEmpty
               ? _buildNoFilterResultsState()
-              : ListView(
+              : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  controller: _myListScrollController,
                   padding: const EdgeInsets.all(AppConstants.spacingM),
-                  children: filteredBaseItems.map((item) {
+                  itemCount: filteredBaseItems.length + (isLoadingMore || hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= filteredBaseItems.length) {
+                      return _buildLoadMoreIndicator(isLoadingMore);
+                    }
+                    final item = filteredBaseItems[index];
                     final myRating = personalRatings
                         .where((r) => r.itemId == item.id)
                         .firstOrNull;
                     return _buildItemCard(item, myRating, [], false);
-                  }).toList(),
+                  },
                 ),
         );
       } else if (ratingSourceFilter == 'recommendations') {
+        final hasMore = ItemProviderHelper.userRatedHasMore(ref, widget.itemType);
+        final isLoadingMore = ItemProviderHelper.userRatedIsLoadingMore(ref, widget.itemType);
+
         return RefreshIndicator(
           onRefresh: () async {
+            await ref.read(schemaProvider.notifier).refreshSchema(widget.itemType);
+            await ItemProviderHelper.refreshUserRatedItems(ref, widget.itemType);
             await ref.read(ratingProvider.notifier).refreshRatings();
           },
           child: filteredBaseItems.isEmpty
               ? _buildNoFilterResultsState()
-              : ListView(
+              : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  controller: _myListScrollController,
                   padding: const EdgeInsets.all(AppConstants.spacingM),
-                  children: filteredBaseItems.map((item) {
+                  itemCount: filteredBaseItems.length + (isLoadingMore || hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= filteredBaseItems.length) {
+                      return _buildLoadMoreIndicator(isLoadingMore);
+                    }
+                    final item = filteredBaseItems[index];
                     final myRating = userRatings
                         .where(
                           (r) =>
@@ -687,7 +742,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                       itemRecommendations,
                       false,
                     );
-                  }).toList(),
+                  },
                 ),
         );
       }
@@ -726,20 +781,35 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
         .toList();
 
     final totalItems = personalItems.length + sharedOnlyItems.length;
+    final hasMore = ItemProviderHelper.userRatedHasMore(ref, widget.itemType);
+    final isLoadingMore = ItemProviderHelper.userRatedIsLoadingMore(ref, widget.itemType);
 
     return RefreshIndicator(
       onRefresh: () async {
+        await ref.read(schemaProvider.notifier).refreshSchema(widget.itemType);
+        await ItemProviderHelper.refreshUserRatedItems(ref, widget.itemType);
         await ref.read(ratingProvider.notifier).refreshRatings();
       },
       child: totalItems == 0
           ? (activeFilters.isNotEmpty
                 ? _buildNoFilterResultsState()
                 : _buildEmptyMyListState())
-          : ListView(
-              padding: const EdgeInsets.all(AppConstants.spacingM),
-              children: [
-                // Items with personal ratings
-                ...personalItems.map((item) {
+          : ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              controller: _myListScrollController,
+              padding: const EdgeInsets.fromLTRB(
+                AppConstants.spacingM,
+                AppConstants.spacingM,
+                AppConstants.spacingM,
+                96,
+              ),
+              itemCount: totalItems + (isLoadingMore || hasMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index >= totalItems) {
+                  return _buildLoadMoreIndicator(isLoadingMore);
+                }
+                if (index < personalItems.length) {
+                  final item = personalItems[index];
                   final myRating = personalRatings
                       .where((r) => r.itemId == item.id)
                       .firstOrNull;
@@ -752,22 +822,43 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
                     itemSharedRatings,
                     false,
                   );
-                }),
-
-                // Items with only shared ratings (recommendations)
-                ...sharedOnlyItems.map((item) {
-                  final itemSharedRatings = sharedRatings
-                      .where((r) => r.itemId == item.id)
-                      .toList();
-                  return _buildItemCard(item, null, itemSharedRatings, false);
-                }),
-              ],
+                }
+                final sharedIndex = index - personalItems.length;
+                final item = sharedOnlyItems[sharedIndex];
+                final itemSharedRatings = sharedRatings
+                    .where((r) => r.itemId == item.id)
+                    .toList();
+                return _buildItemCard(item, null, itemSharedRatings, false);
+              },
             ),
+    );
+  }
+
+  Widget _buildLoadMoreIndicator(bool isLoadingMore) {
+    if (isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.all(AppConstants.spacingM),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.all(AppConstants.spacingM),
+      child: Center(
+        child: Text(
+          'All items loaded',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildNoFilterResultsState() {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(AppConstants.spacingM),
       children: [
         SizedBox(
@@ -823,6 +914,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
     bool isLoadingMore = false,
   }) {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(
         AppConstants.spacingM,
@@ -1227,6 +1319,7 @@ class _ItemTypeScreenState extends ConsumerState<ItemTypeScreen>
 
   Widget _buildEmptyMyListState() {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(AppConstants.spacingM),
       children: [
         SizedBox(
