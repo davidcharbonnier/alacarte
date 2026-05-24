@@ -247,54 +247,54 @@
 
 ## 17. Client Pagination & Server-Side Filtering
 
-- [ ] 17.1 Create `GetTypeStats` handler in `controllers/dynamicItemController.go` returning `{ total_items, user_rated_count }` for a schema type
-- [ ] 17.2 Register `GET /api/stats/type/:type` route in `main.go` (stats group, auth-required)
-- [ ] 17.3 Write controller integration test for `GetTypeStats` (httptest + testcontainers)
-- [ ] 17.4 Create `PaginatedResponse<T>` model in `models/paginated_response.dart` with fields `items`, `total`, `page`, `perPage`, `totalPages` and `hasMore` getter
-- [ ] 17.5 Add `page`, `perPage`, `search`, `filters` params to `getItemsByType()` in `DynamicItemService`, build query string, parse full response envelope, return `ApiResponse<PaginatedResponse<DynamicItem>>`
-- [ ] 17.6 Remove 5-minute TTL cache (`_itemCache`, `_cacheTimestamp`, `_isCacheValid`) from `DynamicItemService` — pagination state is now the source of truth
-- [ ] 17.7 Add `getTypeStats(String type)` method to `DynamicItemService` calling `GET /api/stats/type/{type}`
-- [ ] 17.8 Add pagination state fields to `DynamicItemState`: `totalByType`, `currentPageByType`, `totalPagesByType`, `isLoadingMoreByType`, `typeStatsByType`
-- [ ] 17.9 Add accessor methods to `DynamicItemState`: `totalForType`, `hasMore`, `isLoadingMore`, `typeStats`
-- [ ] 17.10 Modify `loadItems()` in `DynamicItemNotifier`: fetch page 1, replace items in `itemsByType`, store pagination meta
-- [ ] 17.11 Add `loadMoreItems(String type)` to `DynamicItemNotifier`: fetch currentPage+1, append items, guard against double-load or no-more
-- [ ] 17.12 Modify `updateSearchQuery()` in `DynamicItemNotifier`: reset to page 1, trigger API fetch with search + active filters
-- [ ] 17.13 Modify `setCategoryFilter()` in `DynamicItemNotifier`: reset to page 1, trigger API fetch with all active filters + search
-- [ ] 17.14 Modify `clearFilters()` in `DynamicItemNotifier`: reset to page 1, fetch page 1 with no filters
-- [ ] 17.15 Add `loadTypeStats(String type)` to `DynamicItemNotifier`: fetch and store stats
-- [ ] 17.16 Remove `_refreshFilterOptions()` from `DynamicItemNotifier` — filter options now derived from schema
-- [ ] 17.17 Remove `getFilteredItems()` from `DynamicItemState` — filtering moves to server
-- [ ] 17.18 Update `invalidateItem()` / `addItem()` / `updateItemInCache()` in `DynamicItemNotifier` to reset pagination to page 1
-- [ ] 17.19 Add `hasMore` passthrough to `ItemProviderHelper`
-- [ ] 17.20 Add `isLoadingMore` passthrough to `ItemProviderHelper`
-- [ ] 17.21 Add `totalItems` passthrough to `ItemProviderHelper`
-- [ ] 17.22 Add `loadMoreItems` passthrough to `ItemProviderHelper`
-- [ ] 17.23 Add `typeStats` passthrough to `ItemProviderHelper`
-- [ ] 17.24 Add `loadTypeStats` passthrough to `ItemProviderHelper`
-- [ ] 17.25 Remove `getFilteredItems` passthrough from `ItemProviderHelper`
-- [ ] 17.26 Add `totalItemsProvider`, `hasMoreProvider`, `isLoadingMoreProvider` family providers
-- [ ] 17.27 Rewrite `getAvailableFilters()` in `ItemFilterHelper` to accept `ItemSchema` instead of item list, returning select/enum field options
-- [ ] 17.28 Update callers in `ItemTypeScreen` to pass schema to `ItemFilterHelper.getAvailableFilters()`
-- [ ] 17.29 Add `ScrollController` to `_ItemTypeScreenState`, dispose in `dispose()`
-- [ ] 17.30 Attach scroll listener in `ItemTypeScreen`: trigger `loadMoreItems` when within 200px of bottom
-- [ ] 17.31 Show `CircularProgressIndicator` at bottom of list when `isLoadingMore == true`
-- [ ] 17.32 Show "All items loaded" text when `!hasMore && items.isNotEmpty`
-- [ ] 17.33 Apply same `ScrollController` and load-more pattern to `_buildMyListTab()` in `ItemTypeScreen`
-- [ ] 17.34 Keep `RefreshIndicator` in `ItemTypeScreen`: call `loadItems(type, forceRefresh: true)` to clear and reload page 1
-- [ ] 17.35 Add `Timer? _searchDebounce` to `ItemTypeScreen` widget state, cancel in `dispose()`
-- [ ] 17.36 Modify `onSearchChanged` in `ItemTypeScreen`: cancel prior timer, set new 300ms debounce timer calling `updateSearchQuery`
-- [ ] 17.37 Pass `search` param through to `getItemsByType()` in service layer from `ItemTypeScreen`
-- [ ] 17.38 Retrieve `ItemSchema` for current type from `schemaForTypeProvider` in `ItemTypeScreen`
-- [ ] 17.39 Pass active filters through to `getItemsByType()` as `filter[key]=value` query params from `ItemTypeScreen`
-- [ ] 17.40 Call `dynamicItemProvider.notifier.loadTypeStats(schema.name)` for each active schema on home screen initial load
-- [ ] 17.41 Replace `dynamicItemState.getItems(schema.name).length` with `typeStats?.totalItems ?? 0` in `home_screen.dart`
-- [ ] 17.42 Replace `_getUniqueItemCount(ratings, itemType)` with `typeStats?.userRatedCount ?? 0` in `home_screen.dart`
-- [ ] 17.43 Remove `_getUniqueItemCount()` method entirely from `home_screen.dart`
-- [ ] 17.44 Remove eager `loadItems()` trigger from `home_screen.dart` `build()` — home screen no longer needs the full item list
-- [ ] 17.45 Test pagination: verify `hasMore`, `loadMoreItems` appends correctly, pull-to-refresh resets
-- [ ] 17.46 Test debounced search: rapid typing fires single request after 300ms
-- [ ] 17.47 Test filter + pagination interplay: applying filter resets to page 1, filter options come from schema
-- [ ] 17.48 Test home screen: stats load once, item counts display correctly, pull-to-refresh refreshes stats
-- [ ] 17.49 Test error handling: network error during `loadMoreItems` preserves existing items and state
-- [ ] 17.50 Test empty states: search/filter with no results shows empty state, `hasMore` is false
-- [ ] 17.51 Test inventory update: creating/deleting an item resets pagination to page 1
+- [x] 17.1 Create `GetTypeStats` handler in `controllers/dynamicItemController.go` returning `{ total_items, user_rated_count }` for a schema type
+- [x] 17.2 Register `GET /api/stats/type/:type` route in `main.go` (stats group, auth-required)
+- [x] 17.3 Write controller integration test for `GetTypeStats` (httptest + testcontainers)
+- [x] 17.4 Create `PaginatedResponse<T>` model in `models/paginated_response.dart` with fields `items`, `total`, `page`, `perPage`, `totalPages` and `hasMore` getter
+- [x] 17.5 Add `page`, `perPage`, `search`, `filters` params to `getItemsByType()` in `DynamicItemService`, build query string, parse full response envelope, return `ApiResponse<PaginatedResponse<DynamicItem>>`
+- [x] 17.6 Remove 5-minute TTL cache (`_itemCache`, `_cacheTimestamp`, `_isCacheValid`) from `DynamicItemService` — pagination state is now the source of truth
+- [x] 17.7 Add `getTypeStats(String type)` method to `DynamicItemService` calling `GET /api/stats/type/{type}`
+- [x] 17.8 Add pagination state fields to `DynamicItemState`: `totalByType`, `currentPageByType`, `totalPagesByType`, `isLoadingMoreByType`, `typeStatsByType`
+- [x] 17.9 Add accessor methods to `DynamicItemState`: `totalForType`, `hasMore`, `isLoadingMore`, `typeStats`
+- [x] 17.10 Modify `loadItems()` in `DynamicItemNotifier`: fetch page 1, replace items in `itemsByType`, store pagination meta
+- [x] 17.11 Add `loadMoreItems(String type)` to `DynamicItemNotifier`: fetch currentPage+1, append items, guard against double-load or no-more
+- [x] 17.12 Modify `updateSearchQuery()` in `DynamicItemNotifier`: reset to page 1, trigger API fetch with search + active filters
+- [x] 17.13 Modify `setCategoryFilter()` in `DynamicItemNotifier`: reset to page 1, trigger API fetch with all active filters + search
+- [x] 17.14 Modify `clearFilters()` in `DynamicItemNotifier`: reset to page 1, fetch page 1 with no filters
+- [x] 17.15 Add `loadTypeStats(String type)` to `DynamicItemNotifier`: fetch and store stats
+- [x] 17.16 Remove `_refreshFilterOptions()` from `DynamicItemNotifier` — filter options now derived from schema
+- [x] 17.17 Remove `getFilteredItems()` from `DynamicItemState` — filtering moves to server
+- [x] 17.18 Update `invalidateItem()` / `addItem()` / `updateItemInCache()` in `DynamicItemNotifier` to reset pagination to page 1
+- [x] 17.19 Add `hasMore` passthrough to `ItemProviderHelper`
+- [x] 17.20 Add `isLoadingMore` passthrough to `ItemProviderHelper`
+- [x] 17.21 Add `totalItems` passthrough to `ItemProviderHelper`
+- [x] 17.22 Add `loadMoreItems` passthrough to `ItemProviderHelper`
+- [x] 17.23 Add `typeStats` passthrough to `ItemProviderHelper`
+- [x] 17.24 Add `loadTypeStats` passthrough to `ItemProviderHelper`
+- [x] 17.25 Remove `getFilteredItems` passthrough from `ItemProviderHelper`
+- [x] 17.26 Add `totalItemsProvider`, `hasMoreProvider`, `isLoadingMoreProvider` family providers
+- [x] 17.27 Rewrite `getAvailableFilters()` in `ItemFilterHelper` to accept `ItemSchema` instead of item list, returning select/enum field options
+- [x] 17.28 Update callers in `ItemTypeScreen` to pass schema to `ItemFilterHelper.getAvailableFilters()`
+- [x] 17.29 Add `ScrollController` to `_ItemTypeScreenState`, dispose in `dispose()`
+- [x] 17.30 Attach scroll listener in `ItemTypeScreen`: trigger `loadMoreItems` when within 200px of bottom
+- [x] 17.31 Show `CircularProgressIndicator` at bottom of list when `isLoadingMore == true`
+- [x] 17.32 Show "All items loaded" text when `!hasMore && items.isNotEmpty`
+- [x] 17.33 Apply same `ScrollController` and load-more pattern to `_buildMyListTab()` in `ItemTypeScreen`
+- [x] 17.34 Keep `RefreshIndicator` in `ItemTypeScreen`: call `loadItems(type, forceRefresh: true)` to clear and reload page 1
+- [x] 17.35 Add `Timer? _searchDebounce` to `ItemTypeScreen` widget state, cancel in `dispose()`
+- [x] 17.36 Modify `onSearchChanged` in `ItemTypeScreen`: cancel prior timer, set new 300ms debounce timer calling `updateSearchQuery`
+- [x] 17.37 Pass `search` param through to `getItemsByType()` in service layer from `ItemTypeScreen`
+- [x] 17.38 Retrieve `ItemSchema` for current type from `schemaForTypeProvider` in `ItemTypeScreen`
+- [x] 17.39 Pass active filters through to `getItemsByType()` as `filter[key]=value` query params from `ItemTypeScreen`
+- [x] 17.40 Call `dynamicItemProvider.notifier.loadTypeStats(schema.name)` for each active schema on home screen initial load
+- [x] 17.41 Replace `dynamicItemState.getItems(schema.name).length` with `typeStats?.totalItems ?? 0` in `home_screen.dart`
+- [x] 17.42 Replace `_getUniqueItemCount(ratings, itemType)` with `typeStats?.userRatedCount ?? 0` in `home_screen.dart`
+- [x] 17.43 Remove `_getUniqueItemCount()` method entirely from `home_screen.dart`
+- [x] 17.44 Remove eager `loadItems()` trigger from `home_screen.dart` `build()` — home screen no longer needs the full item list
+- [x] 17.45 Test pagination: verify `hasMore`, `loadMoreItems` appends correctly, pull-to-refresh resets
+- [x] 17.46 Test debounced search: rapid typing fires single request after 300ms
+- [x] 17.47 Test filter + pagination interplay: applying filter resets to page 1, filter options come from schema
+- [x] 17.48 Test home screen: stats load once, item counts display correctly, pull-to-refresh refreshes stats
+- [x] 17.49 Test error handling: network error during `loadMoreItems` preserves existing items and state
+- [x] 17.50 Test empty states: search/filter with no results shows empty state, `hasMore` is false
+- [x] 17.51 Test inventory update: creating/deleting an item resets pagination to page 1
