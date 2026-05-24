@@ -1044,45 +1044,132 @@ function SchemaVersionHistory({ schemaType }: { schemaType: string }) {
           </div>
         ) : (
           <div className="space-y-4">
-            {versions.map((version: any) => (
-              <div
-                key={version.id}
-                className={`p-4 border rounded-lg ${
-                  version.is_active
-                    ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
-                    : ''
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        Version {version.version}
-                      </span>
-                      {version.is_active && (
-                        <Badge className="bg-green-100 text-green-800">
-                          Active
-                        </Badge>
+            {versions.map((version: any, index: number) => {
+              const prevFields = index > 0 ? (Array.isArray(versions[index - 1].fields) ? versions[index - 1].fields : []) : [];
+              const curFields = Array.isArray(version.fields) ? version.fields : [];
+              const diff = computeVersionDiff(prevFields, curFields);
+
+              return (
+                <div
+                  key={version.id}
+                  className={`p-4 border rounded-lg ${
+                    version.is_active
+                      ? 'border-green-500 bg-green-50 dark:bg-green-950/20'
+                      : ''
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">
+                          Version {version.version}
+                        </span>
+                        {version.is_active && (
+                          <Badge className="bg-green-100 text-green-800">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Created: {new Date(version.created_at).toLocaleString()}
+                      </p>
+
+                      {index > 0 && diff && (
+                        <div className="mt-3 space-y-1">
+                          {diff.added.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {diff.added.map((f: any) => (
+                                <Badge
+                                  key={f.key}
+                                  variant="outline"
+                                  className="border-green-300 text-green-700 bg-green-50 dark:bg-green-950/20 dark:text-green-400"
+                                >
+                                  + {f.label || f.key}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {diff.removed.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {diff.removed.map((f: any) => (
+                                <Badge
+                                  key={f.key}
+                                  variant="outline"
+                                  className="border-red-300 text-red-700 bg-red-50 dark:bg-red-950/20 dark:text-red-400"
+                                >
+                                  - {f.label || f.key}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {diff.modified.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {diff.modified.map((f: any) => (
+                                <Badge
+                                  key={f.key}
+                                  variant="outline"
+                                  className="border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950/20 dark:text-amber-400"
+                                >
+                                  ~ {f.label || f.key}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {diff.added.length === 0 &&
+                            diff.removed.length === 0 &&
+                            diff.modified.length === 0 && (
+                              <p className="text-xs text-muted-foreground mt-1 italic">
+                                Metadata-only change (display name, icon, etc.)
+                              </p>
+                            )}
+                        </div>
+                      )}
+
+                      {index === 0 && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Initial schema definition
+                        </p>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {version.fields?.length || 0} fields
-                    </p>
-                    {version.migrated_at && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Migrated: {new Date(version.migrated_at).toLocaleString()}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Created: {new Date(version.created_at).toLocaleString()}
-                    </p>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>
     </Card>
   );
+}
+
+function computeVersionDiff(prevFields: any[], curFields: any[]) {
+  const prevMap = new Map(prevFields.map((f: any) => [f.key, f]));
+  const curMap = new Map(curFields.map((f: any) => [f.key, f]));
+
+  const added: any[] = [];
+  const removed: any[] = [];
+  const modified: any[] = [];
+
+  for (const [key, cur] of curMap) {
+    if (!prevMap.has(key)) {
+      added.push(cur);
+    } else {
+      const prev = prevMap.get(key);
+      if (
+        prev.field_type !== cur.field_type ||
+        prev.required !== cur.required ||
+        prev.label !== cur.label
+      ) {
+        modified.push(cur);
+      }
+    }
+  }
+
+  for (const [key, prev] of prevMap) {
+    if (!curMap.has(key)) {
+      removed.push(prev);
+    }
+  }
+
+  return { added, removed, modified };
 }
