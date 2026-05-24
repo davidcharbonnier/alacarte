@@ -331,3 +331,7 @@
 - [x] 19.19 Add loading, empty, and error states to My List user-rated data path
 - [x] 19.20 Update My List pull-to-refresh handlers to call `refreshUserRatedItems` alongside ratings refresh and schema refresh
 - [x] 19.21 Manual smoke test: rate items A, B, Z in 100-item catalog, verify all 3 visible in My List on first load
+
+## 20. Options Serialization Fix
+
+- [x] 20.1 Fix schema create/update in `apps/api/controllers/schemaController.go` to accept `{value, label}` objects for select/enum options instead of flat strings, matching the response format returned by `parseFieldOptionsValue`
