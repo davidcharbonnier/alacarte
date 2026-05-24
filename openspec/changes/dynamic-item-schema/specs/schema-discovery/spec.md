@@ -47,9 +47,15 @@ The system SHALL provide an endpoint to retrieve complete schema details includi
     "display_name": "Beer",
     "plural_name": "Beers",
     "icon": "Beer",
-      "color": "#FFA000",
-      "unique_fields": ["producer", "type"],
-      "fields": [
+    "color": "#FFA000",
+    "unique_fields": ["producer", "type"],
+    "version": 2,
+    "version_hash": "a1b2c3d4",
+    "versions": [
+      {"id": 1, "version": 1, "fields": [...], "is_active": false, "created_at": "2024-01-15T10:00:00Z"},
+      {"id": 2, "version": 2, "fields": [...], "is_active": true,  "created_at": "2024-01-20T14:30:00Z"}
+    ],
+    "fields": [
       {
         "key": "name",
         "label": "Name",
@@ -238,6 +244,10 @@ Response: 200 OK
   "version": 2,
   "version_hash": "a1b2c3d4",
   "unique_fields": ["name"],
+  "versions": [
+    {"id": 1, "version": 1, "fields": [...], "is_active": false, "created_at": "2024-01-15T10:00:00Z"},
+    {"id": 2, "version": 2, "fields": [...], "is_active": true,  "created_at": "2024-01-20T14:30:00Z"}
+  ],
   "fields": [...]
 }
 ```

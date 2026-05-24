@@ -178,6 +178,9 @@ func SchemaDetails(c *gin.Context) {
 	var itemCount int64
 	utils.DB.Model(&models.Item{}).Where("schema_id = ?", cached.Schema.ID).Count(&itemCount)
 
+	var allVersions []models.SchemaVersion
+	utils.DB.Where("schema_id = ?", cached.Schema.ID).Order("version ASC").Find(&allVersions)
+
 	response := map[string]interface{}{
 		"name":          cached.Schema.Name,
 		"display_name":  cached.Schema.DisplayName,
@@ -190,6 +193,7 @@ func SchemaDetails(c *gin.Context) {
 		"version_hash":  cached.VersionHash,
 		"item_count":    itemCount,
 		"fields":        fields,
+		"versions":      allVersions,
 	}
 
 	if cached.Version != nil {
@@ -237,6 +241,9 @@ func buildSchemaDetailResponse(schema *models.ItemTypeSchema, fields []models.It
 	var itemCount int64
 	utils.DB.Model(&models.Item{}).Where("schema_id = ?", schema.ID).Count(&itemCount)
 
+	var allVersions []models.SchemaVersion
+	utils.DB.Where("schema_id = ?", schema.ID).Order("version ASC").Find(&allVersions)
+
 	var uniqueFields []string
 	if schema.UniqueFields != "" {
 		json.Unmarshal([]byte(schema.UniqueFields), &uniqueFields)
@@ -254,6 +261,7 @@ func buildSchemaDetailResponse(schema *models.ItemTypeSchema, fields []models.It
 		"version_hash":  versionHash,
 		"item_count":    itemCount,
 		"fields":        fieldsData,
+		"versions":      allVersions,
 	}
 }
 
