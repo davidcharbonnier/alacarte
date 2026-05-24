@@ -660,3 +660,164 @@ func TestEAVQueryBuilder_PartialUpdatePreservesFieldValues(t *testing.T) {
 		t.Errorf("expected description to be preserved, got %v", fieldValues["description"])
 	}
 }
+
+func TestEAVQueryBuilder_RatedBy(t *testing.T) {
+	qb, cleanup := setupQueryBuilderTest(t)
+	defer cleanup()
+
+	user := createTestUser(t)
+
+	// Create 3 items: A (author-rated), B (viewer-shared), C (unrated)
+	_, err := qb.CreateItem("cheese", uint(user.ID), map[string]interface{}{
+		"name": "A - Rated by author",
+		"type": "Soft",
+	})
+	if err != nil {
+		t.Fatalf("failed to create item A: %v", err)
+	}
+
+	_, err = qb.CreateItem("cheese", uint(user.ID), map[string]interface{}{
+		"name": "B - Shared with viewer",
+		"type": "Soft",
+	})
+	if err != nil {
+		t.Fatalf("failed to create item B: %v", err)
+	}
+
+	_, err = qb.CreateItem("cheese", uint(user.ID), map[string]interface{}{
+		"name": "C - Unrated",
+		"type": "Hard",
+	})
+	if err != nil {
+		t.Fatalf("failed to create item C: %v", err)
+	}
+
+	// Get item IDs from database
+	var allItems []models.Item
+	if err := utils.DB.Where("schema_id = (SELECT id FROM item_type_schemas WHERE name = ?)", "cheese").Find(&allItems).Error; err != nil {
+		t.Fatalf("failed to fetch items: %v", err)
+	}
+	if len(allItems) < 3 {
+		t.Fatalf("expected at least 3 items, got %d", len(allItems))
+	}
+
+	// Find items by name
+	var itemA, itemB *models.Item
+	for i := range allItems {
+		if allItems[i].Name == "A - Rated by author" {
+			itemA = &allItems[i]
+		}
+		if allItems[i].Name == "B - Shared with viewer" {
+			itemB = &allItems[i]
+		}
+	}
+	if itemA == nil || itemB == nil {
+		t.Fatal("could not find test items A or B")
+	}
+
+	// Create rating for item A as test user (author)
+	ratingA := models.Rating{
+		Grade:  5.0,
+		Note:   "Excellent",
+		UserID: int(user.ID),
+		ItemID: int(itemA.ID),
+	}
+	if err := utils.DB.Create(&ratingA).Error; err != nil {
+		t.Fatalf("failed to create rating A: %v", err)
+	}
+
+	// Create rating for item B as another user
+	otherUser := createTestUser(t)
+	ratingB := models.Rating{
+		Grade:  4.0,
+		Note:   "Good",
+		UserID: int(otherUser.ID),
+		ItemID: int(itemB.ID),
+	}
+	if err := utils.DB.Create(&ratingB).Error; err != nil {
+		t.Fatalf("failed to create rating B: %v", err)
+	}
+
+	// Add test user as viewer of rating B
+	if err := utils.DB.Table("rating_viewers").Create(map[string]interface{}{
+		"rating_id": ratingB.ID,
+		"user_id":   user.ID,
+	}).Error; err != nil {
+		t.Fatalf("failed to add viewer: %v", err)
+	}
+
+	// Query with Rated=true — should return items A and B (not C)
+	result, err := qb.BuildListQuery(QueryParams{
+		SchemaName:    "cheese",
+		Rated:         true,
+		RatedByUserID: int(user.ID),
+		Page:          1,
+		PerPage:       20,
+	})
+	if err != nil {
+		t.Fatalf("failed to query rated items: %v", err)
+	}
+	if result.Total != 2 {
+		t.Errorf("expected 2 rated items, got %d", result.Total)
+	}
+	ratedNames := make(map[string]bool)
+	for _, item := range result.Items {
+		if name, ok := item["name"].(string); ok {
+			ratedNames[name] = true
+		}
+	}
+	if !ratedNames["A - Rated by author"] {
+		t.Error("expected item A (author-rated) to be in results")
+	}
+	if !ratedNames["B - Shared with viewer"] {
+		t.Error("expected item B (viewer-shared) to be in results")
+	}
+	if ratedNames["C - Unrated"] {
+		t.Error("did not expect item C (unrated) to be in results")
+	}
+
+	// Query without Rated flag — should return all 3 items
+	result, err = qb.BuildListQuery(QueryParams{
+		SchemaName: "cheese",
+		Page:       1,
+		PerPage:    20,
+	})
+	if err != nil {
+		t.Fatalf("failed to query all items: %v", err)
+	}
+	if result.Total != 3 {
+		t.Errorf("expected 3 total items without rated flag, got %d", result.Total)
+	}
+
+	// Test pagination within rated subset
+	result, err = qb.BuildListQuery(QueryParams{
+		SchemaName:    "cheese",
+		Rated:         true,
+		RatedByUserID: int(user.ID),
+		Page:          1,
+		PerPage:       1,
+	})
+	if err != nil {
+		t.Fatalf("failed to query rated items page 1: %v", err)
+	}
+	if result.Total != 2 {
+		t.Errorf("expected total 2 rated items, got %d", result.Total)
+	}
+	if len(result.Items) != 1 {
+		t.Errorf("expected 1 item on page 1 with per_page=1, got %d", len(result.Items))
+	}
+
+	result, err = qb.BuildListQuery(QueryParams{
+		SchemaName:    "cheese",
+		Rated:         true,
+		RatedByUserID: int(user.ID),
+		Page:          2,
+		PerPage:       1,
+	})
+	if err != nil {
+		t.Fatalf("failed to query rated items page 2: %v", err)
+	}
+	if len(result.Items) != 1 {
+		t.Errorf("expected 1 item on page 2 with per_page=1, got %d", len(result.Items))
+	}
+}

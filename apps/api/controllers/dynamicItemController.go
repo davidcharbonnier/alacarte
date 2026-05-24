@@ -56,6 +56,13 @@ func DynamicItemList(c *gin.Context) {
 		params.HasImage = &val
 	}
 
+	if c.Query("rated") == "true" {
+		if userID := utils.GetCurrentUserID(c); userID > 0 {
+			params.Rated = true
+			params.RatedByUserID = int(userID)
+		}
+	}
+
 	result, err := queryBuilder.BuildListQuery(params)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

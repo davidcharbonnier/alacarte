@@ -643,3 +643,122 @@ func TestGetTypeStats_WithUserRatings(t *testing.T) {
 		t.Errorf("expected user_rated_count 1, got %v", response["user_rated_count"])
 	}
 }
+
+func TestDynamicItemList_RatedBy(t *testing.T) {
+	router, token, cleanup := setupDynamicItemControllerTest(t)
+	defer cleanup()
+
+	// Create items
+	for _, item := range []map[string]interface{}{
+		{"name": "Rated Item", "type": "Soft"},
+		{"name": "Shared Item", "type": "Hard"},
+		{"name": "Unrated Item", "type": "Soft"},
+	} {
+		bodyJSON, _ := json.Marshal(item)
+		w := performRequest(router, "POST", "/api/items/cheese", token, bodyJSON)
+		if w.Code != http.StatusOK {
+			t.Fatalf("failed to create item '%s': %d %s", item["name"], w.Code, w.Body.String())
+		}
+	}
+
+	// Fetch items to get their IDs
+	w := performRequest(router, "GET", "/api/items/cheese", token, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("failed to list items: %d %s", w.Code, w.Body.String())
+	}
+	var listResp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &listResp)
+	items, _ := listResp["items"].([]interface{})
+	if len(items) != 3 {
+		t.Fatalf("expected 3 items, got %d", len(items))
+	}
+
+	var ratedItemID, sharedItemID int
+	for _, raw := range items {
+		item := raw.(map[string]interface{})
+		name := item["name"].(string)
+		id := int(item["id"].(float64))
+		switch name {
+		case "Rated Item":
+			ratedItemID = id
+		case "Shared Item":
+			sharedItemID = id
+		}
+	}
+
+	// Create rating for "Rated Item" as user 1 (the admin user created by setup)
+	rating1 := models.Rating{
+		Grade:  5.0,
+		Note:   "My rating",
+		UserID: 1,
+		ItemID: ratedItemID,
+	}
+	if err := utils.DB.Create(&rating1).Error; err != nil {
+		t.Fatalf("failed to create rating: %v", err)
+	}
+
+	// Create rating for "Shared Item" as another user, shared with user 1
+	otherUser := models.User{
+		GoogleID:         "other-google-ratedby",
+		Email:            "other@ratedby.com",
+		DisplayName:      "Other User",
+		ProfileCompleted: true,
+		LastLoginAt:      time.Now(),
+	}
+	if err := utils.DB.Create(&otherUser).Error; err != nil {
+		t.Fatalf("failed to create other user: %v", err)
+	}
+	rating2 := models.Rating{
+		Grade:  4.0,
+		Note:   "Shared",
+		UserID: int(otherUser.ID),
+		ItemID: sharedItemID,
+	}
+	if err := utils.DB.Create(&rating2).Error; err != nil {
+		t.Fatalf("failed to create shared rating: %v", err)
+	}
+	// Add user 1 as viewer
+	if err := utils.DB.Table("rating_viewers").Create(map[string]interface{}{
+		"rating_id": rating2.ID,
+		"user_id":   1,
+	}).Error; err != nil {
+		t.Fatalf("failed to add viewer: %v", err)
+	}
+
+	// Test with rated=true — should return 2 items (rated + shared)
+	w = performRequest(router, "GET", "/api/items/cheese?rated=true", token, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var response map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &response)
+	ratedItems, _ := response["items"].([]interface{})
+	if len(ratedItems) != 2 {
+		t.Errorf("expected 2 rated items, got %d", len(ratedItems))
+	}
+
+	// Verify only rated and shared items are returned
+	for _, raw := range ratedItems {
+		item := raw.(map[string]interface{})
+		name := item["name"].(string)
+		if name == "Unrated Item" {
+			t.Errorf("unrated item should not appear in rated results")
+		}
+	}
+
+	// Verify total count is correct in response
+	if response["total"] != float64(2) {
+		t.Errorf("expected total 2, got %v", response["total"])
+	}
+
+	// Verify pagination metadata
+	page, hasPage := response["page"]
+	if hasPage && page != float64(1) {
+		t.Errorf("expected page 1, got %v", page)
+	}
+	totalPages, hasTotalPages := response["total_pages"]
+	if hasTotalPages && totalPages != float64(1) {
+		t.Errorf("expected 1 total page, got %v", totalPages)
+	}
+}
