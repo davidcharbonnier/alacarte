@@ -22,13 +22,15 @@ func NewEAVQueryBuilder(registry *SchemaRegistry) *EAVQueryBuilder {
 }
 
 type QueryParams struct {
-	SchemaName string
-	Page       int
-	PerPage    int
-	Sort       string
-	Search     string
-	Filters    map[string]interface{}
-	HasImage   *bool
+	SchemaName    string
+	Page          int
+	PerPage       int
+	Sort          string
+	Search        string
+	Filters       map[string]interface{}
+	HasImage      *bool
+	Rated         bool
+	RatedByUserID int
 }
 
 type ListResult struct {
@@ -92,6 +94,17 @@ func (qb *EAVQueryBuilder) BuildListQuery(params QueryParams) (*ListResult, erro
 						Select("id").
 						Where("schema_id = ? AND display LIKE ?", cached.Schema.ID, "%\"searchable\":true%"))
 			query = query.Where("id IN (?) OR LOWER(field_values) LIKE ?", eavSubquery, "%"+searchTerm+"%")
+		}
+
+		if params.Rated && params.RatedByUserID > 0 {
+			authorSubQuery := tx.Model(&models.Rating{}).
+				Select("item_id").
+				Where("user_id = ?", params.RatedByUserID)
+			viewerSubQuery := tx.Table("rating_viewers").
+				Select("DISTINCT r.item_id").
+				Joins("JOIN ratings r ON r.id = rating_viewers.rating_id").
+				Where("rating_viewers.user_id = ? AND r.deleted_at IS NULL", params.RatedByUserID)
+			query = query.Where("id IN (?) OR id IN (?)", authorSubQuery, viewerSubQuery)
 		}
 
 		if params.Filters != nil {
