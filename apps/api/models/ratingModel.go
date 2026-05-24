@@ -17,9 +17,6 @@ type Rating struct {
 	ItemID int  `json:"item_id"`
 	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE" json:"item,omitempty"`
 
-	// Keep ItemType as gorm:"-" to prevent AutoMigrate from dropping column prematurely
-	ItemType string `gorm:"-" json:"item_type,omitempty"`
-
 	// Privacy - users who can see this rating
 	Viewers []User `gorm:"many2many:rating_viewers;" json:"viewers,omitempty"`
 }

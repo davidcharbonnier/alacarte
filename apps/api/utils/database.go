@@ -72,18 +72,12 @@ func RunMigrations() {
 	// Safe additive migrations - only adds new tables/columns, never removes
 	err := DB.AutoMigrate(
 		&models.User{},
-		&models.Cheese{},
-		&models.Gin{},
-		&models.Wine{},
-		&models.Coffee{},
-		&models.ChiliSauce{},
 		&models.Rating{},
 		&models.ItemTypeSchema{},
 		&models.ItemTypeField{},
 		&models.SchemaVersion{},
 		&models.Item{},
 		&models.ItemFieldValue{},
-		&models.MigrationLog{},
 	)
 	if err != nil {
 		log.Fatal("Database migration failed:", err)

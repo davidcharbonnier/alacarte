@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/davidcharbonnier/alacarte-api/controllers"
-	"github.com/davidcharbonnier/alacarte-api/internal/migration"
+	"github.com/davidcharbonnier/alacarte-api/internal/cleanup"
 	"github.com/davidcharbonnier/alacarte-api/services"
 	"github.com/davidcharbonnier/alacarte-api/utils"
 	"github.com/gin-contrib/cors"
@@ -29,11 +29,14 @@ func init() {
 
 // gin code
 func main() {
-	// Check for self-healing migration mode (Cloud Run Job mode)
-	if os.Getenv("RUN_SELF_HEALING_MIGRATION") == "true" {
-		fmt.Println("🚀 Running in migration mode")
-		runSelfHealingMigration()
-		return
+	// Check for post-migration cleanup mode (Cloud Run Job mode)
+	if os.Getenv("RUN_CLEANUP_MIGRATION") == "true" {
+		fmt.Println("🚀 Running in post-migration cleanup mode")
+		if err := cleanup.RunCleanupMigration(); err != nil {
+			fmt.Println("❌ Cleanup failed:", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	}
 
 	utils.InitStorageClient()
@@ -114,101 +117,6 @@ func main() {
 			users.GET("/shareable", controllers.GetShareableUsers)
 		}
 
-		// cheese
-		cheese := api.Group("/cheese")
-		{
-			cheese.POST("/new", controllers.CheeseCreate)
-			cheese.GET("/all", controllers.CheeseIndex)
-			cheese.GET("/:id", controllers.CheeseDetails)
-			cheese.PUT("/:id", controllers.CheeseEdit)
-			cheese.DELETE("/:id", controllers.CheeseRemove)
-			// Image management
-			cheese.POST("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "cheese"})
-				controllers.UploadItemImage(c)
-			})
-			cheese.DELETE("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "cheese"})
-				controllers.DeleteItemImage(c)
-			})
-		}
-
-		// gin
-		ginItem := api.Group("/gin")
-		{
-			ginItem.POST("/new", controllers.GinCreate)
-			ginItem.GET("/all", controllers.GinIndex)
-			ginItem.GET("/:id", controllers.GinDetails)
-			ginItem.PUT("/:id", controllers.GinEdit)
-			ginItem.DELETE("/:id", controllers.GinRemove)
-			// Image management
-			ginItem.POST("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "gin"})
-				controllers.UploadItemImage(c)
-			})
-			ginItem.DELETE("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "gin"})
-				controllers.DeleteItemImage(c)
-			})
-		}
-
-		// wine
-		wineItem := api.Group("/wine")
-		{
-			wineItem.POST("/new", controllers.WineCreate)
-			wineItem.GET("/all", controllers.WineIndex)
-			wineItem.GET("/:id", controllers.WineDetails)
-			wineItem.PUT("/:id", controllers.WineEdit)
-			wineItem.DELETE("/:id", controllers.WineRemove)
-			// Image management
-			wineItem.POST("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
-				controllers.UploadItemImage(c)
-			})
-			wineItem.DELETE("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "wine"})
-				controllers.DeleteItemImage(c)
-			})
-		}
-
-		// coffee
-		coffee := api.Group("/coffee")
-		{
-			coffee.POST("/new", controllers.CoffeeCreate)
-			coffee.GET("/all", controllers.CoffeeIndex)
-			coffee.GET("/:id", controllers.CoffeeDetails)
-			coffee.PUT("/:id", controllers.CoffeeEdit)
-			coffee.DELETE("/:id", controllers.CoffeeRemove)
-			// Image management
-			coffee.POST("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "coffee"})
-				controllers.UploadItemImage(c)
-			})
-			coffee.DELETE("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "coffee"})
-				controllers.DeleteItemImage(c)
-			})
-		}
-
-		// chili-sauce
-		chiliSauce := api.Group("/chili-sauce")
-		{
-			chiliSauce.POST("/new", controllers.ChiliSauceCreate)
-			chiliSauce.GET("/all", controllers.ChiliSauceIndex)
-			chiliSauce.GET("/:id", controllers.ChiliSauceDetails)
-			chiliSauce.PUT("/:id", controllers.ChiliSauceEdit)
-			chiliSauce.DELETE("/:id", controllers.ChiliSauceRemove)
-			// Image management
-			chiliSauce.POST("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "chili-sauce"})
-				controllers.UploadItemImage(c)
-			})
-			chiliSauce.DELETE("/:id/image", func(c *gin.Context) {
-				c.Params = append(c.Params, gin.Param{Key: "itemType", Value: "chili-sauce"})
-				controllers.DeleteItemImage(c)
-			})
-		}
-
 		// rating
 		rating := api.Group("/rating")
 		{
@@ -258,51 +166,6 @@ func main() {
 	admin := router.Group("/admin")
 	admin.Use(utils.RequireAuth(), utils.RequireAdmin())
 	{
-		// Cheese admin
-		cheese := admin.Group("/cheese")
-		{
-			cheese.GET("/:id/delete-impact", controllers.GetCheeseDeleteImpact)
-			cheese.DELETE("/:id", controllers.DeleteCheese)
-			cheese.POST("/seed", controllers.SeedCheeses)
-			cheese.POST("/validate", controllers.ValidateCheeses)
-		}
-
-		// Gin admin
-		ginAdmin := admin.Group("/gin")
-		{
-			ginAdmin.GET("/:id/delete-impact", controllers.GetGinDeleteImpact)
-			ginAdmin.DELETE("/:id", controllers.DeleteGin)
-			ginAdmin.POST("/seed", controllers.SeedGins)
-			ginAdmin.POST("/validate", controllers.ValidateGins)
-		}
-
-		// Wine admin
-		wineAdmin := admin.Group("/wine")
-		{
-			wineAdmin.GET("/:id/delete-impact", controllers.GetWineDeleteImpact)
-			wineAdmin.DELETE("/:id", controllers.DeleteWine)
-			wineAdmin.POST("/seed", controllers.SeedWines)
-			wineAdmin.POST("/validate", controllers.ValidateWines)
-		}
-
-		// Coffee admin
-		coffeeAdmin := admin.Group("/coffee")
-		{
-			coffeeAdmin.GET("/:id/delete-impact", controllers.GetCoffeeDeleteImpact)
-			coffeeAdmin.DELETE("/:id", controllers.DeleteCoffee)
-			coffeeAdmin.POST("/seed", controllers.SeedCoffees)
-			coffeeAdmin.POST("/validate", controllers.ValidateCoffees)
-		}
-
-		// Chili Sauce admin
-		chiliSauceAdmin := admin.Group("/chili-sauce")
-		{
-			chiliSauceAdmin.GET("/:id/delete-impact", controllers.GetChiliSauceDeleteImpact)
-			chiliSauceAdmin.DELETE("/:id", controllers.DeleteChiliSauce)
-			chiliSauceAdmin.POST("/seed", controllers.SeedChiliSauces)
-			chiliSauceAdmin.POST("/validate", controllers.ValidateChiliSauces)
-		}
-
 		// User admin
 		users := admin.Group("/users")
 		{
@@ -337,24 +200,6 @@ func main() {
 	}
 
 	router.Run()
-}
-
-// runSelfHealingMigration executes the migration pipeline with verification and rollback
-func runSelfHealingMigration() {
-	fmt.Println("=============================================")
-	fmt.Println("  A LA CARTE - SELF-HEALING MIGRATION")
-	fmt.Println("=============================================")
-
-	if err := migration.RunSelfHealingMigration(); err != nil {
-		fmt.Println("❌ Migration failed:", err)
-		migration.PerformRollback()
-		os.Exit(1)
-	}
-
-	fmt.Println("=============================================")
-	fmt.Println("  MIGRATION SUCCESSFUL")
-	fmt.Println("=============================================")
-	os.Exit(0)
 }
 
 // Setup CORS for frontend integration

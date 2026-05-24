@@ -359,11 +359,10 @@ func TestDynamicItemDeleteImpact(t *testing.T) {
 
 	// Create a rating
 	rating := models.Rating{
-		Grade:    5.0,
-		Note:     "Great",
-		UserID:   1,
-		ItemID:   int(createResp["id"].(float64)),
-		ItemType: "cheese",
+		Grade:  5.0,
+		Note:   "Great",
+		UserID: 1,
+		ItemID: int(createResp["id"].(float64)),
 	}
 	utils.DB.Create(&rating)
 
