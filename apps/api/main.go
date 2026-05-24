@@ -230,6 +230,7 @@ func main() {
 		stats := api.Group("/stats")
 		{
 			stats.GET("/community/:id", controllers.GetCommunityStats)
+			stats.GET("/type/:type", controllers.GetTypeStats)
 		}
 
 		// Dynamic items

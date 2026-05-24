@@ -71,6 +71,11 @@ func setupDynamicItemControllerTest(t *testing.T) (*gin.Engine, string, func()) 
 			items.PUT("/:type/:id", DynamicItemUpdate)
 			items.DELETE("/:type/:id", DynamicItemDelete)
 		}
+
+		stats := api.Group("/stats")
+		{
+			stats.GET("/type/:type", GetTypeStats)
+		}
 	}
 
 	// Admin routes
@@ -530,5 +535,111 @@ func TestDynamicItemList_CombinedFilterSearchSort(t *testing.T) {
 		if first["name"] != "Brie B" {
 			t.Errorf("expected 'Brie B', got %v", first["name"])
 		}
+	}
+}
+
+func TestGetTypeStats(t *testing.T) {
+	router, token, cleanup := setupDynamicItemControllerTest(t)
+	defer cleanup()
+
+	// Create items
+	for _, item := range []map[string]interface{}{
+		{"name": "Brie", "type": "Soft"},
+		{"name": "Cheddar", "type": "Hard"},
+		{"name": "Camembert", "type": "Soft"},
+	} {
+		bodyJSON, _ := json.Marshal(item)
+		w := performRequest(router, "POST", "/api/items/cheese", token, bodyJSON)
+		if w.Code != http.StatusOK {
+			t.Fatalf("failed to create item: %d %s", w.Code, w.Body.String())
+		}
+	}
+
+	// Get type stats
+	w := performRequest(router, "GET", "/api/stats/type/cheese", token, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to parse response: %v", err)
+	}
+
+	totalItems, ok := response["total_items"].(float64)
+	if !ok {
+		t.Fatalf("expected total_items to be a number, got %T", response["total_items"])
+	}
+	if totalItems != 3 {
+		t.Errorf("expected total_items 3, got %v", totalItems)
+	}
+
+	userRatedCount, ok := response["user_rated_count"].(float64)
+	if !ok {
+		t.Fatalf("expected user_rated_count to be a number, got %T", response["user_rated_count"])
+	}
+	if userRatedCount != 0 {
+		t.Errorf("expected user_rated_count 0 (no ratings yet), got %v", userRatedCount)
+	}
+}
+
+func TestGetTypeStats_NotFound(t *testing.T) {
+	router, token, cleanup := setupDynamicItemControllerTest(t)
+	defer cleanup()
+
+	w := performRequest(router, "GET", "/api/stats/type/nonexistent", token, nil)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404 for nonexistent type, got %d", w.Code)
+	}
+}
+
+func TestGetTypeStats_Unauthenticated(t *testing.T) {
+	router, _, cleanup := setupDynamicItemControllerTest(t)
+	defer cleanup()
+
+	w := performRequest(router, "GET", "/api/stats/type/cheese", "", nil)
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected 401 for unauthenticated, got %d", w.Code)
+	}
+}
+
+func TestGetTypeStats_WithUserRatings(t *testing.T) {
+	router, token, cleanup := setupDynamicItemControllerTest(t)
+	defer cleanup()
+
+	// Create an item
+	body := map[string]interface{}{"name": "Rated Brie", "type": "Soft"}
+	bodyJSON, _ := json.Marshal(body)
+	w := performRequest(router, "POST", "/api/items/cheese", token, bodyJSON)
+	if w.Code != http.StatusOK {
+		t.Fatalf("failed to create item: %d %s", w.Code, w.Body.String())
+	}
+
+	var createResp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &createResp)
+	itemID := int(createResp["id"].(float64))
+
+	// Create a rating for the item
+	rating := models.Rating{
+		Grade:  4.0,
+		Note:   "Good",
+		UserID: 1,
+		ItemID: itemID,
+	}
+	utils.DB.Create(&rating)
+
+	w = performRequest(router, "GET", "/api/stats/type/cheese", token, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var response map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &response)
+
+	if response["total_items"] != float64(1) {
+		t.Errorf("expected total_items 1, got %v", response["total_items"])
+	}
+	if response["user_rated_count"] != float64(1) {
+		t.Errorf("expected user_rated_count 1, got %v", response["user_rated_count"])
 	}
 }
