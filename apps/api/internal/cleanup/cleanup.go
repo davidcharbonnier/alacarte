@@ -77,6 +77,14 @@ func dropRatingColumn() error {
 		fmt.Println("  - Column item_type does not exist (skipped)")
 	}
 
+	fmt.Println()
+	fmt.Println("  Recreating indexes with new column sets...")
+	if err := utils.DB.AutoMigrate(&models.Rating{}); err != nil {
+		fmt.Printf("  ⚠️  AutoMigrate failed: %v\n", err)
+		return err
+	}
+	fmt.Println("  ✓ Recreated indexes via AutoMigrate")
+
 	return nil
 }
 
