@@ -1,3 +1,10 @@
+## [2.3.1](https://github.com/davidcharbonnier/alacarte/compare/api-v2.3.0...api-v2.3.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* **api:** create composite unique index on (user_id, item_id) instead of user_id only ([4243fbe](https://github.com/davidcharbonnier/alacarte/commit/4243fbe8c094c609620b6f36296b17ae768bbe71))
+
 # [2.3.0](https://github.com/davidcharbonnier/alacarte/compare/api-v2.2.2...api-v2.3.0) (2026-06-29)
 
 
