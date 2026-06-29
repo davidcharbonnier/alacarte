@@ -142,33 +142,3 @@ func DeleteFromStorage(filename string) error {
 	return nil
 }
 
-// ExtractFilenameFromURL extracts filename from storage URL
-// Example: "http://localhost:9000/bucket/wine_123.jpg" → "wine_123.jpg"
-func ExtractFilenameFromURL(url string) string {
-	if url == "" {
-		return ""
-	}
-
-	parts := strings.Split(url, "/")
-	if len(parts) > 0 {
-		return parts[len(parts)-1]
-	}
-
-	return ""
-}
-
-// CheckIfFileExists checks if a file exists in storage
-func CheckIfFileExists(filename string) (bool, error) {
-	_, err := s3Client.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(filename),
-	})
-	if err != nil {
-		if strings.Contains(err.Error(), "NotFound") {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return true, nil
-}

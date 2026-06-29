@@ -3,11 +3,14 @@ package controllers
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/davidcharbonnier/alacarte-api/models"
 	"github.com/davidcharbonnier/alacarte-api/utils"
 )
 
@@ -25,7 +28,7 @@ func UploadItemImage(c *gin.Context) {
 	processAndSaveImage(c, item, itemType)
 }
 
-func processAndSaveImage(c *gin.Context, item utils.ItemWithImage, itemType string) {
+func processAndSaveImage(c *gin.Context, item *models.Item, itemType string) {
 	// Get uploaded file
 	file, header, err := c.Request.FormFile("image")
 	if err != nil {
@@ -51,7 +54,7 @@ func processAndSaveImage(c *gin.Context, item utils.ItemWithImage, itemType stri
 		processedImage.ContentType,
 	)
 	if err != nil {
-		utils.AppLogger.LogError("Failed to upload to storage", err)
+		slog.Error("failed to upload to storage", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
 		return
 	}
@@ -59,10 +62,10 @@ func processAndSaveImage(c *gin.Context, item utils.ItemWithImage, itemType stri
 	// Delete old image if exists
 	oldImageURL := item.GetImageURL()
 	if oldImageURL != nil && *oldImageURL != "" {
-		oldFilename := utils.ExtractFilenameFromURL(*oldImageURL)
+		oldFilename := (*oldImageURL)[strings.LastIndex(*oldImageURL, "/")+1:]
 		if err := utils.DeleteFromStorage(oldFilename); err != nil {
 			// Log but don't fail
-			utils.AppLogger.LogError("Failed to delete old image", err)
+			slog.Error("failed to delete old image", "error", err)
 		}
 	}
 
@@ -107,7 +110,7 @@ func DeleteItemImage(c *gin.Context) {
 	}
 
 	// Delete image from storage
-	filename := utils.ExtractFilenameFromURL(*imageURL)
+	filename := (*imageURL)[strings.LastIndex(*imageURL, "/")+1:]
 	if err := utils.DeleteFromStorage(filename); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete image"})
 		return

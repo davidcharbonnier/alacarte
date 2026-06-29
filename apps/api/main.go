@@ -19,9 +19,6 @@ func init() {
 		utils.LoadEnvVars()
 	}
 
-	// Initialize secure logger
-	utils.InitLogger()
-
 	// Initialize database and run base migrations
 	utils.MySQLConnect()
 	utils.RunMigrations()
