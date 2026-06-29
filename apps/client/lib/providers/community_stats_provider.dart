@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 import '../models/api_response.dart';
@@ -78,18 +79,10 @@ class CommunityStatsParams {
       identical(this, other) ||
       other is CommunityStatsParams &&
           runtimeType == other.runtimeType &&
-          _listEquals(itemIds, other.itemIds);
+          listEquals(itemIds, other.itemIds);
 
   @override
   int get hashCode => itemIds.hashCode;
-  
-  bool _listEquals(List<int> a, List<int> b) {
-    if (a.length != b.length) return false;
-    for (int i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
-  }
 }
 
 /// Helper extension to provide convenient access to community stats values
