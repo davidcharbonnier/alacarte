@@ -6,15 +6,8 @@ import (
 	"github.com/davidcharbonnier/alacarte-api/models"
 )
 
-// ItemWithImage interface - all item models must implement this
-type ItemWithImage interface {
-	GetImageURL() *string
-	SetImageURL(url *string)
-}
-
 // GetItemByType fetches a dynamic item by schema name and item ID string.
-// This replaces the old switch-case that looked up legacy models.
-func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
+func GetItemByType(itemType string, itemID string) (*models.Item, error) {
 	var id uint
 	if _, err := fmt.Sscanf(itemID, "%d", &id); err != nil {
 		return nil, fmt.Errorf("invalid item ID: %s", itemID)
@@ -23,8 +16,7 @@ func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
 }
 
 // GetDynamicItem fetches a dynamic item by schema name and ID
-// Returns the item and any error
-func GetDynamicItem(schemaName string, itemID uint) (ItemWithImage, error) {
+func GetDynamicItem(schemaName string, itemID uint) (*models.Item, error) {
 	var item models.Item
 
 	if err := DB.Joins("JOIN item_type_schemas ON item_type_schemas.id = items.schema_id").
@@ -37,7 +29,7 @@ func GetDynamicItem(schemaName string, itemID uint) (ItemWithImage, error) {
 }
 
 // SaveItem saves an item to the database
-func SaveItem(item ItemWithImage) error {
+func SaveItem(item *models.Item) error {
 	return DB.Save(item).Error
 }
 

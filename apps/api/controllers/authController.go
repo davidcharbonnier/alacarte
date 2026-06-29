@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -32,8 +33,7 @@ func GoogleOAuthExchange(c *gin.Context) {
 	// Parse Google ID token (with complete profile data required)
 	googleUser, err := parseGoogleIDToken(body.IDToken)
 	if err != nil {
-		// Secure logging - no sensitive data in production
-		utils.AppLogger.LogOAuthError(err)
+		slog.Error("oauth validation error", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid Google ID token or missing profile data",
 		})
@@ -57,22 +57,22 @@ func GoogleOAuthExchange(c *gin.Context) {
 		}
 
 		if err := utils.DB.Create(&user).Error; err != nil {
-			utils.AppLogger.LogError("User creation", err)
+			slog.Error("user creation", "error", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 			return
 		}
-		utils.AppLogger.LogAuthSuccess(user.Email)
+		slog.Info("auth success", "email", user.Email)
 	} else {
 		// Update last login
 		user.LastLoginAt = time.Now()
 		utils.DB.Save(&user)
-		utils.AppLogger.LogAuthSuccess(user.Email)
+		slog.Info("auth success", "email", user.Email)
 	}
 
 	// Generate real JWT token
 	token, err := utils.GenerateJWT(&user)
 	if err != nil {
-		utils.AppLogger.LogError("JWT generation", err)
+		slog.Error("JWT generation", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}

@@ -275,7 +275,7 @@ func DynamicItemUploadImage(c *gin.Context) {
 		return
 	}
 
-	if uint(item.(*models.Item).UserID) != userID {
+	if uint(item.UserID) != userID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You can only manage images for your own items"})
 		return
 	}
@@ -305,7 +305,7 @@ func DynamicItemDeleteImage(c *gin.Context) {
 		return
 	}
 
-	if uint(item.(*models.Item).UserID) != userID {
+	if uint(item.UserID) != userID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "You can only manage images for your own items"})
 		return
 	}
@@ -317,7 +317,7 @@ func DynamicItemDeleteImage(c *gin.Context) {
 		return
 	}
 
-	filename := utils.ExtractFilenameFromURL(*imageURL)
+	filename := (*imageURL)[strings.LastIndex(*imageURL, "/")+1:]
 	if err := utils.DeleteFromStorage(filename); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete image"})
 		return
