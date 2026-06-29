@@ -83,6 +83,15 @@ func dropRatingColumn() error {
 		fmt.Println("  - Column item_type does not exist (skipped)")
 	}
 
+	// Drop old single-column unique index on user_id if it exists (from prior failed run)
+	if utils.DB.Migrator().HasIndex(&models.Rating{}, "idx_ratings_user_item") {
+		if err := utils.DB.Migrator().DropIndex(&models.Rating{}, "idx_ratings_user_item"); err != nil {
+			fmt.Printf("  ⚠️  Failed to drop old idx_ratings_user_item: %v\n", err)
+			return err
+		}
+		fmt.Println("  ✓ Dropped old idx_ratings_user_item (single-column unique)")
+	}
+
 	fmt.Println()
 	fmt.Println("  Recreating indexes with new column sets...")
 	if err := utils.DB.AutoMigrate(&models.Rating{}); err != nil {
