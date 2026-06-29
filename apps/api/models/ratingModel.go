@@ -10,10 +10,10 @@ type Rating struct {
 	Note     string  `json:"note"`
 
 	// User association with CASCADE deletion
-	UserID int  `json:"user_id" gorm:"index:idx_ratings_user_item,unique"`
+	UserID int  `json:"user_id" gorm:"uniqueIndex:idx_ratings_user_item"`
 	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 
-	ItemID int  `json:"item_id" gorm:"index:idx_ratings_item"`
+	ItemID int  `json:"item_id" gorm:"uniqueIndex:idx_ratings_user_item;index:idx_ratings_item"`
 	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE" json:"item,omitempty"`
 
 	// Privacy - users who can see this rating
