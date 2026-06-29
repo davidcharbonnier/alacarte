@@ -1,3 +1,17 @@
+# [2.3.0](https://github.com/davidcharbonnier/alacarte/compare/api-v2.2.2...api-v2.3.0) (2026-06-29)
+
+
+### Bug Fixes
+
+* **api:** disable FK checks during cleanup index migration ([e06799e](https://github.com/davidcharbonnier/alacarte/commit/e06799e829f7d6545736d86ed845cb46909d2b3d))
+* **api:** recreate rating indexes after cleanup migration ([bbfeb1a](https://github.com/davidcharbonnier/alacarte/commit/bbfeb1aad8c08923a9c138d05c83e755a2e970a8))
+
+
+### Features
+
+* **admin:** remove legacy item-type hardcoded configuration ([07b2e2d](https://github.com/davidcharbonnier/alacarte/commit/07b2e2d8921c36c5450b3009f58ff00e038dedb5))
+* **api:** remove legacy item-type code and add cleanup migration ([4c97bc0](https://github.com/davidcharbonnier/alacarte/commit/4c97bc060be90115567e4544f6857ce2b19cbb44))
+
 ## [2.2.2](https://github.com/davidcharbonnier/alacarte/compare/api-v2.2.1...api-v2.2.2) (2026-05-24)
 
 
