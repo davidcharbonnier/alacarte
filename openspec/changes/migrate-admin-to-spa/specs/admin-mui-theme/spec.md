@@ -69,40 +69,50 @@ The admin panel SHALL use the same spacing, border radius, and accent color scal
 - **THEN** the font family SHALL be Roboto (matching Flutter default)
 - **AND** font sizes SHALL follow the M3 type scale (display, headline, title, body, label)
 
-### Requirement: Item-type accent colors
+### Requirement: Item-type accent colors are schema-driven
 
-The admin panel SHALL use distinct accent colors for each item type, matching the Flutter client's item-type color mapping.
+The admin panel SHALL read item-type accent colors from the schema's `color` field at render time, rather than maintaining a hardcoded per-type color map. This makes the schema registry the single source of truth for item-type colors and avoids drift when new item types are added via the schema editor.
 
-#### Scenario: Cheese item type
+#### Scenario: Item type with a schema color
 
-- **WHEN** components render cheese-related UI (badges, card accents, icons)
-- **THEN** the accent color SHALL be `#673AB7` (deepPurple)
+- **WHEN** components render item-type UI (badges, card accents, icons, sidebar indicators)
+- **AND** the active schema for that item type defines a `color` field
+- **THEN** the accent color SHALL be read from `schema.color`
 
-#### Scenario: Gin item type
+#### Scenario: Item type without a schema color
 
-- **WHEN** components render gin-related UI
-- **THEN** the accent color SHALL be `#009688` (teal)
+- **WHEN** components render item-type UI
+- **AND** the active schema does not define a `color` field (or no active schema exists for the type)
+- **THEN** a default grey accent SHALL be used
 
-#### Scenario: Wine item type
+### Requirement: Schema-driven icon rendering via curated MUI registry
 
-- **WHEN** components render wine-related UI
-- **THEN** the accent color SHALL be `#8E24AA` (purple)
+The admin panel SHALL render schema-driven icons (stored as `schema.icon`) by resolving the stored name through a curated registry of MUI icons, rather than a namespace import of `@mui/icons-material`. This keeps the SPA bundle small (only the curated icons are bundled) while covering the consumables domain. The schema registry remains the source of truth for which icon a type uses; the curated registry only maps names to components.
 
-#### Scenario: Coffee item type
+#### Scenario: Item type with a registry icon
 
-- **WHEN** components render coffee-related UI
-- **THEN** the accent color SHALL be `#795548` (brown)
+- **WHEN** a component renders a schema-driven icon (sidebar, dashboard cards, item table, item detail, schema list, schema editor)
+- **AND** `schema.icon` matches an entry in the curated MUI icon registry
+- **THEN** the corresponding MUI icon component SHALL be rendered
 
-#### Scenario: Chili sauce item type
+#### Scenario: Item type with an unregistered or absent icon
 
-- **WHEN** components render chili-sauce-related UI
-- **THEN** the accent color SHALL be `#F44336` (red)
+- **WHEN** a component renders a schema-driven icon
+- **AND** `schema.icon` is absent or does not match any registry entry (e.g. a stale lucide name from before the migration)
+- **THEN** a default fallback MUI icon SHALL be rendered
 
-#### Scenario: Unknown item type
+#### Scenario: Schema editor icon selection
 
-- **WHEN** components render UI for an item type not in the predefined mapping
-- **THEN** the accent color SHALL be read from the schema's `color` field (server-driven)
-- **AND** if no schema color exists, a default grey accent SHALL be used
+- **WHEN** an admin edits a schema in the schema editor
+- **THEN** the icon picker SHALL offer the curated registry's icon set (searchable by label)
+- **AND** the selected icon name SHALL be persisted to `schema.icon`
+
+#### Scenario: Existing item types after migration
+
+- **WHEN** the migration ships
+- **AND** existing item types still store pre-migration icon names (lucide component names) in `schema.icon`
+- **THEN** those types SHALL render the fallback icon
+- **AND** an admin SHALL be able to re-set each type's icon via the schema editor to restore a proper MUI icon (one-time manual pass, accepted breakage)
 
 ### Requirement: CSS variable export
 

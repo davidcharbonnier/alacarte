@@ -78,7 +78,7 @@ apps/admin/
 │  Page    │                     │ /google  │◀── {token,user}─│ /auth/google│
 └────┬─────┘                     └──────────┘                 └───────────┘
      │
-     │ sessionStorage.setItem('jwt', token)
+     │ sessionStorage.setItem('jwt_token', token)
      │ fetch GET /api/auth/check-admin
      │
      ├─ is_admin === true  → navigate to /dashboard
@@ -120,13 +120,13 @@ src/components/                ← NO router imports (useParams, useNavigate, et
 lib/config/design-system.ts          →    src/theme.ts (MUI extendTheme)
 ─────────────────────────────              ─────────────────────────────
 brandColors.primary: '#673AB7'      →    palette.primary.main: '#673AB7'
-brandColors.secondary: '#26A69A'    →    palette.secondary.main: '#26A69A'
-itemTypeColors.cheese: '#673AB7'    →    custom theme extensions (TBD)
+brandColors.secondary: '#9C27B0'    →    palette.secondary.main: '#9C27B0'
+itemTypeColors.cheese: '#673AB7'    →    read from schema.color at render (grey fallback)
 spacing: { xs:4, s:8, m:16, ... }   →    spacing: 8 (MUI default = 8px base)
 radius: { xs:2, s:4, m:8, ... }     →    shape.borderRadius: 8
 ```
 
-Item-type colors (cheese, gin, wine, etc.) are accent colors, not part of the core palette. They'll be stored as custom theme variables or a lookup map, since they're used for item-type badges and card accents — not as semantic color roles.
+Item-type colors (cheese, gin, wine, etc.) are no longer hardcoded. They are read from `schema.color` at render time (see theme spec `admin-mui-theme`), with a grey fallback when absent. The schema registry is the single source of truth — no theme extension or local color map is needed.
 
 ### Decision 4: MUI X Data Grid replaces GenericItemTable
 
@@ -170,6 +170,7 @@ This ensures client-side routing works — any path that doesn't match a static 
 - Token has 24-hour expiry, limiting the window of abuse.
 - Backend requires both valid JWT AND `is_admin` flag for admin endpoints. A stolen token from a non-admin user cannot access admin routes.
 - Content-Security-Policy headers can be set in nginx to restrict script sources.
+- The 401 interceptor (Decision 1) clears the JWT and redirects via the TanStack Router instance (imported into the Axios setup) rather than `window.location`, so a 401 from inside the app tree performs a clean SPA navigation to `/login` without a full page reload. Only the initial auth-context bootstrap path may fall back to `window.location` if the router is not yet mounted.
 
 ### Risk 2: TanStack Router ecosystem immaturity
 
@@ -227,7 +228,8 @@ This ensures client-side routing works — any path that doesn't match a static 
 |-----------|--------|-------|
 | `<Dialog>` + `<DialogTrigger>` | `<Dialog open={} onClose={}>` + `onClick` | MUI's API is simpler — no `DialogTrigger` wrapper needed |
 | `<Card borderLeftColor>` | `<Card sx={{ borderLeft: '4px solid' }}>` | Same visual, MUI `sx` prop replaces inline style |
-| `lucide-react` icons | `@mui/icons-material` | ArrowBack, Delete, CheckCircle, Cancel, Inventory2, ZoomIn |
+| `lucide-react` icons (app chrome) | `@mui/icons-material` | ArrowBack, Delete, CheckCircle, Cancel, Inventory2, ZoomIn — static icons hardcoded in JSX |
+| `lucide-react` icons (schema-driven) | curated MUI icon registry | `schema.icon` resolved via a bounded `ICON_MAP` of ~40-80 MUI icons, not `import *` (see Decision 10) |
 | `formatFieldValue()` | Same logic, different icon components | Business logic unchanged, only JSX shell changes |
 
 **GenericSeedForm mapping**:
@@ -242,3 +244,24 @@ This ensures client-side routing works — any path that doesn't match a static 
 | Step indicator (text card) | `<Stepper>` or plain `<Typography>` | Stepper is optional polish, plain text keeps it simple |
 
 The seed form's state machine (idle → validating → validated → imported → error) is pure business logic driven by React Query mutation states. Only the component shell changes.
+
+### Decision 10: MUI-only icons with a curated registry
+
+**Choice**: Replace `lucide-react` entirely. All icons — both app chrome and schema-driven — use `@mui/icons-material`. Schema-driven icons resolve through a curated registry of ~40-80 MUI icons (food/drink/general), imported individually and exposed as a bounded `ICON_MAP`. The schema editor's icon picker sources its options from this registry.
+
+**Rationale**: A single icon library keeps the stack uniform and removes a dependency. `import * as Icons from '@mui/icons-material'` would bundle all ~2,000 icons (~2MB+), defeating tree-shaking — so the schema-driven lookup cannot use a namespace import the way the current lucide code does. A curated registry with explicit per-icon imports keeps the bundle small while covering the consumables domain (cheese, gin, wine, coffee, chili sauce, and foreseeable future types). Render sites use `ICON_MAP[schema.icon] ?? DefaultIcon`. The schema editor's existing `ICON_OPTIONS` array is replaced with the registry's option list (searchable).
+
+**Accepted breakage**: Existing `schema.icon` values in the database are lucide component names (`'Pizza'`, `'Wine'`, `'Flame'`, ...). MUI uses different names (`'WineBar'`, `'Coffee'`, `'LocalFireDepartment'`, ...), so every existing type renders the fallback icon until an admin re-sets its icon via the schema editor. This temporary breakage is accepted — the admin panel is internal with a handful of item types, and re-setting icons is a one-time manual pass. No DB migration script is written; icons are corrected through the existing schema editor UI.
+
+**Alternatives considered**:
+- *Keep lucide for schema-driven icons*: Zero DB breakage, but retains a second icon library and its dependency purely for data-driven rendering. Rejected in favor of a single uniform stack.
+- *Full namespace import (`import *`)*: Simplest code, picker shows all icons, but ~2MB+ bundle bloat for a static SPA. Rejected.
+- *Lazy-load picker (dynamic import on open)*: All 2,000 icons available with a small base bundle, but complex wiring and slower picker open for a domain that needs ~40-80 icons. Rejected as over-build.
+
+### Decision 11: Schema color picker — curated palette, not free input
+
+**Choice**: The schema editor's color picker offers a curated palette of ~16-24 named hex swatches (expanded from the current 8). Free color input (`<input type="color">` + hex field) is not offered.
+
+**Rationale**: `schema.color` drives per-type visual identity (sidebar indicators, item-table badges, card accents). A curated palette keeps colors visually distinct and readable on both light/dark surfaces, while ~16-24 swatches cover the foreseeable range of consumable types without collisions. Free input risks bad contrast, clashing badges, and loss of per-type identity — an admin picking `#FF00FF` would render an unreadable badge. The palette is expandable later if the type count grows beyond it; the stored value is just a hex string, so expanding the picker costs no data migration.
+
+**Note on existing values**: Current `schema.color` values in the DB are from an arbitrary Flat UI palette (`#E67E22`, `#9B59B6`, ...) chosen during `dynamic-item-schema`. These hex values render fine under MUI and are preserved unchanged — only the picker's offered set changes.
