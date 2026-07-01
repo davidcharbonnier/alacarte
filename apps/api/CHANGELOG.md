@@ -1,3 +1,5 @@
+## [2.3.2](https://github.com/davidcharbonnier/alacarte/compare/api-v2.3.1...api-v2.3.2) (2026-07-01)
+
 ## [2.3.1](https://github.com/davidcharbonnier/alacarte/compare/api-v2.3.0...api-v2.3.1) (2026-06-29)
 
 
