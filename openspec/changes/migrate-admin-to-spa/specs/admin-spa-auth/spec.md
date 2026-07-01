@@ -100,6 +100,7 @@ The admin panel SHALL maintain the authenticated session when the user refreshes
 - **WHEN** the user refreshes the browser on any admin page
 - **AND** a JWT exists in `sessionStorage`
 - **THEN** the system SHALL read the JWT from `sessionStorage` on app initialization
+- **AND** the system SHALL decode the JWT to rehydrate the user object into application state
 - **AND** the Axios interceptor SHALL attach the JWT to subsequent requests
 - **AND** the user SHALL remain on the current page without re-authentication
 
