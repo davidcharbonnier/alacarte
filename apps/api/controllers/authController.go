@@ -22,11 +22,11 @@ import (
 func GoogleOAuthExchange(c *gin.Context) {
 	var body struct {
 		IDToken     string `json:"id_token" binding:"required"`
-		AccessToken string `json:"access_token" binding:"required"`
+		AccessToken string `json:"access_token"`
 	}
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Google tokens required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Google id_token required"})
 		return
 	}
 

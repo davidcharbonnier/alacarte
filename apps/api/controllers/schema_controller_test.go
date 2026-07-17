@@ -314,6 +314,253 @@ func TestSchemaDelete_RejectWithItems(t *testing.T) {
 	}
 }
 
+func TestSchemaUpdate_IdenticalFieldsSkipsVersion(t *testing.T) {
+	router, token, cleanup := setupControllerTest(t)
+	defer cleanup()
+
+	// Create a fresh schema with a known v1 active version
+	createBody := map[string]interface{}{
+		"name":         "version-dedup",
+		"display_name": "Version Dedup",
+		"plural_name":  "Version Dedups",
+		"icon":         "check",
+		"color":        "#00FF00",
+		"fields": []map[string]interface{}{
+			{"key": "name", "label": "Name", "field_type": "text", "required": true},
+			{"key": "origin", "label": "Origin", "field_type": "text", "required": false},
+		},
+	}
+	createJSON, _ := json.Marshal(createBody)
+	if w := performRequest(router, "POST", "/admin/schemas", token, createJSON); w.Code != http.StatusOK {
+		t.Fatalf("create setup failed: %d %s", w.Code, w.Body.String())
+	}
+
+	// PUT with the same fields → must NOT create a new version
+	updateBody := map[string]interface{}{
+		"display_name": "Version Dedup",
+		"fields": []map[string]interface{}{
+			{"key": "name", "label": "Name", "field_type": "text", "required": true},
+			{"key": "origin", "label": "Origin", "field_type": "text", "required": false},
+		},
+	}
+	updateJSON, _ := json.Marshal(updateBody)
+	w := performRequest(router, "PUT", "/admin/schemas/version-dedup", token, updateJSON)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("parse response: %v", err)
+	}
+
+	if upd, _ := resp["updated"].(bool); upd {
+		t.Errorf("expected updated=false for identical fields, got true. message=%v", resp["message"])
+	}
+	if msg, _ := resp["message"].(string); msg != "No changes to save" {
+		t.Errorf("expected message 'No changes to save', got %q", msg)
+	}
+
+	// Verify only v1 exists, still active
+	var schema models.ItemTypeSchema
+	utils.DB.Where("name = ?", "version-dedup").First(&schema)
+	var versions []models.SchemaVersion
+	utils.DB.Where("schema_id = ?", schema.ID).Order("version ASC").Find(&versions)
+	if len(versions) != 1 {
+		t.Errorf("expected exactly 1 schema_version row, got %d", len(versions))
+	}
+	if len(versions) > 0 && !versions[0].IsActive {
+		t.Errorf("expected v1 to remain active")
+	}
+}
+
+func TestSchemaUpdate_DifferentFieldsCreatesVersion(t *testing.T) {
+	router, token, cleanup := setupControllerTest(t)
+	defer cleanup()
+
+	createBody := map[string]interface{}{
+		"name":         "version-bump",
+		"display_name": "Version Bump",
+		"plural_name":  "Version Bumps",
+		"icon":         "arrow-up",
+		"color":        "#0000FF",
+		"fields": []map[string]interface{}{
+			{"key": "name", "label": "Name", "field_type": "text", "required": true},
+		},
+	}
+	createJSON, _ := json.Marshal(createBody)
+	if w := performRequest(router, "POST", "/admin/schemas", token, createJSON); w.Code != http.StatusOK {
+		t.Fatalf("create setup failed: %d %s", w.Code, w.Body.String())
+	}
+
+	// PUT with a different field set → MUST create v2
+	updateBody := map[string]interface{}{
+		"fields": []map[string]interface{}{
+			{"key": "name", "label": "Name", "field_type": "text", "required": true},
+			{"key": "region", "label": "Region", "field_type": "text", "required": false},
+		},
+	}
+	updateJSON, _ := json.Marshal(updateBody)
+	w := performRequest(router, "PUT", "/admin/schemas/version-bump", token, updateJSON)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if upd, _ := resp["updated"].(bool); !upd {
+		t.Errorf("expected updated=true for changed fields, got false. message=%v", resp["message"])
+	}
+
+	var schema models.ItemTypeSchema
+	utils.DB.Where("name = ?", "version-bump").First(&schema)
+	var versions []models.SchemaVersion
+	utils.DB.Where("schema_id = ?", schema.ID).Order("version ASC").Find(&versions)
+	if len(versions) != 2 {
+		t.Errorf("expected 2 schema_version rows, got %d", len(versions))
+	}
+	// v1 inactive, v2 active
+	if len(versions) == 2 {
+		if versions[0].IsActive || !versions[1].IsActive {
+			t.Errorf("expected v1 inactive and v2 active; got v1.is_active=%v v2.is_active=%v", versions[0].IsActive, versions[1].IsActive)
+		}
+	}
+}
+
+func TestSchemaUpdate_EmptyFieldsCreatesVersion(t *testing.T) {
+	router, token, cleanup := setupControllerTest(t)
+	defer cleanup()
+
+	createBody := map[string]interface{}{
+		"name":         "version-empty",
+		"display_name": "Version Empty",
+		"plural_name":  "Version Empties",
+		"icon":         "trash",
+		"color":        "#FF0000",
+		"fields": []map[string]interface{}{
+			{"key": "name", "label": "Name", "field_type": "text", "required": true},
+		},
+	}
+	createJSON, _ := json.Marshal(createBody)
+	if w := performRequest(router, "POST", "/admin/schemas", token, createJSON); w.Code != http.StatusOK {
+		t.Fatalf("create setup failed: %d %s", w.Code, w.Body.String())
+	}
+
+	// Empty fields array is destructive — MUST count as a change (updated=true)
+	// and wipe all ItemTypeField rows for the schema.
+	updateBody := map[string]interface{}{"fields": []map[string]interface{}{}}
+	updateJSON, _ := json.Marshal(updateBody)
+	w := performRequest(router, "PUT", "/admin/schemas/version-empty", token, updateJSON)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if upd, _ := resp["updated"].(bool); !upd {
+		t.Errorf("expected updated=true for empty fields, got false. message=%v", resp["message"])
+	}
+
+	var schema models.ItemTypeSchema
+	utils.DB.Where("name = ?", "version-empty").First(&schema)
+	var fieldCount int64
+	utils.DB.Model(&models.ItemTypeField{}).Where("schema_id = ?", schema.ID).Count(&fieldCount)
+	if fieldCount != 0 {
+		t.Errorf("expected all fields deleted, got %d remaining", fieldCount)
+	}
+}
+
+func TestSchemaUpdate_MetadataOnlyNoVersion(t *testing.T) {
+	router, token, cleanup := setupControllerTest(t)
+	defer cleanup()
+
+	createBody := map[string]interface{}{
+		"name":         "version-meta",
+		"display_name": "Meta",
+		"plural_name":  "Metas",
+		"icon":         "tag",
+		"color":        "#123456",
+		"fields": []map[string]interface{}{
+			{"key": "name", "label": "Name", "field_type": "text", "required": true},
+		},
+	}
+	createJSON, _ := json.Marshal(createBody)
+	if w := performRequest(router, "POST", "/admin/schemas", token, createJSON); w.Code != http.StatusOK {
+		t.Fatalf("create setup failed: %d %s", w.Code, w.Body.String())
+	}
+
+	// Metadata-only update (no fields key) → updated must be true and message
+	// must be "Settings updated".
+	updateBody := map[string]interface{}{"display_name": "Meta Renamed"}
+	updateJSON, _ := json.Marshal(updateBody)
+	w := performRequest(router, "PUT", "/admin/schemas/version-meta", token, updateJSON)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if upd, _ := resp["updated"].(bool); !upd {
+		t.Errorf("expected updated=true for metadata-only update (settings DID change), got false. message=%v", resp["message"])
+	}
+	if msg, _ := resp["message"].(string); msg != "Settings updated" {
+		t.Errorf("expected message 'Settings updated', got %q", msg)
+	}
+
+	var schema models.ItemTypeSchema
+	utils.DB.Where("name = ?", "version-meta").First(&schema)
+	var versions []models.SchemaVersion
+	utils.DB.Where("schema_id = ?", schema.ID).Find(&versions)
+	if len(versions) != 1 {
+		t.Errorf("expected 1 schema_version row (no new version), got %d", len(versions))
+	}
+	if schema.DisplayName != "Meta Renamed" {
+		t.Errorf("expected display_name to be updated, got %q", schema.DisplayName)
+	}
+}
+
+func TestSchemaUpdate_NoChangeDetected(t *testing.T) {
+	router, token, cleanup := setupControllerTest(t)
+	defer cleanup()
+
+	createBody := map[string]interface{}{
+		"name":         "version-noop",
+		"display_name": "Noop",
+		"plural_name":  "Noops",
+		"icon":         "tag",
+		"color":        "#123456",
+		"fields": []map[string]interface{}{
+			{"key": "name", "label": "Name", "field_type": "text", "required": true},
+		},
+	}
+	createJSON, _ := json.Marshal(createBody)
+	if w := performRequest(router, "POST", "/admin/schemas", token, createJSON); w.Code != http.StatusOK {
+		t.Fatalf("create setup failed: %d %s", w.Code, w.Body.String())
+	}
+
+	// Re-send identical metadata — server must detect no change.
+	updateBody := map[string]interface{}{
+		"display_name": "Noop",
+		"plural_name":  "Noops",
+		"icon":         "tag",
+		"color":        "#123456",
+	}
+	updateJSON, _ := json.Marshal(updateBody)
+	w := performRequest(router, "PUT", "/admin/schemas/version-noop", token, updateJSON)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if upd, _ := resp["updated"].(bool); upd {
+		t.Errorf("expected updated=false for identical metadata, got true. message=%v", resp["message"])
+	}
+	if msg, _ := resp["message"].(string); msg != "No changes to save" {
+		t.Errorf("expected message 'No changes to save', got %q", msg)
+	}
+}
+
 func TestSchemaVersionHistory(t *testing.T) {
 	router, token, cleanup := setupControllerTest(t)
 	defer cleanup()

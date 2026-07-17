@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -348,23 +349,23 @@ func SchemaCreate(c *gin.Context) {
 		}
 
 		if options, ok := fieldData["options"].([]interface{}); ok {
-				optionsStr := make([]string, 0, len(options))
-				for _, opt := range options {
-					switch v := opt.(type) {
-					case string:
-						optionsStr = append(optionsStr, v)
-					case map[string]interface{}:
-						if val, found := v["value"]; found {
-							if str, ok := val.(string); ok {
-								optionsStr = append(optionsStr, str)
-							}
+			optionsStr := make([]string, 0, len(options))
+			for _, opt := range options {
+				switch v := opt.(type) {
+				case string:
+					optionsStr = append(optionsStr, v)
+				case map[string]interface{}:
+					if val, found := v["value"]; found {
+						if str, ok := val.(string); ok {
+							optionsStr = append(optionsStr, str)
 						}
 					}
 				}
-				optionsJSON, _ := json.Marshal(optionsStr)
-				s := string(optionsJSON)
-				field.Options = &s
 			}
+			optionsJSON, _ := json.Marshal(optionsStr)
+			s := string(optionsJSON)
+			field.Options = &s
+		}
 
 		if group, ok := fieldData["group"].(string); ok {
 			field.Group = &group
@@ -446,21 +447,37 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 
 	tx := utils.DB.Begin()
 
+	// Load current schema so we can skip no-op metadata writes and tell the
+	// client whether anything actually changed.
+	var currentSchema models.ItemTypeSchema
+	if err := tx.First(&currentSchema, schemaID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load schema"})
+		return
+	}
+
+	metadataChanged := false
 	updates := map[string]interface{}{}
+	setIfDiffers := func(key string, current, next any) {
+		if next != current {
+			updates[key] = next
+			metadataChanged = true
+		}
+	}
 	if body.DisplayName != "" {
-		updates["display_name"] = body.DisplayName
+		setIfDiffers("display_name", currentSchema.DisplayName, body.DisplayName)
 	}
 	if body.PluralName != "" {
-		updates["plural_name"] = body.PluralName
+		setIfDiffers("plural_name", currentSchema.PluralName, body.PluralName)
 	}
 	if body.Icon != "" {
-		updates["icon"] = body.Icon
+		setIfDiffers("icon", currentSchema.Icon, body.Icon)
 	}
 	if body.Color != "" {
-		updates["color"] = body.Color
+		setIfDiffers("color", currentSchema.Color, body.Color)
 	}
 	if body.IsActive != nil {
-		updates["is_active"] = *body.IsActive
+		setIfDiffers("is_active", currentSchema.IsActive, *body.IsActive)
 	}
 	if body.UniqueFields != nil {
 		uniqueFieldsJSON, err := json.Marshal(body.UniqueFields)
@@ -469,7 +486,7 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process unique fields"})
 			return
 		}
-		updates["unique_fields"] = string(uniqueFieldsJSON)
+		setIfDiffers("unique_fields", currentSchema.UniqueFields, string(uniqueFieldsJSON))
 	}
 	if len(updates) > 0 {
 		if err := tx.Model(&models.ItemTypeSchema{}).Where("id = ?", schemaID).Updates(updates).Error; err != nil {
@@ -479,7 +496,22 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 		}
 	}
 
-	if body.Fields != nil {
+	fieldsChanged := body.Fields != nil
+	if body.Fields != nil && len(body.Fields) > 0 {
+		// Skip the version insert + field rewrites when the payload matches the
+		// current active version. GORM's JSON column serializer preserves map
+		// key order, so byte-equality would false-negative; decode + DeepEqual.
+		var activeVersion models.SchemaVersion
+		if err := tx.Where("schema_id = ? AND is_active = ?", schemaID, true).First(&activeVersion).Error; err == nil {
+			var storedFields []map[string]interface{}
+			if err := json.Unmarshal([]byte(activeVersion.Fields), &storedFields); err == nil &&
+				reflect.DeepEqual(body.Fields, storedFields) {
+				fieldsChanged = false
+			}
+		}
+	}
+
+	if fieldsChanged {
 		if len(body.Fields) == 0 {
 			// Empty fields array: delete all existing fields for this schema
 			if err := tx.Where("schema_id = ?", schemaID).Delete(&models.ItemTypeField{}).Error; err != nil {
@@ -612,8 +644,20 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 	var fields []models.ItemTypeField
 	utils.DB.Where("schema_id = ?", schemaID).Order("`order` ASC").Find(&fields)
 
+	updated := metadataChanged || fieldsChanged
+	var message string
+	switch {
+	case fieldsChanged:
+		message = "Schema updated successfully"
+	case metadataChanged:
+		message = "Settings updated"
+	default:
+		message = "No changes to save"
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Schema updated successfully",
+		"message": message,
+		"updated": updated,
 		"schema":  buildSchemaDetailResponse(&updatedSchema, fields),
 	})
 }
@@ -693,10 +737,10 @@ func SchemaVersionHistory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"version":     schemaVersion.Version,
-		"fields":      fields,
-		"is_active":   schemaVersion.IsActive,
-		"created_at":  schemaVersion.CreatedAt,
+		"version":    schemaVersion.Version,
+		"fields":     fields,
+		"is_active":  schemaVersion.IsActive,
+		"created_at": schemaVersion.CreatedAt,
 	})
 }
 
