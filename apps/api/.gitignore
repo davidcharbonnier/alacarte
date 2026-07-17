@@ -35,3 +35,5 @@ Thumbs.db
 # Seed data files (hosted in separate alacarte-seed repository)
 # Note: We don't store any seed JSON files in this repo
 seed/
+
+.env
