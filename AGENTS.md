@@ -2,7 +2,7 @@
 
 À la carte — multi-platform rating and sharing system for consumables (cheese, gin, wine, coffee, chili sauce, and extensible dynamic types).
 
-Monorepo: `apps/api` (Go), `apps/client` (Flutter), `apps/admin` (Next.js), `docs/`, `openspec/`.
+Monorepo: `apps/api` (Go), `apps/client` (Flutter), `apps/admin` (Vite + React SPA), `docs/`, `openspec/`.
 
 Infrastructure: Google Cloud Run + Cloud SQL, Docker, GitHub Actions CI/CD.
 
@@ -119,6 +119,6 @@ When the user requests a durable behavior change, record it here or in the relev
 
 - `apps/api/AGENTS.md` — Go REST API: Gin + GORM + MySQL, Google OAuth/JWT, dynamic schema system, item/rating/user endpoints
 - `apps/client/AGENTS.md` — Flutter client: Riverpod + GoRouter, cross-platform (Android/Web/Linux), offline support, i18n (EN/FR)
-- `apps/admin/AGENTS.md` — Next.js admin panel: NextAuth.js, config-driven item types, shadcn/ui + Tailwind, schema management UI
+- `apps/admin/AGENTS.md` — Vite + React 19 SPA admin: MUI v6, TanStack Router (file-based), `@react-oauth/google` → JWT in sessionStorage, Axios + React Query, dynamic schema system
 - `docs/AGENTS.md` — Centralized documentation hub: purpose-organized, cross-app features, architecture, operations
 - `openspec/AGENTS.md` — Specs & change management: mainline specs, active changes with delta specs, archived changes
