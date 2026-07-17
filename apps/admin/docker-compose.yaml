@@ -1,25 +1,16 @@
 services:
   admin:
-    container_name: alacarte-admin-dev
     build:
       context: .
       dockerfile: Dockerfile
-      target: dev
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - WATCHPACK_POLLING=true
-      - CHOKIDAR_USEPOLLING=true
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
     env_file:
-      - .env.local
-    depends_on:
-      - api
-    networks:
-      - alacarte-network
-      - default
+      - ./.env
+    volumes:
+      - ./src:/app/src
+      - ./index.html:/app/index.html
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - /app/node_modules

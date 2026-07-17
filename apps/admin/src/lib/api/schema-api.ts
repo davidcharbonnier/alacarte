@@ -1,0 +1,84 @@
+import { apiClient } from './client';
+import type {
+  ItemTypeSchema,
+  SchemaField,
+  CreateSchemaRequest,
+  UpdateSchemaRequest,
+  SchemaListResponse,
+  SchemaDetailResponse,
+  UpdateSchemaResponse,
+} from '../types/schema';
+
+export const schemaApi = {
+  list: async (includeInactive = false): Promise<ItemTypeSchema[]> => {
+    const url = includeInactive ? '/api/schemas?include_inactive=true' : '/api/schemas';
+    const response = await apiClient.get<SchemaListResponse>(url);
+    return response.schemas || [];
+  },
+
+  get: async (type: string): Promise<{ schema: SchemaDetailResponse; fields: SchemaField[] }> => {
+    const response = await apiClient.get<SchemaDetailResponse>(`/api/schemas/${type}`);
+    return {
+      schema: response,
+      fields: response.fields || [],
+    };
+  },
+
+  create: async (data: CreateSchemaRequest): Promise<ItemTypeSchema> => {
+    return apiClient.post<ItemTypeSchema>('/admin/schemas', data);
+  },
+
+  update: async (type: string, data: UpdateSchemaRequest): Promise<UpdateSchemaResponse> => {
+    return apiClient.put<UpdateSchemaResponse>(`/admin/schemas/${type}`, data);
+  },
+
+  delete: async (type: string): Promise<void> => {
+    return apiClient.delete(`/admin/schemas/${type}`);
+  },
+
+  getVersion: async (type: string, version: number) => {
+    const response = await apiClient.get<SchemaDetailResponse>(`/admin/schemas/${type}/versions/${version}`);
+    return {
+      schema: response,
+      fields: response.fields || [],
+    };
+  },
+};
+
+export const dynamicItemApi = {
+  list: async (
+    type: string,
+    params?: { page?: number; page_size?: number; search?: string; has_image?: boolean; sort?: string },
+  ): Promise<{ items: any[]; total: number; page: number; per_page: number; total_pages: number }> => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.page_size) searchParams.set('per_page', params.page_size.toString());
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.has_image !== undefined) searchParams.set('filter[has_image]', params.has_image.toString());
+    if (params?.sort) searchParams.set('sort', params.sort);
+
+    const queryString = searchParams.toString();
+    const url = `/api/items/${type}${queryString ? `?${queryString}` : ''}`;
+    return apiClient.get<{ items: any[]; total: number; page: number; per_page: number; total_pages: number }>(url);
+  },
+
+  get: async (type: string, id: number): Promise<any> => {
+    return apiClient.get(`/api/items/${type}/${id}`);
+  },
+
+  create: async (type: string, data: any): Promise<any> => {
+    return apiClient.post(`/api/items/${type}`, data);
+  },
+
+  update: async (type: string, id: number, data: any): Promise<any> => {
+    return apiClient.put(`/api/items/${type}/${id}`, data);
+  },
+
+  delete: async (type: string, id: number): Promise<void> => {
+    return apiClient.delete(`/api/items/${type}/${id}`);
+  },
+
+  getDeleteImpact: async (type: string, id: number): Promise<any> => {
+    return apiClient.get(`/admin/items/${type}/${id}/delete-impact`);
+  },
+};
