@@ -138,6 +138,9 @@ jobs:
     - name: Install dependencies
       working-directory: ./apps/admin
       run: npm ci --ignore-scripts
+    - name: Typecheck
+      working-directory: ./apps/admin
+      run: npm run typecheck
     - name: Run tests
       working-directory: ./apps/admin
       run: npm test
