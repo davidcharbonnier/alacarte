@@ -9,21 +9,20 @@ Users accessing the platform via web browsers need a dedicated interface that:
 - Provides responsive design for desktop, tablet, and mobile viewports
 - Maintains feature parity with the mobile app
 - Uses the same API endpoints and authentication flow
-- Can be run locally via docker-compose for development
+- Runs locally on the host (`flutter run -d web-server --web-port 3001`) against the compose infrastructure
 
-The existing development infrastructure uses:
-- Docker and docker-compose for local development
-- API and admin services already integrated into docker-compose stack
+Local development runs infrastructure (API, MySQL, MinIO, admin) in docker-compose while client platforms run on the host (`flutter run`). The web target follows the same pattern. Deployment mirrors the admin app: CI builds a static bundle attached to the GitHub release, deployed manually to a static host (e.g. Netlify).
 
 ## Goals / Non-Goals
 
 **Goals:**
 - Create a web-optimized Flutter interface with responsive layouts for desktop, tablet, and mobile
 - Implement web-specific navigation patterns (browser history, URL routing, keyboard navigation)
-- Build a Dockerfile for local development with docker-compose
+- Run locally via `flutter run -d web-server --web-port 3001` (host-run, like other client platforms)
 - Maintain feature parity with the mobile app without modifying existing mobile code
 - Ensure accessibility (WCAG 2.1 AA) and cross-browser compatibility
-- Integrate web interface into existing docker-compose stack for local development
+- Produce a static bundle deployable to any static host (SPA fallback via `web/_redirects`)
+- Build the web bundle as a CI release artifact (mirrors admin pattern)
 
 **Non-Goals:**
 - Modifying the existing mobile app UI or behavior
@@ -31,29 +30,36 @@ The existing development infrastructure uses:
 - Implementing new features exclusive to web (all features must work on mobile too)
 - Changing the authentication flow (use existing Google OAuth)
 - Supporting legacy browsers (focus on modern browsers)
-- CI/CD deployment, Docker Hub publishing, or Cloud Run deployment (future consideration)
+- Docker/nginx packaging (static hosting needs no container; dev runs on host)
+- Automated deployment to a hosting provider (CI produces the artifact; deploy is manual, automation can follow)
+- Full i18n for the web UI (EN only at launch; a dedicated i18n rework — including admin integration — is planned separately)
+- Offline support for web (web interface requires network connectivity; offline remains a native-app capability)
 
 ## Decisions
 
-### 1. Flutter Web Compilation Strategy
+### 1. Flutter Web Compilation & UI Fork Strategy
 
-**Decision:** Use Flutter's web compilation target with conditional UI rendering based on platform.
+**Decision:** Use Flutter's web compilation target with a parallel web widget tree, forked at the router level.
 
 **Rationale:**
-- Flutter provides native web compilation support with CanvasKit and HTML renderers
-- Allows code sharing between mobile and web (API clients, models, business logic)
-- Conditional rendering enables platform-specific UI without code duplication
-- Single codebase reduces maintenance overhead
+- A genuine web UX (sidebar navigation, information density, hover states, keyboard-first) needs its own UI vocabulary — adaptive shared screens converge to mobile-stretched-wide
+- Forking at the router keeps one routing table, one auth redirect flow, and identical URLs/deep links across platforms
+- Code sharing happens where it matters: API clients, providers, models, l10n, theme tokens
+- Single codebase, single package — no duplicated business logic
 
 **Alternatives Considered:**
-- **Separate Next.js web app:** Would require duplicating API clients, models, and business logic. More maintenance overhead but better web performance.
-- **Progressive Web App (PWA) wrapper:** Doesn't solve the UI optimization problem, just adds installability.
+- **Adaptive shared screens (responsive breakpoints in existing screens):** lowest-common-denominator UX; web feels like a stretched mobile app. Rejected — web needs its own tree.
+- **Fork inside each screen (`if (kIsWeb)` per screen):** couples both trees per-file; screens become shell wrappers. Router-level fork is cleaner.
+- **Separate Next.js web app:** duplicates API clients, models, and business logic. Rejected.
+- **PWA wrapper:** doesn't solve the UI optimization problem.
 
 **Implementation:**
-- Use `kIsWeb` runtime check to conditionally render web-specific layouts
-- Create web-specific widget variants (e.g., `WebItemCard` vs `MobileItemCard`)
-- Share state management (Riverpod), API clients, and data models
-- Use Flutter's `MediaQuery` and `LayoutBuilder` for responsive breakpoints
+- Existing `lib/routes/app_router.dart` gains platform-aware route builders: `kIsWeb ? WebXxxPage() : XxxScreen()`
+- Shared core (one implementation): `services/`, data `providers/`, `models/`, `l10n/`, route paths/names, theme tokens
+- Parallel shell (two implementations): `screens/web/*` vs `screens/*`, `widgets/web/*` vs `widgets/*`
+- Two orthogonal axes: platform (`kIsWeb`) picks the tree; viewport (`LayoutBuilder`) picks the breakpoint *within* the web tree (>1024 / 768–1024 / <768 — the web tree owns the narrow-browser case)
+- Parity contract: every future feature = two UI implementations over one shared provider; the spec parity requirement is the standing rule
+- Native web feel (Flutter web does not provide these by default): `SelectionArea` for text selection, `SystemMouseCursors.click` on interactive elements, persistent scrollbars on desktop, hover states, keyboard shortcuts
 
 ### 2. Responsive Design Approach
 
@@ -72,70 +78,62 @@ The existing development infrastructure uses:
 **Implementation:**
 - Use `LayoutBuilder` to detect viewport width and render appropriate layouts
 - Create responsive grid widgets that adjust column count based on breakpoint
-- Implement collapsible sidebar navigation for desktop/tablet, bottom nav for mobile
-- Use Flutter's `AdaptiveScaffold` for platform-appropriate navigation
+- `WebScaffold` adapts nav chrome within the web tree: NavigationRail on desktop/tablet, drawer or bottom nav on narrow browser viewports
 
-### 3. Web Server Choice
+### 3. Local Development Workflow
 
-**Decision:** Use nginx as the web server in the Docker container.
+**Decision:** Run the web target on the host with `flutter run -d web-server --web-port 3001`. No Docker container for the client.
 
 **Rationale:**
-- nginx is lightweight, fast, and widely used for static file serving
-- Excellent support for gzip compression, caching headers, and URL rewriting
-- Smaller image size compared to Apache or other alternatives
-- Well-documented and battle-tested in production
+- All other client platforms (Android, Linux) already run on the host; compose provides only infrastructure (API, MySQL, MinIO, admin)
+- A static nginx image requires a rebuild per change — no hot reload, dead dev loop
+- Fixed port 3001 keeps CORS (`ALLOWED_ORIGINS`) and Google OAuth authorized JS origins stable
 
 **Alternatives Considered:**
-- **Apache:** Heavier and slower for static file serving.
-- **Caddy:** Auto-HTTPS is nice but adds complexity and larger image size.
-- **Node.js server:** Unnecessary overhead for serving static files.
+- **nginx container in docker-compose:** production-style packaging without a deployment target; terrible dev loop. Deployment packaging belongs to static hosting, not a container.
+- **Flutter dev server in a container:** adds SDK-in-container complexity for no isolation gain.
 
 **Implementation:**
-- Multi-stage Docker build: Flutter SDK for build stage, nginx for runtime stage
-- Configure nginx for SPA routing (all routes redirect to index.html)
-- Enable gzip compression for JavaScript, CSS, and HTML
-- Set cache headers for static assets (images, fonts)
+- Document `flutter run -d web-server --web-port 3001` in `docs/client/`
+- `http://localhost:3001` added to local `ALLOWED_ORIGINS` (documented in `apps/api/.env.example`; no API code change)
 
 ### 4. Environment Configuration
 
-**Decision:** Inject environment variables at container runtime and use Flutter's `const String.fromEnvironment` to read them.
+**Decision:** Build-time configuration via the existing `flutter_dotenv` mechanism (`.env` bundled as an asset).
 
 **Rationale:**
-- No need to rebuild the Docker image for different environments
-- Matches the existing API and admin deployment patterns
-- Environment variables are standard for containerized applications
-- Secure (no secrets in source code or build artifacts)
+- Flutter web compiles to a static bundle — there is no server runtime, so runtime env injection is impossible without a templating server
+- `flutter_dotenv` is already used on all platforms; `AppConfig` reads `API_BASE_URL`, `GOOGLE_CLIENT_ID`, `APP_VERSION` — zero client code changes
+- The same `.env` file serves `flutter run` (dev) and `flutter build web` (CI)
+- Changing a value requires a rebuild — acceptable: values change rarely (API URL, OAuth client ID)
 
 **Alternatives Considered:**
-- **Build-time configuration:** Would require separate images for dev/staging/prod.
-- **Configuration file mounted as volume:** More complex to manage and version.
+- **`--dart-define` / `String.fromEnvironment`:** also build-time, but rewrites shared `AppConfig` — mobile churn for no gain.
+- **Runtime config (fetched `config.json`, envsubst):** pays off only for one-image-many-environments container deployments; no container → no need.
 
 **Implementation:**
-- Define environment variables in Dockerfile with `ARG` and `ENV` directives
-- Use `--dart-define` during Flutter build to pass values to the app
-- Support variables: `API_URL`, `OAUTH_CLIENT_ID`, `OAUTH_REDIRECT_URI`
-- Provide default values for local development
+- Variables: `API_BASE_URL`, `GOOGLE_CLIENT_ID`, `APP_VERSION` (existing names; no `OAUTH_REDIRECT_URI` — web sign-in uses Google Identity Services with authorized JS origins, no redirect flow)
+- Add `.env.example` in `apps/client/` documenting required variables
+- CI writes `.env` from secrets before `flutter build web`
+- Production API origins are env-managed (`ALLOWED_ORIGINS`), documented in `apps/api/.env.example`
 
-### 5. Docker Compose Integration
+### 5. Static Hosting & CI Artifact
 
-**Decision:** Integrate the web interface into the existing docker-compose stack for local development.
+**Decision:** Build the web bundle as a CI release artifact, mirroring the admin app; deploy manually to a static host (e.g. Netlify).
 
 **Rationale:**
-- Consistent with existing API and admin development workflow
-- Single command to start all services (`docker compose up`)
-- Easy to test web interface with live API
-- Matches existing monorepo patterns
+- Admin precedent: CI builds `dist/`, attaches it to the GitHub release, release notes say "deploy to any static host"
+- Static hosting provides CDN, gzip/brotli, caching headers, and SPA fallback — no custom server to maintain
+- Manual deploy is sufficient at current release cadence; automation is a later add-on
 
 **Alternatives Considered:**
-- **Separate docker-compose for web:** Would require multiple commands and add complexity.
-- **Manual Docker commands:** More error-prone and harder to maintain.
+- **Netlify CI integration / auto-deploy:** more moving parts; add when manual deploys become tedious.
+- **Docker image to Cloud Run:** contradicts static hosting choice; unnecessary server for a static bundle.
 
 **Implementation:**
-- Create `apps/client/docker-compose.yaml` with web service definition
-- Add include path to root `docker-compose.yml`
-- Configure web service to depend on api service
-- Expose web interface on port 3001 (or other available port)
-- Use build context for local development with hot reload
+- Client release workflow: write `.env` from CI secrets, `flutter build web --release`, attach `build/web` to the release
+- Add `web/_redirects` (`/*  /index.html  200`) so SPA deep links survive static hosting (copied into `build/web` at build time)
+- Document manual deploy (Netlify drag-and-drop or CLI) in `docs/client/`
 
 ### 7. URL Routing Strategy
 
@@ -152,10 +150,11 @@ The existing development infrastructure uses:
 - **auto_route:** Similar to go_router but with more boilerplate.
 
 **Implementation:**
-- Define route structure in a single configuration file
-- Use path parameters (e.g., `/items/:id`) for item detail pages
+- Existing `lib/routes/app_router.dart` + `route_names.dart` provide the route structure; extend with platform-aware builders (see §1)
+- Enable `usePathUrlStrategy` for clean URLs (no hash) on web
+- Use existing path parameters (`/items/:itemType/:itemId`) for item detail pages
 - Use query parameters (e.g., `/items?type=cheese`) for filtering
-- Configure nginx to redirect all routes to index.html for SPA behavior
+- SPA fallback: dev server serves `index.html`; static hosts use `web/_redirects`
 
 ### 8. State Management
 
@@ -179,7 +178,7 @@ The existing development infrastructure uses:
 
 ### 9. Authentication Flow
 
-**Decision:** Use the existing Google OAuth flow with web-specific redirect URI.
+**Decision:** Use the existing Google OAuth flow; web sign-in runs through Google Identity Services (authorized JS origins, no redirect URI).
 
 **Rationale:**
 - No changes to the backend API or authentication flow
@@ -192,9 +191,9 @@ The existing development infrastructure uses:
 - **OAuth PKCE:** More secure but adds complexity and doesn't match existing flow.
 
 **Implementation:**
-- Use `google_sign_in` package with web support
-- Configure OAuth client ID for web platform
-- Store JWT token in localStorage with HttpOnly flag (if using cookies)
+- Use `google_sign_in` package with web support (GIS)
+- Reuse the admin/api Web-application OAuth client ID
+- Store JWT via existing `token_storage` (flutter_secure_storage, web-capable)
 - Implement token refresh logic
 - Redirect to login page if token is invalid or expired
 
@@ -225,10 +224,10 @@ The existing development infrastructure uses:
 **Risk:** Flutter web applications can be larger and slower than native web frameworks (React, Vue).
 
 **Mitigation:**
-- Use Flutter's HTML renderer for smaller bundle size (trade-off with performance)
+- Use the default web renderer (CanvasKit); the HTML renderer no longer exists in current Flutter
 - Implement lazy loading for routes and components
 - Optimize images and assets
-- Enable gzip compression in nginx
+- Rely on the static host for gzip/brotli compression and cache headers
 - Monitor performance metrics and optimize as needed
 
 ### Risk: Cross-Browser Compatibility
@@ -261,15 +260,14 @@ The existing development infrastructure uses:
 - Optimize assets and images
 - Monitor bundle size and optimize as needed
 
-### Trade-off: Code Sharing vs. Optimization
+### Risk: UI Tree Drift
 
-**Trade-off:** Sharing code between mobile and web reduces maintenance but may not be optimal for either platform.
+**Risk:** Parallel trees mean web can lag mobile when new features land; maintenance cost is two UIs.
 
 **Mitigation:**
-- Use conditional rendering for platform-specific UI
-- Create web-specific widget variants where needed
-- Monitor performance and optimize critical paths
-- Accept some code duplication for better platform optimization
+- Shared providers/services keep business logic identical; trees differ only in presentation
+- Spec parity requirement acts as standing acceptance checklist
+- New features ship with both implementations in the same change
 
 ### Trade-off: Development Speed vs. Performance
 
@@ -286,9 +284,8 @@ The existing development infrastructure uses:
 1. Set up Flutter web compilation target
 2. Create web-specific layout components (sidebar, responsive grid)
 3. Implement responsive breakpoints
-4. Set up Docker multi-stage build with nginx
-5. Configure environment variable injection
-6. Create docker-compose configuration for web service
+4. Add `web/_redirects` and `.env.example`
+5. Verify local dev workflow (`flutter run -d web-server --web-port 3001`)
 
 ### Phase 2: Core Features (Week 3-4)
 1. Implement web navigation with `go_router`
@@ -298,9 +295,9 @@ The existing development infrastructure uses:
 5. Implement error handling and validation
 
 ### Phase 3: Integration (Week 5)
-1. Integrate web service into docker-compose stack
-2. Test web interface with live API
-3. Verify environment variable configuration
+1. Test web interface with live API (local compose stack)
+2. Verify environment variable configuration (`.env`, CORS, OAuth JS origins)
+3. Add CI release artifact for the web bundle
 4. Test all user flows end-to-end
 
 ### Phase 4: Polish (Week 6)
@@ -311,19 +308,18 @@ The existing development infrastructure uses:
 
 ### Rollback Strategy
 - Keep previous version of mobile app unchanged
-- If web interface has issues, can remove from docker-compose while keeping mobile functional
-- Docker image can be rebuilt if needed
-- No production deployment to rollback from
+- Web artifact is additive to releases; simply don't deploy it
+- Static host deploys can be rolled back by redeploying the previous bundle
 
 ## Open Questions
 
-1. **OAuth Client ID:** ✅ **RESOLVED** - Use the same OAuth client ID as the mobile app.
-   - **Decision:** Reuse existing client ID for web platform
-   - **Impact:** Simplifies configuration, no changes needed to Google OAuth setup
+1. **OAuth Client ID:** ✅ **RESOLVED** - Use the existing Web-application client ID (same one admin uses, `VITE_GOOGLE_CLIENT_ID`).
+   - **Decision:** Reuse the admin/api Web-type client ID — mobile client IDs are platform-typed (Android/iOS) and cannot drive Google Identity Services web sign-in; same GCP project, so the API already accepts its audience
+   - **Impact:** No new Google OAuth client to create; only `http://localhost:3001` (and the deployed host) added to authorized JavaScript origins
 
-2. **OAuth Redirect URI:** ✅ **RESOLVED** - Use localhost for local development.
-   - **Decision:** Configure OAuth redirect URI to http://localhost:3001 for docker-compose
-   - **Impact:** Web interface will work in local development environment
+2. **OAuth Authorized JS Origin:** ✅ **RESOLVED** - Use localhost for local development.
+   - **Decision:** Add `http://localhost:3001` to authorized JavaScript origins (GIS flow; no redirect URI), plus the production host when deployed
+   - **Impact:** Web interface works in local development and on the deployed static host
 
 3. **Analytics:** ✅ **RESOLVED** - No analytics for now.
    - **Decision:** Defer analytics implementation to future iteration

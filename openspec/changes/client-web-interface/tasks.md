@@ -2,63 +2,63 @@
 
 ### Flutter Foundation Setup
 
-- [ ] 1.1 Add `go_router` package to `apps/client/pubspec.yaml`
+- [ ] 1.1 Enable path URL strategy (`usePathUrlStrategy`) for clean web URLs (go_router 16 already in pubspec; web defaults to hash URLs)
 - [ ] 1.2 Verify Flutter web compilation target is enabled in `apps/client/`
 - [ ] 1.3 Create responsive breakpoint utilities in `apps/client/lib/responsive/` (mobile <768px, tablet 768-1024px, desktop >1024px)
 - [ ] 1.4 Create `WebSidebar` navigation widget for desktop/tablet in `apps/client/lib/widgets/web/`
 - [ ] 1.5 Create `ResponsiveGrid` widget that adjusts column count based on breakpoint in `apps/client/lib/widgets/web/`
-- [ ] 1.6 Create `AdaptiveScaffold` wrapper that uses sidebar for web and bottom nav for mobile in `apps/client/lib/widgets/web/`
-- [ ] 1.10 Create `.env.example` file in `apps/client/` documenting required environment variables
+- [ ] 1.6 Create `WebScaffold` responsive within the web tree (NavigationRail on desktop, drawer/bottom nav on narrow viewports) in `apps/client/lib/widgets/web/`
+- [ ] 1.7 Add `web/_redirects` with `/* /index.html 200` for SPA deep-linking on static hosts
+- [ ] 1.8 Create `.env.example` file in `apps/client/` documenting required environment variables (`API_BASE_URL`, `GOOGLE_CLIENT_ID`, `APP_VERSION`)
+- [ ] 1.9 Verify local dev: `flutter run -d web-server --web-port 3001` serves the app and deep links work
+- [ ] 1.10 Update `apps/api/.env.example` documenting `ALLOWED_ORIGINS` with `http://localhost:3001` for local web dev
 
 ### Web Navigation and Routing
 
-- [ ] 2.1 Create `apps/client/lib/router/router.dart` with `go_router` configuration
-- [ ] 2.2 Define route structure: `/`, `/items`, `/items/:id`, `/profile`, `/search`, `/login`
-- [ ] 2.3 Implement path parameters for item detail pages (`/items/:id`)
-- [ ] 2.4 Implement query parameters for filtering (`/items?type=cheese`)
-- [ ] 2.5 Configure browser history integration in router
-- [ ] 2.6 Add deep linking support for item pages
-- [ ] 2.7 Create `NotFoundPage` widget for invalid routes
-- [ ] 2.8 Test navigation using browser back/forward buttons
-- [ ] 2.9 Test navigation by entering URLs directly
+- [ ] 2.1 Extend existing `apps/client/lib/routes/app_router.dart` with platform-aware route builders (`kIsWeb ? WebXxxPage() : XxxScreen()`)
+- [ ] 2.2 Add `/profile` route for `WebProfilePage`; verify the existing route table covers all web screens (search stays in-page, no route)
+- [ ] 2.3 Verify existing path parameters for item detail pages (`/items/:itemType/:itemId`) work on web
+- [ ] 2.4 Test navigation using browser back/forward buttons (go_router default behavior on web)
+- [ ] 2.5 Test deep linking by entering URLs directly (depends on 1.1 path URL strategy)
+- [ ] 2.6 Create web-styled `NotFoundPage` for invalid routes (router currently renders a placeholder)
 
 ### Web-Specific UI Components
 
 - [ ] 3.1 Create `WebItemCard` widget with desktop-optimized layout in `apps/client/lib/widgets/web/`
-- [ ] 3.2 Create `WebItemDetailPage` with two-column layout (left: image/info, right: description/ratings) in `apps/client/lib/pages/web/`
+- [ ] 3.2 Create `WebItemDetailPage` with two-column layout (left: image/info, right: description/ratings) in `apps/client/lib/screens/web/`
 - [ ] 3.3 Create `WebRatingWidget` with mouse and keyboard support in `apps/client/lib/widgets/web/`
 - [ ] 3.4 Create `WebSearchBar` with real-time results and keyboard navigation in `apps/client/lib/widgets/web/`
-- [ ] 3.5 Create `WebProfilePage` with dashboard layout in `apps/client/lib/pages/web/`
-- [ ] 3.6 Create `WebErrorPage` with user-friendly error messages in `apps/client/lib/pages/web/`
+- [ ] 3.5 Create `WebProfilePage` with dashboard layout in `apps/client/lib/screens/web/`
+- [ ] 3.6 Create `WebErrorPage` with user-friendly error messages in `apps/client/lib/screens/web/`
 - [ ] 3.7 Implement inline validation error display in forms
 - [ ] 3.8 Add focus indicators for keyboard navigation
 - [ ] 3.9 Test all components on desktop viewport (>1024px)
 - [ ] 3.10 Test all components on tablet viewport (768-1024px)
 - [ ] 3.11 Test all components on mobile viewport (<768px)
+- [ ] 3.12 Add `SelectionArea` wrappers for selectable text content
+- [ ] 3.13 Add hover cursors (`SystemMouseCursors.click`) and hover states on interactive elements
+- [ ] 3.14 Add persistent scrollbars on desktop viewport and keyboard shortcuts (e.g. `/` focuses search)
 
 ### Authentication Integration
 
 - [ ] 4.1 Configure `google_sign_in` package for web platform in `apps/client/`
-- [ ] 4.2 Set OAuth client ID for web platform (reuse existing client ID)
-- [ ] 4.3 Configure OAuth redirect URI to use localhost (http://localhost:3001)
-- [ ] 4.4 Implement JWT token storage in localStorage
-- [ ] 4.5 Add token refresh logic in API client
-- [ ] 4.6 Implement redirect to login page on invalid/expired token
+- [ ] 4.2 Configure web sign-in with the existing Web-application OAuth client ID (same as admin `VITE_GOOGLE_CLIENT_ID`)
+- [ ] 4.3 Add `http://localhost:3001` to authorized JavaScript origins for the web OAuth client (Google Cloud Console)
+- [ ] 4.4 Verify JWT storage via existing `token_storage` (flutter_secure_storage) works on web
+- [ ] 4.5 Verify auth state refresh and 401 handling (`auth_provider`) work on web; adapt if needed
+- [ ] 4.6 Verify router auth redirect on invalid/expired token works on web
 - [ ] 4.7 Test Google OAuth sign-in flow on web
-- [ ] 4.8 Test token refresh flow
-- [ ] 4.9 Test logout functionality
+- [ ] 4.8 Test logout functionality
 
 ### State Management
 
 - [ ] 5.1 Create web-specific Riverpod providers for UI state (e.g., `sidebarToggleProvider`) in `apps/client/lib/providers/`
 - [ ] 5.2 Verify existing Riverpod providers work correctly on web platform
 - [ ] 5.3 Add URL-based state providers for filters and search queries
-- [ ] 5.4 Test reactive updates with `ref.watch`
-- [ ] 5.5 Test one-time reads with `ref.read`
 
 ### Item Listing and Filtering
 
-- [ ] 6.1 Create `WebItemListPage` with responsive grid layout in `apps/client/lib/pages/web/`
+- [ ] 6.1 Create `WebItemListPage` with responsive grid layout in `apps/client/lib/screens/web/`
 - [ ] 6.2 Implement filter UI (consumable type, rating range) in sidebar
 - [ ] 6.3 Connect filters to URL query parameters
 - [ ] 6.4 Implement real-time filter updates without page reload
@@ -85,18 +85,16 @@
 - [ ] 8.1 Implement real-time search results in `WebSearchBar`
 - [ ] 8.2 Display search results in dropdown/overlay
 - [ ] 8.3 Add keyboard navigation (arrow keys, Enter) for search results
-- [ ] 8.4 Connect search to existing API endpoints
+- [ ] 8.4 Wire `WebSearchBar` to existing search support in `dynamic_item_service` (`?search=` param)
 - [ ] 8.5 Test search with keyboard navigation
 - [ ] 8.6 Test search with mouse interaction
 
 ### Error Handling
 
-- [ ] 9.1 Create `WebErrorPage` with user-friendly error messages
-- [ ] 9.2 Implement network error handling with retry button
-- [ ] 9.3 Implement validation error display inline with form fields
-- [ ] 9.4 Add error boundary for unexpected errors
-- [ ] 9.5 Test network error scenarios
-- [ ] 9.6 Test validation error scenarios
+- [ ] 9.1 Implement network error handling with retry button
+- [ ] 9.2 Add error boundary for unexpected errors
+- [ ] 9.3 Test network error scenarios
+- [ ] 9.4 Test validation error scenarios
 
 ### Accessibility
 
@@ -107,14 +105,14 @@
 - [ ] 10.5 Test with screen reader software
 - [ ] 10.6 Fix any accessibility issues found
 
-### Performance Optimization (Frontend)
+### Performance Optimization
 
-- [ ] 11.3 Implement lazy loading for images
-- [ ] 11.4 Implement lazy loading for routes
-- [ ] 11.5 Optimize images and assets
-- [ ] 11.6 Remove unused dependencies
-- [ ] 11.7 Monitor bundle size and optimize if needed
-- [ ] 11.8 Test page load performance (target <3 seconds)
+- [ ] 11.1 Implement lazy loading for images
+- [ ] 11.2 Implement lazy loading for routes
+- [ ] 11.3 Optimize images and assets
+- [ ] 11.4 Remove unused dependencies
+- [ ] 11.5 Monitor bundle size and optimize if needed
+- [ ] 11.6 Test page load performance (target <3 seconds)
 
 ### Testing
 
@@ -127,46 +125,28 @@
 
 ### Cross-Browser Testing
 
-- [ ] 16.1 Test on Chrome (latest version)
-- [ ] 16.2 Test on Firefox (latest version)
-- [ ] 16.3 Test on Safari (latest version)
-- [ ] 16.4 Test on Edge (latest version)
-- [ ] 16.5 Test on Chrome Mobile
-- [ ] 16.6 Test on Safari Mobile (iOS)
-- [ ] 16.7 Fix any browser-specific issues found
+- [ ] 13.1 Test on Chrome (latest version)
+- [ ] 13.2 Test on Firefox (latest version)
+- [ ] 13.3 Test on Safari (latest version)
+- [ ] 13.4 Test on Edge (latest version)
+- [ ] 13.5 Test on Chrome Mobile
+- [ ] 13.6 Test on Safari Mobile (iOS)
+- [ ] 13.7 Fix any browser-specific issues found
 
 ## DevOps
 
-### Docker Configuration
+### CI Release Artifact
 
-- [ ] 1.7 Create `Dockerfile` in `apps/client/` with multi-stage build (Flutter SDK stage + nginx runtime stage)
-- [ ] 1.8 Create `nginx.conf` in `apps/client/` for SPA routing, gzip compression, and cache headers
-- [ ] 1.9 Configure environment variable injection in Dockerfile using `ARG` and `--dart-define` for `API_URL`, `OAUTH_CLIENT_ID`, `OAUTH_REDIRECT_URI`
-- [ ] 1.11 Test local Docker build with `docker build -t client-web .` in `apps/client/`
-- [ ] 1.12 Test local Docker container with `docker run -p 3001:80 client-web`
-
-### Performance Optimization (Docker)
-
-- [ ] 11.1 Enable gzip compression in nginx configuration
-- [ ] 11.2 Set cache headers for static assets (images, fonts)
-
-### Docker Compose Integration
-
-- [ ] 13.1 Create `apps/client/docker-compose.yaml` with web service definition
-- [ ] 13.2 Configure web service to depend on api service
-- [ ] 13.3 Expose web interface on port 3001
-- [ ] 13.4 Configure build context for local development with hot reload
-- [ ] 13.5 Add environment variables for API_URL, OAUTH_CLIENT_ID, OAUTH_REDIRECT_URI
-- [ ] 13.6 Add include path to root `docker-compose.yml`
-- [ ] 13.7 Test docker-compose up with all services
-- [ ] 13.8 Test web interface connectivity to API
-- [ ] 13.9 Test OAuth flow with localhost redirect URI
+- [ ] 14.1 Add web build to client release workflow: write `.env` from CI secrets, `flutter build web --release`
+- [ ] 14.2 Attach `build/web` bundle to the GitHub release (mirror admin `dist/` pattern)
+- [ ] 14.3 Add release note: "Deploy `build/web/` to any static host (Netlify, Cloudflare Pages, etc.)"
+- [ ] 14.4 Verify CI artifact contains `_redirects` and loads on a static host (manual Netlify deploy test)
 
 ## Documentation
 
-- [ ] 17.1 Update `README.md` with web interface information
-- [ ] 17.2 Add web interface setup instructions to `docs/client/`
-- [ ] 17.3 Document environment variables in `docs/client/`
-- [ ] 17.4 Document Docker build process in `docs/client/`
-- [ ] 17.5 Document docker-compose usage in `docs/client/`
-- [ ] 17.6 Update architecture documentation in `docs/architecture/`
+- [ ] 15.1 Update `README.md` with web interface information
+- [ ] 15.2 Add web interface setup instructions to `docs/client/`
+- [ ] 15.3 Document environment variables in `docs/client/`
+- [ ] 15.4 Document local dev workflow in `docs/client/` (`flutter run -d web-server --web-port 3001`, `.env` setup)
+- [ ] 15.5 Document manual deploy of the `build/web` artifact to a static host (Netlify) in `docs/client/`
+- [ ] 15.6 Update architecture documentation in `docs/architecture/`
