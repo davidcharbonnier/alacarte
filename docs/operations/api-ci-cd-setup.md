@@ -1,6 +1,5 @@
 # GitVersion CI/CD Setup Guide
 
-> **See also:** API deployment guide – [/docs/api/deployment.md](/docs/api/deployment.md)
 
 This document explains the GitVersion-powered CI/CD pipeline for the À la carte REST API.
 

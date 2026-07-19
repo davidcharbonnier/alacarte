@@ -26,14 +26,13 @@
 ## 4. DevOps: Local & Compose
 
 - [ ] 4.1 Replace `mysql` service with `postgres:16` in `docker-compose.yaml` (POSTGRES_* bootstrap vars, volume rename)
-- [ ] 4.2 Same replacement in `docker-compose.prod.yml`; delete `mysql/my.cnf` and its volume mount
-- [ ] 4.3 Update `apps/api/.env` example and any env templates to `DATABASE_URL`
-- [ ] 4.4 Verify seeding works on Postgres: `RUN_SEEDING=true` against fresh compose stack
+- [ ] 4.2 Update `apps/api/.env` example and any env templates to `DATABASE_URL`
+- [ ] 4.3 Verify seeding works on Postgres: `RUN_SEEDING=true` against fresh compose stack
 
 ## 5. Docs
 
 - [ ] 5.1 Write data-migration runbook (pgloader data-only + reset sequences + verification queries) in `docs/guides/` 
-- [ ] 5.2 Update `docs/api/deployment.md` for Neon + `DATABASE_URL` on Cloud Run
+- [ ] 5.2 Write new `docs/api/deployment.md`: Cloud Run + Neon + `DATABASE_URL` (previous compose-based guide deleted)
 - [ ] 5.3 Update `docs/getting-started/local-development.md` (compose Postgres, new env var)
 - [ ] 5.4 Update `apps/api/AGENTS.md` Local Contracts (Gin + GORM + Postgres, DATABASE_URL)
 - [ ] 5.5 Update `openspec/config.yaml` project context (MySQL/Cloud SQL → Postgres/Neon) after cutover

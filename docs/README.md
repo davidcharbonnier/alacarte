@@ -35,7 +35,6 @@ Welcome to the centralized documentation for the À la carte platform.
 - [API Overview](api/README.md) - REST API documentation
 - [Authentication System](api/authentication-system.md) - OAuth and JWT implementation
 - [Endpoints](api/endpoints.md) - API reference
-- [Deployment](api/deployment.md) - Docker and Cloud Run
 - [Security](api/security.md) - Security improvements
 - [Privacy Model](api/privacy-model.md) - API privacy implementation
 
@@ -87,7 +86,7 @@ This documentation is organized by **purpose** rather than by app:
 - Add a new item type → [Complete Guide](guides/adding-new-item-types.md)
 - Understand authentication → [Authentication](features/authentication.md)
 - Set up local development → [Local Development](getting-started/local-development.md)
-- Deploy to production → [API Deployment](api/deployment.md) | [Admin Deployment](admin/deployment.md)
+- Deploy to production → [Admin Deployment](admin/deployment.md)
 - Understand privacy → [Privacy Model](features/privacy-model.md)
 - Add a new feature → Check [Features](features/) for existing patterns
 - Understand releases → [Monorepo Strategy](architecture/monorepo-strategy.md)

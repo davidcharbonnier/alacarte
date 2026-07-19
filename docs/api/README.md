@@ -13,7 +13,6 @@ This documentation serves as the **primary reference for API developers** workin
 - **[API Endpoints Reference](endpoints.md)** - Complete endpoint documentation
 
 ### Deployment & Operations
-- **[Deployment Guide](deployment.md)** - Docker and Cloud Run deployment
 - **[Security Best Practices](security.md)** - Security improvements and guidelines
 
 ### Implementation Guides
@@ -39,7 +38,6 @@ For feature documentation that spans multiple applications (API, Client, Admin):
 - [Running migrations](/apps/api/README.md#running-migrations) - Automatic on startup
 - [Seeding data](/apps/api/README.md#seeding-data) - Development data setup
 - [Testing endpoints](/apps/api/README.md#testing-endpoints) - API testing examples
-- [Deployment](deployment.md) - Production deployment guide
 
 **API Reference:**
 - [Authentication endpoints](endpoints.md#authentication)
