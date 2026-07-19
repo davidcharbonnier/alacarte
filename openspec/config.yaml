@@ -2,19 +2,19 @@ schema: spec-driven
 
 context: |
   # À la carte Project Context
-  Multi-platform rating/sharing system for consumables (cheese, gin, wine, beer, coffee).
+  Multi-platform rating/sharing system for consumables (cheese, gin, wine, coffee, chili sauce; extensible via dynamic schema system).
 
   ## Tech Stack
   - **API:** Go (Gin, GORM, MySQL), Google OAuth 2.0, JWT
   - **Client:** Flutter (Riverpod, Google Sign-In), Cross-platform (Web, Android, Desktop)
-  - **Admin:** Next.js (TypeScript, NextAuth.js)
+  - **Admin:** Vite + React SPA (TypeScript, MUI, TanStack Router/Query)
   - **Infrastructure:** Google Cloud Run, Cloud SQL, Docker
-  - **CI/CD:** GitHub Actions, Docker Hub, versio (automated versioning)
+  - **CI/CD:** GitHub Actions, GHCR (ghcr.io), semantic-release (automated versioning)
 
   ## Monorepo Structure
   - `apps/api`: Go REST API
   - `apps/client`: Flutter client
-  - `apps/admin`: Next.js admin panel
+  - `apps/admin`: Vite + React SPA admin panel
   - `docs/`: Purpose-organized documentation
 
   ## Domain Context

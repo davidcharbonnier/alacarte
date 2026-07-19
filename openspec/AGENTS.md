@@ -11,27 +11,25 @@ OpenSpec-based specification and change management for the À la carte project. 
 ## Local Contracts
 
 - `config.yaml`: Project context and rules (spec-driven schema)
-- `specs/`: Mainline specs — the current truth for implemented features
-  - `item-management/spec.md`, `chili-sauce-management/spec.md`
+- `specs/`: Mainline specs — the current truth for implemented features (one folder per capability, not individually indexed)
 - `changes/`: Active change proposals in progress
-  - `dynamic-item-schema/`: Dynamic schema system (design, proposal, tasks, delta specs)
   - `refactor-ci-cd-pipeline/`: CI/CD pipeline refactoring
-- `changes/archive/`: Completed/historical changes
-  - `2026-01-19-add-item-picture-filter/`
-  - `2026-02-04-add-chili-sauce-itemtype/`
+  - `postgres-migration/`: MySQL → Postgres (Neon) migration with pgloader data move
+- `changes/archive/`: Completed changes, date-prefixed (not individually indexed)
 - Each change has: `proposal.md`, `tasks.md`, optional `design.md`
 - Delta specs in `changes/{name}/specs/` are merged into main `specs/` on completion
 
 ## Work Guidance
 
-- New changes follow OpenSpec workflow: proposal → design → tasks → implementation
+- New changes start via CLI: `openspec new change <name>`, then `openspec status` / `openspec instructions <artifact>` drive the workflow
+- Artifact order: proposal → design → specs → tasks → implementation
 - Delta specs in active changes should be synced to main specs when change completes
 - Archive completed changes to `changes/archive/` with date prefix
 - Specs use `## ADDED|MODIFIED|REMOVED Requirements` headers for delta diffs
 
 ## Verification
 
-- No automated spec verification configured
+- `openspec validate --changes` — validates change structure and spec format
 
 ## Child DOX Index
 
