@@ -11,9 +11,9 @@ Cloud SQL (MySQL) is the dominant infrastructure cost of the platform. The API a
 - Change `type:json` column tags to `type:jsonb` (`Item.FieldValues`, `ItemTypeSchema.UniqueFields`, `ItemTypeField.Validation`).
 - Replace MySQL-only `SET FOREIGN_KEY_CHECKS = 0/1` statements in migration/cleanup code with the Postgres equivalent (or remove where the legacy-schema workaround is no longer needed).
 - Swap the testcontainer in `utils/testdb.go` from the MySQL module to the Postgres module.
-- Update `docker-compose.yaml` / `docker-compose.prod.yml`: replace the `mysql` service with `postgres`, drop `mysql/my.cnf`.
+- Update `docker-compose.yaml`: replace the `mysql` service with `postgres`.
 - One-off data migration: rehearse then execute a pgloader `--data-only` load from the Cloud SQL MySQL export into the GORM-created Postgres schema, with row-count verification. Documented as a runbook, no repo code.
-- Update docs (`docs/api/deployment.md`, `docs/getting-started/local-development.md`, `docs/guides/migration-process.md`) for the new database and cutover process.
+- Update docs (`docs/getting-started/local-development.md`, `docs/guides/migration-process.md`) for the new database and cutover process; write a new `docs/api/deployment.md` (Cloud Run + Neon) — the previous docker-compose-based guide was deleted.
 
 ## Capabilities
 

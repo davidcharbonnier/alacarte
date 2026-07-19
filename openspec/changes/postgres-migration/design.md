@@ -6,7 +6,7 @@ The API (`apps/api`, Go + Gin + GORM) runs on Cloud Run (scale-to-zero) backed b
 - `utils/testdb.go` — testcontainers MySQL module
 - `internal/cleanup/cleanup.go` — `SET FOREIGN_KEY_CHECKS` (×2, legacy-schema workarounds)
 - `models/schemaModel.go` — `type:enum(...)` tag on `FieldType`
-- Infra: `docker-compose.yaml`, `docker-compose.prod.yml`, `mysql/my.cnf`, docs
+- Infra: `docker-compose.yaml`, docs
 
 All data access otherwise goes through GORM; there are no raw queries against business data, no stored procedures, triggers, or views. Live production data exists and must be preserved (one-off manual migration is acceptable).
 

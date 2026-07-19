@@ -67,7 +67,6 @@ curl -H "Authorization: Bearer YOUR_JWT" \
 For complete API documentation:
 - **[API Documentation](/docs/api/README.md)** - Primary API reference
 - **[API Endpoints Reference](/docs/api/endpoints.md)** - Complete endpoint documentation
-- **[Deployment Guide](/docs/api/deployment.md)** - Docker and Cloud Run deployment
 - **[Security Best Practices](/docs/api/security.md)** - Security improvements
 
 ### Cross-App Features
