@@ -57,11 +57,9 @@ func dropOldTables() error {
 func dropRatingColumn() error {
 	fmt.Println("Step 2: Dropping ratings composite index and item_type column...")
 
-	// FK on item_id requires an index to enforce the constraint. Disable FK
-	// checks so we can drop the old composite idx_ratings_item (which includes
-	// item_type), then re-enable after AutoMigrate creates the replacement.
-	utils.DB.Exec("SET FOREIGN_KEY_CHECKS = 0")
-	defer utils.DB.Exec("SET FOREIGN_KEY_CHECKS = 1")
+	// Postgres: disable triggers to allow dropping FK-backed index, then re-enable.
+	utils.DB.Exec("ALTER TABLE ratings DISABLE TRIGGER ALL")
+	defer utils.DB.Exec("ALTER TABLE ratings ENABLE TRIGGER ALL")
 
 	if utils.DB.Migrator().HasIndex(&models.Rating{}, "idx_ratings_item") {
 		if err := utils.DB.Migrator().DropIndex(&models.Rating{}, "idx_ratings_item"); err != nil {

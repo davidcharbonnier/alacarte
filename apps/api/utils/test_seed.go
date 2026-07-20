@@ -225,6 +225,42 @@ func SeedDefaultSchemas(db *gorm.DB) error {
 				log.Printf("Failed to create field '%s' for schema '%s': %v", f.key, s.name, err)
 			}
 		}
+
+		// Create initial schema version (v1)
+		seedFields := make([]map[string]interface{}, len(s.fields))
+		for i, f := range s.fields {
+			sf := map[string]interface{}{
+				"key":        f.key,
+				"label":      f.label,
+				"field_type": string(f.fieldType),
+				"required":   f.required,
+				"order":      f.order,
+			}
+			if f.group != "" {
+				sf["group"] = f.group
+			}
+			if f.validation != "" {
+				var v interface{}
+				json.Unmarshal([]byte(f.validation), &v)
+				sf["validation"] = v
+			}
+			if f.options != "" {
+				var o interface{}
+				json.Unmarshal([]byte(f.options), &o)
+				sf["options"] = o
+			}
+			seedFields[i] = sf
+		}
+		fieldsJSON, _ := json.Marshal(seedFields)
+		version := models.SchemaVersion{
+			SchemaID: schema.ID,
+			Version:  1,
+			Fields:   string(fieldsJSON),
+			IsActive: true,
+		}
+		if err := db.Create(&version).Error; err != nil {
+			log.Printf("Failed to create version for schema '%s': %v", s.name, err)
+		}
 	}
 
 	return nil

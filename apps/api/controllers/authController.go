@@ -46,14 +46,16 @@ func GoogleOAuthExchange(c *gin.Context) {
 
 	if err != nil {
 		// Create new user from Google account
+		isInitialAdmin := utils.GetEnv("INITIAL_ADMIN_EMAIL", "") == googleUser.Email
 		user = models.User{
-			GoogleID:     googleUser.Sub,
-			Email:        googleUser.Email,
-			FullName:     googleUser.Name,
-			DisplayName:  "", // Will be set during profile completion
-			Avatar:       googleUser.Picture,
-			Discoverable: true,
-			LastLoginAt:  time.Now(),
+			GoogleID:         googleUser.Sub,
+			Email:            googleUser.Email,
+			FullName:         googleUser.Name,
+			DisplayName:      googleUser.Name, // ponytail: use full name as initial display name
+			Avatar:           googleUser.Picture,
+			Discoverable:     true,
+			ProfileCompleted: isInitialAdmin, // ponytail: initial admin bypasses profile setup
+			LastLoginAt:      time.Now(),
 		}
 
 		if err := utils.DB.Create(&user).Error; err != nil {

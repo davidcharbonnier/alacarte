@@ -569,7 +569,77 @@ func TestSchemaVersionHistory(t *testing.T) {
 	if w.Code != http.StatusOK && w.Code != http.StatusNotFound {
 		t.Fatalf("unexpected status: %d", w.Code)
 	}
+}
 
-	// Cheese may or may not have a version 1 depending on seed data
-	// The test is mainly that the endpoint responds correctly
+func TestFieldTypeValid(t *testing.T) {
+	tests := []struct {
+		ft    models.FieldType
+		valid bool
+	}{
+		{models.FieldTypeText, true},
+		{models.FieldTypeTextarea, true},
+		{models.FieldTypeNumber, true},
+		{models.FieldTypeSelect, true},
+		{models.FieldTypeCheckbox, true},
+		{models.FieldTypeEnum, true},
+		{models.FieldType("banana"), false},
+		{models.FieldType(""), false},
+		{models.FieldType("TEXT"), false},
+	}
+
+	for _, tt := range tests {
+		got := tt.ft.Valid()
+		if got != tt.valid {
+			t.Errorf("FieldType(%q).Valid() = %v, want %v", tt.ft, got, tt.valid)
+		}
+	}
+}
+
+func TestSchemaCreate_InvalidFieldType(t *testing.T) {
+	router, token, cleanup := setupControllerTest(t)
+	defer cleanup()
+
+	body := map[string]interface{}{
+		"name":         "invalid-field-test",
+		"display_name": "Invalid Field Test",
+		"plural_name":  "Invalid Field Tests",
+		"icon":         "x",
+		"color":        "#FF0000",
+		"fields": []map[string]interface{}{
+			{
+				"key":        "name",
+				"label":      "Name",
+				"field_type": "banana",
+				"required":   true,
+			},
+		},
+	}
+	bodyJSON, _ := json.Marshal(body)
+
+	w := performRequest(router, "POST", "/admin/schemas", token, bodyJSON)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid field type, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestSchemaUpdate_InvalidFieldType(t *testing.T) {
+	router, token, cleanup := setupControllerTest(t)
+	defer cleanup()
+
+	body := map[string]interface{}{
+		"fields": []map[string]interface{}{
+			{
+				"key":        "name",
+				"label":      "Name",
+				"field_type": "banana",
+				"required":   true,
+			},
+		},
+	}
+	bodyJSON, _ := json.Marshal(body)
+
+	w := performRequest(router, "PUT", "/admin/schemas/cheese", token, bodyJSON)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid field type on update, got %d: %s", w.Code, w.Body.String())
+	}
 }

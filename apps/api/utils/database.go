@@ -1,58 +1,33 @@
 package utils
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/davidcharbonnier/alacarte-api/models"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
-func MySQLConnect() {
+func Connect() {
+	databaseURL, defined := os.LookupEnv("DATABASE_URL")
+	if !defined {
+		log.Fatal("DATABASE_URL env var is not defined")
+	}
+
 	var err error
-
-	mysql_host, defined := os.LookupEnv("MYSQL_HOST")
-	if !defined {
-		log.Fatal("MYSQL_HOST env var is not defined")
-	}
-	mysql_port, defined := os.LookupEnv("MYSQL_PORT")
-	if !defined {
-		mysql_port = "3306"
-	}
-	mysql_username, defined := os.LookupEnv("MYSQL_USERNAME")
-	if !defined {
-		log.Fatal("MYSQL_USERNAME env var is not defined")
-	}
-	mysql_password, defined := os.LookupEnv("MYSQL_PASSWORD")
-	if !defined {
-		log.Fatal("MYSQL_PASSWORD env var is not defined")
-	}
-	mysql_database, defined := os.LookupEnv("MYSQL_DATABASE")
-	if !defined {
-		log.Fatal("MYSQL_DATABASE env var is not defined")
-	}
-
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&collation=utf8mb4_unicode_ci&parseTime=True&allowNativePasswords=false", mysql_username, mysql_password, mysql_host, mysql_port, mysql_database)
-
-	fmt.Println("Connecting to database " + mysql_database + " at " + mysql_host + ":" + mysql_port)
-
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-		// Use standard GORM naming conventions (plural tables)
-	})
+	DB, err = gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	// Simple connection test
 	if sqlDB, err := DB.DB(); err == nil {
 		if err := sqlDB.Ping(); err != nil {
-			fmt.Println("Database ping failed:", err)
+			log.Println("Database ping failed:", err)
 		} else {
-			fmt.Println("Database connection successful")
+			log.Println("Database connection successful")
 		}
 	}
 }
@@ -61,15 +36,6 @@ func MySQLConnect() {
 func RunMigrations() {
 	log.Println("Running database migrations...")
 
-	// TODO: Remove this workaround once legacy schemas (cheese, gin, wine, coffee,
-	// chili_sauce) are dropped and all data has been migrated through the self-healing
-	// migration. FK checks are disabled to allow AutoMigrate to add fk_items_ratings on
-	// databases restored from pre-migration backups where ratings.item_id still references
-	// legacy table IDs.
-	DB.Exec("SET FOREIGN_KEY_CHECKS = 0")
-	defer DB.Exec("SET FOREIGN_KEY_CHECKS = 1")
-
-	// Safe additive migrations - only adds new tables/columns, never removes
 	err := DB.AutoMigrate(
 		&models.User{},
 		&models.Rating{},

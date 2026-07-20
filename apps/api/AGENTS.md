@@ -14,14 +14,14 @@ Go backend for the À la carte rating platform. Serves all API endpoints for cli
 
 ## Local Contracts
 
-- Framework: Gin (HTTP), GORM (ORM), MySQL 8.0+
+- Framework: Gin (HTTP), GORM (ORM), Postgres 16+
 - Auth: Google OAuth 2.0 → JWT (access + refresh tokens)
 - Storage: MinIO/S3 for images
 - Schema system: Dynamic item schemas with validation engine, schema registry, hybrid JSON+EAV storage
 - Dynamic item endpoints: `/api/items/:type` adapts to any active schema
 - Legacy item endpoints: `/api/cheese`, `/api/wine`, `/api/gin`, `/api/coffee`, `/api/chili-sauce` coexist with dynamic items
 - DB migrations run automatically on startup; self-healing migration mode via `RUN_SELF_HEALING_MIGRATION=true`
-- Environment: `.env` file in `apps/api/`
+- Environment: `.env` file in `apps/api/`, single `DATABASE_URL` for database connection
 - Tests: Go native testing (`go test`), files named `*_test.go`
 - Code style: `gofmt`, Effective Go conventions
 - CHANGELOG in `apps/api/CHANGELOG.md`

@@ -50,7 +50,7 @@ func (r *SchemaRegistry) LoadSchemas() error {
 
 	var schemas []models.ItemTypeSchema
 	if err := utils.DB.Preload("Fields", func(db *gorm.DB) *gorm.DB {
-		return db.Order("`order` ASC")
+		return db.Order("\"order\" ASC")
 	}).Order("name ASC").Find(&schemas).Error; err != nil {
 		return fmt.Errorf("failed to load schemas: %w", err)
 	}
@@ -64,7 +64,7 @@ func (r *SchemaRegistry) LoadSchemas() error {
 	var versionResults []schemaVersionResult
 	if err := utils.DB.Model(&models.SchemaVersion{}).
 		Select("schema_id, version, fields").
-		Where("is_active = 1 AND schema_id IN (SELECT id FROM item_type_schemas)").
+		Where("is_active = true AND schema_id IN (SELECT id FROM item_type_schemas)").
 		Order("version DESC").
 		Find(&versionResults).Error; err != nil {
 		return fmt.Errorf("failed to load schema versions: %w", err)
@@ -161,7 +161,7 @@ func (r *SchemaRegistry) RefreshSchema(name string) error {
 
 	var schema models.ItemTypeSchema
 	if err := utils.DB.Preload("Fields", func(db *gorm.DB) *gorm.DB {
-		return db.Order("`order` ASC")
+		return db.Order("\"order\" ASC")
 	}).Where("name = ?", name).First(&schema).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			delete(r.schemas, name)
@@ -178,7 +178,7 @@ func (r *SchemaRegistry) RefreshSchema(name string) error {
 	var activeVersion *models.SchemaVersion
 	var versionHash string
 	var versionResult models.SchemaVersion
-	err := utils.DB.Where("schema_id = ? AND is_active = 1", schema.ID).Order("version DESC").Limit(1).First(&versionResult).Error
+	err := utils.DB.Where("schema_id = ? AND is_active = true", schema.ID).Order("version DESC").Limit(1).First(&versionResult).Error
 	if err == nil {
 		activeVersion = &versionResult
 		versionHash = GenerateVersionHash(activeVersion)

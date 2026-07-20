@@ -5,10 +5,10 @@ context: |
   Multi-platform rating/sharing system for consumables (cheese, gin, wine, coffee, chili sauce; extensible via dynamic schema system).
 
   ## Tech Stack
-  - **API:** Go (Gin, GORM, MySQL), Google OAuth 2.0, JWT
+  - **API:** Go (Gin, GORM, Postgres), Google OAuth 2.0, JWT
   - **Client:** Flutter (Riverpod, Google Sign-In), Cross-platform (Web, Android, Desktop)
   - **Admin:** Vite + React SPA (TypeScript, MUI, TanStack Router/Query)
-  - **Infrastructure:** Google Cloud Run, Cloud SQL, Docker
+  - **Infrastructure:** Google Cloud Run, Neon (serverless Postgres), Docker
   - **CI/CD:** GitHub Actions, GHCR (ghcr.io), semantic-release (automated versioning)
 
   ## Monorepo Structure

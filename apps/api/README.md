@@ -40,10 +40,7 @@ go run main.go
 
 ### Seeding Data
 ```bash
-RUN_SEEDING=true \
-  CHEESE_DATA_SOURCE=../alacarte-seed/cheeses.json \
-  GIN_DATA_SOURCE=../alacarte-seed/gins.json \
-  go run main.go
+RUN_SEEDING=true go run main.go
 ```
 
 ### Resetting Database (Development)
@@ -83,7 +80,7 @@ For features that span multiple applications:
 
 - **Language:** Go 1.21+
 - **Framework:** Gin (HTTP web framework)
-- **Database:** MySQL 8.0+ with GORM ORM
+- **Database:** Postgres 16+ with GORM ORM
 - **Authentication:** Google OAuth 2.0 + JWT
 - **Deployment:** Docker + Google Cloud Run
 
@@ -108,8 +105,7 @@ See `.env.example` for complete list. Key variables:
 
 ```bash
 # Database
-MYSQL_HOST=localhost
-MYSQL_DATABASE=alacarte
+DATABASE_URL=postgres://user:password@localhost:5432/alacarte?sslmode=disable
 
 # Authentication
 JWT_SECRET_KEY=your-secret-key

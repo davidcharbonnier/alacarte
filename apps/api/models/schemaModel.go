@@ -24,7 +24,7 @@ type ItemTypeSchema struct {
 	Icon         string          `gorm:"type:varchar(50);not null" json:"icon"`
 	Color        string          `gorm:"type:varchar(7);not null" json:"color"`
 	IsActive     bool            `gorm:"default:true" json:"is_active"`
-	UniqueFields string          `gorm:"type:json" json:"unique_fields"`
+	UniqueFields string          `gorm:"type:jsonb" json:"unique_fields"`
 	Fields       []ItemTypeField `gorm:"foreignKey:SchemaID" json:"fields,omitempty"`
 	Versions     []SchemaVersion `gorm:"foreignKey:SchemaID" json:"versions,omitempty"`
 	Items        []Item          `gorm:"foreignKey:SchemaID" json:"items,omitempty"`
@@ -40,11 +40,11 @@ type ItemTypeField struct {
 	SchemaID   uint           `gorm:"not null;index:idx_order" json:"schema_id"`
 	Key        string         `gorm:"type:varchar(50);not null" json:"key"`
 	Label      string         `gorm:"type:varchar(100);not null" json:"label"`
-	FieldType  FieldType      `gorm:"type:enum('text','textarea','number','select','checkbox','enum');not null" json:"field_type"`
+	FieldType  FieldType      `gorm:"type:varchar(20);not null" json:"field_type"`
 	Required   bool           `gorm:"default:false" json:"required"`
 	Order      int            `gorm:"not null;default:0;index:idx_order" json:"order"`
 	Group      *string        `gorm:"type:varchar(50)" json:"group,omitempty"`
-	Validation *string        `gorm:"type:json" json:"validation,omitempty"`
+	Validation *string        `gorm:"type:jsonb" json:"validation,omitempty"`
 	Display    *string        `gorm:"type:json" json:"display,omitempty"`
 	Options    *string        `gorm:"type:json" json:"options,omitempty"`
 	Schema     ItemTypeSchema `gorm:"foreignKey:SchemaID;constraint:OnDelete:CASCADE" json:"-"`
@@ -52,6 +52,14 @@ type ItemTypeField struct {
 
 func (ItemTypeField) TableName() string {
 	return "item_type_fields"
+}
+
+func (ft FieldType) Valid() bool {
+	switch ft {
+	case FieldTypeText, FieldTypeTextarea, FieldTypeNumber, FieldTypeSelect, FieldTypeCheckbox, FieldTypeEnum:
+		return true
+	}
+	return false
 }
 
 type SchemaVersion struct {
