@@ -20,8 +20,17 @@ func init() {
 	}
 
 	// Initialize database and run base migrations
-	utils.MySQLConnect()
+	utils.Connect()
 	utils.RunMigrations()
+
+	// Seed default schemas if requested
+	if os.Getenv("RUN_SEEDING") == "true" {
+		if err := utils.SeedDefaultSchemas(utils.DB); err != nil {
+			fmt.Printf("Warning: seeding failed: %v\n", err)
+		} else {
+			fmt.Println("Default schemas seeded successfully")
+		}
+	}
 }
 
 // gin code

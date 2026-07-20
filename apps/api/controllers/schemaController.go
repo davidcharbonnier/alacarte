@@ -149,7 +149,7 @@ func SchemaDetails(c *gin.Context) {
 		}
 
 		var fields []models.ItemTypeField
-		utils.DB.Where("schema_id = ?", schema.ID).Order("`order` ASC").Find(&fields)
+		utils.DB.Where("schema_id = ?", schema.ID).Order("\"order\" ASC").Find(&fields)
 
 		response := buildSchemaDetailResponse(&schema, fields)
 		c.JSON(http.StatusOK, response)
@@ -318,7 +318,7 @@ func SchemaCreate(c *gin.Context) {
 
 	if err := tx.Create(&schema).Error; err != nil {
 		tx.Rollback()
-		if strings.Contains(err.Error(), "Duplicate") || strings.Contains(err.Error(), "UNIQUE") {
+		if strings.Contains(strings.ToLower(err.Error()), "duplicate") || strings.Contains(err.Error(), "UNIQUE") {
 			c.JSON(http.StatusConflict, gin.H{"error": "A schema with this name already exists"})
 			return
 		}
@@ -327,11 +327,18 @@ func SchemaCreate(c *gin.Context) {
 	}
 
 	for i, fieldData := range body.Fields {
+		fieldType := models.FieldType(getStringField(fieldData, "field_type"))
+		if !fieldType.Valid() {
+			tx.Rollback()
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid field type '" + string(fieldType) + "' for field '" + getStringField(fieldData, "key") + "'"})
+			return
+		}
+
 		field := models.ItemTypeField{
 			SchemaID:  schema.ID,
 			Key:       getStringField(fieldData, "key"),
 			Label:     getStringField(fieldData, "label"),
-			FieldType: models.FieldType(getStringField(fieldData, "field_type")),
+			FieldType: fieldType,
 			Required:  getBoolField(fieldData, "required"),
 			Order:     i,
 		}
@@ -521,7 +528,7 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 			}
 		} else {
 			var currentVersion int
-			tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Select("MAX(version)").Scan(&currentVersion)
+			tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Select("COALESCE(MAX(version), 0)").Scan(&currentVersion)
 			newVersion := currentVersion + 1
 
 			tx.Model(&models.SchemaVersion{}).Where("schema_id = ?", schemaID).Update("is_active", false)
@@ -552,13 +559,20 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 				newKeys[i] = fieldKey
 
 				var existingField models.ItemTypeField
-				err := tx.Where("schema_id = ? AND `key` = ?", schemaID, fieldKey).First(&existingField).Error
+				err := tx.Where("schema_id = ? AND \"key\" = ?", schemaID, fieldKey).First(&existingField).Error
+
+				fieldType := models.FieldType(getStringField(fieldData, "field_type"))
+				if !fieldType.Valid() {
+					tx.Rollback()
+					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid field type '" + string(fieldType) + "' for field '" + fieldKey + "'"})
+					return
+				}
 
 				field := models.ItemTypeField{
 					SchemaID:  schemaID,
 					Key:       fieldKey,
 					Label:     getStringField(fieldData, "label"),
-					FieldType: models.FieldType(getStringField(fieldData, "field_type")),
+					FieldType: fieldType,
 					Required:  getBoolField(fieldData, "required"),
 					Order:     i,
 				}
@@ -620,7 +634,7 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 
 			// Delete orphaned fields not present in the new field set
 			if len(newKeys) > 0 {
-				if err := tx.Where("schema_id = ? AND `key` NOT IN ?", schemaID, newKeys).Delete(&models.ItemTypeField{}).Error; err != nil {
+				if err := tx.Where("schema_id = ? AND \"key\" NOT IN ?", schemaID, newKeys).Delete(&models.ItemTypeField{}).Error; err != nil {
 					tx.Rollback()
 					c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to delete orphaned fields"})
 					return
@@ -642,7 +656,7 @@ func processSchemaUpdate(c *gin.Context, schemaID uint, schemaName string) {
 	var updatedSchema models.ItemTypeSchema
 	utils.DB.Where("id = ?", schemaID).First(&updatedSchema)
 	var fields []models.ItemTypeField
-	utils.DB.Where("schema_id = ?", schemaID).Order("`order` ASC").Find(&fields)
+	utils.DB.Where("schema_id = ?", schemaID).Order("\"order\" ASC").Find(&fields)
 
 	updated := metadataChanged || fieldsChanged
 	var message string

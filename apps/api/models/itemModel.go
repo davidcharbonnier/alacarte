@@ -10,7 +10,7 @@ type Item struct {
 	Name            string           `gorm:"type:varchar(255);index" json:"name"`
 	SchemaID        uint             `gorm:"not null;index" json:"schema_id"`
 	ImageURL        *string          `gorm:"type:varchar(500)" json:"image_url,omitempty"`
-	FieldValues     string           `gorm:"type:json" json:"field_values,omitempty"`
+	FieldValues     string           `gorm:"type:jsonb" json:"field_values,omitempty"`
 	UserID          int              `gorm:"not null;index" json:"user_id"`
 	SchemaVersionID *uint            `gorm:"index" json:"schema_version_id,omitempty"`
 	Schema          ItemTypeSchema   `gorm:"foreignKey:SchemaID;constraint:OnDelete:CASCADE" json:"-"`

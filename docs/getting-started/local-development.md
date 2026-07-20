@@ -20,7 +20,7 @@ docker-compose up -d
 
 This will start:
 - **API**: http://localhost:8080
-- **MySQL**: localhost:3306
+- **Postgres**: localhost:5432
 - **MinIO**: http://localhost:9000 (API), http://localhost:9001 (Console)
 - **Admin Panel**: http://localhost:3000
 
@@ -48,8 +48,8 @@ flutter run -d chrome
 ### API Only
 
 ```bash
-# Start API, MySQL, and MinIO
-docker-compose up api mysql minio create-bucket
+# Start API, Postgres, and MinIO
+docker-compose up api postgres minio create-bucket
 
 # Or run without Docker:
 cd apps/api
@@ -92,7 +92,7 @@ Make sure these are configured before running.
 All services share the `alacarte-network` bridge network, allowing:
 - Admin → API communication
 - Client → API communication
-- Direct MySQL access for debugging
+- Direct Postgres access for debugging
 - MinIO file storage access
 
 ## Stopping Services
@@ -111,7 +111,7 @@ docker-compose down -v
 
 If ports are already in use, modify `docker-compose.yml`:
 - API: Change `8080:8080`
-- MySQL: Change `3306:3306`
+- Postgres: Change `5432:5432`
 - Admin: Change `3000:3000`
 - MinIO: Change `9000:9000` and `9001:9001`
 
@@ -121,14 +121,14 @@ If ports are already in use, modify `docker-compose.yml`:
 2. Check admin `.env.local` has correct API URL (should be `http://api:8080` for Docker networking)
 3. Ensure both services are on `alacarte-network`
 
-### MySQL Connection Issues
+### Postgres Connection Issues
 
 ```bash
-# Check MySQL is ready
-docker-compose logs mysql
+# Check Postgres is ready
+docker-compose logs postgres
 
 # Connect directly to debug
-docker-compose exec mysql mysql -u root -ppassword
+docker-compose exec postgres psql -U rest_api -d rest_api
 ```
 
 ### Client Can't Connect to API
@@ -160,7 +160,7 @@ docker-compose logs -f
 # View logs for specific service
 docker-compose logs -f api
 docker-compose logs -f admin
-docker-compose logs -f mysql
+docker-compose logs -f postgres
 docker-compose logs -f minio
 ```
 

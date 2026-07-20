@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
-	tcmysql "github.com/testcontainers/testcontainers-go/modules/mysql"
-	gormmysql "gorm.io/driver/mysql"
+	tpg "github.com/testcontainers/testcontainers-go/modules/postgres"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-// SetupTestDB creates a fresh MySQL 8.4 container, runs migrations, and returns a cleanup function.
+// SetupTestDB creates a fresh Postgres 16 container, runs migrations, and returns a cleanup function.
 // Use it in tests like:
 //
 //	cleanup, err := utils.SetupTestDB()
@@ -19,26 +20,34 @@ import (
 func SetupTestDB() (func(), error) {
 	ctx := context.Background()
 
-	ctr, err := tcmysql.Run(ctx,
-		"mysql:8.4",
-		tcmysql.WithDatabase("test_alacarte"),
-		tcmysql.WithUsername("test"),
-		tcmysql.WithPassword("test"),
+	ctr, err := tpg.Run(ctx,
+		"postgres:16-alpine",
+		tpg.WithDatabase("test_alacarte"),
+		tpg.WithUsername("test"),
+		tpg.WithPassword("test"),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to start mysql container: %w", err)
+		return nil, fmt.Errorf("failed to start postgres container: %w", err)
 	}
 
-	connStr, err := ctr.ConnectionString(ctx, "parseTime=true")
+	connStr, err := ctr.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		_ = ctr.Terminate(ctx)
 		return nil, fmt.Errorf("failed to get connection string: %w", err)
 	}
 
-	db, err := gorm.Open(gormmysql.Open(connStr), &gorm.Config{})
+	// ponytail: retry connect, Postgres sometimes not ready when container reports ready
+	var db *gorm.DB
+	for i := 0; i < 10; i++ {
+		db, err = gorm.Open(postgres.Open(connStr), &gorm.Config{})
+		if err == nil {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 	if err != nil {
 		_ = ctr.Terminate(ctx)
-		return nil, fmt.Errorf("failed to connect to test db: %w", err)
+		return nil, fmt.Errorf("failed to connect to test db after retries: %w", err)
 	}
 
 	// Set global DB so existing code works

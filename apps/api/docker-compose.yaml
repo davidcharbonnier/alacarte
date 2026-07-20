@@ -8,8 +8,8 @@ services:
     volumes:
       - ./:/project/
     depends_on:
-      mysql:
-        condition: service_started
+      postgres:
+        condition: service_healthy
       minio:
         condition: service_healthy
       create-bucket:
@@ -18,18 +18,22 @@ services:
       - alacarte-network
       - default
 
-  mysql:
-    image: mysql:8.4.5
+  postgres:
+    image: postgres:16-alpine
     restart: unless-stopped
     ports:
-      - 3306:3306
+      - 5432:5432
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: rest_api
-      MYSQL_USER: rest_api
-      MYSQL_PASSWORD: rest_api
+      POSTGRES_USER: rest_api
+      POSTGRES_PASSWORD: rest_api
+      POSTGRES_DB: rest_api
     volumes:
-      - mysql_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rest_api -d rest_api"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - alacarte-network
 
@@ -70,7 +74,7 @@ services:
       - alacarte-network
 
 volumes:
-  mysql_data:
-    name: alacarte-mysql-data
+  postgres_data:
+    name: alacarte-postgres-data
   minio_data:
     name: alacarte-minio-data

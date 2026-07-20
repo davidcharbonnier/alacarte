@@ -14,3 +14,8 @@ services:
       - ./vite.config.ts:/app/vite.config.ts
       - ./tsconfig.json:/app/tsconfig.json
       - /app/node_modules
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - default

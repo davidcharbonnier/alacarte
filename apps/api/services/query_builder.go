@@ -92,8 +92,8 @@ func (qb *EAVQueryBuilder) BuildListQuery(params QueryParams) (*ListResult, erro
 				Where("field_id IN (?)",
 					tx.Model(&models.ItemTypeField{}).
 						Select("id").
-						Where("schema_id = ? AND display LIKE ?", cached.Schema.ID, "%\"searchable\":true%"))
-			query = query.Where("id IN (?) OR LOWER(field_values) LIKE ?", eavSubquery, "%"+searchTerm+"%")
+						Where("schema_id = ? AND display::text LIKE ?", cached.Schema.ID, "%\"searchable\":true%"))
+			query = query.Where("id IN (?) OR LOWER(field_values::text) LIKE ?", eavSubquery, "%"+searchTerm+"%")
 		}
 
 		if params.Rated && params.RatedByUserID > 0 {
