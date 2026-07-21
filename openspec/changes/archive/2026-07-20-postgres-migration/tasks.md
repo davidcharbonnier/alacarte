@@ -39,15 +39,15 @@
 
 ## 6. Data Migration & Cutover **[manual]**
 
-- [ ] 6.1 Create Neon project + scratch database **[manual]**
-- [ ] 6.2 Deploy new API image pointed at scratch Neon DB; confirm AutoMigrate schema **[manual]**
-- [ ] 6.3 Rehearse: pgloader `--data-only --reset-sequences` from Cloud SQL export into scratch DB **[manual]**
-- [ ] 6.4 Verify rehearsal: per-table row counts, JSON/enum spot-checks, insert one item + one rating **[manual]**
-- [ ] 6.5 Cutover: final pgloader run into production Neon DB, verify **[manual]**
-- [ ] 6.6 Update Cloud Run `DATABASE_URL` to production Neon, confirm API health **[manual]**
-- [ ] 6.7 Stop Cloud SQL instance; start one-week safety window **[manual]**
-- [ ] 6.8 Delete Cloud SQL instance after safety window **[manual]**
+- [x] 6.1 Create Neon project + scratch database **[manual]**
+- [x] 6.2 Deploy new API image pointed at scratch Neon DB; confirm AutoMigrate schema **[manual]**
+- [x] 6.3 Rehearse: pgloader `--data-only --reset-sequences` from Cloud SQL export into scratch DB **[manual]**
+- [x] 6.4 Verify rehearsal: per-table row counts, JSON/enum spot-checks, insert one item + one rating **[manual]**
+- [x] 6.5 Cutover: final pgloader run into production Neon DB, verify **[manual]**
+- [x] 6.6 Update Cloud Run `DATABASE_URL` to production Neon, confirm API health **[manual]**
+- [x] 6.7 Stop Cloud SQL instance; start one-week safety window **[manual]**
+- [x] 6.8 Delete Cloud SQL instance after safety window **[manual]**
 
 ## 7. Release
 
-- [ ] 7.1 Commit with `BREAKING CHANGE:` footer documenting the `MYSQL_*` → `DATABASE_URL` rename → major version bump
+- [x] 7.1 Commit with `BREAKING CHANGE:` footer documenting the `MYSQL_*` → `DATABASE_URL` rename → major version bump
