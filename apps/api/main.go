@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/davidcharbonnier/alacarte-api/controllers"
@@ -212,16 +213,21 @@ func main() {
 func setupCORS() gin.HandlerFunc {
 	config := cors.DefaultConfig()
 
-	if origins := os.Getenv("ALLOWED_ORIGINS"); origins != "" {
-		config.AllowOrigins = strings.Split(origins, ",")
-	} else {
-		// Development default
-		config.AllowOrigins = []string{
-			"http://localhost:3000",
-			"http://localhost:8080",
-			"http://127.0.0.1:3000",
-			"http://127.0.0.1:8080",
+	origins := os.Getenv("ALLOWED_ORIGINS")
+	if origins == "" {
+		origins = "http://localhost:3000,http://localhost:8080"
+	}
+
+	allowed := strings.Split(origins, ",")
+	// ponytail: path.Match supports * and ? wildcards in ALLOWED_ORIGINS
+	config.AllowOriginFunc = func(origin string) bool {
+		for _, pattern := range allowed {
+			pattern = strings.TrimSpace(pattern)
+			if ok, _ := path.Match(pattern, origin); ok {
+				return true
+			}
 		}
+		return false
 	}
 
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization", "Cache-Control", "Pragma"}
