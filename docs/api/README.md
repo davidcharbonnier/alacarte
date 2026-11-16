@@ -17,7 +17,6 @@ This documentation serves as the **primary reference for API developers** workin
 
 ### Implementation Guides
 - **[Adding New Item Types](/docs/guides/adding-new-item-types.md#phase-1-backend-implementation-65-min)** - Backend implementation guide
-- **[Backend Checklist](/docs/guides/backend-checklist.md)** - Quick reference checklist
 
 ## 🔗 Related Documentation
 
