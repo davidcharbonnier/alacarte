@@ -3,7 +3,7 @@
 > **Concepts first:** the cross-app privacy model (visibility tiers, audience, sharing behavior, cascade rules, privacy guarantees) lives in [docs/features/privacy-model.md](/docs/features/privacy-model.md). This document covers only the backend implementation.
 
 ---
-**Last Updated:** September 2025  
+**Last Updated:** November 2026  
 **Related Documentation:**
 - [Privacy Model (canonical)](/docs/features/privacy-model.md)
 - [Authentication System](authentication-system.md)
@@ -96,7 +96,7 @@ users.GET("/shareable", controllers.GetShareableUsers)                   // prev
 
 ### Implementation Notes
 
-- **`PATCH /user/me`** — partial update; validates display name (trimmed, non-empty, unique → 409) and applies `discoverable`.
+- **`PATCH /user/me`** — partial update; writes only whitelisted fields (`display_name`, `discoverable`). Display-name validation (2–50 chars, uniqueness → 409) happens at profile completion (`/profile/complete`), not here.
 - **Bulk operations** (`/bulk/private`, `/bulk/unshare/:userId`) run per rating and return `ratings_affected` (plus `removed_user` display name for unshare).
 - **`/users/shareable`** — returns `previous_connections` (users who have shared with the current user, via `rating_viewers` join) and `discoverable` users, excluding the requester and previous connections so previous connections appear first.
 - **Ownership check** — all rating-mutation endpoints verify `rating.UserID` matches the token user (403 otherwise).

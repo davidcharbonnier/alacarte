@@ -3,7 +3,7 @@
 > **Concepts first:** the cross-app privacy model (visibility tiers, audience, sharing behavior, cascade rules, privacy guarantees) lives in [docs/features/privacy-model.md](/docs/features/privacy-model.md). This document covers only the Flutter client implementation.
 
 ---
-**Last Updated:** September 2025  
+**Last Updated:** November 2026  
 **Related Documentation:**
 - [Privacy Model (canonical)](/docs/features/privacy-model.md)
 - [Authentication System](authentication-system.md)

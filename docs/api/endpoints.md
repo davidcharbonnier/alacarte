@@ -295,11 +295,11 @@ Returns ratings shared with the specified user.
 ### Get Ratings by Item
 
 ```http
-GET /api/rating/:type/:id
+GET /api/rating/:id
 Authorization: Bearer JWT_TOKEN
 ```
 
-**Example:** `GET /api/rating/wine/1`
+**Example:** `GET /api/rating/1`
 
 Returns:
 - User's own ratings for this item

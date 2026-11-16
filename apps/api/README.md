@@ -111,7 +111,6 @@ INITIAL_ADMIN_EMAIL=admin@example.com
 
 # Google OAuth
 GOOGLE_CLIENT_ID=your-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
 
 # Server
 GIN_MODE=debug

@@ -2,7 +2,7 @@
 
 > **See also:** App-specific implementation details: [API](/docs/api/authentication-system.md) · [Client](/docs/client/authentication-system.md) · [Admin](/docs/admin/authentication-system.md)
 
-**Last Updated:** January 2025  
+**Last Updated:** November 2026  
 **Status:** Production Ready
 
 The À la carte platform uses **Google OAuth 2.0** with **JWT tokens** for secure, cross-platform authentication.
