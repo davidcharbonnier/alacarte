@@ -7,9 +7,9 @@ Multi-platform rating and sharing system for consumables (cheese, gin, wine, bee
 ```
 alacarte/
 ├── apps/
-│   ├── api/          # Go REST API (GORM + MySQL)
-│   ├── client/       # Flutter mobile/web app
-│   └── admin/        # Next.js admin panel
+│   ├── api/          # Go REST API (Gin + GORM + Postgres)
+│   ├── client/       # Flutter cross-platform app
+│   └── admin/        # Vite + React admin SPA
 ├── docs/             # Consolidated documentation
 └── .github/
     └── workflows/    # CI/CD pipelines
@@ -42,7 +42,7 @@ cd apps/admin && npm install
 ### Development
 
 ```bash
-# Start backend services (API + MySQL + MinIO + Admin)
+# Start backend services (API + Postgres + MinIO + Admin)
 docker-compose up -d
 
 # Run Flutter client (separate terminal)
@@ -116,9 +116,9 @@ Docker images are published automatically to GHCR:
 
 ## 🏗️ Technology Stack
 
-- **API:** Go + Gin + GORM + MySQL
+- **API:** Go + Gin + GORM + Postgres
 - **Client:** Flutter + Riverpod
-- **Admin:** Next.js + TypeScript
+- **Admin:** Vite + React 19 + TypeScript
 - **Infrastructure:** Google Cloud Run + Cloud SQL
 - **CI/CD:** GitHub Actions + GHCR (GitHub Container Registry)
 - **Release Automation:** semantic-release + Conventional Commits
@@ -170,7 +170,7 @@ See [Migration Process Guide](/docs/guides/migration-process.md) for complete in
 
 ## 📚 Documentation
 
-- [CI/CD Setup Guide](./docs/operations/ci-cd-setup.md) ⭐ **UPDATED!**
+- [CI/CD Setup Guide](./docs/operations/ci-cd-setup.md)
 - [Local Development Guide](./docs/getting-started/local-development.md)
 - [API Documentation](./docs/api/README.md)
 - [Client Documentation](./docs/client/README.md)

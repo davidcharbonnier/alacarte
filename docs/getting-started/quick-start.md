@@ -33,10 +33,9 @@ cp apps/api/.env.prod.template apps/api/.env
 cp apps/admin/.env.example apps/admin/.env.local
 
 # Edit apps/admin/.env.local with your configuration:
-# - API_URL (http://localhost:8080)
-# - NEXT_PUBLIC_API_URL (http://localhost:8080)
-# - Google OAuth credentials
-# - NextAuth configuration
+# - VITE_API_URL (http://localhost:8080)
+# - VITE_GOOGLE_CLIENT_ID (Google OAuth Web Client ID)
+
 ```
 
 ### Client Configuration
@@ -107,4 +106,4 @@ curl -I http://localhost:3000
 ## Next Steps
 
 - [Local Development Guide](local-development.md) - Complete setup details
-- [Architecture Overview](/docs/architecture/overview.md) - Understanding the system
+- [Monorepo Strategy](/docs/architecture/monorepo-strategy.md) - Repository structure and versioning

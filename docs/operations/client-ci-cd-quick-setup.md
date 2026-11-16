@@ -136,6 +136,6 @@ git push origin feat/test-ci-cd
 
 ## 🔗 Related Documentation
 
-- [Full CI/CD Documentation](ci-cd-pipeline.md)
-- [Android Setup Guide](android-setup.md)
-- [Authentication System](authentication-system.md)
+- [Full CI/CD Documentation](client-ci-cd-pipeline.md)
+- [Android Setup Guide](../client/setup/android-setup.md)
+- [Authentication System](../features/authentication.md)

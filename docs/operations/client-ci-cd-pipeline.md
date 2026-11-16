@@ -293,8 +293,8 @@ Typical build times:
 
 ## 📚 Related Documentation
 
-- **[Android Setup Guide](android-setup.md)** - Local Android development setup
-- **[Authentication System](authentication-system.md)** - Google OAuth configuration
+- **[Android Setup Guide](../client/setup/android-setup.md)** - Local Android development setup
+- **[Authentication System](../features/authentication.md)** - Google OAuth configuration
 - **Main README** - General project documentation
 
 ## 🎯 Future Enhancements

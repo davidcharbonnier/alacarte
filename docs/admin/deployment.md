@@ -25,19 +25,8 @@
 API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
 NEXT_PUBLIC_API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
 
-# NextAuth Configuration
-NEXTAUTH_URL=https://alacarte-admin-xxx.northamerica-northeast1.run.app
-NEXTAUTH_SECRET=<generate-with-openssl-rand-base64-32>
-
 # Google OAuth (must match backend)
 GOOGLE_CLIENT_ID=<your-google-client-id>
-GOOGLE_CLIENT_SECRET=<your-google-client-secret>
-```
-
-### Generate NextAuth Secret
-
-```bash
-openssl rand -base64 32
 ```
 
 ---
@@ -49,10 +38,9 @@ openssl rand -base64 32
 In Google Cloud Console → APIs & Services → Credentials:
 
 **Production:**
-- JavaScript origins: `https://alacarte-admin-xxx.northamerica-northeast1.run.app`
-- Redirect URI: `https://alacarte-admin-xxx.northamerica-northeast1.run.app/api/auth/callback/google`
+- Authorized JavaScript origins: `https://alacarte-admin-xxx.northamerica-northeast1.run.app`
 
-**Important:** Must use the exact Cloud Run URL
+**Important:** Must use the exact Cloud Run URL. No server-side redirect URI is needed — the SPA uses Google Identity Services (`@react-oauth/google`) and sends the `id_token` to the backend, which verifies it and issues its own JWT (stored in `sessionStorage`).
 
 ---
 
@@ -92,8 +80,8 @@ gcloud run deploy alacarte-admin \
   --platform managed \
   --region northamerica-northeast1 \
   --allow-unauthenticated \
-  --set-env-vars "NEXTAUTH_URL=https://alacarte-admin-xxx.run.app,API_URL=https://backend.run.app,NEXT_PUBLIC_API_URL=https://backend.run.app" \
-  --set-secrets "NEXTAUTH_SECRET=nextauth-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest"
+  --set-env-vars "NEXT_PUBLIC_API_URL=https://backend.run.app,GOOGLE_CLIENT_ID=google-client-id:latest" \
+  --set-secrets "GOOGLE_CLIENT_SECRET=google-client-secret:latest"
 ```
 
 ---
@@ -135,19 +123,17 @@ This user can login immediately and promote other users to admin via the UI.
 ### Production Security
 
 - ✅ HTTPS enforced (Cloud Run automatic)
-- ✅ Secure cookies (automatic in production)
-- ✅ HttpOnly session cookies
-- ✅ CSRF protection (NextAuth)
+- ✅ Backend verifies Google `id_token` before issuing its own JWT
 - ✅ Admin verification at login
 - ✅ Backend JWT validation on all API calls
+- ✅ JWT held in `sessionStorage` (cleared when the tab closes)
 - ✅ No tech stack info disclosed
 - ✅ X-Powered-By header disabled
 
 ### Secrets Management
 
 **Use Google Secret Manager for:**
-- `NEXTAUTH_SECRET`
-- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_CLIENT_SECRET` (used by the backend)
 
 **Never commit to git:**
 - `.env.local`
@@ -157,13 +143,6 @@ This user can login immediately and promote other users to admin via the UI.
 ---
 
 ## Troubleshooting
-
-### UntrustedHost Error
-
-**Symptom:** Login fails with UntrustedHost in logs  
-**Solution:** 
-1. Verify `NEXTAUTH_URL` matches exact Cloud Run URL
-2. Ensure `trustHost: true` is in `auth.ts` (already configured)
 
 ### Access Denied for Admin User
 
@@ -184,8 +163,8 @@ This user can login immediately and promote other users to admin via the UI.
 
 **Symptom:** Google OAuth error after clicking sign in  
 **Solution:**
-1. Add exact Cloud Run URL to Google OAuth redirect URIs
-2. Include the full path: `.../api/auth/callback/google`
+1. Add exact Cloud Run URL to Google OAuth authorized JavaScript origins
+2. Verify `GOOGLE_CLIENT_ID` matches the OAuth client used by the client app
 
 ---
 

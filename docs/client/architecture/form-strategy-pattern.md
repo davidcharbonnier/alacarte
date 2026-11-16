@@ -741,9 +741,8 @@ FormFieldConfig.autocomplete(
 
 ## 📚 Related Documentation
 
-- **[Adding New Item Types](adding-new-item-types.md)** - Complete guide including model, service, provider
-- **[New Item Type Checklist](new-item-type-checklist.md)** - Step-by-step checklist
-- **[Internationalization](internationalization.md)** - Localization system details
+- **[Adding New Item Types](../../guides/adding-new-item-types.md)** - Complete guide including model, service, provider
+- **[Internationalization](../../features/internationalization.md)** - Localization system details
 
 ---
 
