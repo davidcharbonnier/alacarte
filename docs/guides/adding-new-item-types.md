@@ -380,7 +380,7 @@ See the [Migration Process Guide](/docs/guides/migration-process.md) for detaile
 
 - [Schema Management Guide](/docs/admin/schema-management.md) - Detailed admin UI guide
 - [API Endpoints Reference](/docs/api/endpoints.md) - Dynamic schema and item API
-- [Dynamic Schema Design](/openspec/changes/dynamic-item-schema/design.md) - Technical architecture
+- [Dynamic Schema Management](../admin/schema-management.md) - Schema system reference
 - [Client Architecture](/docs/client/README.md) - Flutter client schema discovery
 
 ---

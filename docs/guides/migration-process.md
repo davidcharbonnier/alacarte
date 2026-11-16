@@ -522,7 +522,7 @@ mysql -u root -p alacarte < alacarte-backup-YYYYMMDD.sql
 - [Schema Management Guide](/docs/admin/schema-management.md) - Admin UI guide
 - [Adding New Item Types](/docs/guides/adding-new-item-types.md) - Post-migration guide
 - [API Endpoints Reference](/docs/api/endpoints.md) - Dynamic endpoint documentation
-- [Dynamic Schema Design](/openspec/changes/dynamic-item-schema/design.md) - Technical architecture
+- [Dynamic Schema Management](../admin/schema-management.md) - Schema system reference
 
 ---
 
