@@ -33,3 +33,11 @@ The current CI/CD system lacks intelligent change detection, independent app ver
 - **Tooling**: Potential replacement or augmentation of versio and related tools
 - **Developer Experience**: Improved visibility into build status and artifact availability through PR comments
 - **Deployment Artifacts**: Consistent, versioned Docker images and APKs available for each release
+
+## Status & Remaining Validation
+
+The pipeline described above is implemented (`pr-snapshot.yml`, `release.yml`, `version.yml`; see [CI/CD Setup](ci-cd-setup.md)). The following from the original plan was never verified end-to-end and is untracked elsewhere:
+
+- No manual end-to-end validation of `release.yml` via a test tag has ever been run
+- Dev/prod environment variables and secrets (sections 1.11–1.13, 4.7–4.10 of the original task list) are unverified
+- Client CI/CD quick-setup walkthrough has not been executed against the final pipeline

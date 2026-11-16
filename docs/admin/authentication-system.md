@@ -48,6 +48,7 @@ The `GoogleLogin` `credential` is the Google `id_token` — exactly what the bac
 ## Session Handling
 
 - **Storage:** `sessionStorage` key `jwt_token` (`JWT_STORAGE_KEY` in `lib/api/client.ts`) — session is scoped to the browser tab and ends when the tab closes.
+- **Why `sessionStorage`:** survives page refreshes but clears on tab close and is not shared across tabs. Alternatives were rejected: `localStorage` widens the XSS surface (token outlives the tab), in-memory forces re-auth on refresh, and an httpOnly-cookie BFF needs a server component the static-host deploy doesn't have. XSS risk from third-party scripts is deemed minimal — a pragmatic middle ground.
 - **Request attachment:** Axios request interceptor adds `Authorization: Bearer <jwt>` to every call.
 - **Expiry:** The JWT is checked client-side on context init (`exp` claim); a 24h-expired token is treated as signed out.
 - **401 handling:** The Axios response interceptor navigates to `/login` on any 401 (SPA navigation via a held router reference; a 401 during boot is a cold-start race with the same target).

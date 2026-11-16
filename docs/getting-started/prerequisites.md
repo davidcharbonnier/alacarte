@@ -24,9 +24,9 @@ Before you can run the À la carte project locally, you'll need to install the f
 - **Docker Compose:** [Install Docker Compose](https://docs.docker.com/compose/install/)
 - **Verification:** `docker --version` and `docker compose version`
 
-### MySQL
+### Postgres
 - **Version:** 8.0+
-- **Note:** Docker Compose will run MySQL in a container, so no local installation is required
+- **Note:** Docker Compose will run Postgres in a container, so no local installation is required
 
 ## Google OAuth Setup
 

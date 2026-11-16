@@ -374,21 +374,41 @@ Removes specified user from all of the author's shared ratings.
 ### Get Community Stats
 
 ```http
-GET /api/stats/community/:type/:id
+GET /api/stats/community/:id
 Authorization: Bearer JWT_TOKEN
 ```
 
-**Example:** `GET /api/stats/community/wine/1`
+**Example:** `GET /api/stats/community/1`
 
 **Response:**
 ```json
 {
   "total_ratings": 15,
-  "average_rating": 8.2
+  "average_rating": 8.2,
+  "item_id": 1
 }
 ```
 
-Returns anonymous aggregate statistics (no individual attribution).
+Returns anonymous aggregate statistics for one item (no individual attribution).
+
+### Get Type Stats
+
+```http
+GET /api/stats/type/:type
+Authorization: Bearer JWT_TOKEN
+```
+
+**Example:** `GET /api/stats/type/cheese`
+
+**Response:**
+```json
+{
+  "total_items": 150,
+  "user_rated_count": 42
+}
+```
+
+Returns the total item count for a schema and how many of them the current user has rated (distinct items).
 
 ---
 
@@ -543,16 +563,23 @@ Content-Type: application/json
 - Dual-write: JSON column (fast reads) + EAV rows (filterable)
 - Uniqueness is enforced based on schema's `unique_fields` configuration
 
-**Validation Error Response (400):**
+**Validation Error Response (400):** — `errors` is an array of structured validation errors:
 ```json
 {
   "error": "validation_failed",
-  "errors": {
-    "name": ["Name is required"],
-    "age_months": ["Must be a number"]
-  }
+  "errors": [
+    {
+      "field": "abv",
+      "label": "ABV",
+      "code": "min_value",
+      "message": "ABV must be at least 0",
+      "details": { "min": 0, "actual": -1 }
+    }
+  ]
 }
 ```
+
+**Error codes:** `required`, `min_value`, `max_value`, `min_length`, `max_length`, `pattern`, `type_mismatch`, `invalid_option`, `unknown_field`; a request-level `unknown_schema` error (no `field`) is returned when the schema does not exist. `details` carries the failing constraint values when applicable. Note: an unknown `field_type` in a schema definition is rejected with `400` at schema create/update time.
 
 ### Update Item
 
@@ -663,6 +690,9 @@ Content-Type: application/json
 ```
 
 **Field Types:** `text`, `textarea`, `number`, `select`, `checkbox`, `enum`
+
+**Field Properties:**
+- `group`: optional string (max 50 chars) — groups fields in forms and detail views
 
 **Validation Rules:**
 - `required`: boolean
@@ -921,6 +951,7 @@ Authorization: Bearer ADMIN_JWT
 | `search` | string | `mountain` | Full-text search across all fields |
 | `filter[field_key]` | string | `filter[origin]=Quebec` | Filter by EAV field value |
 | `filter[has_image]` | boolean | `true` | Filter items with images only |
+| `rated` | boolean | `true` | "My List" — only items the current user has rated. The user is always derived from the JWT token; a client-provided user ID is never trusted |
 
 ### Schema List Parameters
 

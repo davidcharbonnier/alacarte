@@ -42,12 +42,12 @@ type User struct {
 type Rating struct {
 	gorm.Model
 
-	Grade    float32 `json:"grade"`
-	Note     string  `json:"note"`
+	Grade float32 `json:"grade"`
+	Note  string  `json:"note"`
 
-	// Item association (polymorphic)
-	ItemID   int    `json:"item_id"`
-	ItemType string `json:"item_type"`
+	// Item association (plain FK; cascade delete with the item)
+	ItemID int  `json:"item_id"`
+	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE" json:"item,omitempty"`
 
 	UserID int  `json:"user_id"`
 	User   User `gorm:"foreignKey:UserID" json:"user,omitempty"`
@@ -108,8 +108,8 @@ users.GET("/shareable", controllers.GetShareableUsers)                   // prev
 ```sql
 CREATE INDEX idx_rating_viewers_user_id ON rating_viewers(user_id);
 CREATE INDEX idx_rating_viewers_rating_id ON rating_viewers(rating_id);
-CREATE INDEX idx_ratings_user_item ON ratings(user_id, item_type, item_id);
-CREATE INDEX idx_ratings_item ON ratings(item_type, item_id);
+CREATE INDEX idx_ratings_user_item ON ratings(user_id, item_id);
+CREATE INDEX idx_ratings_item ON ratings(item_id);
 CREATE INDEX idx_users_discoverable ON users(discoverable);
 CREATE INDEX idx_users_display_name ON users(display_name);
 ```
