@@ -33,6 +33,22 @@ The À la carte platform implements a **privacy-first architecture** where user 
 
 ---
 
+## 👁️ Visibility Tiers
+
+Every rating exists in exactly one tier:
+
+| Tier | Who sees it | Where it appears |
+|---|---|---|
+| **Personal** | Author only (default for new ratings) | "My Rating" section in item details |
+| **Shared** | Author + explicitly shared users | "Recommendations" section for recipients |
+| **Community** | Everyone, anonymous aggregates only | "Community" stats (averages, counts) |
+
+Equivalent access-control layers: Personal → Shared → Community → Blocked (no access to private/unshared ratings).
+
+Display names are generated from the full name as `First L.` (first name + upper-cased last initial) and are user-customizable, unique, and validated by each app (client: 2–50 characters).
+
+---
+
 ## 🗄️ Database Architecture
 
 ### Privacy-Related Tables
