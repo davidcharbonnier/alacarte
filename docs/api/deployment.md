@@ -20,7 +20,6 @@ The API runs on Google Cloud Run backed by a serverless Postgres database (Neon)
 | `DATABASE_URL` | Postgres connection string (from Neon dashboard) |
 | `JWT_SECRET_KEY` | HMAC-SHA256 signing key (≥64 chars) |
 | `GOOGLE_CLIENT_ID` | Google OAuth 2.0 client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 client secret |
 | `INITIAL_ADMIN_EMAIL` | Email of the initial admin user |
 
 ### Optional

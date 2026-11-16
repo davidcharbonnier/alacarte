@@ -1,6 +1,6 @@
 # Production Deployment Guide - Admin Panel
 
-**Last Updated:** October 2025  
+**Last Updated:** November 2026  
 **Status:** Production-Ready
 
 ---
@@ -56,30 +56,30 @@ git checkout -b feat/admin-enhancements
 git commit -m "feat: add user management"
 git push
 
-# Create PR → Builds pre-release image
-# Merge to master → Builds production image with version tag
+# Create PR → CI builds the dist/ artifact with VITE_* vars from GitHub vars
+# (ADMIN_VITE_API_URL, ADMIN_VITE_GOOGLE_CLIENT_ID)
+# Merge to master → release workflow produces a dist/ artifact per version tag
 ```
 
-**Images created:**
-- `davidcharbonnier/alacarte-admin:latest`
-- `davidcharbonnier/alacarte-admin:0.1.0` (semantic version)
+**Artifacts created:**
+- `admin-dist-{version}` (static bundle, e.g. `admin-dist-0.1.0`)
 
-### Method 2: Manual Docker Build
+### Method 2: Manual Static Build
 
 ```bash
-# Build production image
-docker build -t davidcharbonnier/alacarte-admin:latest --target prod .
+cd apps/admin
 
-# Push to Docker Hub
-docker push davidcharbonnier/alacarte-admin:latest
+# VITE_* values are baked into the bundle at build time — set them before building
+export VITE_API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
+export VITE_GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 
-# Deploy to Cloud Run
-gcloud run deploy alacarte-admin \
-  --image davidcharbonnier/alacarte-admin:latest \
-  --platform managed \
-  --region northamerica-northeast1 \
-  --allow-unauthenticated \
-  --set-env-vars "VITE_API_URL=https://backend.run.app,VITE_GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com"
+npm ci --ignore-scripts
+npm run build
+
+# Upload dist/ to any static host (Netlify, Cloudflare Pages, Firebase Hosting, …)
+```
+
+No runtime env vars exist for the admin SPA — changing `VITE_*` requires a rebuild.
 ```
 
 ---

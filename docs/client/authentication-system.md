@@ -2,7 +2,7 @@
 
 > **Shared behavior (auth flow, token lifecycle, session rules) lives in [/docs/features/authentication.md](/docs/features/authentication.md).** This doc covers only Flutter-specific implementation.
 
-**Last Updated:** January 2025  
+**Last Updated:** November 2026  
 **Related Documentation:**
 - [Privacy Model](/docs/client/privacy-model.md)
 - [Android OAuth Setup](/docs/client/setup/android-oauth-setup.md)

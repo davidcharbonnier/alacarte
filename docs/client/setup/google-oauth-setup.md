@@ -81,11 +81,9 @@ keytool -list -v -alias your-release-alias -keystore path/to/release.keystore
 ```bash
 # In your Cloud Run environment variables
 GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-web-client-secret
 
 # Example:
 GOOGLE_CLIENT_ID=123456789-abcdefghijk.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=GOCSPX-abc123def456ghi789
 ```
 
 ### **Validation Architecture**

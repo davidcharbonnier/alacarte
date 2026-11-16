@@ -2,7 +2,7 @@
 
 > **Shared behavior (flow, token lifecycle, session rules) lives in [/docs/features/authentication.md](/docs/features/authentication.md).** This doc covers only backend-specific implementation.
 
-**Last Updated:** January 2025  
+**Last Updated:** November 2026  
 **Related Documentation:**
 - [Privacy Model](privacy-model.md)
 
