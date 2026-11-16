@@ -19,7 +19,7 @@ cd alacarte
 ### API Configuration
 ```bash
 # Copy the production template to .env
-cp apps/api/.env.prod.template apps/api/.env
+cp apps/api/.env.example apps/api/.env
 
 # Edit apps/api/.env with your configuration:
 # - Database credentials
@@ -29,14 +29,13 @@ cp apps/api/.env.prod.template apps/api/.env
 
 ### Admin Configuration
 ```bash
-# Copy the example file to .env.local
-cp apps/admin/.env.example apps/admin/.env.local
+# Copy the example file (Docker Compose reads apps/admin/.env)
+cp apps/admin/.env.example apps/admin/.env
 
-# Edit apps/admin/.env.local with your configuration:
-# - API_URL (http://localhost:8080)
-# - NEXT_PUBLIC_API_URL (http://localhost:8080)
-# - Google OAuth credentials
-# - NextAuth configuration
+# Edit apps/admin/.env with your configuration:
+# - VITE_API_URL (http://localhost:8080)
+# - VITE_GOOGLE_CLIENT_ID (Google OAuth Web Client ID)
+
 ```
 
 ### Client Configuration
@@ -55,7 +54,7 @@ docker-compose up -d
 
 # This will start:
 # - API on port 8080
-# - MySQL on port 3306
+# - Postgres on port 5432 (connection string in DATABASE_URL)
 # - MinIO on ports 9000/9001
 # - Admin panel on port 3000
 ```
@@ -100,11 +99,11 @@ curl -I http://localhost:3000
 
 - **API:** http://localhost:8080
 - **Admin Panel:** http://localhost:3000
-- **Client Web:** http://localhost:3001 (when running Flutter web)
+- **Client Web:** http://localhost:<port> (Flutter web picks an ephemeral port unless you pass `--web-port`)
 - **MinIO Console:** http://localhost:9001 (for file storage management)
-- **MySQL:** localhost:3306 (username: root, password: password)
+- **Postgres:** localhost:5432 (connection string: see `apps/api/.env.example`)
 
 ## Next Steps
 
 - [Local Development Guide](local-development.md) - Complete setup details
-- [Architecture Overview](/docs/architecture/overview.md) - Understanding the system
+- [Monorepo Strategy](/docs/architecture/monorepo-strategy.md) - Repository structure and versioning

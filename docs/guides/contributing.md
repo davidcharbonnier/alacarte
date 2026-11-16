@@ -4,7 +4,7 @@
 
 This guide covers the development workflow, commit conventions, and contribution guidelines for the À la carte monorepo.
 
-Our monorepo uses automated versioning powered by **versio** and **conventional commits**. There's no manual versioning or changesets required - version bumps happen automatically based on your commit messages.
+Our monorepo uses automated versioning powered by **semantic-release** and **conventional commits**. There's no manual versioning or changesets required - version bumps happen automatically based on your commit messages.
 
 ## 🔄 Development Workflow
 
@@ -120,7 +120,7 @@ feat: add wine filtering endpoint
 # Invalid scope
 feat(server): add wine filtering endpoint
 
-# Not sentence case
+# Not lower case (commitlint enforces subject-case: lower-case)
 feat(api): Add wine filtering endpoint
 ```
 
@@ -142,7 +142,7 @@ Versioning is **fully automated** based on your commit messages.
    - Apps without changes keep their current version
 
 3. **Automatic tag creation:**
-   - When PRs are merged to master, versio creates Git tags
+   - When PRs are merged to master, semantic-release creates Git tags
    - Tags follow format: `api-v1.2.3`, `client-v1.2.3`, `admin-v1.2.3`
 
 4. **Release automation:**
@@ -170,13 +170,14 @@ Versioning is **fully automated** based on your commit messages.
 
 Every PR commit automatically creates snapshot versions for testing:
 
-**Version Format:** `{version}-pr-{pr_number}.{commit_sha}`
-**Example:** `1.1.0-pr-123.abc1234`
+**Version Format:** `pr-{pr_number}.{increment}`
+**Example:** `pr-123.5`
 
 **What Gets Built:**
 
 - ✅ Only apps that changed (detected automatically)
-- ✅ Docker images for API and Admin
+- ✅ Docker image for API
+- ✅ Static `dist/` bundle for Admin
 - ✅ APK artifact for Client
 
 **How to Use:**
@@ -184,8 +185,7 @@ Every PR commit automatically creates snapshot versions for testing:
 1. **Check PR comments** for snapshot version links
 2. **Deploy manually to QA** (if needed):
    ```bash
-   gcloud run deploy alacarte-api-qa \
-     --image=davidcharbonnier/alacarte-api:pr-123-latest
+   docker pull ghcr.io/{owner}/alacarte-api:pr-123.5
    ```
 3. **Download Client APK** from GitHub Actions artifacts
 4. **Test the changes** before merge
@@ -252,12 +252,12 @@ For non-urgent bugs, follow normal workflow:
 - Use Riverpod for state management
 - Follow existing widget patterns
 
-### TypeScript/Next.js (Admin)
+### TypeScript/React (Admin)
 
-- Follow [Next.js best practices](https://nextjs.org/docs)
+- Follow [React best practices](https://react.dev/learn)
 - Use TypeScript strictly (no `any`)
-- Use provided UI components
-- Follow existing page patterns
+- Use MUI v6 components and theme tokens from `src/theme.ts` (no Tailwind)
+- Follow existing route/page patterns (TanStack Router file-based routes)
 
 ## 📚 Documentation
 
@@ -318,7 +318,7 @@ Update docs when you:
 ### Common Questions
 
 **Q: What happened to changesets?**
-A: We've moved to automated versioning with versio. No manual changesets needed!
+A: We've moved to automated versioning with semantic-release. No manual changesets needed!
 
 **Q: My commit was rejected - what do I do?**
 A: Fix the commit message to follow the conventional format with required scope:
@@ -328,7 +328,7 @@ git commit -m "feat(api): add wine filtering endpoint"
 ```
 
 **Q: Do I need to bump versions manually?**
-A: No, versio handles all versioning automatically based on your commits.
+A: No, semantic-release handles all versioning automatically based on your commits.
 
 **Q: How do I indicate a breaking change?**
 A: Add a `BREAKING CHANGE:` footer to your commit:

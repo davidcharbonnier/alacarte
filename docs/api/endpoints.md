@@ -10,6 +10,10 @@ Complete REST API endpoint documentation for the À la carte platform.
 
 All protected endpoints require a JWT token in the `Authorization` header:
 
+```bash
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
 ### Health Check
 
 ```http
@@ -17,28 +21,6 @@ GET /health
 ```
 
 Returns `200 OK` indicating the service is healthy.
-
----
-
-```bash
-Authorization: Bearer YOUR_JWT_TOKEN
-```
-
-### OAuth
-
----
-
-## 🔐 Google OAuth Exchange
-
-```http
-POST /auth/google
-Content-Type: application/json
-
-{
-  "id_token": "google-id-token",
-  "access_token": "google-access-token"
-}
-```
 
 ## 👤 Profile Management
 
@@ -58,7 +40,7 @@ Content-Type: application/json
 ### Check Display Name Availability
 
 ```http
-GET /profile/check-display-name?name=John
+GET /profile/check-display-name?display_name=John
 Authorization: Bearer JWT_TOKEN
 ```
 
@@ -136,75 +118,13 @@ GET /api/users/shareable
 Authorization: Bearer JWT_TOKEN
 ```
 
-Returns users with `discoverable = true` and completed profiles.
-
----
-
-## 🧀 Item Endpoints (Legacy)
-
-**Deprecated:** The legacy item endpoints (`/api/:itemType/*`) are deprecated in favor of the [dynamic item endpoints](#-dynamic-item-endpoints) (`/api/items/:type/*`). The legacy endpoints will return `410 Gone` in a future release.
-
-Supported item types via dynamic endpoints: any active schema (e.g., `cheese`, `gin`, `wine`, `coffee`, `chili-sauce`)
-
-### Get All Items (Legacy)
-
-```http
-GET /api/:itemType/all
-Authorization: Bearer JWT_TOKEN
-```
-
-**Example:**
-```bash
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/api/items/cheese
-```
-
-### Get Item by ID (Legacy)
-
-```http
-GET /api/:itemType/:id
-Authorization: Bearer JWT_TOKEN
-```
-
-### Create Item (Legacy)
-
-```http
-POST /api/:itemType/new
-Authorization: Bearer JWT_TOKEN
-Content-Type: application/json
-
-{
-  "name": "Item Name",
-  "origin": "Quebec",
-  ...
-}
-```
-
-### Update Item (Legacy)
-
-```http
-PUT /api/:itemType/:id
-Authorization: Bearer JWT_TOKEN
-Content-Type: application/json
-
-{
-  "name": "Updated Name",
-  ...
-}
-```
-
-### Delete Item (Legacy)
-
-```http
-DELETE /api/:itemType/:id
-Authorization: Bearer JWT_TOKEN
-```
+Returns two arrays: `previous_connections` (users who have shared with the current user, profile completed) first, then `discoverable` users (excluding the requester and previous connections).
 
 ---
 
 ## 📸 Image Endpoints
 
-Upload or delete images for any item type via dynamic endpoints.
+Upload or delete images for any item type via dynamic endpoints. Item-owner only — any other user gets `403`.
 
 ```http
 POST /api/items/:type/:id/image
@@ -212,11 +132,6 @@ Authorization: Bearer JWT_TOKEN
 Content-Type: multipart/form-data
 
 image=@file.jpg
-```
-
-**Legacy (deprecated):**
-```http
-POST /api/:itemType/:id/image
 ```
 
 **Constraints:**
@@ -269,7 +184,6 @@ Authorization: Bearer JWT_TOKEN
 Content-Type: application/json
 
 {
-  "item_type": "wine",
   "item_id": 1,
   "grade": 8.5,
   "note": "Excellent wine!"
@@ -295,15 +209,27 @@ Returns ratings shared with the specified user.
 ### Get Ratings by Item
 
 ```http
-GET /api/rating/:type/:id
+GET /api/rating/:id
 Authorization: Bearer JWT_TOKEN
 ```
 
-**Example:** `GET /api/rating/wine/1`
+**Example:** `GET /api/rating/1`
 
-Returns:
-- User's own ratings for this item
-- Ratings shared with the user
+Returns only ratings for this item that are visible to the current user (shared with them via `rating_viewers`).
+
+### Update Rating
+
+```http
+PUT /api/rating/:id
+Authorization: Bearer JWT_TOKEN
+Content-Type: application/json
+
+{
+  "item_id": 1,
+  "grade": 9.0,
+  "note": "Updated review"
+}
+```
 
 ### Update Rating
 
@@ -349,6 +275,8 @@ Content-Type: application/json
 }
 ```
 
+Also accepts a legacy singular `user_id` for backward compatibility.
+
 ### Bulk Make Ratings Private
 
 ```http
@@ -374,21 +302,41 @@ Removes specified user from all of the author's shared ratings.
 ### Get Community Stats
 
 ```http
-GET /api/stats/community/:type/:id
+GET /api/stats/community/:id
 Authorization: Bearer JWT_TOKEN
 ```
 
-**Example:** `GET /api/stats/community/wine/1`
+**Example:** `GET /api/stats/community/1`
 
 **Response:**
 ```json
 {
   "total_ratings": 15,
-  "average_rating": 8.2
+  "average_rating": 8.2,
+  "item_id": 1
 }
 ```
 
-Returns anonymous aggregate statistics (no individual attribution).
+Returns anonymous aggregate statistics for one item (no individual attribution).
+
+### Get Type Stats
+
+```http
+GET /api/stats/type/:type
+Authorization: Bearer JWT_TOKEN
+```
+
+**Example:** `GET /api/stats/type/cheese`
+
+**Response:**
+```json
+{
+  "total_items": 150,
+  "user_rated_count": 42
+}
+```
+
+Returns the total item count for a schema and how many of them the current user has rated (distinct items).
 
 ---
 
@@ -493,7 +441,6 @@ GET /api/items/:type?page=1&per_page=20&sort=name&search=query&filter[field_key]
     {
       "id": 1,
       "name": "Cheddar",
-      "description": "Aged cheddar cheese",
       "image_url": "http://localhost:9000/alacarte-images/cheese_1.jpg",
       "field_values": {
         "origin": "Quebec",
@@ -501,7 +448,7 @@ GET /api/items/:type?page=1&per_page=20&sort=name&search=query&filter[field_key]
         "age_months": 12
       },
       "user_id": 1,
-      "schema_version_id": 1,
+      "schema_type": "cheese",
       "created_at": "2025-01-15T10:00:00Z",
       "updated_at": "2025-01-15T10:00:00Z"
     }
@@ -517,6 +464,7 @@ GET /api/items/:type?page=1&per_page=20&sort=name&search=query&filter[field_key]
 
 ```http
 GET /api/items/:type/:id
+Authorization: Bearer JWT_TOKEN
 ```
 
 ### Create Item
@@ -528,7 +476,6 @@ Content-Type: application/json
 
 {
   "name": "Item Name",
-  "description": "Optional description",
   "field_values": {
     "origin": "Quebec",
     "milk_type": "Cow",
@@ -543,16 +490,23 @@ Content-Type: application/json
 - Dual-write: JSON column (fast reads) + EAV rows (filterable)
 - Uniqueness is enforced based on schema's `unique_fields` configuration
 
-**Validation Error Response (400):**
+**Validation Error Response (400):** — `errors` is an array of structured validation errors:
 ```json
 {
   "error": "validation_failed",
-  "errors": {
-    "name": ["Name is required"],
-    "age_months": ["Must be a number"]
-  }
+  "errors": [
+    {
+      "field": "abv",
+      "label": "ABV",
+      "code": "min_value",
+      "message": "ABV must be at least 0",
+      "details": { "min": 0, "actual": -1 }
+    }
+  ]
 }
 ```
+
+**Error codes:** `required`, `min_value`, `max_value`, `min_length`, `max_length`, `pattern`, `type_mismatch`, `invalid_option`, `unknown_field`; a request-level `unknown_schema` error (no `field`) is returned when the schema does not exist. `details` carries the failing constraint values when applicable. Note: an unknown `field_type` in a schema definition is rejected with `400` at schema create/update time.
 
 ### Update Item
 
@@ -570,7 +524,7 @@ Content-Type: application/json
 ```
 
 **Notes:**
-- Only the item owner can update (admins can override)
+- Only the item owner can update (no admin override; admins have a separate delete bypass)
 - Partial updates supported (omitted fields keep existing values)
 
 ### Delete Item
@@ -664,6 +618,9 @@ Content-Type: application/json
 
 **Field Types:** `text`, `textarea`, `number`, `select`, `checkbox`, `enum`
 
+**Field Properties:**
+- `group`: optional string (max 50 chars) — groups fields in forms and detail views
+
 **Validation Rules:**
 - `required`: boolean
 - `minLength` / `maxLength`: string length (text/textarea)
@@ -674,9 +631,10 @@ Content-Type: application/json
 - `badge`: boolean - shows as pill on item cards
 - `primary`: boolean - primary subtitle field
 - `secondary`: boolean - secondary subtitle field
+- `searchable`: boolean - field is included in full-text `search=` matching
 
 **Constraints:**
-- `name` must be unique, kebab-case (e.g., `chili-sauce`)
+- `name` must be unique; kebab-case is convention, not enforced (e.g., `chili-sauce`)
 - Creates initial schema version automatically (version 1)
 
 ### Update Schema
@@ -720,9 +678,8 @@ Authorization: Bearer ADMIN_JWT
 ```json
 {
   "version": 1,
-  "fields": "[{...}]",
+  "fields": [{ "key": "name", "label": "Name", "field_type": "text" }],
   "is_active": true,
-  "migrated_at": null,
   "created_at": "2025-01-15T10:00:00Z"
 }
 ```
@@ -770,58 +727,7 @@ Validates JSON without importing. Checks validation rules and unique field prese
 
 ---
 
-All admin endpoints require `is_admin = true` in the user's profile.
-
-### Item Management
-
-#### Get Delete Impact
-
-```http
-GET /admin/:itemType/:id/delete-impact
-Authorization: Bearer ADMIN_JWT
-```
-
-Returns impact assessment before deletion:
-- Number of ratings
-- Users affected
-- Sharing relationships
-
-#### Delete Item (Admin)
-
-```http
-DELETE /admin/:itemType/:id
-Authorization: Bearer ADMIN_JWT
-```
-
-Cascading delete (removes item, ratings, and shares).
-
-#### Seed Items
-
-```http
-POST /admin/:itemType/seed
-Authorization: Bearer ADMIN_JWT
-Content-Type: application/json
-
-{
-  "url": "https://example.com/data.json"
-}
-```
-
-Bulk import items from JSON URL.
-
-#### Validate Seed Data
-
-```http
-POST /admin/:itemType/validate
-Authorization: Bearer ADMIN_JWT
-Content-Type: application/json
-
-{
-  "url": "https://example.com/data.json"
-}
-```
-
-Validates JSON without importing.
+All admin endpoints require `is_admin = true` in the user's profile. There is no admin item delete route — admins delete via `DELETE /api/items/:type/:id` (owner-or-admin bypass).
 
 ### User Management
 
@@ -877,30 +783,23 @@ Authorization: Bearer ADMIN_JWT
 
 ### Success Response
 
-```json
-{
-  "data": { ... },
-  "message": "Success message"
-}
-```
+Most endpoints return the resource directly (no `{data, message}` envelope); a few add a `message` field alongside the payload (e.g. bulk privacy operations).
 
 ### Error Response
 
 ```json
 {
-  "error": "Error message",
-  "details": {
-    "field": ["validation error"]
-  }
+  "error": "Error message"
 }
 ```
+
+Validation failures return `error: "validation_failed"` with a structured `errors` array (see [Create Item](#create-item)).
 
 ### HTTP Status Codes
 
 | Code | Meaning |
 |------|---------|
-| 200 | Success |
-| 201 | Created |
+| 200 | Success (all creates return 200, not 201) |
 | 400 | Bad Request (validation error) |
 | 401 | Unauthorized (missing/invalid token) |
 | 403 | Forbidden (insufficient permissions) |
@@ -921,6 +820,7 @@ Authorization: Bearer ADMIN_JWT
 | `search` | string | `mountain` | Full-text search across all fields |
 | `filter[field_key]` | string | `filter[origin]=Quebec` | Filter by EAV field value |
 | `filter[has_image]` | boolean | `true` | Filter items with images only |
+| `rated` | boolean | `true` | "My List" — only items the current user has rated. The user is always derived from the JWT token; a client-provided user ID is never trusted |
 
 ### Schema List Parameters
 

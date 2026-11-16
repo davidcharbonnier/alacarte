@@ -1,6 +1,6 @@
 # Backend API Requirements - Admin Panel
 
-**Last Updated:** January 2025  
+**Last Updated:** November 2026 (legacy per-type sections below are historical — see the note)  
 **Status:** 📋 Specification for Backend Implementation
 
 ---
@@ -66,6 +66,8 @@ POST /auth/google
 ---
 
 ## 📦 Item Management
+
+> **⚠️ Superseded:** the hardcoded per-type endpoints below (`/api/cheese/*`, `/api/gin/*`, …) no longer exist. All item management now goes through the dynamic endpoints — `GET /api/items/:type`, `POST /admin/items/:type/seed`, `GET /admin/items/:type/:id/delete-impact` (see [API endpoints](/docs/api/endpoints.md)) — and admin schema management via `/admin/schemas/*` (see [Schema Management](/docs/admin/schema-management.md)). Much of what this document marks "to implement" already exists; the "Last Updated" status notes are unreliable. Kept for historical context.
 
 ### Cheese Endpoints
 
@@ -699,9 +701,8 @@ curl -X DELETE \
 
 ## 📚 Related Documentation
 
-- [Authentication System](authentication-system.md) - NextAuth.js integration
-- [Adding New Item Types](adding-new-item-types.md) - Extending admin functionality
-- [Phased Implementation](phased-implementation.md) - Development timeline
+- [Authentication System](authentication-system.md) - Admin OAuth and session management
+- [Adding New Item Types](../guides/adding-new-item-types.md) - Extending admin functionality
 
 ---
 

@@ -1,138 +1,153 @@
-# Security Improvements - OAuth Debug Removal
+# Security - Backend
 
-## 🔒 Production Security Enhancements
+> **Concepts first:** the cross-app authentication model (flow, token lifecycle, session rules) lives in [/docs/features/authentication.md](/docs/features/authentication.md) and the privacy model in [/docs/features/privacy-model.md](/docs/features/privacy-model.md). This document covers only the backend security implementation.
 
-### **Sensitive Debug Information Removed**
-
-**Before (Development Debug):**
-```go
-c.JSON(http.StatusBadRequest, gin.H{
-    "error": "Invalid Google ID token or missing profile data",
-    "details": err.Error(), // ❌ EXPOSED: Internal error details
-})
-
-return nil, fmt.Errorf("invalid token: %v", err) // ❌ EXPOSED: Google API error details
-return nil, fmt.Errorf("token audience mismatch") // ❌ EXPOSED: Internal validation logic
-```
-
-**After (Production Safe):**
-```go
-// Secure logging - no sensitive data in production
-utils.AppLogger.LogOAuthError(err)
-c.JSON(http.StatusBadRequest, gin.H{
-    "error": "Invalid Google ID token or missing profile data",
-    // ✅ SAFE: No internal details exposed to client
-})
-
-return nil, fmt.Errorf("invalid token") // ✅ SAFE: Generic error message
-return nil, fmt.Errorf("unauthorized token") // ✅ SAFE: No internal logic exposed
-```
-
-### **🛡️ Security Benefits**
-
-#### **Information Disclosure Prevention**
-- **No internal error details** exposed to client applications
-- **No Google API responses** leaked to potential attackers
-- **No validation logic** revealed that could aid in bypass attempts
-- **No sensitive configuration** shown in production logs
-
-#### **Secure Logging System**
-```go
-// Production-aware logging
-func (l *Logger) LogOAuthError(err error) {
-    if l.isProduction {
-        // ✅ SAFE: Generic message in production
-        log.Printf("🔍 OAuth validation error (check server logs)")
-    } else {
-        // ✅ HELPFUL: Detailed logging for development
-        log.Printf("🔍 OAuth validation error: %v", err)
-    }
-}
-```
-
-#### **Environment-Based Security**
-```go
-// Only show sensitive config in development
-if gin.Mode() == gin.DebugMode {
-    fmt.Printf("   • Client ID: %s\n", os.Getenv("GOOGLE_CLIENT_ID"))
-} else {
-    fmt.Println("   • Client ID: [configured]") // ✅ SAFE: No ID exposure
-}
-```
-
-### **📋 Security Improvements Applied**
-
-#### **Error Message Sanitization**
-- ✅ **Generic error messages** for client responses
-- ✅ **Detailed logging** retained for server-side debugging
-- ✅ **No internal state** exposed through error messages
-- ✅ **Consistent error format** across all OAuth endpoints
-
-#### **Token Handling Security**
-- ✅ **No token contents** logged or exposed
-- ✅ **Token validation errors** sanitized before client response
-- ✅ **JWT parsing errors** provide no implementation details
-- ✅ **Audience validation** failures don't reveal expected values
-
-#### **Configuration Security**
-- ✅ **Client IDs** hidden in production startup logs
-- ✅ **Environment variables** never logged
-- ✅ **Database credentials** protected from accidental exposure
-- ✅ **Production mode** automatically enables secure logging
-
-### **🔍 Attack Surface Reduction**
-
-#### **What Attackers Can No Longer Learn**
-- **Internal validation logic** (audience checking, token parsing)
-- **Google API response details** (error codes, validation failures)
-- **Configuration values** (client IDs, expected audiences)
-- **Implementation details** (JWT structure expectations, required fields)
-
-#### **What Still Works for Legitimate Debugging**
-- **Server-side logs** contain full error details for developers
-- **Development mode** shows detailed information for local testing
-- **Authentication success** logging for monitoring and analytics
-- **Generic client errors** provide enough information for proper error handling
-
-### **📈 Production Benefits**
-
-#### **Enhanced Security Posture**
-- **Reduced information disclosure** attack surface
-- **Compliance-ready** error handling (no sensitive data leaks)
-- **Professional error responses** for client applications
-- **Secure by default** configuration
-
-#### **Maintained Debugging Capability**
-- **Development environment** retains full debugging information
-- **Server logs** contain all necessary details for troubleshooting
-- **Environment-aware** logging adapts to deployment context
-- **Structured logging** for easy parsing and monitoring
-
-### **🚀 Implementation Status**
-
-#### **✅ Completed Security Enhancements**
-- **Auth Controller**: Sanitized all error responses and logging
-- **Secure Logger**: Environment-aware logging utility implemented
-- **Main Application**: Production-safe configuration display
-- **Error Handling**: Generic client messages with detailed server logs
-
-#### **📊 Before/After Comparison**
-
-**Development Mode (Debug):**
-```
-🔍 OAuth validation error: invalid token: oauth2: cannot fetch token: ...
-   • Client ID: 414358220433-utddgtujirv58gt6g33kb7jei3shih27.apps.googleusercontent.com
-```
-
-**Production Mode (Secure):**
-```
-🔍 OAuth validation error (check server logs)
-   • Client ID: [configured]
-```
-
-The security improvements maintain all functionality while protecting sensitive implementation details from potential attackers, following security best practices for production OAuth implementations.
+**Last Updated:** November 2026  
+**Related Documentation:**
+- [Authentication System (backend)](authentication-system.md)
+- [Privacy Model (canonical)](/docs/features/privacy-model.md)
+- [Deployment](deployment.md)
 
 ---
 
-**Security First - À la carte REST API**  
-*Secure OAuth implementation with zero information disclosure*
+## Overview
+
+Security in the API rests on five pillars, each mapped to code:
+
+| Pillar | Implementation | Source |
+|--------|----------------|--------|
+| Identity verification | Google `id_token` verified via Google Tokeninfo API | `controllers/authController.go` |
+| Session tokens | HS256 JWTs signed with `JWT_SECRET_KEY` | `utils/jwt.go` |
+| Route protection | Gin middleware chain | `utils/auth.go` |
+| Cross-origin access | Origin allowlist with wildcard patterns | `main.go` (`setupCORS`) |
+| Error hygiene | Generic client errors, detailed server-side logs | `controllers/*.go` |
+
+---
+
+## Authentication (Google Sign-In)
+
+### Flow
+
+The API never touches OAuth authorization codes or client secrets. The client obtains a Google `id_token`, and the API exchanges it for its own JWT via `POST /auth/google`:
+
+1. Client sends `{ "id_token": "<google-id-token>" }` to `/auth/google`.
+2. `parseGoogleIDToken` (`controllers/authController.go`) verifies the token with **Google's Tokeninfo API** (`oauth2Service.Tokeninfo().IdToken(...)`). Google's servers confirm authenticity — no local signature verification.
+3. **Audience check:** the token's `aud` must exactly match `GOOGLE_CLIENT_ID`. Mismatch → rejected with a generic error.
+4. The JWT payload is decoded (`parseJWTPayload`) to extract the full profile (`sub`, `email`, `name`, ...). Missing `sub`, `email`, or `name` → rejected; the API requires complete profile data.
+5. User is found or created by `google_id` and a backend JWT is returned.
+
+### Why no client secret
+
+`GOOGLE_CLIENT_SECRET` is not used anywhere in the API. Verification relies on Google's Tokeninfo API plus the audience check, so only `GOOGLE_CLIENT_ID` is required. This is intentional (backend-for-frontend style token exchange) — do not "fix" it by adding a secret-based flow.
+
+### Trust boundary notes
+
+- The tokeninfo call confirms the token is valid and unexpired **per Google**, but the API performs its own audience check; never skip it, or tokens minted for other apps would authenticate here.
+- `parseJWTPayload` decodes the payload *without* verifying the signature — that is safe only because authenticity was already established by the Tokeninfo call in step 2. Keep both steps together.
+
+---
+
+## Session Tokens (JWT)
+
+`utils/jwt.go` issues and validates all session tokens:
+
+- **Algorithm:** HS256 (`jwt.SigningMethodHS256`). Validation rejects any token whose `alg` header is not HMAC — this blocks `alg: none` and algorithm-confusion attacks.
+- **Secret:** `JWT_SECRET_KEY`. The code requires it to be non-empty (token generation fails otherwise). **Use 64+ characters in production** — see `.env.example`.
+- **Expiry:** 24 hours (`ExpiresAt` + `IssuedAt` claims; enforced by `golang-jwt/v5` during parse).
+- **Claims:** `user_id`, `email`, `display_name`, plus registered claims (`iss: alacarte-api`, `sub` = user ID).
+
+There are intentionally **no refresh or logout endpoints** — see token lifecycle in the shared [authentication doc](/docs/features/authentication.md).
+
+---
+
+## Authorization Middleware
+
+`utils/auth.go` provides three middlewares. All read the `Authorization: Bearer <jwt>` header, validate the JWT, and load the user from the database (a valid token for a deleted user is rejected).
+
+| Middleware | Behavior | Failure response |
+|------------|----------|------------------|
+| `RequireAuth` | Valid JWT **and** completed profile (`HasCompletedSetup`) | 401 `Authentication required` / 403 `Profile setup required` |
+| `RequirePartialAuth` | Valid JWT only (profile may be incomplete) | 401 `Authentication required` |
+| `RequireAdmin` | Valid JWT **and** admin status | 401 / 403 `Admin access required` |
+
+`RequireAdmin` is always chained after `RequireAuth` (see admin route group in `main.go`); it re-reads the user from the request context.
+
+### Admin status
+
+Single source of truth: `utils.IsUserAdmin(user)` — admin if either:
+
+- `user.IsAdmin` (database flag, manageable via promote/demote admin endpoints), or
+- the user's email equals `INITIAL_ADMIN_EMAIL` (env config; the initial admin also bypasses profile setup at first login).
+
+### Route protection map (`main.go`)
+
+| Route group | Protection |
+|-------------|------------|
+| `/auth/google` | Public (token exchange itself) |
+| `/health` | Public |
+| `/profile/*` | `RequirePartialAuth` (profile completion, display name check) |
+| Most item/rating/schema read & write routes | `RequireAuth` or `RequirePartialAuth` per route |
+| `/admin/*` (users, schemas, item admin) | `RequireAuth` + `RequireAdmin` |
+
+For per-endpoint details see [endpoints.md](endpoints.md).
+
+---
+
+## CORS
+
+`setupCORS` in `main.go`:
+
+- Origins come from `ALLOWED_ORIGINS` (comma-separated). Default if unset: `http://localhost:3000,http://localhost:8080`.
+- Each entry is matched with Go's `path.Match`, so shell-style wildcards (`*`, `?`) are supported, e.g. `https://*.example.com` (useful for Cloud Run preview URLs).
+- Unknown origins get no CORS headers; the browser blocks the request.
+
+---
+
+## Error Handling & Information Disclosure
+
+### Client responses
+
+All client-facing error messages are generic and stable. Internal causes (parsing errors, Google API responses, validation internals) are never returned — handlers return fixed strings such as:
+
+- `Invalid Google ID token or missing profile data`
+- `Authentication required` / `Profile setup required` / `Admin access required`
+- `Failed to create user` / `Failed to generate token`
+
+This prevents attackers from learning validation logic, expected audiences, or backend internals from error text.
+
+### Server-side logging
+
+Detailed error causes are logged server-side with `slog.Error` (structured logging, e.g. `authController.go`), so developers keep full debugging information without exposing it to clients. Note: errors logged this way can include internal detail — ship logs to a trusted sink only.
+
+### Configuration display
+
+At startup the OAuth config is printed, but `GOOGLE_CLIENT_ID` is shown in full only when `GIN_MODE=debug`; in any other mode it prints `[configured]` (`main.go`, `setupAuthRoutes`). The API defaults to `release` mode unless `GIN_MODE` says otherwise.
+
+---
+
+## Additional Hardening
+
+- **Trusted proxies:** `TRUSTED_PROXIES` env var controls which proxies Gin trusts for client IP resolution; unset → no proxies trusted (`router.SetTrustedProxies(nil)`), preventing IP spoofing via `X-Forwarded-For`.
+- **Release mode by default:** gin runs in `release` mode unless `GIN_MODE` is set, disabling debug output.
+- **Request logging:** all requests are logged (`gin.Logger`), except `/health`.
+- **Upload limits:** image uploads capped at 5 MB (`MaxMultipartMemory`).
+- **Panic recovery:** `gin.Recovery()` converts panics into 500s without stack traces leaking to clients.
+- **Password-less auth:** no passwords are stored anywhere; credential theft surface is limited to stolen JWTs (24h window) and Google tokens.
+
+---
+
+## Security Checklist for Deployment
+
+- [ ] `JWT_SECRET_KEY` set, 64+ random characters, never reused across environments
+- [ ] `GOOGLE_CLIENT_ID` matches the client app's OAuth client
+- [ ] `ALLOWED_ORIGINS` lists only production frontend origins (wildcards kept narrow)
+- [ ] `TRUSTED_PROXIES` set to the actual load balancer (Cloud Run) or left unset
+- [ ] `GIN_MODE` not set to `debug` in production
+- [ ] `INITIAL_ADMIN_EMAIL` set to the operator account; promote/demote used for ongoing admin management
+
+---
+
+**Related Documentation:**
+- [Authentication System](authentication-system.md) — endpoints and flows
+- [Privacy Model](/docs/features/privacy-model.md) — data visibility and sharing guarantees
+- [Deployment](deployment.md) — environment configuration

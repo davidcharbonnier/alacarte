@@ -1,417 +1,206 @@
 # Cache Management
 
+> **Schema cache contract (ETag, TTL, versioning) and offline behavior live in [/docs/features/](/docs/features/).** This doc covers how the Flutter client caches data and images, and how refresh and eviction work.
+
+**Last Updated:** November 2026  
+**Related Documentation:**
+- [Offline Handling](/docs/features/offline-handling.md)
+- [Rating System](/docs/features/rating-system.md)
+- [Image Upload](/docs/features/image-upload.md)
+- [Client Architecture](/docs/client/architecture/)
+
+---
+
 ## Overview
 
-The Flutter client uses a **two-level caching strategy** for optimal performance:
-1. **Data Cache** - API response data stored in memory
-2. **Image Cache** - Image files stored on disk
+The Flutter client has **no dedicated data cache layer**. Freshness is managed by three independent mechanisms:
 
-Both are managed through a combination of **bulk clearing** (for refresh operations) and **granular clearing** (for single item updates).
+1. **Riverpod state** — item lists held in memory per type (`DynamicItemProvider`); "cache" means "already loaded, skip refetch"
+2. **Service-level in-memory caches** — schema cache and community stats cache, each with a 5-minute TTL
+3. **Image disk cache** — `cached_network_image` (^3.4.1), with explicit eviction on image replacement/deletion
 
----
+On the API side, schema responses carry an `ETag` and `Cache-Control: public, max-age=300`.
 
-## Architecture
-
-### Data Cache (In-Memory)
-
-**Location**: `ItemService` classes (Cheese/Gin/Wine)
-
-**What's Cached**:
-- API response: `List<CheeseItem>` / `List<GinItem>` / `List<WineItem>`
-- Cache expiry: 5 minutes
-- Stored in: `_cachedResponse` field
-
-**Clearing Strategy**:
-```dart
-// Bulk clear - clears ALL data + ALL images
-await itemService.clearCache();
-
-// Granular - invalidate specific item
-itemProvider.invalidateItem(itemId); // Removes from state
-```
-
-### Image Cache (On-Disk)
-
-**Location**: Managed by `flutter_cache_manager` (DefaultCacheManager)
-
-**What's Cached**:
-- Downloaded image files from backend
-- No expiry (manual eviction only)
-- Stored in: App's cache directory
-
-**Clearing Strategy**:
-```dart
-// Bulk clear - clears ALL images
-await DefaultCacheManager().emptyCache();
-
-// Granular - clears ONE image
-await DefaultCacheManager().removeFile(imageUrl);
-```
+**There is no `flutter_cache_manager` dependency and no persisted data cache.** Restarting the app always refetches item lists and schemas.
 
 ---
 
-## Cache Strategies
+## What Is Cached, and Where
 
-### Strategy 1: Bulk Clear (Used for Refresh Operations)
+### 1. Item Lists — Riverpod State (Memory Only)
 
-**When Used**:
-- Pull-to-refresh on item list
-- Item creation
-- Item update (data only, not image)
+**Location**: `apps/client/lib/providers/dynamic_item_provider.dart`  
+**Helpers**: `apps/client/lib/utils/item_provider_helper.dart`
 
-**What Happens**:
-```dart
-// 1. Clear ALL data cache + ALL image cache
-await itemService.clearCache();
+`DynamicItemState` holds per-type maps:
 
-// 2. Fetch ALL items from API
-await itemService.getAllItems();
-```
+- `itemsByType` — item lists per schema type
+- `userRatedItemsByType` — the user's rated items per type
+- pagination state (`totalByType`, `currentPageByType`, `totalPagesByType`, ...)
+- loading/error flags per type
+- search queries and category filters per type
 
-**Benefits**:
-- ✅ Simple and reliable
-- ✅ Guarantees fresh state everywhere
-- ✅ No edge cases
+`loadItems(type, {forceRefresh})` skips the network when all of these hold:
 
-**Trade-offs**:
-- ❌ Clears everything (even unchanged items)
-- ❌ Multiple API calls
-- ✅ But fast enough with HTTP/2 multiplexing
+- `!forceRefresh`
+- `state.hasLoadedOnce` (at least one successful load this session)
+- `state.hasItems(type)` (the list is non-empty)
 
-### Strategy 2: Granular Clear (Used for Single Item Operations)
+Otherwise it fetches page 1 (with current search/filter values) and replaces the list. There is **no TTL on item state** — the list lives as long as the provider does (app session), and any pull-to-refresh forces a refetch.
 
-**When Used**:
-- Image upload/delete for single item
-- Pull-to-refresh on item detail screen
+Screens never touch the notifier directly; they go through `ItemProviderHelper` static wrappers (`refreshItems`, `loadMoreItems`, `invalidateItem`, `loadSpecificItems`).
 
-**What Happens**:
-```dart
-// 1. Clear ONLY this item's image
-await DefaultCacheManager().removeFile(oldImageUrl);
+### 2. Schema Cache — In-Memory, 5-Minute TTL + ETag
 
-// 2. Invalidate ONLY this item from provider state
-itemProvider.invalidateItem(itemId);
+**Location**: `apps/client/lib/services/schema_service.dart` (`SchemaService` singleton)  
+**Exposed via**: `schemaProvider` (`lib/providers/schema_provider.dart`)
 
-// 3. Reload ONLY this item from API
-await loadSpecificItems([itemId]);
-```
+`SchemaService` keeps three per-schema maps:
 
-**Benefits**:
-- ✅ Efficient - only touches what changed
-- ✅ Fast - single API call
-- ✅ Scales well (1000+ items)
+- `_schemaCache` — parsed `ItemSchema` objects keyed by schema name
+- `_cacheTimestamp` — when each entry was fetched
+- `_etagCache` — the `ETag` header from the last response
 
-**Trade-offs**:
-- ❌ Slightly more complex (3 steps)
-- ✅ But worth it for single-item operations
+Behavior:
+
+- `fetchSchemas({forceRefresh})` / `fetchSchema(type, {forceRefresh})` return cached entries while every entry is younger than `_cacheExpiry` (5 minutes); otherwise fetch from `/api/schemas`
+- `forceRefresh: true` bypasses the TTL check (`refreshSchemas()` / `refreshSchema(type)` are the force variants)
+- `clearCache()` empties all three maps
+
+**ETag note:** the API sends `ETag` on schema responses and honors `If-None-Match` with a `304` (see API side below). The client *stores* the ETag in `_etagCache` but does **not yet send `If-None-Match`** — client-side revalidation is purely TTL-based. Sending it is the natural next step if schema traffic becomes a concern.
+
+### 3. Community Stats Cache — In-Memory, 5-Minute TTL
+
+**Location**: `apps/client/lib/services/api_service.dart` (`_communityStatsCache`)
+
+Per-item community stats (`/api/items/{type}/{id}/stats`) cached for 5 minutes, keyed by item. Cleared wholesale via `clearCommunityStatsCache()` on pull-to-refresh, or per-provider via `ref.invalidate(communityStatsProvider)`.
+
+### 4. Ratings Cache — In-Memory, 5-Minute TTL
+
+**Location**: `apps/client/lib/services/rating_service.dart`
+
+Ratings cached per viewer (`_ratingsByViewerCache`, keyed by viewer id, 5-minute expiry). `clearCache({viewerId})` clears one viewer's entries or all. Called after rating changes — see [Rating System](/docs/features/rating-system.md).
+
+### 5. Image Cache — Disk, via `cached_network_image`
+
+**Location**: `apps/client/lib/widgets/items/item_image.dart` (all item images render through `CachedNetworkImage`)
+
+- `cached_network_image` ^3.4.1 backs onto `DefaultCacheManager` — files persist across app restarts (unlike all in-memory caches above)
+- No custom `stalePeriod` or cache-size configuration; package defaults apply
+- Eviction is **explicit and targeted** — see [Image Cache Eviction](#image-cache-eviction)
+
+### 6. API-Side Schema Cache (for context)
+
+The API (`apps/api/services/schema_registry.go`) keeps an in-memory `SchemaRegistry` of `CachedSchema` entries with a `VersionHash`. `GET /api/schemas/{type}` returns:
+
+- `ETag: <VersionHash>`
+- `Cache-Control: public, max-age=300`
+- `304 Not Modified` when the request carries a matching `If-None-Match`
+
+So even without client-side cooperation, CDN/HTTP-layer caching covers 5 minutes per schema.
 
 ---
 
-## Implementation Details
+## How Refresh Works
 
-### Bulk Clear Implementation
+### Pull-to-Refresh: Home Screen
 
-**In ItemService** (`apps/client/lib/services/item_service.dart`):
+`home_screen.dart` refreshes the global view:
+
 ```dart
-class CheeseItemService extends ItemService<CheeseItem> {
-  ApiResponse<List<CheeseItem>>? _cachedResponse;
-  DateTime? _cacheTime;
-  
-  Future<void> clearCache() async {
-    // Clear data cache
-    _cachedResponse = null;
-    _cacheTime = null;
-    
-    // Clear ALL image cache
-    await DefaultCacheManager().emptyCache();
-  }
+onRefresh: () async {
+  await ref.read(schemaProvider.notifier).refreshSchemas(); // forceRefresh
+  _hasLoadedStats = false;
+  _loadTypeStats();
+  await ref.read(ratingProvider.notifier).refreshRatings();
 }
 ```
 
-**In ItemProvider** (`apps/client/lib/providers/item_provider.dart`):
+### Pull-to-Refresh: Item Type Screen
+
+`item_type_screen.dart` refreshes one type — full cache sweep:
+
 ```dart
-Future<void> refreshItems() async {
-  // Clear both data and images
-  await itemService.clearCache();
-  
-  // Fetch fresh data
-  final response = await itemService.getAllItems();
-  // Update state...
+onRefresh: () async {
+  apiService.clearCommunityStatsCache();     // all stats
+  ratingService.clearCache();                // all ratings
+  await ref.read(schemaProvider.notifier).refreshSchema(widget.itemType);
+  await ItemProviderHelper.refreshItems(ref, widget.itemType);
+  ref.read(ratingProvider.notifier).refreshRatings();
+  ref.invalidate(communityStatsProvider);
 }
 ```
 
-### Granular Clear Implementation
+`ItemProviderHelper.refreshItems` → `DynamicItemNotifier.refreshItems(type)` → `loadItems(type, forceRefresh: true)`, which refetches page 1 with the current search query and filters and replaces the list. Pagination state resets to page 1.
 
-**In ItemProvider** (`apps/client/lib/providers/item_provider.dart`):
-```dart
-void invalidateItem(int itemId) {
-  // Remove item from provider state
-  final updatedItems = state.items.where((i) => i.id != itemId).toList();
-  state = state.copyWith(items: updatedItems);
-}
-```
+### Pull-to-Refresh: Item Detail Screen
 
-**In Form** (`apps/client/lib/forms/generic_item_form_screen.dart`):
-```dart
-// After successful image upload
-if (imageUrl != null) {
-  // 1. Clear old image
-  if (oldImageUrl != null) {
-    await DefaultCacheManager().removeFile(oldImageUrl);
-  }
-  
-  // 2. Invalidate item from state
-  ItemProviderHelper.invalidateItem(ref, itemType, itemId);
-  
-  // 3. Reload this item
-  await ItemProviderHelper.loadSpecificItems(ref, itemType, [itemId]);
-}
-```
+`item_detail_screen.dart` (`_refreshItemData`) does a **granular** refresh for a single item:
 
-**In Detail Screen** (`apps/client/lib/screens/items/item_detail_screen.dart`):
-```dart
-Future<void> _refreshItemData() async {
-  // 1. Clear this item's image
-  if (imageUrl != null) {
-    await DefaultCacheManager().removeFile(imageUrl);
-  }
-  
-  // 2. Invalidate from state
-  ItemProviderHelper.invalidateItem(ref, itemType, itemId);
-  
-  // 3. Reload from API
-  await ItemProviderHelper.loadSpecificItems(ref, itemType, [itemId]);
-  
-  // 4. Refresh local state
-  await _loadItemData();
-}
-```
+1. Evict the item's image from the disk cache (`CachedNetworkImage.evictFromCache`)
+2. Invalidate the item in provider state (`ItemProviderHelper.invalidateItem`)
+3. Reload the item via `loadSpecificItems` → `getItemById` → `addItem` (merges back into the list)
+4. Reload local screen state
+
+### User-Rated Tabs
+
+The "My ratings" tabs in `item_type_screen.dart` refresh via `ItemProviderHelper.refreshUserRatedItems`, which clears the list/pagination state and reloads from scratch.
+
+### Force-Refresh Triggers (Summary)
+
+| Trigger | What refreshes |
+|---|---|
+| Pull-to-refresh (home) | Schemas (all), stats, ratings |
+| Pull-to-refresh (item type) | Stats cache, ratings cache, schema (type), items (type, force) |
+| Pull-to-refresh (item detail) | Single item: image evict + state invalidate + refetch |
+| Search / filter change | `loadItems(forceRefresh: true)` with new query/filters |
+| Item create/update/delete | Provider state updated in place; pagination reset |
 
 ---
 
-## When Each Strategy is Used
+## Image Cache Eviction
 
-| Operation | Strategy | What's Cleared | What's Reloaded |
-|-----------|----------|----------------|-----------------|
-| **Pull-to-refresh (list)** | Bulk | ALL data + ALL images | ALL items |
-| **Pull-to-refresh (detail)** | Granular | 1 item's image | 1 item |
-| **Item creation** | Bulk | ALL data + ALL images | ALL items |
-| **Item update (data)** | Bulk | ALL data + ALL images | ALL items |
-| **Image upload** | Granular | 1 item's image | 1 item |
-| **Image delete** | Granular | 1 item's image | 1 item |
+Images are only evicted explicitly — `cached_network_image` never invalidates on its own. The eviction points:
 
----
+**`dynamic_item_form_screen.dart`** (edit mode):
 
-## Cache Flow Examples
+- Before saving: if the user deleted the image, `CachedNetworkImage.evictFromCache(_oldImageUrl)` after the API delete succeeds
+- After upload: if the image was replaced, evict the old URL so the new one (possibly same URL with different content) is refetched
 
-### Example 1: User Uploads Image for Cheese #5
+**`item_detail_screen.dart`** (`_refreshItemData`):
 
-```
-1. User edits cheese #5, uploads new image
-2. Form: Clear cheese #5's old image from cache
-3. Form: Invalidate cheese #5 from provider state
-4. Form: Reload cheese #5 from API (with new image URL)
-5. Navigate back to detail screen
-6. Detail screen: Loads cheese #5 from provider state ✅
-7. Image widget: Loads new image (old one was cleared) ✅
-8. Navigate to cheese list
-9. List: Shows cheese #5 with new image ✅
-```
+- Evicts the current item's image before refetching the item, so a changed image shows fresh
 
-### Example 2: Pull-to-Refresh on Cheese List
-
-```
-1. User pulls down on cheese list
-2. Provider: Clear ALL data cache + ALL image cache
-3. Provider: Fetch ALL cheeses from API
-4. List: Displays all fresh data ✅
-```
-
-### Example 3: Pull-to-Refresh on Cheese #5 Detail
-
-```
-1. User pulls down on cheese #5 detail screen
-2. Screen: Clear cheese #5's image from cache
-3. Screen: Invalidate cheese #5 from provider state
-4. Screen: Reload cheese #5 from API
-5. Screen: Display fresh data ✅
-6. Navigate to list
-7. List: Cheese #5 is present (was reloaded) ✅
-```
+**Rule of thumb:** any time an image at a known URL can change or disappear server-side, call `CachedNetworkImage.evictFromCache(url)` for the old URL. If a URL ever points to changing content (e.g. same URL re-uploaded), eviction must happen on both replace and delete paths.
 
 ---
 
-## Key Components
+## Offline Behavior
 
-### Files Involved
+The client has **no offline data cache for items** — offline, previously loaded Riverpod state may still render, but nothing is persisted or revalidated. What does happen offline:
 
-1. **ItemService** (`apps/client/lib/services/item_service.dart`)
-   - `clearCache()` - Bulk clear method
-   - Clears data cache + ALL images
+- Requests fail gracefully into per-type error state (`errorsByType`); screens show error UI with retry
+- When connectivity is restored, the auth provider revalidates the session via `/api/user/me` and data loads resume normally — no manual refresh needed
 
-2. **ItemProvider** (`apps/client/lib/providers/item_provider.dart`)
-   - `refreshItems()` - Calls clearCache(), reloads all
-   - `invalidateItem(id)` - Removes specific item from state
-   - `loadSpecificItems([ids])` - Reloads specific items
-
-3. **ItemProviderHelper** (`apps/client/lib/utils/item_provider_helper.dart`)
-   - Wrapper methods for type-agnostic access
-   - `refreshItems()` - Bulk refresh
-   - `invalidateItem()` - Granular invalidation
-   - `loadSpecificItems()` - Granular reload
-
-4. **ItemImage Widget** (`apps/client/lib/widgets/items/item_image.dart`)
-   - Uses `CachedNetworkImage`
-   - Automatic loading/error states
-   - Fetches from cache or network
-
-### Helper Utilities
-
-**Clear specific image**:
-```dart
-await DefaultCacheManager().removeFile(imageUrl);
-```
-
-**Clear all images**:
-```dart
-await DefaultCacheManager().emptyCache();
-```
-
-**Invalidate item from state**:
-```dart
-ItemProviderHelper.invalidateItem(ref, itemType, itemId);
-```
-
-**Reload specific item**:
-```dart
-await ItemProviderHelper.loadSpecificItems(ref, itemType, [itemId]);
-```
+Details, including the connectivity provider and revalidation flow: [Offline Handling](/docs/features/offline-handling.md). That doc also sketches a future `OfflineCache` class (persisting ratings/items); it is not implemented — today's only persistent cache is images.
 
 ---
 
-## Performance Characteristics
+## Guidance
 
-### Bulk Clear
+**When adding a new screen or feature:**
 
-| Metric | Value |
-|--------|-------|
-| API Calls | 1 (getAllItems) |
-| Items Cleared | ALL (e.g., 100 items) |
-| Images Cleared | ALL (e.g., 100 images) |
-| Time | ~200-500ms (HTTP/2 multiplexing) |
+- Read items through `ItemProviderHelper`, not the notifier directly
+- Pull-to-refresh must call the force variants (`refreshItems`, `refreshSchema(s)`, `refreshRatings`) and clear any service cache the screen reads (stats, ratings)
+- If your feature caches responses in memory, follow the existing pattern: singleton service, `Map` cache + timestamp map, `static const Duration _cacheExpiry = Duration(minutes: 5)`, force-refresh parameter, `clearCache()`
 
-### Granular Clear
+**When changing items or images:**
 
-| Metric | Value |
-|--------|-------|
-| API Calls | 1 (getItemById) |
-| Items Cleared | 1 |
-| Images Cleared | 1 |
-| Time | ~50-100ms |
+- Mutations update provider state in place (`addItem` / `updateItem` / `invalidateItem`) — do not drop the whole list for a single-item change
+- Always evict replaced or deleted images: `CachedNetworkImage.evictFromCache(oldUrl)`
 
-**Efficiency Gain**: ~5-10x faster for single item operations
+**When adding a new item type:**
 
----
+- Nothing cache-specific is needed — types are dynamic; the schema cache and provider state are keyed by type name automatically
 
-## Testing
-
-### Test Bulk Clear
-
-```bash
-cd apps/client
-flutter run -d linux
-```
-
-1. Go to cheese list
-2. Pull down to refresh
-3. ✅ Verify: All images reload
-4. Check network tab: Single API call for all items
-
-### Test Granular Clear
-
-1. Edit cheese #5, upload new image
-2. Save
-3. ✅ Verify: New image appears immediately
-4. Go to cheese list
-5. ✅ Verify: Cheese #5 has new image
-6. ✅ Verify: Other cheeses unchanged (no reload)
-7. Pull-to-refresh on cheese #5 detail
-8. ✅ Verify: Image reloads
-9. Go to list
-10. ✅ Verify: Cheese #5 still in list
-
----
-
-## Future Optimizations
-
-### Potential Improvements
-
-1. **Smarter Bulk Clear**
-   - Only clear images for items currently in view
-   - Keep off-screen images cached
-
-2. **Cache Size Limits**
-   - Implement max cache size (e.g., 100MB)
-   - LRU eviction for old images
-
-3. **Preemptive Loading**
-   - Prefetch images for next/previous items
-   - Background refresh for stale data
-
-4. **Cache Analytics**
-   - Track hit/miss rates
-   - Optimize based on usage patterns
-
-### When to Optimize
-
-Current approach is fine unless:
-- App has 1000+ items per type
-- Users complain about slow list scrolling
-- Mobile data usage is excessive
-- Cache directory grows too large (>500MB)
-
----
-
-## Dependencies
-
-```yaml
-dependencies:
-  cached_network_image: ^3.3.0
-  flutter_cache_manager: ^3.3.1
-```
-
----
-
-## Troubleshooting
-
-### Images not updating after edit
-
-**Symptom**: Old image still shows after upload
-**Cause**: Image cache not cleared
-**Fix**: Check that `DefaultCacheManager().removeFile()` is called
-
-### Item missing from list after update
-
-**Symptom**: Item disappears after image upload
-**Cause**: Item invalidated but not reloaded
-**Fix**: Ensure `loadSpecificItems()` is called after `invalidateItem()`
-
-### Slow pull-to-refresh
-
-**Symptom**: List takes 2+ seconds to refresh
-**Cause**: Too many items, bulk clear overhead
-**Fix**: Consider paginated loading or virtual scrolling
-
----
-
-## Summary
-
-**Two strategies for two scenarios**:
-
-1. ✅ **Bulk Clear** - Simple, reliable, used for list refresh
-2. ✅ **Granular Clear** - Efficient, fast, used for single item operations
-
-**Best of both worlds**:
-- Simple where it matters (user-initiated refresh)
-- Efficient where it counts (background operations)
-- Scales to production use cases
+**Known limitation:** the client stores schema ETags but never sends `If-None-Match`, so schema revalidation is TTL-only. If schema changes need to appear faster than 5 minutes without pull-to-refresh, wire `_etagCache` into a conditional request.

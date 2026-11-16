@@ -9,7 +9,7 @@ SPA admin panel for the À la carte platform. Provides user management, item CRU
 - Code: `apps/admin/`
 - Docs: `docs/admin/`
 - Release tag: `admin-v*`
-- Docker image: `ghcr.io/{repo}-admin`
+- Deploy artifact: static `dist/` bundle (built by CI with `VITE_*` vars baked at build time; deployed to a static host — no Docker image)
 
 ## Local Contracts
 

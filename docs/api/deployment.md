@@ -7,7 +7,7 @@ The API runs on Google Cloud Run backed by a serverless Postgres database (Neon)
 | Component | Service | Notes |
 |-----------|---------|-------|
 | Compute | Cloud Run | Scale-to-zero, `min-instances: 0` |
-| Database | Neon | Serverless Postgres 16, free tier |
+| Database | Neon | Serverless Postgres 16, free tier; ~1s cold-start on first request after idle (always-on is a paid toggle) |
 | Storage | MinIO / S3-compatible | Image uploads |
 | Registry | GitHub Container Registry (ghcr.io) | Docker images |
 
@@ -20,8 +20,16 @@ The API runs on Google Cloud Run backed by a serverless Postgres database (Neon)
 | `DATABASE_URL` | Postgres connection string (from Neon dashboard) |
 | `JWT_SECRET_KEY` | HMAC-SHA256 signing key (≥64 chars) |
 | `GOOGLE_CLIENT_ID` | Google OAuth 2.0 client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 client secret |
 | `INITIAL_ADMIN_EMAIL` | Email of the initial admin user |
+
+### Image Storage (required for uploads)
+
+| Variable | Description |
+|----------|-------------|
+| `STORAGE_BUCKET_NAME` | S3/MinIO bucket name |
+| `STORAGE_ENDPOINT` | S3 endpoint URL |
+| `STORAGE_REGION` | S3 region |
+| `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` | S3 credentials |
 
 ### Optional
 
@@ -57,12 +65,8 @@ Neon provides this string directly from the dashboard. For local development, us
 1. Push image: `docker push ghcr.io/org/alacarte-api:latest`
 2. Deploy to Cloud Run (Console or `gcloud run deploy`)
 3. Set `DATABASE_URL` to Neon scratch database connection string
-4. On first request, GORM `AutoMigrate` creates the full Postgres schema
+4. On startup, GORM `AutoMigrate` creates the full Postgres schema (runs before the server starts accepting requests)
 5. Verify: `curl https://api.example.com/health`
-
-### Production Cutover
-
-See [Postgres Migration Runbook](../guides/postgres-migration-runbook.md) for the data migration procedure.
 
 ## Local Development
 

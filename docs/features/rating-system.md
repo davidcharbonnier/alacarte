@@ -118,8 +118,8 @@ The À la carte rating system enables users to create, edit, share, and manage r
 **Enhanced Implementation**:
 - Single-purpose widget for community statistics display
 - **Riverpod Provider Architecture**: Uses `FutureProvider.family` for efficient caching
-- **Automatic Caching**: Stats cached per (itemType, itemId) pair - no duplicate API calls
-- **Optimized data source**: Uses `/api/stats/community/:type/:id` endpoint
+- **Automatic Caching**: Stats cached per item id, with batch fetch support (`CommunityStatsParams(itemIds: [...])`) - no duplicate API calls
+- **Optimized data source**: Uses `/api/stats/community/:id` endpoint
 - Clean, original design maintained from previous implementation
 - Efficient loading states and error handling with AsyncValue
 - Anonymous aggregate data without privacy violations
@@ -138,7 +138,7 @@ The À la carte rating system enables users to create, edit, share, and manage r
 final communityStatsProvider = FutureProvider.family<Map<String, dynamic>, CommunityStatsParams>(
   (ref, params) async {
     final apiService = ref.watch(apiServiceProvider);
-    final response = await apiService.getCommunityStats(params.itemType, params.itemId);
+    final response = await apiService.getCommunityStats(itemId); // one call per item id, batched by the family key
 
     // Use direct type checking as documented in README
     if (response is ApiSuccess<Map<String, dynamic>>) {
@@ -158,20 +158,14 @@ final communityStatsProvider = FutureProvider.family<Map<String, dynamic>, Commu
 {
   "total_ratings": 5,
   "average_rating": 4.2,
-  "item_type": "cheese",
   "item_id": 123
 }
-
-// Convenient extension methods
-stats.totalRatings  // int
-stats.averageRating // double
 ```
 
 **Widget Usage**:
 ```dart
 RatingSummaryCard(
-  item: cheeseItem,
-  itemType: 'cheese', // Provider fetches stats automatically
+  item: cheeseItem, // Provider fetches stats automatically by item id
 )
 ```
 
@@ -225,16 +219,15 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 **Location**: `lib/screens/items/item_detail_screen.dart`
 
 **Data Loading Strategy**:
-- Loads community ratings via `getRatingsByItem()`
-- Loads user's viewer ratings via `getRatingsByViewer()`
-- Merges both sources to ensure shared ratings appear
+- Loads the user's visible ratings via `getRatingsByViewer()` (includes shared ratings)
 - Separates personal vs shared ratings for proper display
+- Note: `getRatingsByItem()` exists in the service but is not used by this screen
 
 #### Item Type Screen
 **Location**: `lib/screens/items/item_type_screen.dart`
 
 **Personal List Enhancements**:
-- Defaults to "My List" tab for improved UX
+- Remembers the last active tab (defaults to "All Items")
 - Distinguishes personal ratings vs recommendations visually
 - Shows side-by-side personal + recommendations for same item
 - Clear visual indicators (person icon for personal, thumbs up for recommendations)
@@ -260,7 +253,7 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 - `makeAllRatingsPrivate()` - Bulk remove all sharing from all ratings
 - `removeUserFromAllShares()` - Bulk unshare specific user from all ratings
 - `loadRatingsByViewer()` - Load user's complete reference list
-- `loadRatingsByItem()` - Load community ratings for specific items
+- `loadRatingsForCurrentUser()` - Reload ratings after auth changes
 
 ### API Integration
 **Service**: `lib/services/rating_service.dart`
@@ -271,7 +264,7 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 - `PUT /rating/:id/share` - Share rating with users (batch: `user_ids` array)
 - `PUT /rating/:id/hide` - Unshare rating from users (batch: `user_ids` array)
 - `GET /rating/viewer/:id` - Get user's complete rating list (personal + shared)
-- `GET /rating/:itemType/:id` - Get all community ratings for item
+- `GET /stats/community/:id` - Get community stats for one item
 - `PUT /rating/bulk/private` - Make all user's ratings private
 - `PUT /rating/bulk/unshare/:userId` - Remove user from all shares
 
@@ -279,8 +272,8 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 **Rating Model**: `lib/models/rating.dart`
 
 **Key Properties**:
-- `id`, `grade`, `note`, `authorId`, `itemId`, `itemType`
-- `author`, `viewers`, `cheese` - Populated relations from backend
+- `id`, `grade`, `note`, `authorId`, `itemId`
+- `author`, `viewers` - Populated relations from backend (`cheese` is a legacy dynamic field kept for backward compatibility)
 - Extension methods for UI convenience (`starRating`, `authorName`, etc.)
 
 ## User Experience Flow
@@ -382,7 +375,7 @@ All rating screens use SafeNavigation helpers:
 - `goBackFromRatingCreation()` - Always returns to item detail
 - `goBackFromRatingEdit()` - Context-aware navigation  
 - Crash-proof navigation with smart fallbacks
-- Deep link support for rating URLs
+- Deep links are not configured (no VIEW intent-filter)
 
 ### Route Structure
 - `/rating/create/:itemType/:itemId` - Rating creation

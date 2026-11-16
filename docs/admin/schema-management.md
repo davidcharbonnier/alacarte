@@ -74,23 +74,18 @@ Click **"Add Field"** to define each field:
 | **Label** | Human-readable label shown in forms |
 | **Field Type** | One of: text, textarea, number, select, checkbox, enum |
 | **Required** | Whether the field is mandatory |
-| **Order** | Display order in forms and detail views |
+| **Group** | Optional group name (max 50 chars) to group fields in forms/views |
+| **Order** | Display order in forms and detail views (up/down arrows) |
 
-### Step 4: Configure Validation (Optional)
+### Step 4: Validation, Options and Display Hints (API-level)
 
-Click the validation icon on a field to add rules:
+The schema editor UI does not expose editing for validation rules, select/enum options, or display hints — new fields get empty defaults. To set them, include them in the field objects of the schema API payload (PUT/PATCH via the schema endpoints — see the field structure in [API endpoints](/docs/api/endpoints.md)):
 
-- **Min Length / Max Length** - For text/textarea fields
-- **Min / Max** - For number fields
-- **Pattern** - Regex pattern for text fields
+- **Validation** — `minLength`/`maxLength` (text/textarea), `min`/`max` (number), `pattern` (regex, text)
+- **Options** — predefined values for select/enum fields
+- **Display hints** — `badge` (colored pill on item cards), `primary`/`secondary` (subtitle fields)
 
-### Step 5: Configure Display Hints (Optional)
-
-Click the display icon on a field to set:
-
-- **Badge** - Shows as a colored pill on item cards
-- **Primary** - Primary subtitle field (shown below title)
-- **Secondary** - Secondary subtitle field (fallback)
+**Note:** Only one field should have `badge: true`. The badge field is excluded from detail rows.
 
 **Note:** Only one field should have `badge: true`. The badge field is excluded from detail rows.
 
@@ -122,11 +117,10 @@ Field keys must be:
 
 The following keys are reserved and handled specially:
 - `name` - Stored as a first-class database column (fast queries, always required)
-- `description` - Stored as a first-class column
 
 ### Field Order
 
-Fields are displayed in forms and detail views in the order you define them. Use drag-and-drop in the schema editor to reorder.
+Fields are displayed in forms and detail views in the order you define them. Reorder with the up/down arrows in the schema editor.
 
 ---
 
@@ -326,11 +320,7 @@ Set **"Is Active"** back to `true`. The item type immediately reappears in the c
 
 ## Version History
 
-Each schema update creates a new immutable version. View version history at:
-
-```
-/admin/schemas/:type/history
-```
+Version history is shown in the schema editor's history tab (`/schemas/:type`) and served by the API at `GET /admin/schemas/:type/versions/:version`. Versions come embedded in `GET /api/schemas/:type`.
 
 ### Version Details
 
@@ -342,12 +332,11 @@ Each schema update creates a new immutable version. View version history at:
 ### How Versions Work
 
 1. When you create a schema, it gets version 1
-2. When you edit the schema, it gets version 2 (version 1 is preserved)
-3. Existing items reference their creation version
-4. New items always use the latest active version
-5. Items are validated against their creation version, not the latest
+2. Only edits that change fields create a new version (metadata-only edits like display name or icon skip versioning)
+3. Old versions are preserved immutable
+4. **Items are always validated against the latest active schema** — not their creation version. The creation version is stored on items for reference but never consulted at validation time.
 
-This ensures data integrity: if you remove a required field in version 2, items created with version 1 still validate correctly.
+This means removing or tightening a field's rules applies to validation of all future writes, including updates to items created under older versions.
 
 ---
 
@@ -449,4 +438,4 @@ This is by design. Existing items keep their creation schema version. Only new i
 
 - [API Endpoints Reference](/docs/api/endpoints.md) - Schema and item API details
 - [Adding New Item Types](/docs/guides/adding-new-item-types.md) - Developer guide
-- [Dynamic Schema Design](/openspec/changes/dynamic-item-schema/design.md) - Technical design document
+- [Dynamic Schema Management](schema-management.md) - Schema system reference

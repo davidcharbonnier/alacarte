@@ -4,13 +4,12 @@ Central hub for all admin‑panel documentation.
 
 ## 📚 Documentation Index
 
-- **Quick Start** – See the repository README for the admin app: [/apps/admin/README.md](/apps/admin/README.md)
+
 - **Authentication System** – Detailed admin authentication guide: [/docs/admin/authentication-system.md](/docs/admin/authentication-system.md)
-- **Design System** – UI design guidelines and component library: [/docs/admin/design-system.md](/docs/admin/design-system.md)
+- **Design System** – MUI v6 / Material Design 3 theme and styling conventions: [/docs/admin/design-system.md](/docs/admin/design-system.md)
 - **Deployment Guide** – Production deployment instructions: [/docs/admin/deployment.md](/docs/admin/deployment.md)
 - **Backend Requirements** – API specifications needed by the admin panel: [/docs/admin/backend-requirements.md](/docs/admin/backend-requirements.md)
 - **Schema Management Guide** – How to create and manage item type schemas: [/docs/admin/schema-management.md](/docs/admin/schema-management.md)
-- **Phased Implementation** – Development phases and rollout plan: [/docs/admin/phased-implementation.md](/docs/admin/phased-implementation.md)
 
 ## 🔗 Cross‑App Features
 

@@ -33,6 +33,22 @@ The À la carte platform implements a **privacy-first architecture** where user 
 
 ---
 
+## 👁️ Visibility Tiers
+
+Every rating exists in exactly one tier:
+
+| Tier | Who sees it | Where it appears |
+|---|---|---|
+| **Personal** | Author only (default for new ratings) | "My Rating" section in item details |
+| **Shared** | Author + explicitly shared users | "Recommendations" section for recipients |
+| **Community** | Everyone, anonymous aggregates only | "Community" stats (averages, counts) |
+
+Equivalent access-control layers: Personal → Shared → Community → Blocked (no access to private/unshared ratings).
+
+Display names are generated from the full name as `First L.` (first name + upper-cased last initial) and are user-customizable, unique, and validated by each app (client: 2–50 characters).
+
+---
+
 ## 🗄️ Database Architecture
 
 ### Privacy-Related Tables
@@ -49,7 +65,8 @@ users (
 
 -- Ratings (private by default)
 ratings (
-    id, user_id, item_id, item_type,
+    id, user_id,
+    item_id,               -- FK -> items (plain foreign key, no item_type column)
     grade, note,
     created_at, updated_at
 )
@@ -59,21 +76,13 @@ rating_viewers (
     rating_id, user_id,  -- Many-to-many
     created_at
 )
-
--- Sharing relationship analytics
-sharing_relationships (
-    user_a_id, user_b_id,
-    first_shared_at, last_shared_at,
-    total_shares
-)
 ```
 
 ### Privacy Cascade Rules
 
 **When a user is deleted:**
 - ✅ All their ratings are deleted
-- ✅ All sharing relationships are removed
-- ✅ Shared ratings no longer visible to others
+- ✅ Shared ratings no longer visible to others (cascade through rating deletion)
 
 **When an item is deleted:**
 - ✅ All ratings for that item are deleted
@@ -217,26 +226,6 @@ Admins have additional access for platform management:
 ---
 
 ## 📊 Privacy Metrics
-
-### User Privacy Stats
-
-Available via `GET /api/user/sharing-stats`:
-
-```json
-{
-  "total_ratings": 15,
-  "total_shares": 8,
-  "unique_users_shared_with": 3,
-  "discoverable": true,
-  "sharing_relationships": [
-    {
-      "user_id": 2,
-      "display_name": "Alice",
-      "total_shares": 5
-    }
-  ]
-}
-```
 
 ### Platform Privacy Metrics (Admin)
 

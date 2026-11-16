@@ -7,6 +7,7 @@ This is the central entry point for all client‑side documentation.
 - **Quick Start** – See the repository README for the client app: [/apps/client/README.md](/apps/client/README.md)
 - **Authentication System** – Detailed front‑end authentication guide: [/docs/client/authentication-system.md](/docs/client/authentication-system.md)
 - **Privacy Model** – Front‑end privacy handling: [/docs/client/privacy-model.md](/docs/client/privacy-model.md)
+- **Cache Management** – Client caching and refresh behavior: [/docs/client/cache-management.md](/docs/client/cache-management.md)
 - **Setup Guides** – Android, Google OAuth, and other environment setup: [/docs/client/setup/](/docs/client/setup/)
 - **Architecture** – Router and form‑pattern documentation: [/docs/client/architecture/](/docs/client/architecture/)
 - **Features** – Notifications, settings, and other client features: [/docs/client/features/](/docs/client/features/)

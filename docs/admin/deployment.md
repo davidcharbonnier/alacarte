@@ -1,6 +1,6 @@
 # Production Deployment Guide - Admin Panel
 
-**Last Updated:** October 2025  
+**Last Updated:** November 2026  
 **Status:** Production-Ready
 
 ---
@@ -9,10 +9,9 @@
 
 ### Prerequisites
 
-- [ ] Docker Hub account with `davidcharbonnier/alacarte-admin` repository
-- [ ] Google Cloud Project with Cloud Run enabled
+- [ ] Static hosting account (Netlify, Cloudflare Pages, Firebase Hosting, …) for the admin SPA
 - [ ] Backend API deployed and accessible
-- [ ] Google OAuth Web Client configured
+- [ ] Google OAuth Web Client configured with the admin origin
 
 ---
 
@@ -21,23 +20,11 @@
 ### Required Variables
 
 ```bash
-# API Configuration
-API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
-NEXT_PUBLIC_API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
+# API Configuration (baked into bundle at build time)
+VITE_API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
 
-# NextAuth Configuration
-NEXTAUTH_URL=https://alacarte-admin-xxx.northamerica-northeast1.run.app
-NEXTAUTH_SECRET=<generate-with-openssl-rand-base64-32>
-
-# Google OAuth (must match backend)
-GOOGLE_CLIENT_ID=<your-google-client-id>
-GOOGLE_CLIENT_SECRET=<your-google-client-secret>
-```
-
-### Generate NextAuth Secret
-
-```bash
-openssl rand -base64 32
+# Google OAuth Web Client ID (baked into bundle at build time)
+VITE_GOOGLE_CLIENT_ID=<your-google-client-id>
 ```
 
 ---
@@ -49,10 +36,9 @@ openssl rand -base64 32
 In Google Cloud Console → APIs & Services → Credentials:
 
 **Production:**
-- JavaScript origins: `https://alacarte-admin-xxx.northamerica-northeast1.run.app`
-- Redirect URI: `https://alacarte-admin-xxx.northamerica-northeast1.run.app/api/auth/callback/google`
+- Authorized JavaScript origins: `https://alacarte-admin-xxx.northamerica-northeast1.run.app`
 
-**Important:** Must use the exact Cloud Run URL
+**Important:** Must use the exact deployed domain (your static-host URL). No server-side redirect URI is needed — the SPA uses Google Identity Services (`@react-oauth/google`) and sends the `id_token` to the backend, which verifies it and issues its own JWT (stored in `sessionStorage`).
 
 ---
 
@@ -69,31 +55,30 @@ git checkout -b feat/admin-enhancements
 git commit -m "feat: add user management"
 git push
 
-# Create PR → Builds pre-release image
-# Merge to master → Builds production image with version tag
+# Create PR → CI builds the dist/ artifact with VITE_* vars from GitHub vars
+# (ADMIN_VITE_API_URL, ADMIN_VITE_GOOGLE_CLIENT_ID)
+# Merge to master → release workflow produces a dist/ artifact per version tag
 ```
 
-**Images created:**
-- `davidcharbonnier/alacarte-admin:latest`
-- `davidcharbonnier/alacarte-admin:0.1.0` (semantic version)
+**Artifacts created:**
+- `admin-dist-{version}` (static bundle, e.g. `admin-dist-0.1.0`)
 
-### Method 2: Manual Docker Build
+### Method 2: Manual Static Build
 
 ```bash
-# Build production image
-docker build -t davidcharbonnier/alacarte-admin:latest --target prod .
+cd apps/admin
 
-# Push to Docker Hub
-docker push davidcharbonnier/alacarte-admin:latest
+# VITE_* values are baked into the bundle at build time — set them before building
+export VITE_API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
+export VITE_GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 
-# Deploy to Cloud Run
-gcloud run deploy alacarte-admin \
-  --image davidcharbonnier/alacarte-admin:latest \
-  --platform managed \
-  --region northamerica-northeast1 \
-  --allow-unauthenticated \
-  --set-env-vars "NEXTAUTH_URL=https://alacarte-admin-xxx.run.app,API_URL=https://backend.run.app,NEXT_PUBLIC_API_URL=https://backend.run.app" \
-  --set-secrets "NEXTAUTH_SECRET=nextauth-secret:latest,GOOGLE_CLIENT_ID=google-client-id:latest,GOOGLE_CLIENT_SECRET=google-client-secret:latest"
+npm ci --ignore-scripts
+npm run build
+
+# Upload dist/ to any static host (Netlify, Cloudflare Pages, Firebase Hosting, …)
+```
+
+No runtime env vars exist for the admin SPA — changing `VITE_*` requires a rebuild.
 ```
 
 ---
@@ -102,7 +87,7 @@ gcloud run deploy alacarte-admin \
 
 ### Verify Deployment
 
-1. **Access admin panel:** `https://alacarte-admin-xxx.northamerica-northeast1.run.app`
+1. **Access admin panel:** your static-host URL (e.g. `https://admin.example.com`)
 2. **Click "Sign in with Google"**
 3. **Authenticate with admin account**
 4. **Should redirect to dashboard**
@@ -134,20 +119,17 @@ This user can login immediately and promote other users to admin via the UI.
 
 ### Production Security
 
-- ✅ HTTPS enforced (Cloud Run automatic)
-- ✅ Secure cookies (automatic in production)
-- ✅ HttpOnly session cookies
-- ✅ CSRF protection (NextAuth)
+- ✅ HTTPS enforced (automatic on Cloud Run and all major static hosts)
+- ✅ Backend verifies Google `id_token` before issuing its own JWT
 - ✅ Admin verification at login
 - ✅ Backend JWT validation on all API calls
+- ✅ JWT held in `sessionStorage` (cleared when the tab closes)
 - ✅ No tech stack info disclosed
 - ✅ X-Powered-By header disabled
 
 ### Secrets Management
 
-**Use Google Secret Manager for:**
-- `NEXTAUTH_SECRET`
-- `GOOGLE_CLIENT_SECRET`
+The admin SPA needs no secrets — both env vars are public build-time values (backend keeps `GOOGLE_CLIENT_SECRET` in Secret Manager; see the API deployment guide).
 
 **Never commit to git:**
 - `.env.local`
@@ -157,13 +139,6 @@ This user can login immediately and promote other users to admin via the UI.
 ---
 
 ## Troubleshooting
-
-### UntrustedHost Error
-
-**Symptom:** Login fails with UntrustedHost in logs  
-**Solution:** 
-1. Verify `NEXTAUTH_URL` matches exact Cloud Run URL
-2. Ensure `trustHost: true` is in `auth.ts` (already configured)
 
 ### Access Denied for Admin User
 
@@ -178,14 +153,14 @@ This user can login immediately and promote other users to admin via the UI.
 **Solution:**
 1. Verify `API_URL` is correct
 2. Check backend is deployed and running
-3. Verify Cloud Run → Cloud Run networking allows traffic
+3. Verify the API service allows traffic from the admin origin
 
 ### OAuth Redirect Mismatch
 
 **Symptom:** Google OAuth error after clicking sign in  
 **Solution:**
-1. Add exact Cloud Run URL to Google OAuth redirect URIs
-2. Include the full path: `.../api/auth/callback/google`
+1. Add the exact deployed admin URL to Google OAuth authorized JavaScript origins
+2. Verify `GOOGLE_CLIENT_ID` matches the OAuth client used by the client app
 
 ---
 
@@ -193,39 +168,32 @@ This user can login immediately and promote other users to admin via the UI.
 
 ### Check Logs
 
-```bash
-# View admin panel logs
-gcloud run services logs read alacarte-admin \
-  --region northamerica-northeast1 \
-  --limit 50
-
-# Follow logs in real-time
-gcloud run services logs tail alacarte-admin \
-  --region northamerica-northeast1
-```
+The admin SPA is a static bundle — no server logs exist for it. Debug via the browser console (see Key Log Patterns below) and the API's Cloud Run logs for backend-side auth events.
 
 ### Key Log Patterns
 
+The admin SPA is a static bundle — it produces no server logs. Watch browser console output:
+
 **Successful login:**
 ```
-POST /api/auth/callback/google → 302
-GET / → 200
+POST /auth/google → 200 (JWT stored in sessionStorage)
+GET /api/auth/check-admin → 200 {"is_admin": true}
 ```
 
 **Failed admin check:**
 ```
-Admin access required - user is not an administrator
-Error: AccessDenied
+GET /api/auth/check-admin → 200 {"is_admin": false}
 ```
 
 **Backend unreachable:**
 ```
-Authentication failed: [network error]
-Error: ServiceUnavailable
+Axios network error → redirect to /login
 ```
+
+Backend-side auth logs are in the API service's Cloud Run logs.
 
 ---
 
-## Admin Panel is Production-Ready! ✅
+## Admin Panel Status
 
-All authentication, authorization, and error handling is complete and tested.
+All authentication, authorization, and error handling is complete.
