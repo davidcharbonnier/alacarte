@@ -449,4 +449,4 @@ This is by design. Existing items keep their creation schema version. Only new i
 
 - [API Endpoints Reference](/docs/api/endpoints.md) - Schema and item API details
 - [Adding New Item Types](/docs/guides/adding-new-item-types.md) - Developer guide
-- [Dynamic Schema Design](/openspec/changes/dynamic-item-schema/design.md) - Technical design document
+- [Dynamic Schema Management](schema-management.md) - Schema system reference
