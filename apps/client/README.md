@@ -28,7 +28,6 @@ flutter run -d linux  # or -d chrome, -d android
 ### Adding a New Item Type
 See [Adding New Item Types - Frontend Section](/docs/guides/adding-new-item-types.md#phase-2-frontend-implementation-50-min)
 
-Quick reference: [Client Checklist](/docs/guides/client-checklist.md)
 
 ### Running the App
 ```bash

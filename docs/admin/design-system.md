@@ -435,7 +435,6 @@ beer: {
 ## Related Documentation
 
 - [Adding New Item Types](/docs/guides/adding-new-item-types.md)
-- [Admin Checklist](/docs/guides/admin-checklist.md)
 - [Backend Requirements](/docs/admin/backend-requirements.md)
 
 ---

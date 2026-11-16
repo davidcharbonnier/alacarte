@@ -321,9 +321,6 @@ French: Rouge, Blanc, Rosé
 ## 📚 Related Documentation
 
 - [Adding New Item Types](adding-new-item-types.md) - Complete guide
-- [Backend Checklist](backend-checklist.md) - Backend steps
-- [Client Checklist](client-checklist.md) - Frontend steps
-- [Admin Checklist](admin-checklist.md) - Admin panel steps
 
 ---
 

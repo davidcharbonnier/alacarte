@@ -699,9 +699,8 @@ curl -X DELETE \
 
 ## 📚 Related Documentation
 
-- [Authentication System](authentication-system.md) - NextAuth.js integration
-- [Adding New Item Types](adding-new-item-types.md) - Extending admin functionality
-- [Phased Implementation](phased-implementation.md) - Development timeline
+- [Authentication System](authentication-system.md) - Admin OAuth and session management
+- [Adding New Item Types](../guides/adding-new-item-types.md) - Extending admin functionality
 
 ---
 

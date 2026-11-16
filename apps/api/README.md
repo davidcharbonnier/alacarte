@@ -30,7 +30,6 @@ go run main.go
 ### Adding a New Item Type
 See [Adding New Item Types - Backend Section](/docs/guides/adding-new-item-types.md#phase-1-backend-implementation-65-min)
 
-Quick reference: [Backend Checklist](/docs/guides/backend-checklist.md)
 
 ### Running Migrations
 ```bash
@@ -74,7 +73,6 @@ For features that span multiple applications:
 
 ### Implementation Guides
 - **[Adding New Item Types](/docs/guides/adding-new-item-types.md)** - Complete platform guide
-- **[Backend Checklist](/docs/guides/backend-checklist.md)** - Quick reference checklist
 
 ## Technology Stack
 

@@ -62,7 +62,6 @@ Neon provides this string directly from the dashboard. For local development, us
 
 ### Production Cutover
 
-See [Postgres Migration Runbook](../guides/postgres-migration-runbook.md) for the data migration procedure.
 
 ## Local Development
 
