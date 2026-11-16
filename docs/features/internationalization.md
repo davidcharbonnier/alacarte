@@ -85,29 +85,22 @@ validator: LocalizedValidators.createUserNameValidator(context)
 // Returns: "Le nom est requis" (French) or "Name is required" (English)
 ```
 
-#### **4. AppBarHelper Integration (appbar_helper.dart)**
-```dart
-// Language switcher appears wherever theme toggle appears
-actions: AppBarHelper.buildStandardActions(context, ref)
-// Includes: [Connectivity] [Language: FR/EN] [Theme] [Settings]
-```
-
 ### Language Switching
 
 #### **User Interface**
-- **Text-based toggle**: Shows "FR" when in English, "EN" when in French
-- **Universal availability**: Appears on all screens with app bars
-- **Consistent positioning**: Between connectivity indicator and theme toggle
-- **Professional styling**: Bordered button matching app theme
+- **Language selector dialog**: `LanguageSelector` (`lib/widgets/settings/language_selector.dart`) — a dialog with radio choices `auto` (device locale), `french`, `english`
+- **Location**: Settings screen; no app-bar toggle anymore
 
-#### **Persistence**
+#### **Persistence & Resolution**
 ```dart
-// Language preference automatically saved
-ref.read(localeProvider.notifier).toggleLanguage();
+// Preference persisted via localeProvider; default is auto (device locale)
+enum LocalePreference { auto, french, english }
 
 // Current language check
 final isFrench = ref.read(localeProvider).languageCode == 'fr';
 ```
+
+The locale is resolved from the preference: `auto` follows the device locale (French if the device is French, otherwise English), the other values force a language.
 
 ### **🚀 App Initialization Translations**
 
@@ -357,7 +350,7 @@ Text(context.l10n.deleteConfirmation(item.name))
 #### **Screens**
 - **HomeScreen**: Welcome messages, preference lists, item type cards
 - **AppInitializationScreen**: Loading messages, extended loading indicators
-- **UserSelectionScreen**: Profile selection, search, instructions, initialization error banners
+- **AuthScreen / DisplayNameSetupScreen**: Profile selection, display-name setup, initialization error banners
 - **UserFormScreen**: Form labels, validation, help text
 - **UserSettingsScreen**: Management options, confirmations, warnings
 - **ItemTypeScreen**: Tabs, empty states, item cards, rating indicators
@@ -464,7 +457,6 @@ lib/
 │   ├── localized_validators.dart # Context-aware form validation
 │   └── appbar_helper.dart      # Standard actions with language switcher
 └── models/
-    └── cheese_item.dart        # Example: getLocalizedDetailFields(context)
 
 l10n.yaml                       # Localization configuration
 pubspec.yaml                    # Dependencies: flutter_localizations, intl
@@ -613,7 +605,7 @@ static int _compareLocaleAware(String a, String b) {
 
 Locale-aware sorting is implemented in three key places:
 
-**1. Item Provider** (`lib/providers/item_provider.dart`):
+**1. Item Provider** (`lib/providers/dynamic_item_provider.dart`):
 ```dart
 import 'package:diacritic/diacritic.dart';
 
@@ -806,7 +798,7 @@ The `Collator` approach automatically supports:
 
 ## Translation Statistics
 
-**Total Translation Keys**: 110+ keys covering entire application including initialization
+**Total Translation Keys**: ~450+ keys covering the entire application including initialization
 **Languages Supported**: French (primary), English (fallback)
 **Coverage**: 100% of user-facing text including error states and loading messages
 **New in v1.1**: Async initialization error messages and extended loading indicators

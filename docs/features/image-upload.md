@@ -14,15 +14,13 @@ The À la carte platform supports image uploads for all item types (cheese, gin,
 - **Processing:** Server-side validation, resizing, and compression
 - **Delivery:** Public URLs with configurable endpoints
 - **Integration:** Generic implementation works for all item types
-- **Access:** Any authenticated user can upload/delete images (collaborative platform)
+- **Access:** Item owner only — other users (including non-owner admins) get `403`
 
 ### Current Status
-- ✅ Backend API endpoints (upload, delete) at `/api/:itemType/:id/image`
+- ✅ Backend API endpoints (upload, delete) at `/api/items/:type/:id/image`
 - ✅ Image validation and processing
-- ✅ Admin panel display (thumbnails, full-size, zoom)
-- ✅ Admin panel API client (uploadImage, deleteImage methods)
-- ⏳ Admin panel upload UI (not yet implemented)
-- ⏳ Client app display and upload (not yet implemented)
+- ✅ Admin panel display (thumbnails, full-size, zoom via `generic-item-detail.tsx` / `generic-item-table.tsx`)
+- ✅ Client app display (`item_image.dart`) and upload (`item_image_picker.dart` + `image_service.dart`)
 
 ---
 
@@ -33,18 +31,21 @@ The À la carte platform supports image uploads for all item types (cheese, gin,
 All item models include an optional `image_url` field:
 
 ```go
-type Wine struct {
+// apps/api/models/itemModel.go — one generic Item model for all schema types
+type Item struct {
     gorm.Model
-    Name        string
-    // ... other fields ...
-    ImageURL    *string  `json:"image_url,omitempty"`
-    Ratings     []Rating `gorm:"polymorphic:Item;"`
+    Name        string  `gorm:"type:varchar(255);index" json:"name"`
+    SchemaID    uint    `gorm:"not null;index" json:"schema_id"`
+    ImageURL    *string `gorm:"type:varchar(500)" json:"image_url,omitempty"`
+    FieldValues string  `gorm:"type:jsonb" json:"field_values,omitempty"`
+    UserID      int     `gorm:"not null;index" json:"user_id"`
+    // ... relations (Schema, User, Ratings, FieldValuesRows) ...
 }
 ```
 
 **Properties:**
 - **Type:** Nullable string pointer
-- **Format:** Full public URL (e.g., `http://localhost:9000/alacarte-images/wine_uuid.jpg`)
+- **Format:** Full public URL (e.g., `http://localhost:9000/alacarte-images/wine_550e8400-e29b-41d4-a716-446655440000.jpg` — `{type}_{uuid}.jpg`)
 - **Omitted:** Not included in JSON if null/empty
 - **Migration:** Auto-added by GORM on startup
 
@@ -54,9 +55,9 @@ type Wine struct {
 
 ### Upload Image
 
-**Endpoint:** `POST /api/:itemType/:id/image`
+**Endpoint:** `POST /api/items/:type/:id/image`
 
-**Authentication:** JWT required (any authenticated user)
+**Authentication:** JWT required, item owner only
 
 **Request:**
 - Content-Type: `multipart/form-data`
@@ -68,7 +69,7 @@ type Wine struct {
 curl -X POST \
   -H "Authorization: Bearer $TOKEN" \
   -F "image=@wine-bottle.jpg" \
-  http://localhost:8080/api/wine/1/image
+  http://localhost:8080/api/items/wine/1/image
 ```
 
 **Response (200 OK):**
@@ -86,15 +87,15 @@ curl -X POST \
 
 ### Delete Image
 
-**Endpoint:** `DELETE /api/:itemType/:id/image`
+**Endpoint:** `DELETE /api/items/:type/:id/image`
 
-**Authentication:** JWT required (any authenticated user)
+**Authentication:** JWT required, item owner only
 
 **Example:**
 ```bash
 curl -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/api/wine/1/image
+  http://localhost:8080/api/items/wine/1/image
 ```
 
 **Response (200 OK):**
@@ -263,28 +264,18 @@ STORAGE_USE_SSL=true
 
 ### Generic Item Interface
 
-All item types implement `ItemWithImage` interface:
+The single generic `Item` model implements `ItemWithImage`:
 
 ```go
 type ItemWithImage interface {
     GetImageURL() *string
     SetImageURL(url *string)
 }
-
-// Example implementation
-func (c *Cheese) GetImageURL() *string {
-    return c.ImageURL
-}
-
-func (c *Cheese) SetImageURL(url *string) {
-    c.ImageURL = url
-}
 ```
 
 **Benefits:**
 - Upload/delete controllers work for all item types
 - No item-specific code needed
-- Easy to add new item types
 
 ### Upload Flow
 
@@ -322,30 +313,9 @@ func (c *Cheese) SetImageURL(url *string) {
 
 ## 🖼️ Admin Panel Integration
 
-### API Client Methods
+### API Client
 
-The admin panel includes image upload/delete methods in the generic item API:
-
-```typescript
-import { getItemApi } from '@/lib/api/generic-item-api';
-
-// Get API client for item type
-const wineApi = getItemApi('wine');
-
-// Upload image
-const result = await wineApi.uploadImage(itemId, imageFile);
-// Returns: { message: string, image_url: string }
-
-// Delete image
-await wineApi.deleteImage(itemId);
-// Returns: { message: string }
-```
-
-**Features:**
-- Works for all item types (cheese, gin, wine, etc.)
-- Automatic authentication (sends the JWT from `sessionStorage`)
-- FormData handling for file uploads
-- Type-safe responses
+The admin API client (`src/lib/api/`) has no image upload/delete methods — image management is done from the Flutter client and the API directly. The admin displays images read-only: `generic-item-table.tsx` (thumbnails) and `generic-item-detail.tsx` (full-size, zoom). The item list can filter on images with `filter[has_image]` (see `schema-api.ts`).
 
 ### Display Components
 
@@ -463,10 +433,10 @@ export TOKEN="your-jwt-token"
 curl -X POST \
   -H "Authorization: Bearer $TOKEN" \
   -F "image=@test-image.jpg" \
-  http://localhost:8080/api/wine/1/image
+  http://localhost:8080/api/items/wine/1/image
 
 # Verify in admin panel
-# Navigate to http://localhost:3001/wine/1
+# Navigate to http://localhost:3000 (admin) or the Flutter client item page
 ```
 
 **Delete Test:**
@@ -474,7 +444,7 @@ curl -X POST \
 # Delete image
 curl -X DELETE \
   -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/api/wine/1/image
+  http://localhost:8080/api/items/wine/1/image
 
 # Verify in admin panel (should show placeholder)
 ```
@@ -573,7 +543,7 @@ mc ls local/alacarte-images
 
 **Database check:**
 ```sql
-SELECT id, name, image_url FROM wines WHERE id = 1;
+SELECT id, name, image_url FROM items WHERE id = 1;
 ```
 
 ### Wrong public URL
@@ -590,40 +560,9 @@ SELECT id, name, image_url FROM wines WHERE id = 1;
 
 ## 📝 Code Examples
 
-### Adding Image Support to New Item Type
+### Adding Image Support to a New Item Type
 
-**Step 1: Update model**
-```go
-type Beer struct {
-    gorm.Model
-    Name     string
-    ImageURL *string `json:"image_url,omitempty"`
-    // ... other fields
-}
-
-func (b *Beer) GetImageURL() *string { return b.ImageURL }
-func (b *Beer) SetImageURL(url *string) { b.ImageURL = url }
-```
-
-**Step 2: Register in item helper**
-```go
-func GetItemByType(itemType string, itemID string) (ItemWithImage, error) {
-    switch itemType {
-    case "beer":
-        model = &models.Beer{}
-    // ... other cases
-    }
-}
-
-func ValidateItemType(itemType string) bool {
-    validTypes := map[string]bool{
-        "beer": true,
-        // ... other types
-    }
-}
-```
-
-**That's it!** Upload/delete endpoints work automatically.
+Nothing to do — image upload is part of the generic dynamic item endpoints. Activating a schema automatically enables `POST/DELETE /api/items/:type/:id/image` for that type; new types are validated via a schema lookup (`ValidateItemType` → active schema check), not a hardcoded map.
 
 ### Custom Image Processing
 

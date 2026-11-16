@@ -219,16 +219,15 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 **Location**: `lib/screens/items/item_detail_screen.dart`
 
 **Data Loading Strategy**:
-- Loads community ratings via `getRatingsByItem()`
-- Loads user's viewer ratings via `getRatingsByViewer()`
-- Merges both sources to ensure shared ratings appear
+- Loads the user's visible ratings via `getRatingsByViewer()` (includes shared ratings)
 - Separates personal vs shared ratings for proper display
+- Note: `getRatingsByItem()` exists in the service but is not used by this screen
 
 #### Item Type Screen
 **Location**: `lib/screens/items/item_type_screen.dart`
 
 **Personal List Enhancements**:
-- Defaults to "My List" tab for improved UX
+- Remembers the last active tab (defaults to "All Items")
 - Distinguishes personal ratings vs recommendations visually
 - Shows side-by-side personal + recommendations for same item
 - Clear visual indicators (person icon for personal, thumbs up for recommendations)
@@ -254,7 +253,7 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 - `makeAllRatingsPrivate()` - Bulk remove all sharing from all ratings
 - `removeUserFromAllShares()` - Bulk unshare specific user from all ratings
 - `loadRatingsByViewer()` - Load user's complete reference list
-- `loadRatingsByItem()` - Load community ratings for specific items
+- `loadRatingsForCurrentUser()` - Reload ratings after auth changes
 
 ### API Integration
 **Service**: `lib/services/rating_service.dart`
@@ -376,7 +375,7 @@ All rating screens use SafeNavigation helpers:
 - `goBackFromRatingCreation()` - Always returns to item detail
 - `goBackFromRatingEdit()` - Context-aware navigation  
 - Crash-proof navigation with smart fallbacks
-- Deep link support for rating URLs
+- Deep links are not configured (no VIEW intent-filter)
 
 ### Route Structure
 - `/rating/create/:itemType/:itemId` - Rating creation

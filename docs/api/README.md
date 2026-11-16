@@ -13,7 +13,7 @@ This documentation serves as the **primary reference for API developers** workin
 - **[API Endpoints Reference](endpoints.md)** - Complete endpoint documentation
 
 ### Deployment & Operations
-- **[Security Best Practices](security.md)** - Security improvements and guidelines
+- **[Security](security.md)** - Security reference: Google auth, JWT, middleware, CORS, error handling
 
 ### Implementation Guides
 - **[Adding New Item Types](/docs/guides/adding-new-item-types.md#phase-1-backend-implementation-65-min)** - Backend implementation guide
@@ -29,7 +29,7 @@ For feature documentation that spans multiple applications (API, Client, Admin):
 ### App-Specific Documentation
 - **[API Implementation Details](/apps/api/README.md)** - Detailed API setup and usage
 - **[Client Documentation](/docs/client/)** - Flutter client documentation
-- **[Admin Documentation](/docs/admin/)** - Next.js admin panel documentation
+- **[Admin Documentation](/docs/admin/)** - Admin SPA documentation
 
 ## 🚀 Quick Links
 
@@ -39,15 +39,15 @@ For feature documentation that spans multiple applications (API, Client, Admin):
 - [Testing endpoints](/apps/api/README.md#testing-endpoints) - API testing examples
 
 **API Reference:**
-- [Authentication endpoints](endpoints.md#authentication)
-- [User management](endpoints.md#user-management)
-- [Item endpoints](endpoints.md#items)
-- [Rating endpoints](endpoints.md#ratings)
-- [Admin endpoints](endpoints.md#admin)
+- [Authentication endpoints](endpoints.md#-authentication)
+- [User management](endpoints.md#-user-management)
+- [Item endpoints](endpoints.md#-dynamic-item-endpoints)
+- [Rating endpoints](endpoints.md#-rating-endpoints)
+- [Admin endpoints](endpoints.md#-admin-schema-endpoints)
 
 ## 📦 Technology Stack
 
-- **Language:** Go 1.21+
+- **Language:** Go 1.25+
 - **Framework:** Gin
 - **Database:** Postgres 16+ with GORM
 - **Authentication:** Google OAuth + JWT

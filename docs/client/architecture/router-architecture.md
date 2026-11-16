@@ -30,6 +30,9 @@ The redirect function is designed to only trigger on meaningful authentication s
 redirect: (context, state) {
   final currentLocation = state.uri.path;
   
+  // Allow initialization screen to handle initial routing
+  if (currentLocation == RouteNames.initialization) return null;
+  
   // Clear authentication flow
   if (!isAuthenticated) {
     if (currentLocation == RouteNames.auth) return null;
@@ -51,6 +54,8 @@ redirect: (context, state) {
   return null; // No redirect needed for authenticated users in app
 }
 ```
+
+The router starts at `initialLocation: RouteNames.initialization` — a loading screen that performs initial routing (auth check, profile check) before handing off.
 
 ### Why This Architecture Works
 
@@ -90,7 +95,7 @@ SafeNavigation.goBackToHub(context);                               // To home sc
 - **Automatic fallback routes** when `pop()` is not available
 - **Context-aware routing** based on current screen and user intent
 - **Error handling** with graceful degradation
-- **Deep link support** consistent across entry points
+- **SafeNavigation fallbacks** consistent across entry points
 - **Cross-platform compatibility** for web, desktop, mobile
 
 ### Navigation Flow Patterns
@@ -269,7 +274,7 @@ testWidgets('Router should not redirect during settings updates', (tester) async
 ### Manual Testing Checklist
 - [ ] Settings toggle doesn't navigate away
 - [ ] Back navigation works from all screens
-- [ ] Deep links work correctly
+- [ ] SafeNavigation fallbacks work correctly
 - [ ] Browser back button behaves properly
 - [ ] Authentication flow redirects appropriately
 - [ ] No navigation crashes on edge cases

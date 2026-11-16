@@ -19,7 +19,7 @@ cd alacarte
 ### API Configuration
 ```bash
 # Copy the production template to .env
-cp apps/api/.env.prod.template apps/api/.env
+cp apps/api/.env.example apps/api/.env
 
 # Edit apps/api/.env with your configuration:
 # - Database credentials
@@ -29,10 +29,10 @@ cp apps/api/.env.prod.template apps/api/.env
 
 ### Admin Configuration
 ```bash
-# Copy the example file to .env.local
-cp apps/admin/.env.example apps/admin/.env.local
+# Copy the example file (Docker Compose reads apps/admin/.env)
+cp apps/admin/.env.example apps/admin/.env
 
-# Edit apps/admin/.env.local with your configuration:
+# Edit apps/admin/.env with your configuration:
 # - VITE_API_URL (http://localhost:8080)
 # - VITE_GOOGLE_CLIENT_ID (Google OAuth Web Client ID)
 
@@ -99,7 +99,7 @@ curl -I http://localhost:3000
 
 - **API:** http://localhost:8080
 - **Admin Panel:** http://localhost:3000
-- **Client Web:** http://localhost:3001 (when running Flutter web)
+- **Client Web:** http://localhost:<port> (Flutter web picks an ephemeral port unless you pass `--web-port`)
 - **MinIO Console:** http://localhost:9001 (for file storage management)
 - **Postgres:** localhost:5432 (connection string: see `apps/api/.env.example`)
 

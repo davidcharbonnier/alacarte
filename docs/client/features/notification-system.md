@@ -264,7 +264,7 @@ class NotificationHelper {
   static void showLoading(BuildContext context, String message)
   
   /// Show error with theme color (alternative)
-  static void showErrorFromTheme(BuildContext context, String message)
+  static void showError(BuildContext context, String message)
 }
 ```
 
