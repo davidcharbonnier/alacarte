@@ -1,6 +1,6 @@
 # Authentication System
 
-> **See also:** Full backend authentication implementation is in [/docs/api/authentication-system.md](/docs/api/authentication-system.md).
+> **See also:** App-specific implementation details: [API](/docs/api/authentication-system.md) · [Client](/docs/client/authentication-system.md) · [Admin](/docs/admin/authentication-system.md)
 
 **Last Updated:** January 2025  
 **Status:** Production Ready
@@ -14,277 +14,123 @@ The À la carte platform uses **Google OAuth 2.0** with **JWT tokens** for secur
 ### Authentication Flow
 
 ```
-1. User → Google OAuth login
-2. Google → Returns authorization code
-3. Client → Sends code to backend
-4. Backend → Validates with Google, generates JWT
-5. Client → Uses JWT for all API requests
+1. User → Google OAuth login (platform-specific client)
+2. Google → Returns id_token (verified Google identity)
+3. Client → Sends id_token to backend POST /auth/google
+4. Backend → Validates id_token with Google, finds or creates user, generates JWT
+5. Client → Uses JWT (Authorization: Bearer) for all API requests
 ```
+
+All three apps share this flow. Only the Google-side sign-in UI and token storage differ (see app docs).
 
 ### Key Components
 
 - **Google OAuth 2.0** - User authentication via Google accounts
-- **JWT Tokens** - Stateless API authentication
-- **Profile Setup** - Display name and privacy configuration
+- **JWT Tokens** - Stateless API authentication, signed by the backend
+- **Profile Setup** - Display name and privacy configuration after first sign-in
 - **Cross-Platform** - Web, mobile, desktop support
 
 ---
 
-## 🔧 Backend Implementation
+## 🔑 Token Lifecycle
 
-> **See also:** Full backend authentication implementation – [/docs/api/authentication-system.md](/docs/api/authentication-system.md).
+- **Single access token** — the backend issues one JWT per sign-in. There are no refresh tokens or `/auth/refresh` / `/auth/logout` endpoints today; when the token expires, the client simply signs in again.
+- **Lifetime:** 24 hours (`GenerateJWT` in `apps/api/utils/jwt.go`).
+- **Signing:** HS256 with `JWT_SECRET_KEY` (64+ character random secret).
+- **Claims:** `user_id`, `email`, `display_name` + standard registered claims (`exp`, `iat`, issuer `alacarte-api`).
+- **Transport:** Sent as `Authorization: Bearer <jwt>` on every API request; backend validates signature and expiry on each call.
 
-### Environment Variables
+### Session Rules
 
-```bash
-JWT_SECRET_KEY=your-64-char-secret
-GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
-INITIAL_ADMIN_EMAIL=admin@example.com
-```
-
-**See:** [API authentication docs](/docs/api/authentication-system.md) for implementation details
-
----
-
-## 📱 Frontend Implementation
-
-> **See also:** Full client authentication implementation – [/docs/client/authentication-system.md](/docs/client/authentication-system.md).
-
-### Google Sign-In Integration
-
-```dart
-// Using google_sign_in package
-final GoogleSignIn _googleSignIn = GoogleSignIn(
-  scopes: ['email', 'profile'],
-  serverClientId: AppConfig.googleWebClientId,
-);
-
-// Sign in flow
-final account = await _googleSignIn.signIn();
-final auth = await account.authentication;
-
-// Exchange with backend
-final response = await apiService.exchangeGoogleToken(
-  authorizationCode: auth.serverAuthCode,
-  idToken: auth.idToken,
-);
-
-// Store JWT token
-await _tokenStorage.saveToken(response.token);
-```
-
-### Auth Provider
-
-```dart
-// Riverpod auth state management
-class AuthProvider extends StateNotifier<AuthState> {
-  Future<void> signInWithGoogle() async {
-    // 1. Google OAuth
-    // 2. Backend exchange
-    // 3. Profile check
-    // 4. Navigate appropriately
-  }
-  
-  Future<void> completeProfile(String displayName, bool discoverable) async {
-    // Profile setup after OAuth
-  }
-  
-  Future<void> signOut() async {
-    // Clear tokens and Google session
-  }
-}
-```
-
-### Cross-Platform OAuth
-
-- **Web:** Google Sign-In web library
-- **Android:** Native Google Sign-In with serverClientId
-- **Desktop:** Web OAuth flow via browser
-
-### Environment Variables
-
-```bash
-API_BASE_URL=http://localhost:8080
-GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
-```
-
-**See:** [Client authentication docs](/docs/client/authentication-system.md) for implementation details
+| App | Storage | Session behavior |
+|-----|---------|------------------|
+| Flutter client | `flutter_secure_storage` (platform-encrypted) | Session survives app restarts until token expiry; token revalidated with `GET /api/user/me` on connectivity restore |
+| Admin SPA | `sessionStorage` (`jwt_token` key) | Session scoped to the browser tab; cleared on sign-out and on 401 |
+| Backend | — | Stateless; no server-side sessions |
 
 ---
 
-## ⚙️ Admin Panel Implementation
+## 👤 Profile Setup & Privacy
 
-### NextAuth.js Configuration
+After first Google sign-in, a user completes their profile:
 
-```typescript
-// NextAuth providers
-providers: [
-  GoogleProvider({
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  }),
-]
+- **Display name** (unique, user-chosen — real identity is never exposed)
+- **Discoverable toggle** — controls visibility in sharing
+- **Private by default** — ratings only visible to the author
+- **Explicit sharing** — users choose exactly who sees ratings
 
-// JWT callback - exchange for backend JWT
-callbacks: {
-  async jwt({ token, account }) {
-    if (account) {
-      // Exchange Google token for backend JWT
-      const response = await fetch(`${API_URL}/auth/google`, {
-        method: 'POST',
-        body: JSON.stringify({ code: account.access_token }),
-      });
-      const { token: backendToken } = await response.json();
-      token.backendToken = backendToken;
-    }
-    return token;
-  },
-}
-```
+See [Privacy Model](/docs/features/privacy-model.md) for the privacy architecture.
 
-### Protected Routes
+### Admin Role
 
-```typescript
-// Middleware protection
-export { default } from 'next-auth/middleware';
+Admin status is a backend concern, checked once per login via `GET /api/auth/check-admin`:
 
-export const config = {
-  matcher: [
-    '/((?!auth|api/auth|_next/static|_next/image|favicon.ico).*)',
-  ],
-};
-```
-
-### Environment Variables
-
-```bash
-NEXTAUTH_URL=http://localhost:3001
-NEXTAUTH_SECRET=your-nextauth-secret
-NEXT_PUBLIC_API_URL=http://localhost:8080
-GOOGLE_CLIENT_ID=your-web-client-id
-GOOGLE_CLIENT_SECRET=your-client-secret
-```
-
-**See:** [Admin authentication docs](/docs/admin/authentication-system.md) for implementation details
+- `is_admin` flag in the database, **or** email matches `INITIAL_ADMIN_EMAIL` (bootstrap admin)
+- Backend enforces `RequireAdmin` on every admin endpoint (single source of truth, defense in depth)
 
 ---
 
 ## 🔒 Security Considerations
 
-### JWT Token Security
+- **Token validation:** Backend validates the Google `id_token` with Google's API servers on every exchange — no trust in client claims.
+- **HTTPS Only:** Production tokens over HTTPS.
+- **Redirect URI / origin validation:** Whitelisted in Google Cloud Console.
+- **Minimal error messages:** No technical details exposed to end users.
+- **Stateless validation:** Every API request re-checks the JWT signature and expiry.
 
-- **Expiration:** 24-hour token lifetime
-- **Secret Key:** 64+ character random secret
-- **HTTPS Only:** Production tokens over HTTPS
-- **HttpOnly Cookies:** (Admin panel only)
+### Environment Variables (all apps)
 
-### OAuth Security
+```bash
+# Backend (apps/api)
+JWT_SECRET_KEY=your-64-char-secret
+GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+INITIAL_ADMIN_EMAIL=[EMAIL]
 
-- **PKCE Flow:** Used for mobile apps
-- **State Parameter:** CSRF protection
-- **Redirect URI Validation:** Whitelist in Google Console
-- **Token Validation:** Backend validates with Google tokeninfo API
+# Flutter client (apps/client)
+API_BASE_URL=http://localhost:8080
+GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 
-### Privacy Controls
+# Admin SPA (apps/admin)
+VITE_API_URL=http://localhost:8080
+VITE_GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+```
 
-- **Display Names:** Hide real identity
-- **Discoverable Toggle:** Control visibility in sharing
-- **Private by Default:** Ratings only visible to author
-- **Explicit Sharing:** Users choose exactly who sees ratings
+The web OAuth client ID is shared across apps so that Google identity and backend audience match.
 
 ---
 
 ## 🧪 Testing
 
-### Backend Testing
-
 ```bash
-# Test Google OAuth endpoint
+# Exchange a Google id_token for a backend JWT
 curl -X POST http://localhost:8080/auth/google \
   -H "Content-Type: application/json" \
-  -d '{"code": "GOOGLE_AUTH_CODE"}'
+  -d '{"id_token": "GOOGLE_ID_TOKEN"}'
 
-# Test protected endpoint
+# Test a protected endpoint
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   http://localhost:8080/api/user/me
 ```
 
-### Frontend Testing
-
-```bash
-# Run with OAuth configuration
-flutter run -d linux
-
-# Test flow:
-# 1. Click "Sign in with Google"
-# 2. Complete OAuth in browser
-# 3. Return to app
-# 4. Complete profile setup
-# 5. Access protected features
-```
-
-### Admin Testing
-
-```bash
-npm run dev
-# Navigate to http://localhost:3001
-# Sign in with Google
-# Verify admin access
-```
+Client and admin flows are tested through their apps: sign in with Google, complete profile setup (new users), verify protected features.
 
 ---
 
 ## 📚 Related Documentation
 
-### Component-Specific Docs
-- [API Authentication Details](/docs/api/authentication-system.md) - Backend implementation
-- [Client Authentication Details](/docs/client/authentication-system.md) - Frontend implementation
-- [Admin Authentication Details](/docs/admin/authentication-system.md) - Admin panel implementation
+### App-Specific Implementation
+- [API Authentication Details](/docs/api/authentication-system.md) - Routes, middleware, JWT internals
+- [Client Authentication Details](/docs/client/authentication-system.md) - Flutter provider and platform OAuth setup
+- [Admin Authentication Details](/docs/admin/authentication-system.md) - SPA session handling and route guards
 
 ### Setup Guides
 - [Android OAuth Setup](/docs/client/setup/android-oauth-setup.md) - Android-specific configuration
-- [Google OAuth Setup](/docs/client/google-oauth-setup.md) - Google Console configuration
+- [Google OAuth Setup](/docs/client/setup/google-oauth-setup.md) - Google Console configuration
 
 ### Related Features
 - [Privacy Model](/docs/features/privacy-model.md) - Privacy architecture
 - [User Management](/docs/api/README.md#user-management) - User CRUD operations
-
----
-
-## 🚀 Quick Setup
-
-### 1. Google Cloud Console
-
-1. Create OAuth 2.0 credentials
-2. Add authorized redirect URIs
-3. Copy client ID and secret
-
-### 2. Backend
-
-```bash
-cd apps/api
-# Update .env with Google credentials
-go run main.go
-```
-
-### 3. Frontend
-
-```bash
-cd apps/client
-# Update .env with client ID
-flutter run
-```
-
-### 4. Admin
-
-```bash
-cd apps/admin
-# Update .env.local with credentials
-npm run dev
-```
-
-**Total setup time: ~15 minutes**
 
 ---
 
