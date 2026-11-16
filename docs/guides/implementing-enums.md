@@ -1,328 +1,129 @@
 # Implementing Enums for Item Fields
 
-**Created:** January 2025  
-**Example:** Wine Color (Rouge, Blanc, Rosé, Mousseux, Orange)
+**Last Updated:** November 2026
+**Status:** ✅ Dynamic Schema System Active
 
-This guide shows how to implement enums for item fields that should have predefined values across all three platforms.
+This guide shows how to add an enum/select field (a dropdown with a fixed set of valid values) to any item type. The dynamic schema system supports enum fields end-to-end — admin, API, and Flutter client — with no code changes.
 
----
-
-## 🎯 When to Use Enums
-
-Use enums for fields that:
-- ✅ Have a fixed set of valid values
-- ✅ Should be enforced at the API level
-- ✅ Need dropdown selection in forms
-- ✅ Prevent data inconsistency
-- ✅ Improve filtering/categorization
-
-**Examples:**
-- Wine color: Rouge, Blanc, Rosé, Mousseux, Orange
-- Cheese type: Soft, Hard, Semi-soft, Blue
-- Item status: Active, Archived, Draft
-- Size: Small, Medium, Large
+**Example:** Wine color (Rouge, Blanc, Rosé, Mousseux, Orange)
 
 ---
 
-## 📋 Implementation Checklist
+## 🎯 When to Use an Enum Field
 
-### **Backend (Go) - ~10 min**
+Use `select` or `enum` for fields that:
+- Have a fixed set of valid values (color, style, type, size)
+- Should be enforced at the API level (values are validated server-side against the schema)
+- Need dropdown selection in the item form
+- Should appear as a filter chip in the client
 
-**1. Create Enum File** (`models/[field]Enum.go`)
-
-```go
-package models
-
-import (
-	"database/sql/driver"
-	"fmt"
-)
-
-type WineColor string
-
-const (
-	WineColorRouge    WineColor = "Rouge"
-	WineColorBlanc    WineColor = "Blanc"
-	WineColorRose     WineColor = "Rosé"
-	WineColorMousseux WineColor = "Mousseux"
-	WineColorOrange   WineColor = "Orange"
-)
-
-func (c WineColor) IsValid() bool {
-	switch c {
-	case WineColorRouge, WineColorBlanc, WineColorRose, WineColorMousseux, WineColorOrange:
-		return true
-	default:
-		return false
-	}
-}
-
-func (c WineColor) Value() (driver.Value, error) {
-	if !c.IsValid() {
-		return nil, fmt.Errorf("invalid wine color: %s", c)
-	}
-	return string(c), nil
-}
-
-func (c *WineColor) Scan(value interface{}) error {
-	str, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("failed to scan wine color")
-	}
-	*c = WineColor(str)
-	if !c.IsValid() {
-		return fmt.Errorf("invalid wine color: %s", *c)
-	}
-	return nil
-}
-```
-
-**2. Update Model**
-```go
-type Wine struct {
-    // ... other fields
-    Color WineColor `gorm:"not null" json:"color"`
-}
-```
-
-**3. Add Validation in Controllers**
-```go
-// In Create and Edit endpoints
-wineColor := models.WineColor(body.Color)
-if !wineColor.IsValid() {
-    c.JSON(400, gin.H{"error": "Invalid color. Must be: Rouge, Blanc, Rosé, Mousseux, Orange"})
-    return
-}
-```
+**Examples:** wine color, cheese type, beer style, ABV category, chili heat level.
 
 ---
 
-### **Admin Panel (Next.js) - ~2 min**
+## 📋 How to Add an Enum/Select Field
 
-**Update Item Config:**
+### Step 1: Define the Field in the Admin Schema Editor
 
-```typescript
-{
-  key: 'color',
-  label: 'Color',
-  type: 'select',  // Changed from 'text'
-  required: true,
-  options: [
-    { value: 'Rouge', label: 'Rouge' },
-    { value: 'Blanc', label: 'Blanc' },
-    { value: 'Rosé', label: 'Rosé' },
-    { value: 'Mousseux', label: 'Mousseux' },
-    { value: 'Orange', label: 'Orange' },
-  ],
-  helperText: 'Wine color/type',
-}
+Open the schema for the item type in the admin panel (Schemas → item type). The field editor lets you set, per field:
+
+| Property | UI control | Notes |
+|---|---|---|
+| `key` | Text field | Machine name, e.g. `color` |
+| `label` | Text field | Display name, e.g. `Color` |
+| `field_type` | Dropdown | Choose `Select` or `Enum` |
+| `group` | Text field | Optional; groups fields in forms and detail views |
+| `required` | Checkbox | Enforced server-side |
+| `order` | Up/down arrows | Position within the form |
+
+Both `select` and `enum` behave identically end-to-end (see Step 3); prefer `select` for new fields.
+
+**Important:** the admin editor does **not** yet expose an options editor. Options are preserved on save but can only be set via the API payload (Step 2). The same applies to `validation` and `display` hints.
+
+### Step 2: Provide Options via the API
+
+Create or update the schema with the field's options as a JSON array of strings:
+
+```http
+POST /admin/schemas        # create
+PUT  /admin/schemas/:type  # update
+Authorization: Bearer ADMIN_JWT
 ```
-
-**Note:** Admin panel is read-only, so this just documents the field structure.
-
----
-
-### **Client (Flutter) - ~15 min**
-
-**1. Create Enum File** (`lib/models/[field]_enum.dart`)
-
-```dart
-enum WineColor {
-  rouge('Rouge'),
-  blanc('Blanc'),
-  rose('Rosé'),
-  mousseux('Mousseux'),
-  orange('Orange');
-
-  final String value;
-  const WineColor(this.value);
-
-  static WineColor? fromString(String? value) {
-    if (value == null || value.isEmpty) return null;
-    
-    try {
-      return WineColor.values.firstWhere(
-        (color) => color.value.toLowerCase() == value.toLowerCase(),
-      );
-    } catch (e) {
-      return null;
-    }
-  }
-
-  String toJson() => value;
-  static WineColor? fromJson(String? json) => fromString(json);
-
-  @override
-  String toString() => value;
-}
-```
-
-**2. Update Model**
-
-```dart
-import 'wine_color.dart';
-
-class WineItem {
-  final WineColor color;  // Changed from String
-  
-  // fromJson
-  color: WineColor.fromString(json['color'] as String?) ?? WineColor.rouge,
-  
-  // toJson
-  'color': color.value,
-  
-  // categories
-  'color': color.value,
-  
-  // searchableText
-  '... ${color.value} ...'.toLowerCase()
-  
-  // displaySubtitle
-  parts.add(color.value);
-}
-```
-
-**3. Update Form Strategy**
-
-```dart
-// In getFormFields()
-FormFieldConfig.dropdown(
-  key: 'color',
-  labelBuilder: (context) => context.l10n.colorLabel,
-  hintBuilder: (context) => context.l10n.selectColor,
-  options: [
-    DropdownOption(value: 'Rouge', labelBuilder: (_) => 'Rouge'),
-    DropdownOption(value: 'Blanc', labelBuilder: (_) => 'Blanc'),
-    DropdownOption(value: 'Rosé', labelBuilder: (_) => 'Rosé'),
-    DropdownOption(value: 'Mousseux', labelBuilder: (_) => 'Mousseux'),
-    DropdownOption(value: 'Orange', labelBuilder: (_) => 'Orange'),
-  ],
-  icon: Icons.palette,
-  required: true,
-)
-
-// In initializeControllers()
-'color': TextEditingController(text: initialItem?.color.value ?? ''),
-
-// In buildItem()
-final colorValue = controllers['color']!.text.trim();
-final wineColor = WineColor.fromString(colorValue) ?? WineColor.rouge;
-
-return WineItem(
-  // ...
-  color: wineColor,
-);
-```
-
-**4. Update Service Validation**
-
-```dart
-static List<String> _validateWineItem(WineItem wine) {
-  final errors = <String>[];
-  
-  // ... name, country validation
-  
-  // Color validation not needed - enum type guarantees validity
-  
-  return errors;
-}
-
-// Filter methods
-.map((wine) => wine.color.value)  // Use .value for string
-```
-
-**5. Add Localization** (optional for dropdown hint)
 
 ```json
 {
-  "selectColor": "Select color",
-  "@selectColor": {
-    "description": "Hint text for color dropdown"
-  }
+  "fields": [
+    {
+      "key": "color",
+      "label": "Color",
+      "field_type": "select",
+      "required": true,
+      "group": "Characteristics",
+      "options": ["Rouge", "Blanc", "Rosé", "Mousseux", "Orange"],
+      "display": { "badge": true }
+    }
+  ]
 }
 ```
 
----
+Notes:
+- The API also accepts `{ "value": "...", "label": "..." }` objects in the options array, but only the `value` is stored — options are plain strings end-to-end.
+- `select`/`enum` values are validated server-side on every item create and update: the submitted value must match one of the field's options, otherwise the request returns `400` with field-level details. No controller code needed.
+- A schema update creates a new immutable schema version automatically. Existing items keep their creation version, so adding an option never invalidates old data. Optionally validate existing items against the new version with `POST /admin/items/:type/validate`.
+- Reference: [docs/api/endpoints.md](/docs/api/endpoints.md) (schema section) and [docs/admin/schema-management.md](/docs/admin/schema-management.md).
 
-## 🎨 Form UI Results
+### Step 3: Client Rendering (Automatic)
 
-### **Dropdown Field:**
-- Shows dropdown with predefined options
-- Can't enter invalid values
-- Clean, professional UI
-- Localized labels (if using labelBuilder with context)
+**Item form** — the Flutter client renders any field of type `select` or `enum` as a `DropdownButtonFormField` populated from the schema's `options` (`lib/widgets/forms/dynamic_form.dart`, `_buildSelectField`/`_buildEnumField`; enum delegates to the select builder). Users cannot enter values outside the options list.
 
-### **Display in Detail View:**
-- Shows enum value as regular text
-- Appears in badge (for distinguishing field)
-- Can be filtered
+**Detail views** — display hints control placement: `badge: true` shows the value as a colored pill on item cards, `primary`/`secondary` control heading placement (see [docs/admin/schema-management.md](/docs/admin/schema-management.md)).
 
----
-
-## 💡 Pro Tips
-
-### **Data Values vs Display Labels**
-
-**Option 1: Keep values in one language (recommended for data consistency)**
-```dart
-// Values stay in French (database values)
-DropdownOption(value: 'Rouge', labelBuilder: (_) => 'Rouge'),
-
-// Display is same in both languages
-English: Rouge, Blanc, Rosé
-French: Rouge, Blanc, Rosé
-```
-
-**Option 2: Localize display (for user-facing categories)**
-```dart
-// Values in English (internal)
-DropdownOption(value: 'red', labelBuilder: (context) => context.l10n.colorRed),
-
-// Display changes with language
-English: Red, White, Rosé
-French: Rouge, Blanc, Rosé
-```
-
-**Wine uses Option 1** - Values are French (SAQ standard), display stays French.
-
-### **Enum vs String Trade-offs**
-
-**Enum Pros:**
-- ✅ Type safety
-- ✅ Compile-time validation
-- ✅ No typos possible
-- ✅ Better IDE autocomplete
-- ✅ Dropdown UI enforces values
-
-**Enum Cons:**
-- ❌ Migration needed for existing data
-- ❌ Adding values requires code change
-- ❌ More complex than simple strings
-
-**Use enums when:** Values are truly fixed and unlikely to change frequently
-
-**Use strings when:** Values are dynamic, user-defined, or frequently changing
+**Filters** — every `select`/`enum` field with a non-empty options list automatically becomes a filter chip in the client list view (`ItemFilterHelper` extracts options from the schema; filtering runs server-side against the EAV database). Adding the field to the schema adds the filter with no client release. See [docs/features/filtering-system.md](/docs/features/filtering-system.md).
 
 ---
 
-## 🔄 Migration Strategy
+## 💡 Design Notes
 
-### **For New Item Types:**
-- Start with enum from day one
-- No migration needed
+### Values vs Display Labels
 
-### **For Existing Item Types:**
-1. Drop and reseed data (development)
-2. Create migration script (production)
-3. Add validation progressively
+Options are stored and transmitted as plain strings — there is no per-option label or localization layer. Two ways to handle a multilingual audience:
+
+**Option 1: Culture-neutral values (recommended)**
+Use values that read the same in EN and FR, e.g. `Rouge, Blanc, Rosé` (SAQ standard for wine). Display and data stay in sync; no ambiguity.
+
+**Option 2: Language-neutral keys**
+Store keys like `red`, `white` and localize at display time. This requires client-side localization logic keyed off the value — only worth it if the options are user-facing categories that must translate. The schema system does not localize options for you.
+
+### Enum/Select vs Free-Text String
+
+**Select/enum pros:**
+- ✅ Server-side validation — invalid values rejected with `400`
+- ✅ Dropdown UI — no typos, no free-text drift
+- ✅ Automatic filter chips per option
+- ✅ Change options anytime via schema update, no migration
+
+**Select/enum cons:**
+- ❌ Adding a value requires a schema update (admin/API, not a code change)
+- ❌ Not suitable for open-ended values (producers, regions) — use `text`
+- ❌ Existing items are not re-validated when options change; renamed options leave stale values in old items
+
+**Use select/enum when:** values are a small, stable controlled vocabulary used for categorization and filtering.
+**Use text when:** values are user-defined, open-ended, or frequently changing.
+
+### Migration Strategy
+
+- **New item types:** define select/enum fields from day one — nothing to migrate.
+- **Existing items and changed options:** old items keep their creation schema version and are never re-validated, so adding options is always safe. If you narrow options or rename values, decide whether stale values in old items are acceptable, re-map them if not, then optionally re-validate with `POST /admin/items/:type/validate`.
 
 ---
 
 ## 📚 Related Documentation
 
-- [Adding New Item Types](adding-new-item-types.md) - Complete guide
+- [Adding New Item Types](adding-new-item-types.md) — full walkthrough for creating a new item type
+- [Schema Management](../admin/schema-management.md) — admin-side field types, validation rules, display hints
+- [API Endpoints](../api/endpoints.md) — schema payload reference
+- [Filtering System](../features/filtering-system.md) — how schema options become filter chips
 
 ---
 
-**Last Updated:** January 2025  
-**Example Implementation:** Wine color enum
+**Last Updated:** November 2026

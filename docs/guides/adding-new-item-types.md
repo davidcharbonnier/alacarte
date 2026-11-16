@@ -185,7 +185,7 @@ If you need a field type not supported by the schema system (e.g., date picker, 
 
 ### Admin Extension
 
-1. Add the field type to the field type selector in `apps/admin/app/admin/schemas/[type]/page.tsx`
+1. Add the field type to the field type selector in `apps/admin/src/pages/schema-editor.tsx`
 2. Add configuration UI for the field type's specific options
 
 ---
@@ -213,7 +213,7 @@ For custom display beyond the standard field renderers:
 Override the default item card for a specific schema:
 
 1. Create a custom widget in `apps/client/lib/widgets/items/`
-2. Register it in `ItemListScreen` based on schema name
+2. Register it in `item_type_screen.dart` (or the dynamic form widgets) based on schema name
 3. Use schema display hints to control when to use the custom layout
 
 ---
@@ -332,21 +332,15 @@ If you have existing item types created with the old hardcoded approach, migrate
 
 Create a schema that matches the existing item type's fields.
 
-### Step 2: Run Migration Script
+### Step 2: Run Migration Script (historical — already executed in production)
 
-Use the migration script at `apps/api/scripts/migrate_to_dynamic.go`:
+The migration was run once; production now uses dynamic schemas only. The script at `apps/api/scripts/migrate_to_dynamic.go` is kept for reference but is currently broken — it calls an undefined `utils.MySQLConnect` and does not compile (same for `seed.go` and `reset_database.go`). It:
 
-```bash
-cd apps/api
-go run scripts/migrate_to_dynamic.go
-```
-
-This script:
-1. Creates schema records for existing item types
-2. Creates field records for each model field
-3. Migrates existing items to the new `items` table
-4. Creates EAV rows for filterable fields
-5. Creates initial schema versions
+1. Created schema records for existing item types
+2. Created field records for each model field
+3. Migrated existing items to the new `items` table
+4. Created EAV rows for filterable fields
+5. Created initial schema versions
 
 ### Step 3: Verify Migration
 

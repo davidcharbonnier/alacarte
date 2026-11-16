@@ -29,7 +29,7 @@ Settings Entry Points:
 lib/widgets/settings/
 ├── settings_section_header.dart    # Reusable section headers with icons
 ├── settings_row.dart              # Flexible settings rows with trailing widgets
-├── language_toggle.dart           # Dual-language selector (EN/FR)
+├── language_selector.dart         # Language selector dialog (auto/FR/EN)
 ├── profile_info_widget.dart       # Inline editable profile display
 ├── loading_banner.dart            # Contextual loading indicators
 ├── bulk_action_button.dart        # Privacy action buttons
@@ -55,7 +55,7 @@ SettingsRow(
   subtitle: context.l10n.darkModeDescription,
   trailing: Switch(value: isDarkMode, onChanged: toggleDarkMode),
 ),
-LanguageToggle(), // Reusable component
+LanguageSelector(), // Reusable component
 ProfileInfoWidget(user: user, onSaveDisplayName: saveDisplayName), // Inline editing
 ```
 
@@ -83,21 +83,12 @@ The privacy settings screen features an innovative progressive loading system fo
 ```dart
 // Progressive loading with multi-item type support
 class _PrivacySettingsScreenState extends ConsumerState<PrivacySettingsScreen> {
-  // Track loaded items by type - easily extensible
-  final Map<String, Set<int>> _loadedItemIds = {
-    'cheese': <int>{},
-    // Future: 'wine': <int>{}, 'beer': <int>{}, etc.
-  };
+  // Track loaded items by type - grows automatically, no per-type wiring
+  final Map<String, Set<int>> _loadedItemIds = {};
   
   // Generic loading for any item type
-  Future<void> _loadItemsByType(Map<String, Set<int>> missingItems) async {
-    switch (itemType) {
-      case 'cheese':
-        await ref.read(cheeseItemProvider.notifier).loadSpecificItems(itemIds);
-        break;
-      // Future: Add wine, beer, coffee support
-    }
-  }
+  await ItemProviderHelper.loadSpecificItems(ref, itemType, itemIds);
+  _loadedItemIds.putIfAbsent(itemType, () => <int>{}).addAll(itemIds);
 }
 ```
 
@@ -166,9 +157,9 @@ SettingsRow(
 )
 ```
 
-#### **LanguageToggle**
+#### **LanguageSelector**
 ```dart
-const LanguageToggle() // Self-contained FR/EN toggle
+const LanguageSelector() // Self-contained language dialog (auto/french/english)
 ```
 
 #### **ProfileInfoWidget**
@@ -343,18 +334,13 @@ String _getItemTypeDisplayName(String itemType) {
   switch (itemType) {
     case 'cheese':
       return context.l10n.cheese;
-    case 'wine':          // ← Just add this
-      return 'Vin';       // ← And this
     default:
       return itemType;
   }
 }
 
-// Progressive loading automatically handles new types
-case 'wine':                                                    // ← Add case
-  await ref.read(wineItemProvider.notifier).loadSpecificItems(itemIds); // ← Use provider
-  _loadedItemIds['wine']!.addAll(itemIds);                    // ← Track loading
-  break;
+// Progressive loading automatically handles new types — adding an item type
+// requires zero screen changes: ItemProviderHelper is type-agnostic.
 ```
 
 ## 📱 Mobile Considerations

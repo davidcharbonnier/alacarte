@@ -6,7 +6,7 @@ This guide explains how to run all À la carte applications locally.
 
 - Docker & Docker Compose
 - Node.js >= 18.0.0 (for tooling)
-- Go >= 1.21 (optional, if running API outside Docker)
+- Go >= 1.25 (optional, if running API outside Docker)
 - Flutter SDK >= 3.27 (for client development)
 
 ## Quick Start - All Apps
@@ -81,8 +81,8 @@ flutter run -d chrome  # or your preferred device
 
 Each app has its own environment configuration:
 
-- **API**: Copy `apps/api/.env.prod.template` to `apps/api/.env`
-- **Admin**: Copy `apps/admin/.env.example` to `apps/admin/.env.local`
+- **API**: Copy `apps/api/.env.example` to `apps/api/.env`
+- **Admin**: Copy `apps/admin/.env.example` to `apps/admin/.env` (Docker) or `.env.local` (bare Vite)
 - **Client**: Create `apps/client/.env` with API URL and OAuth configuration
 
 Make sure these are configured before running.
@@ -118,7 +118,7 @@ If ports are already in use, modify `docker-compose.yml`:
 ### Admin Can't Connect to API
 
 1. Verify API is running: `curl http://localhost:8080/health`
-2. Check admin `.env.local` has correct API URL (should be `http://api:8080` for Docker networking)
+2. Check admin `.env` has correct API URL (should be `http://api:8080` for Docker networking)
 3. Ensure both services are on `alacarte-network`
 
 ### Postgres Connection Issues
@@ -146,10 +146,9 @@ docker-compose exec postgres psql -U rest_api -d rest_api
 
 ## Database Seeding
 
-```bash
-# Seed the database with initial data
-docker-compose exec api go run scripts/seed.go
-```
+Default schemas (cheese, gin, wine, coffee, chili-sauce) are seeded at API startup when `RUN_SEEDING=true` is set (already true in `apps/api/.env.example`). Item data can be bulk-imported via the admin endpoint `POST /admin/items/:type/seed` (JSON URL payload — see [API endpoints](../api/endpoints.md)).
+
+Note: the standalone scripts in `apps/api/scripts/` (including `seed.go`) are currently broken — they call an undefined `utils.MySQLConnect` and do not compile.
 
 ## Logs
 

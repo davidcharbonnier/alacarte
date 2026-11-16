@@ -9,10 +9,9 @@
 
 ### Prerequisites
 
-- [ ] Docker Hub account with `davidcharbonnier/alacarte-admin` repository
-- [ ] Google Cloud Project with Cloud Run enabled
+- [ ] Static hosting account (Netlify, Cloudflare Pages, Firebase Hosting, …) for the admin SPA
 - [ ] Backend API deployed and accessible
-- [ ] Google OAuth Web Client configured
+- [ ] Google OAuth Web Client configured with the admin origin
 
 ---
 
@@ -39,7 +38,7 @@ In Google Cloud Console → APIs & Services → Credentials:
 **Production:**
 - Authorized JavaScript origins: `https://alacarte-admin-xxx.northamerica-northeast1.run.app`
 
-**Important:** Must use the exact Cloud Run URL. No server-side redirect URI is needed — the SPA uses Google Identity Services (`@react-oauth/google`) and sends the `id_token` to the backend, which verifies it and issues its own JWT (stored in `sessionStorage`).
+**Important:** Must use the exact deployed domain (your static-host URL). No server-side redirect URI is needed — the SPA uses Google Identity Services (`@react-oauth/google`) and sends the `id_token` to the backend, which verifies it and issues its own JWT (stored in `sessionStorage`).
 
 ---
 
@@ -88,7 +87,7 @@ No runtime env vars exist for the admin SPA — changing `VITE_*` requires a reb
 
 ### Verify Deployment
 
-1. **Access admin panel:** `https://alacarte-admin-xxx.northamerica-northeast1.run.app`
+1. **Access admin panel:** your static-host URL (e.g. `https://admin.example.com`)
 2. **Click "Sign in with Google"**
 3. **Authenticate with admin account**
 4. **Should redirect to dashboard**
@@ -120,7 +119,7 @@ This user can login immediately and promote other users to admin via the UI.
 
 ### Production Security
 
-- ✅ HTTPS enforced (Cloud Run automatic)
+- ✅ HTTPS enforced (automatic on Cloud Run and all major static hosts)
 - ✅ Backend verifies Google `id_token` before issuing its own JWT
 - ✅ Admin verification at login
 - ✅ Backend JWT validation on all API calls
@@ -154,13 +153,13 @@ The admin SPA needs no secrets — both env vars are public build-time values (b
 **Solution:**
 1. Verify `API_URL` is correct
 2. Check backend is deployed and running
-3. Verify Cloud Run → Cloud Run networking allows traffic
+3. Verify the API service allows traffic from the admin origin
 
 ### OAuth Redirect Mismatch
 
 **Symptom:** Google OAuth error after clicking sign in  
 **Solution:**
-1. Add exact Cloud Run URL to Google OAuth authorized JavaScript origins
+1. Add the exact deployed admin URL to Google OAuth authorized JavaScript origins
 2. Verify `GOOGLE_CLIENT_ID` matches the OAuth client used by the client app
 
 ---
@@ -169,16 +168,7 @@ The admin SPA needs no secrets — both env vars are public build-time values (b
 
 ### Check Logs
 
-```bash
-# View admin panel logs
-gcloud run services logs read alacarte-admin \
-  --region northamerica-northeast1 \
-  --limit 50
-
-# Follow logs in real-time
-gcloud run services logs tail alacarte-admin \
-  --region northamerica-northeast1
-```
+The admin SPA is a static bundle — no server logs exist for it. Debug via the browser console (see Key Log Patterns below) and the API's Cloud Run logs for backend-side auth events.
 
 ### Key Log Patterns
 
