@@ -49,6 +49,6 @@ For feature documentation that spans multiple applications (API, Client, Admin):
 
 - **Language:** Go 1.21+
 - **Framework:** Gin
-- **Database:** MySQL 8.0+ with GORM
+- **Database:** Postgres 16+ with GORM
 - **Authentication:** Google OAuth + JWT
 - **Deployment:** Docker + Google Cloud Run

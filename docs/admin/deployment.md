@@ -182,26 +182,28 @@ gcloud run services logs tail alacarte-admin \
 
 ### Key Log Patterns
 
+The admin SPA is a static bundle — it produces no server logs. Watch browser console output:
+
 **Successful login:**
 ```
-POST /api/auth/callback/google → 302
-GET / → 200
+POST /auth/google → 200 (JWT stored in sessionStorage)
+GET /api/auth/check-admin → 200 {"is_admin": true}
 ```
 
 **Failed admin check:**
 ```
-Admin access required - user is not an administrator
-Error: AccessDenied
+GET /api/auth/check-admin → 200 {"is_admin": false}
 ```
 
 **Backend unreachable:**
 ```
-Authentication failed: [network error]
-Error: ServiceUnavailable
+Axios network error → redirect to /login
 ```
+
+Backend-side auth logs are in the API service's Cloud Run logs.
 
 ---
 
-## Admin Panel is Production-Ready! ✅
+## Admin Panel Status
 
-All authentication, authorization, and error handling is complete and tested.
+All authentication, authorization, and error handling is complete.

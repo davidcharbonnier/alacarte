@@ -7,7 +7,7 @@ The API runs on Google Cloud Run backed by a serverless Postgres database (Neon)
 | Component | Service | Notes |
 |-----------|---------|-------|
 | Compute | Cloud Run | Scale-to-zero, `min-instances: 0` |
-| Database | Neon | Serverless Postgres 16, free tier |
+| Database | Neon | Serverless Postgres 16, free tier; ~1s cold-start on first request after idle (always-on is a paid toggle) |
 | Storage | MinIO / S3-compatible | Image uploads |
 | Registry | GitHub Container Registry (ghcr.io) | Docker images |
 

@@ -234,7 +234,7 @@ print('Current user: ${GoogleSignIn().currentUser?.email}');
 ### **Backend (Cloud Run)**
 - **✅ Deployed**: Production Google OAuth validation
 - **✅ Environment**: Google Client ID and secret configured
-- **✅ Database**: MySQL with complete OAuth user schema
+- **✅ Database**: Postgres with complete OAuth user schema
 - **✅ Security**: Real token validation with fail-fast architecture
 
 ### **Frontend Deployment**

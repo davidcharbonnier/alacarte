@@ -1,752 +1,250 @@
-# Filtering System Documentation
+# Filtering System
 
-## Overview
+> **See also:** [API endpoints reference](/docs/api/endpoints.md) · [Schema management](/docs/admin/schema-management.md)
 
-The À la carte app features a sophisticated, mobile-friendly filtering system that enables users to efficiently search and filter items across different contexts. The system is built with a generic architecture that supports any item type while providing context-aware filtering options.
+**Last Updated:** November 2026  
+**Status:** Production Ready
 
-## Architecture
-
-### Core Components
-
-```
-FilteringSystem/
-├── ItemSearchAndFilter (Widget)      # Main UI component with collapsible interface
-├── ItemFilterHelper (Utility)        # Generic filtering logic for rating context
-├── ItemProvider (State Management)   # Filter state and persistence
-├── Localization Support             # Full French/English translations
-└── Locale-Aware Sorting             # Proper handling of accented characters
-```
-
-### Design Philosophy
-
-**Generic & Extensible**
-- Single implementation works for cheese, wine, beer, coffee, etc.
-- Type-safe filtering with compile-time guarantees
-- Zero refactoring needed to add new item types
-
-**Context-Aware**
-- Different filter options per tab (All Items vs Personal List)
-- Smart filter persistence (universal filters persist, tab-specific filters clear)
-- Adaptive UI based on available data
-
-**Mobile-First**
-- Collapsible interface saves 70% screen space when collapsed
-- Touch-friendly controls with proper spacing
-- Progressive disclosure of advanced options
-
-**Locale-Aware**
-- Proper alphabetical sorting of accented characters (é, è, à, ç, etc.)
-- Uses `Collator` from `intl` package for locale-aware string comparison
-- Ensures French names sort correctly (e.g., "Équilibre" appears after "E" not at end)
-
-## User Interface
-
-### Collapsible Filter Panel
-
-**Collapsed State (Default)**
-```
-[🔍 Search cheeses by name...] [🔧] [❌]
-[Showing 5 of 38 items]
-```
-
-**Expanded State (When filter button tapped)**
-```
-[🔍 Search cheeses by name...] [🔧²] [❌]
-[Type] [Origin] [Producer] [My Ratings] [Recommendations]
-[Showing 5 of 38 items]
-```
-
-### Visual Indicators
-
-**Filter Button States:**
-- **Inactive**: Gray outline filter icon
-- **Active with filters**: Purple filled filter icon + red count badge
-- **Expanded**: Filter icon shows current state
-
-**Filter Count Badge:**
-- Red circular badge showing number of active filters
-- Positioned on top-right of filter button
-- Only appears when filters are active
-
-**Clear Filters Button:**
-- Uses `Icons.filter_alt_off` (filter icon with slash)
-- Red color indicates removal action
-- Only appears when filters are active
-- Direct access without expanding filters
-
-## Filter Types
-
-### Universal Filters (Persist Across Tabs)
-
-**1. Text Search**
-- **Scope**: Name field only (simplified from multi-field search)
-- **Behavior**: Case-insensitive partial matching
-- **Example**: "cheddar" finds "Sharp Cheddar", "Cheddar Aged"
-- **Localization**: 
-  - EN: "Search cheeses by name..."
-  - FR: "Rechercher fromages par nom..."
-
-**2. Category Filters**
-- **Type**: Hard, Soft, Semi-soft, Blue, etc.
-- **Origin**: France, Switzerland, Canada, etc.
-- **Producer**: Specific cheese makers
-- **Dynamic**: Options populated from actual data
-- **Interface**: Dialog with radio buttons (All + specific values)
-
-### Context-Specific Filters (Tab-Specific)
-
-**All Items Tab:**
-- **"Rated"**: Items you have rated (discovery context)
-- **"Unrated"**: Items you haven't rated yet (discovery context)
-- **Purpose**: Help users find new items to rate or revisit rated items
-
-**Personal List Tab:**
-- **"My Ratings"**: Items you've personally rated
-- **"Recommendations"**: Items others have recommended to you
-- **Purpose**: Separate your ratings from friend recommendations
-
-## Smart Filter Persistence
-
-### Behavior Rules
-
-**When Switching Tabs:**
-- **✅ Preserved**: Search query, Type, Origin, Producer filters
-- **❌ Cleared**: My Ratings, Recommendations, Rated, Unrated filters
-- **Reason**: Universal filters apply to both contexts, tab-specific filters don't
-
-**Auto-Expansion Logic:**
-- **Collapsed by default**: Clean interface, saves space
-- **Auto-expands**: When filters are already active (so users can see what's applied)
-- **Manual toggle**: Users can expand/collapse at any time
-
-### Filter State Management
-
-**Provider Level:**
-```dart
-class ItemState<T> {
-  final String searchQuery;           // Persists across tabs
-  final Map<String, String> categoryFilters; // Mixed persistence
-  // categoryFilters['type'] -> Persists
-  // categoryFilters['rating_source'] -> Cleared on tab switch
-}
-```
-
-**Tab Change Handler:**
-```dart
-void _onTabChanged() {
-  // Automatically remove rating-based filters
-  provider.clearTabSpecificFilters();
-}
-```
-
-## Technical Implementation
-
-### Generic Architecture
-
-**ItemSearchAndFilter Widget**
-- Generic widget that adapts to any item type
-- Context-aware filter options based on `isPersonalListTab` parameter
-- Collapsible state management with visual feedback
-
-**ItemFilterHelper Utility**
-- Static methods for rating context filtering
-- Handles visibility checks for shared ratings
-- Separates filtering logic from UI concerns
-
-### ⚠️ Deprecated Pattern - Do Not Use
-
-**The following pattern is deprecated and should NOT be used:**
-
-```dart
-// ❌ DEPRECATED - Do not add new methods like these:
-class CoffeeItemService {
-  Future<ApiResponse<List<String>>> getCoffeeRoasters() { ... }
-  Future<ApiResponse<List<String>>> getCoffeeCountries() { ... }
-}
-
-// ❌ DEPRECATED - Do not add extension methods like these:
-extension CoffeeItemExtension on CoffeeItem {
-  static List<String> getUniqueRoasters(List<CoffeeItem> coffees) { ... }
-  static List<String> getUniqueCountries(List<CoffeeItem> coffees) { ... }
-}
-```
-
-**Why these are deprecated:**
-- Requires separate API calls for filter options
-- Duplicates data already available in provider state
-- Not used anywhere in the current codebase
-- Marked for removal (see `docs/dead-code-cleanup.md`)
-
-**✅ Current Best Practice - Filter Option Generation:**
-
-Filter options are now automatically generated from items already in state:
-
-```dart
-// ✅ CORRECT - Provider automatically generates filter options:
-class ItemProvider<T> {
-  void _refreshFilterOptions() {
-    // Extract categories from current items in state
-    final allCategories = <String, Set<String>>{};
-    for (final item in state.items) {
-      for (final entry in item.categories.entries) {
-        allCategories.putIfAbsent(entry.key, () => <String>{}).add(entry.value);
-      }
-    }
-    // Sort with locale-aware comparison
-    final collator = Collator();
-    final filterOptions = allCategories.map(...);
-  }
-}
-
-// ✅ CORRECT - UI gets filter options from helper:
-static Map<String, List<String>> getAvailableFilters<T>(
-  List<T> items,
-  String itemType,
-) {
-  // Directly extract from items, no API call needed
-  final filterOptions = <String, Set<String>>{};
-  for (final item in items) {
-    for (final category in item.categories.entries) {
-      filterOptions.putIfAbsent(category.key, () => <String>{}).add(category.value);
-    }
-  }
-  return filterOptions.map(...); // Sort and return
-}
-```
-
-**Benefits of current approach:**
-- ✅ No extra API calls needed
-- ✅ Filter options always in sync with displayed items
-- ✅ Single source of truth (items in provider state)
-- ✅ Automatic locale-aware sorting
-- ✅ Works for all item types generically
-
-### Rating Context Filtering
-
-**All Items Tab Logic:**
-```dart
-case 'has_ratings':
-  // Show items user has interacted with (approximation of community ratings)
-  final ratedItemIds = userRatings.map((r) => r.itemId).toSet();
-  filtered = items.where((item) => ratedItemIds.contains(item.id)).toList();
-
-case 'no_ratings':
-  // Show items user hasn't rated (discovery)
-  final ratedItemIds = userRatings.map((r) => r.itemId).toSet();
-  filtered = items.where((item) => !ratedItemIds.contains(item.id)).toList();
-```
-
-**Personal List Tab Logic:**
-```dart
-case 'personal':
-  // Show only items user has rated themselves
-  final personalRatedIds = userRatings
-    .where((r) => r.authorId == currentUserId)
-    .map((r) => r.itemId).toSet();
-  filtered = items.where((item) => personalRatedIds.contains(item.id)).toList();
-
-case 'recommendations':
-  // Show items others have recommended (shared with user)
-  final recommendedItemIds = userRatings
-    .where((r) => r.authorId != currentUserId && r.isVisibleToUser(currentUserId))
-    .map((r) => r.itemId).toSet();
-  filtered = items.where((item) => recommendedItemIds.contains(item.id)).toList();
-```
-
-### Special Base Items Logic
-
-**Problem Solved**: Rating-based filters in Personal List tab needed to start with different base item sets than the default personal list.
-
-**Solution**: Dynamic base items selection based on filter type:
-
-```dart
-// For "My Ratings" filter: Start with items user has rated
-if (ratingSourceFilter == 'personal') {
-  final personalRatedItemIds = userRatings
-    .where((r) => r.itemType == 'cheese' && r.authorId == selectedUserId)
-    .map((r) => r.itemId).toSet();
-  
-  var personalRatedItems = cheeseItemState.items
-    .where((item) => personalRatedItemIds.contains(item.id)).toList();
-  // Then apply search and category filters...
-}
-
-// For "Recommendations" filter: Start with all items that have any ratings  
-if (ratingSourceFilter == 'recommendations') {
-  final allRatedItemIds = userRatings
-    .where((r) => r.itemType == 'cheese')
-    .map((r) => r.itemId).toSet();
-  
-  var allRatedItems = cheeseItemState.items
-    .where((item) => allRatedItemIds.contains(item.id)).toList();
-  // Then apply search and category filters...
-}
-```
-
-This ensures accurate filtering and counting for context-specific filters.
-
-## Localization
-
-### Supported Languages
-- **English** (Primary)
-- **French** (Complete translation)
-
-### Localized Elements
-
-**Filter Interface:**
-- Search hint: "Search cheeses by name..." / "Rechercher fromages par nom..."
-- Filter chips: "My Ratings" / "Mes Évaluations"
-- Tooltips: "Show Filters" / "Afficher les Filtres"
-- Category names: "Type" / "Type", "Origin" / "Origine"
-
-**Filter Dialogs:**
-- Dialog title: "Filter by Type" / "Filtrer par Type"
-- All option: "All" / "Tous"
-- Action buttons: "Clear All Filters" / "Effacer Tous les Filtres"
-
-**Results Summary:**
-- Count display: "Showing 5 of 20 items" / "Affichage de 5 sur 20 articles"
-
-### Adding New Languages
-
-To add a new language (e.g., Spanish):
-
-1. **Create translation file**: `lib/l10n/app_es.arb`
-2. **Add filter-specific translations**:
-   ```json
-   {
-     "searchCheeseByNameHint": "Buscar quesos por nombre...",
-     "myRatingsFilter": "Mis Valoraciones",
-     "recommendationsFilter": "Recomendaciones",
-     "ratedFilter": "Valorado", 
-     "unratedFilter": "Sin valorar",
-     "allFilterOption": "Todos",
-     "showFilters": "Mostrar Filtros",
-     "hideFilters": "Ocultar Filtros"
-   }
-   ```
-3. **Regenerate**: Run `flutter gen-l10n`
-
-## Usage Examples
-
-### Developer Integration
-
-**Adding Filtering to New Item Type:**
-```dart
-// 1. Add to screen
-ItemSearchAndFilter(
-  itemType: 'wine',  // Changes filter context automatically
-  onSearchChanged: (query) => ref.read(wineProvider.notifier).updateSearchQuery(query),
-  onFilterChanged: (key, value) => ref.read(wineProvider.notifier).setCategoryFilter(key, value),
-  onClearFilters: () => ref.read(wineProvider.notifier).clearFilters(),
-  // ... other parameters
-)
-
-// 2. No additional code needed - automatically gets:
-//    - Type, Origin, Producer filters (from item data)  
-//    - My Ratings, Recommendations filters (for Personal tab)
-//    - Rated, Unrated filters (for All Items tab)
-//    - Localized interface
-//    - Collapsible mobile-friendly design
-```
-
-### User Workflows
-
-**Discovery Workflow (All Items Tab):**
-1. Search by name: "roquefort"
-2. Apply category filter: Origin = "France"  
-3. Apply rating filter: "Unrated" (find new French cheeses to try)
-4. Switch to Personal tab → Category filters persist, rating filter clears
-
-**Reference List Management (Personal Tab):**
-1. Apply "My Ratings" → See only items you've rated
-2. Search within your ratings: "blue"
-3. Apply category: Type = "Blue" → Find your blue cheese ratings
-4. Switch to "Recommendations" → See what others suggested
-
-**Filter Combination Examples:**
-- Search "cheddar" + Type "Hard" + "Unrated" = Find hard cheddars to try
-- Origin "Switzerland" + "My Ratings" = Your Swiss cheese ratings
-- "Recommendations" + Type "Soft" = Soft cheese recommendations from friends
-
-## Performance Considerations
-
-### Efficient Filtering Pipeline
-
-**Filter Order (Optimized):**
-1. **Search query** (most selective, applied first)
-2. **Category filters** (reduces dataset size)
-3. **Rating context filters** (applied to pre-filtered set)
-
-**Counting Strategy:**
-- Counting logic exactly matches display logic
-- Avoids discrepancies between shown count and actual results
-- Efficient: Only processes necessary data
-
-### Mobile Optimization
-
-**Collapsible Interface:**
-- **Default collapsed**: Minimal space usage
-- **Smart expansion**: Auto-expand when filters active
-- **Action consolidation**: Filter toggle + clear actions in search bar
-
-**Performance Benefits:**
-- **Reduced renders**: Filter chips only render when expanded
-- **Memory efficient**: Filter state only maintained when needed
-- **Touch-optimized**: Proper button sizing and spacing
-
-## Future Enhancement Opportunities
-
-### Advanced Filtering
-
-**Multi-Select Filters:**
-- Select multiple types: "Hard" + "Semi-soft"
-- Multiple origins: "France" + "Switzerland"  
-- Complex queries with AND/OR logic
-
-**Rating Score Filters:**
-- "4+ stars": Items with high ratings
-- "My 5-star ratings": Your favorite items
-- "Highly recommended": Items with many recommendations
-
-**Advanced Search:**
-- **Search in notes**: Find items by your personal notes
-- **Producer search**: Search specific producers  
-- **Description search**: Full-text search in descriptions
-- **Recent activity**: Recently rated items
-
-### Mobile Enhancements
-
-**Bottom Sheet Alternative:**
-- Full-screen filter interface on small screens
-- Tabbed filter categories for complex filtering
-- Filter presets: "My Favorites", "To Try", "French Cheeses"
-
-**Quick Actions:**
-- Swipe gestures for common filters
-- Long-press for quick access to filter dialogs
-- Voice search integration
-
-### Analytics Integration
-
-**Filter Usage Analytics:**
-- Track most-used filter combinations
-- Optimize filter order based on usage
-- Suggest relevant filters based on user behavior
-
-**Performance Monitoring:**
-- Filter response times
-- Cache hit rates for filter results
-- Memory usage optimization
-
-## Testing Strategy
-
-### Unit Tests
-
-**Filter Logic Testing:**
-```dart
-test('ItemFilterHelper filters recommendations correctly', () {
-  final items = [testCheese1, testCheese2];
-  final ratings = [recommendationRating];
-  final result = ItemFilterHelper.filterItemsWithRatingContext(
-    items, ratings, userId, {'rating_source': 'recommendations'}, true
-  );
-  expect(result.length, 1);
-  expect(result.first.id, testCheese1.id);
-});
-```
-
-**Widget Testing:**
-```dart
-testWidgets('Filter interface collapses and expands correctly', (tester) async {
-  await tester.pumpWidget(testApp);
-  
-  // Initially collapsed
-  expect(find.byType(FilterChip), findsNothing);
-  
-  // Tap filter button to expand
-  await tester.tap(find.byIcon(Icons.filter_list_outlined));
-  await tester.pump();
-  
-  // Now filter chips should be visible
-  expect(find.byType(FilterChip), findsWidgets);
-});
-```
-
-### Integration Tests
-
-**Cross-Tab Filter Persistence:**
-1. Apply universal filter (Type = "Hard")
-2. Apply tab-specific filter ("My Ratings")
-3. Switch tabs
-4. Verify: Type filter persists, My Ratings clears
-
-**Mobile Responsiveness:**
-1. Test on different screen sizes
-2. Verify collapsible behavior
-3. Check touch target sizes
-4. Validate scrolling behavior
-
-## Troubleshooting
-
-### Common Issues
-
-**Filter Not Working:**
-- Check if `ItemFilterHelper.filterItemsWithRatingContext` is called correctly
-- Verify filter keys match between UI and logic ('rating_source' vs 'rating_status')
-- Ensure `isVisibleToUser()` method handles backend data format correctly
-
-**Count Mismatch:**
-- Ensure counting logic exactly matches display logic
-- Verify same base items are used in both count and display methods
-- Check that rating visibility filters are applied consistently
-
-**Missing Translations:**
-- Add missing strings to both `app_en.arb` and `app_fr.arb`
-- Run `flutter gen-l10n` after adding translations
-- Use `context.l10n.keyName` instead of hardcoded strings
-
-### Debug Tools
-
-**Rating Visibility Issues:**
-```dart
-// Add temporary debug to ItemFilterHelper
-print('Rating ${r.id} visible to $userId: ${r.isVisibleToUser(userId)}');
-print('Rating viewers: ${r.viewers}');
-```
-
-**Filter Flow Debugging:**
-```dart
-// Add to provider
-print('Active filters: ${state.categoryFilters}');
-print('Filtered items count: ${filteredItems.length}');
-```
-
-## Implementation Checklist
-
-### For New Item Types
-
-**Backend Requirements:**
-- [ ] Item model with categories (type, origin, producer, etc.)
-- [ ] Rating sharing system with viewer permissions
-- [ ] API endpoints for item CRUD and rating management
-
-**Frontend Implementation:**
-- [ ] Create item model implementing `RateableItem` interface
-- [ ] Add provider extending `ItemProvider<T>`
-- [ ] Register provider in main.dart
-- [ ] Add item type to navigation routes
-- [ ] Update localization files with item-specific strings
-
-**Filtering Integration:**
-- [ ] No additional code needed - automatic inheritance
-- [ ] Verify category fields map correctly to filter options
-- [ ] Test rating context filters work with new item type
-- [ ] Add item-specific search hint if needed
-
-### Mobile Optimization Checklist
-
-**Design Verification:**
-- [ ] Filter interface collapses by default
-- [ ] Active filters auto-expand interface
-- [ ] Touch targets are 44px minimum
-- [ ] Proper spacing between interactive elements
-
-**Functionality Testing:**
-- [ ] All filters work in collapsed and expanded states
-- [ ] Tab switching clears appropriate filters
-- [ ] Search and filtering perform well on lists of 100+ items
-- [ ] Localization works correctly in both languages
-
-## Maintenance
-
-### Regular Updates
-
-**Filter Options:**
-- **Dynamic generation**: Filter options auto-update when new data is added
-- **Cache invalidation**: Options refresh when items are created/updated
-- **Cleanup**: Remove empty filter categories automatically
-
-**Performance Monitoring:**
-- Monitor filter response times as data grows
-- Optimize filtering algorithms for large datasets
-- Consider pagination for very large item lists
-
-### Localization Maintenance
-
-**Adding Translations:**
-1. Update both `.arb` files simultaneously
-2. Test both languages for UI consistency  
-3. Verify filter functionality in both locales
-4. Update documentation for new language support
-
-**String Management:**
-- Use consistent naming conventions for translation keys
-- Group related strings together in `.arb` files
-- Add descriptive comments for translators
-- Test edge cases (long translations, special characters)
-
-## Locale-Aware Sorting
-
-### Overview
-
-The filtering system implements locale-aware string comparison to ensure proper alphabetical sorting of items and filter options, particularly for French names with accented characters.
-
-### Problem Solved
-
-**Before (Simple String Comparison):**
-```
-Americano
-Brewmance
-Cappuccino
-Latte
-Équilibre  ← sorted at the end!
-```
-
-**After (Locale-Aware Comparison):**
-```
-Americano
-Brewmance
-Cappuccino
-Équilibre  ← sorted correctly!
-Latte
-```
-
-### Implementation
-
-**Technology Used:**
-- `diacritic` package (^0.1.5)
-- `removeDiacritics()` function for accent normalization
-- Simple, maintainable, and comprehensive solution
-
-**Code Locations:**
-
-1. **Item List Sorting** (`ItemProvider.filteredItems`):
-```dart
-import 'package:diacritic/diacritic.dart';
-
-// Sort alphabetically by name with locale-aware comparison
-filtered.sort((a, b) => ItemState._compareLocaleAware(a.name, b.name));
-
-// Helper method
-static int _compareLocaleAware(String a, String b) {
-  return removeDiacritics(a).toLowerCase().compareTo(
-    removeDiacritics(b).toLowerCase()
-  );
-}
-```
-
-2. **Filter Options Sorting** (`ItemProvider._refreshFilterOptions`):
-```dart
-// Sort filter options with locale-aware comparison
-final filterOptions = allCategories.map(
-  (key, valueSet) {
-    final sortedList = valueSet.toList();
-    sortedList.sort((a, b) => ItemState._compareLocaleAware(a, b));
-    return MapEntry(key, sortedList);
-  },
-);
-```
-
-3. **UI Filter Dropdowns** (`ItemFilterHelper.getAvailableFilters`):
-```dart
-import 'package:diacritic/diacritic.dart';
-
-// Convert sets to sorted lists with locale-aware comparison
-return filterOptions.map(
-  (key, valueSet) {
-    final sortedList = valueSet.toList();
-    sortedList.sort((a, b) => _compareLocaleAware(a, b));
-    return MapEntry(key, sortedList);
-  },
-);
-
-// Helper method
-static int _compareLocaleAware(String a, String b) {
-  return removeDiacritics(a).toLowerCase().compareTo(
-    removeDiacritics(b).toLowerCase()
-  );
-}
-```
-
-### Accented Characters Handled
-
-The `diacritic` package handles ALL Unicode diacritics, including:
-- **é, è, ê, ë** (e with accents)
-- **à, â** (a with accents)
-- **ç** (c with cedilla)
-- **ô** (o with circumflex)
-- **û, ù** (u with accents)
-- **ï, î** (i with accents)
-- And many more from other languages (Spanish ñ, German ü, etc.)
-
-### Scope of Application
-
-Locale-aware sorting is applied to:
-- ✅ **Main item lists** (all tabs, all item types)
-- ✅ **Search results**
-- ✅ **Filter dropdown options** (Type, Origin, Producer, etc.)
-- ✅ **All alphabetically sorted content**
-
-### Performance Impact
-
-**Minimal Performance Cost:**
-- `removeDiacritics()` is a simple string transformation
-- No external dependencies or complex logic
-- Lightweight package with minimal overhead
-- No noticeable user-facing delay
-
-### Testing Considerations
-
-**When testing sorting:**
-1. Include items with accented characters in test data
-2. Verify correct alphabetical order (e.g., "É" comes after "E")
-3. Test with both French and English locale settings
-4. Verify filter dropdowns show properly sorted options
-
-**Test Data Examples:**
-```dart
-final testItems = [
-  'Americano',
-  'Équilibre',  // Should appear after 'E' items
-  'Brewmance',
-  'À la carte', // Should appear with 'A' items
-];
-```
-
-## Success Metrics
-
-### User Experience Goals
-
-**Efficiency:**
-- Users can find specific items in under 10 seconds
-- Filter combinations provide meaningful results
-- Clear path from discovery to rating creation
-
-**Mobile Usability:**
-- Filtering interface uses <30% of screen space when collapsed
-- Touch interactions feel natural and responsive
-- No accidental taps or UI conflicts
-
-**Accessibility:**
-- Screen reader compatible
-- Keyboard navigation support
-- High contrast mode compatibility
-- Proper focus management
-
-### Technical Performance
-
-**Response Times:**
-- Filter application: <200ms for datasets under 1000 items
-- Search results: <100ms for text queries
-- Tab switching: <50ms filter state updates
-
-**Memory Usage:**
-- Filter state: <1MB for typical datasets
-- UI components: Efficient widget recycling
-- Cache management: Automatic cleanup of unused filter options
+The À la carte platform uses a **hybrid filtering architecture**: schema-driven filters and full-text search run **server-side** against the EAV database, while rating-context filters (my ratings, recommendations, has-picture) run **client-side** over the loaded item list. The same UI adapts to any item type because filter options are extracted from the item type's dynamic schema, never hardcoded.
 
 ---
 
-**Built with Flutter & Riverpod for À la carte**
-*Last updated: September 2025*
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Server-Side Filtering](#server-side-filtering)
+- [Client Implementation](#client-implementation)
+- [Locale-Aware Sorting](#locale-aware-sorting)
+- [Rating-Context Filters](#rating-context-filters)
+- [Has-Picture Filter](#has-picture-filter)
+- [UX Behavior](#ux-behavior)
+- [Extending the System](#extending-the-system)
+
+---
+
+## Architecture Overview
+
+```
+Schema (admin-defined)          Client                          Server (Go API)
+┌─────────────────────┐   ┌──────────────────────────┐   ┌────────────────────────┐
+│ select/enum fields  │──▶│ ItemFilterHelper          │   │ DynamicItemList        │
+│ searchable flags    │   │  → filter options         │──▶│  → parseFilterParams   │
+└─────────────────────┘   │ ItemSearchAndFilter (UI)  │   │  → EAVQueryBuilder     │
+                          │ DynamicItemProvider       │   │  → SQL over EAV tables │
+                          │  → search + filter state  │   └────────────────────────┘
+                          │ DynamicItemService        │
+                          │  → query string building  │
+                          └──────────────────────────┘
+```
+
+Two filter layers:
+
+| Layer | Filters | Where applied |
+|-------|---------|---------------|
+| Server-side | `search`, `filter[field_key]`, `filter[has_image]`, `sort` | EAV query builder (`apps/api/services/query_builder.go`) |
+| Client-side | `rating_source` (personal/recommendations), `rating_status` (rated/unrated) | Over loaded items in the provider state / screen |
+
+The `has_picture` chip bridges both worlds: it is stored in the client filter map like a rating filter but is translated to `filter[has_image]` when the request is built, so it executes server-side.
+
+---
+
+## Server-Side Filtering
+
+### Endpoint
+
+`GET /api/items/:type` (`apps/api/controllers/dynamicItemController.go`, `DynamicItemList`) — the dynamic item list endpoint registered under the `/api/items` group in `apps/api/main.go`.
+
+### Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | 1 | Page number |
+| `per_page` | integer | 20 | Items per page (max 100) |
+| `sort` | string | `name ASC` | Sort field; prefix `-` for descending |
+| `search` | string | - | Full-text search across searchable fields |
+| `filter[field_key]` | string | - | Exact-match filter on an EAV field value |
+| `filter[has_image]` | boolean | - | `true` = items with image, `false` = items without |
+| `rated` | boolean | false | Restrict to items the current user rated or that are shared with them |
+
+Full reference: [docs/api/endpoints.md — Query Parameters](/docs/api/endpoints.md).
+
+### How It Works
+
+`parseFilterParams` scans the query string for keys of the form `filter[...]` and collects them into a map. `filter[has_image]` is handled separately and mapped to a boolean `HasImage` flag.
+
+`EAVQueryBuilder.BuildListQuery` (`apps/api/services/query_builder.go`) composes the SQL:
+
+1. **Base scope** — items of the schema resolved by `:type` (schema resolved from the in-memory registry, refreshed on demand).
+2. **Search** — if `search` is non-empty (lowercased), it matches items where the serialized `field_values` JSON contains the term, **or** where the item has an EAV value in a field flagged `"searchable": true` in the schema definition. This makes search cover both inline and relational EAV storage.
+3. **Field filters** — for each `filter[key]=value`, the field is resolved via the schema registry; unknown keys are silently skipped. String values match exactly (`value = ?`), arrays match with `IN (?)`.
+4. **Has image** — `filter[has_image]=true` filters `image_url IS NOT NULL AND image_url != ''` (inverted for `false`).
+5. **Sort** — `name`, `created_at`, `updated_at` sort directly on the items table; any other sortable field joins `item_field_values` on the matching schema field and sorts on the EAV value. `sort=-field` reverses direction.
+6. **Pagination** — applied last (`OFFSET`/`LIMIT`), with the total count computed before pagination so the client receives `total`, `page`, `per_page`, and `total_pages`.
+
+The response is a paginated envelope:
+
+```json
+{
+  "items": [ ... ],
+  "total": 42,
+  "page": 1,
+  "per_page": 20,
+  "total_pages": 3
+}
+```
+
+Because filtering happens in SQL, filters compose with pagination correctly: every page of results honors the active search and filters.
+
+---
+
+## Client Implementation
+
+### Filter Option Extraction — `ItemFilterHelper`
+
+`apps/client/lib/utils/item_filter_helper.dart`
+
+`getAvailableFilters(ItemSchema schema)` derives the filter UI from the schema, not from the loaded items:
+
+- Iterates `schema.fields` and collects every field of type `select` or `enum` that has a non-empty `options` list.
+- Returns `Map<String, List<String>>` keyed by field key, with each option list sorted locale-aware (see [Locale-Aware Sorting](#locale-aware-sorting)).
+
+Consequence: adding a `select` field to a schema in the admin automatically adds a filter chip in the client — no client release required. See [docs/admin/schema-management.md](/docs/admin/schema-management.md).
+
+The helper also provides `getSearchHint(itemType)` with per-type search hints (cheese, wine, beer, coffee) and a generic fallback.
+
+### Query String Building — `DynamicItemService`
+
+`apps/client/lib/services/dynamic_item_service.dart`
+
+`getItemsByType(type, {schema, page, perPage, search, filters, rated})` builds the request to `/api/items/:type`:
+
+- `page` and `per_page` are always sent.
+- `search` is sent only when non-empty.
+- The filter map is translated one-to-one into `filter[key]=value` query parameters, **except** the special key `has_picture`, which is sent as `filter[has_image]`. This keeps the UI-facing concept ("has picture") decoupled from the API parameter name.
+- `rated=true` is added for the "My List" tab.
+
+### State Management — `DynamicItemProvider`
+
+`apps/client/lib/providers/dynamic_item_provider.dart`
+
+Filter and search state is kept **per item type** in a single `StateNotifier`:
+
+- `searchQueriesByType` — current search text per type.
+- `categoryFiltersByType` — active `key → value` filter map per type.
+
+Mutations that change server-side filtering all trigger a reload of page 1 with `forceRefresh: true`, sending the updated `search`/`filters`:
+
+| Method | Effect |
+|--------|--------|
+| `updateSearchAndLoad(type, query)` | Sets search query, reloads page 1 |
+| `setCategoryFilter(type, key, value)` | Adds/removes one filter (`null` removes), reloads page 1 |
+| `clearFilters(type)` | Clears search **and** all filters, reloads page 1 |
+| `clearTabSpecificFilters(type)` | Removes only `rating_source` / `rating_status` (client-side filters) without reloading |
+
+`loadMoreItems` re-sends the same `search` and `filters` with `page = current + 1`, so infinite scroll appends filtered results.
+
+The `rated` item list (My List tab) is loaded **without** search or filters; filtering of that list happens client-side (see below).
+
+### UI — `ItemSearchAndFilter`
+
+`apps/client/lib/widgets/common/item_search_filter.dart`
+
+A single reusable widget rendered above the item list in `ItemTypeScreen` (`apps/client/lib/screens/items/item_type_screen.dart`):
+
+- **Search bar** — bound to a `TextEditingController` seeded from the provider state; every keystroke calls `onSearchChanged`. A clear button appears while a query is active.
+- **Filter toggle** — collapsible chip area; the filter icon shows a **count badge** of active filters and is tinted when filters are active. Auto-expands on init if filters are already active.
+- **Filter chips** — one `FilterChip` per schema select/enum field (localized labels for known keys such as `type`, `origin`, `producer`, `color`, `region`, ...). Tapping opens a `_FilterSelectionDialog` with a radio list: "All" (clears the filter) plus the schema options.
+- **Rating filter chips** — appended below schema chips, tab-dependent (see [Rating-Context Filters](#rating-context-filters)).
+- **Results summary** — a "showing X of Y" banner whenever a search or filter is active.
+
+### Screen Wiring — `ItemTypeScreen`
+
+`apps/client/lib/screens/items/item_type_screen.dart`
+
+- `ItemFilterHelper.getAvailableFilters(schema)` feeds the chip list; `schemaProvider` supplies the schema for the current type.
+- **Debounced search:** keystrokes cancel the previous `Timer` and start a new 300 ms one; only after 300 ms of inactivity does `updateSearchQuery` (→ `updateSearchAndLoad`) fire a request. The timer is cancelled in `dispose`.
+- Filter changes from the widget go through `ItemProviderHelper` (`apps/client/lib/utils/item_provider_helper.dart`) into `DynamicItemProvider`.
+
+### Two-Sided Filtering on the My List Tab
+
+The My List tab loads items with `rated=true` (no server filters), then applies the active search and filters **client-side**:
+
+- Search matches `item.searchableText` (case-insensitive contains).
+- Category filters match `item.categories[key]` (case-insensitive equality).
+- `rating_source` filters are then applied via `ItemFilterHelper.filterItemsWithRatingContext`.
+
+Rationale: the rated set is small and personal, and `rating_source` cannot be expressed by the server-side filter API.
+
+---
+
+## Locale-Aware Sorting
+
+Filter options are sorted with the `diacritic` package (`ItemFilterHelper._compareLocaleAware`):
+
+```dart
+sortedList.sort((a, b) => _compareLocaleAware(a, b));
+// removeDiacritics(a).toLowerCase().compareTo(removeDiacritics(b).toLowerCase())
+```
+
+Options are compared with diacritics stripped and case folded, so `Époisses` sorts next to `Emmental` instead of after `Z`. This matters for French (É, Œ) and other accented item names in this primarily EN/FR app.
+
+---
+
+## Rating-Context Filters
+
+Implemented in `ItemFilterHelper.filterItemsWithRatingContext` and applied client-side over the already-loaded items. Which filters appear depends on the active tab (`ItemSearchAndFilter.isPersonalListTab`).
+
+### All Items tab (`rating_status`)
+
+| Filter | Behavior |
+|--------|----------|
+| Rated (`has_ratings`) | Items the current user has a rating for |
+| Unrated (`no_ratings`) | Items the current user has **not** rated |
+
+Note: `has_ratings` approximates "any ratings" using only the user's own loaded ratings; it does not reflect community ratings.
+
+### My List tab (`rating_source`)
+
+| Filter | Behavior |
+|--------|----------|
+| My Ratings (`personal`) | Items the user rated themselves |
+| Recommendations (`recommendations`) | Items others rated where the rating is visible to the current user (privacy model applies, see [privacy-model.md](privacy-model.md)) |
+
+Switching tabs clears tab-specific filters (`clearTabSpecificFilters`) so a `rating_source` filter never leaks into the All Items tab and vice versa.
+
+---
+
+## Has-Picture Filter
+
+A **With Picture** chip is available on both tabs:
+
+- UI key: `has_picture` (`'true'` or removed when deselected).
+- On the All Items tab it is sent to the server as `filter[has_image]=true` (or `false`) by `DynamicItemService`, so the filter runs in SQL against `image_url`.
+- The client-side `filterItemsWithRatingContext` also contains a `has_picture` branch (checking `image_url` on the loaded items), used when the filter is applied to client-side-filtered lists such as the My List tab.
+
+---
+
+## UX Behavior
+
+- **Pagination + filters** — infinite scroll (list within 200 px of the bottom triggers `loadMoreItems`) requests the next page with the same search and filters; the server applies filters before paginating, so no results are skipped or duplicated. A spinner or "All items loaded" row terminates the list.
+- **Pull-to-refresh** — the All Items tab refresh clears community stats and ratings caches, refreshes the schema, reloads items (respecting active filters), and invalidates stats providers. My List refreshes the rated item list and ratings.
+- **Filter state per item type** — switching item types via the app-bar switcher does not clear filters: each type keeps its own search query and filter map in the provider.
+- **No results** — when filters/search produce an empty list, a dedicated state offers a **Clear all filters** button instead of the plain empty state.
+- **Result counts** — the summary line compares filtered count against the server `total` (All Items tab) or the locally counted set (My List tab).
+- **Debounce** — 300 ms between last keystroke and request, avoiding a request per character.
+
+---
+
+## Extending the System
+
+- **New filterable field:** add a `select`/`enum` field with options to the schema in the admin ([schema-management.md](/docs/admin/schema-management.md)). The client picks it up automatically; the server filters on any known field key.
+- **New searchable field:** set `"searchable": true` in the field definition; the server-side search subquery picks it up.
+- **New client-only filter:** add a chip in `ItemSearchAndFilter._buildRatingFilters`, a case in `ItemFilterHelper.filterItemsWithRatingContext`, and tab-clear behavior in `clearTabSpecificFilters` if it is tab-specific.
+- **New server-side filter:** extend `parseFilterParams` / `QueryParams` in the API and the matching branch in `EAVQueryBuilder.BuildListQuery`; document it in [endpoints.md](/docs/api/endpoints.md).
+
+## Related Documents
+
+- [docs/api/endpoints.md](/docs/api/endpoints.md) — query parameter reference and response envelope
+- [docs/admin/schema-management.md](/docs/admin/schema-management.md) — defining the fields that drive filters
+- [docs/features/privacy-model.md](privacy-model.md) — visibility rules behind the recommendations filter
+- [docs/features/rating-system.md](rating-system.md) — rating data the context filters operate on

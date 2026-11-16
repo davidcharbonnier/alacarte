@@ -65,7 +65,8 @@ users (
 
 -- Ratings (private by default)
 ratings (
-    id, user_id, item_id, item_type,
+    id, user_id,
+    item_id,               -- FK -> items (plain foreign key, no item_type column)
     grade, note,
     created_at, updated_at
 )
@@ -75,21 +76,13 @@ rating_viewers (
     rating_id, user_id,  -- Many-to-many
     created_at
 )
-
--- Sharing relationship analytics
-sharing_relationships (
-    user_a_id, user_b_id,
-    first_shared_at, last_shared_at,
-    total_shares
-)
 ```
 
 ### Privacy Cascade Rules
 
 **When a user is deleted:**
 - ✅ All their ratings are deleted
-- ✅ All sharing relationships are removed
-- ✅ Shared ratings no longer visible to others
+- ✅ Shared ratings no longer visible to others (cascade through rating deletion)
 
 **When an item is deleted:**
 - ✅ All ratings for that item are deleted

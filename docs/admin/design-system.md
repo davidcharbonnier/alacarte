@@ -1,454 +1,183 @@
 # Admin Panel Design System
 
-**Last Updated:** January 2025  
+**Last Updated:** November 2026  
 **Status:** Complete ✅
 
 ## Overview
 
-The admin panel has a comprehensive design system that matches the Flutter client app for visual consistency. This document covers the complete design system implementation including colors, components, and enhancements.
+The admin panel uses **MUI v6 with a Material Design 3 (M3) theme** as its design system. The single source of truth is `apps/admin/src/theme.ts`. There is no Tailwind, no `lib/config/design-system.ts`, and no custom component library — all UI is built from MUI components styled with theme tokens.
+
+The M3 tonal palette is derived from a **deep purple seed** (`ColorScheme.fromSeed(Colors.deepPurple)`), matching the Flutter client's color scheme. Dark mode is first-class via MUI's `colorSchemes`.
+
+**Related Documentation:**
+
+- [Admin Authentication System](/docs/admin/authentication-system.md)
+- [Admin Deployment](/docs/admin/deployment.md)
+- [Backend Requirements](/docs/admin/backend-requirements.md)
+- [Adding New Item Types](/docs/guides/adding-new-item-types.md)
 
 ---
 
-## Table of Contents
+## Theme Structure
 
-1. [Design Tokens](/docs/admin/design-system.md#design-tokens)
-2. [Color System](/docs/admin/design-system.md#color-system)
-3. [Component Enhancements](/docs/admin/design-system.md#component-enhancements)
-4. [Dark Mode Support](/docs/admin/design-system.md#dark-mode-support)
-5. [Usage Guidelines](/docs/admin/design-system.md#usage-guidelines)
+`apps/admin/src/theme.ts` exports a `createTheme()` result with:
 
----
+- **`colorSchemes`** — light and dark palettes (`cssVariables.colorSchemeSelector: 'class'`, toggled by a `dark`/`light` class on `<html>`)
+- **`typography`** — M3 type scale on Roboto
+- **`shape`** — base `borderRadius: 12`
+- **`components`** — M3-flavored overrides for Button, Card, Paper, AppBar, Chip, TextField, Tab, Dialog, Fab, CssBaseline
 
-## Design Tokens
+Module augmentation extends MUI's `Palette` with M3 surface roles and `Typography` with the full M3 variant names (`headlineSmall`, `titleMedium`, `labelLarge`, …), so everything type-checks in `sx` and props.
 
-### Location
-`apps/admin/lib/config/design-system.ts`
+## Provider Setup
 
-### What's Included
+`src/theme-context.tsx` wraps the app:
 
-**Item Type Colors:**
-- Cheese: Deep purple (#673AB7)
-- Gin: Teal (#009688)
-- Wine: Deep purple variant (#8E24AA)
-
-**Brand Colors:**
-- Primary, secondary, error, success, warning
-
-**Rating Colors:**
-- Personal, recommendation, community
-
-**Spacing Scale:**
-- xs(4px), s(8px), m(16px), l(24px), xl(32px), xxl(48px)
-
-**Border Radius:**
-- xs(2px), s(4px), m(8px), l(12px), xl(16px)
-
-**Icon Sizes:**
-- xs(12px), s(16px), m(24px), l(32px), xl(48px)
-
-**Font Sizes:**
-- xs(10px), s(12px), m(14px), l(16px), xl(20px), xxl(24px)
-
-**Layout Constants:**
-- Max content width: 600px
-- Sidebar width: 256px
-
-**Animation Durations:**
-- Fast: 200ms, Normal: 300ms, Slow: 500ms
-
-### Helper Functions
-
-```typescript
-getItemTypeColor(itemType: string)  // Get color config
-getItemTypeClasses(itemType: string)  // Get Tailwind classes
+```tsx
+<MuiThemeProvider theme={theme} defaultMode={initialMode}>
+  <CssBaseline />
+  <ThemeController>{children}</ThemeController>
+</MuiThemeProvider>
 ```
 
----
+`useThemeMode()` exposes `{ mode, toggle, setMode }`. Mode is persisted to `localStorage` under the key `theme` and applied as a class on `document.documentElement` (which drives the CSS-variable color scheme).
+
+```tsx
+const { mode, toggle } = useThemeMode();
+```
 
 ## Color System
 
-### Item Type Colors
+### Palette roles (light / dark)
 
-| Type   | Hex       | Icon | Usage                  |
-|--------|-----------|------|------------------------|
-| Cheese | #673AB7   | 🍕   | Deep purple (primary)  |
-| Gin    | #009688   | 🍸   | Teal                   |
-| Wine   | #8E24AA   | 🍷   | Deep purple variant    |
+| Role | Light | Dark | Use |
+|------|-------|------|-----|
+| `primary` | `#673AB7` | `#D0BCFF` | Brand actions |
+| `secondary` | `#625B71` | `#CCC2DC` | Secondary accent |
+| `tertiary` | `#7D5260` | `#EFB8C8` | Tertiary accent |
+| `error` | `#B3261E` | `#F2B8B5` | Errors |
+| `warning` | `#FF9800` | `#FFB74D` | Warnings |
+| `success` | `#4CAF50` | `#81C784` | Success states |
+| `background.default` | `#FEF7FF` | `#141218` | Page background |
+| `surface` | `#FEF7FF` | `#141218` | Base surface |
+| `surfaceVariant` | `#E7E0EC` | `#49454F` | Variant surface |
+| `outline` / `outlineVariant` | `#79747E` / `#CAC4D0` | `#938F99` / `#49454F` | Borders, dividers |
 
-### Brand Colors
+### M3 surface containers
 
-| Name      | Hex     | Purpose                    |
-|-----------|---------|----------------------------|
-| Primary   | #673AB7 | Main brand color           |
-| Secondary | #9C27B0 | Secondary accent           |
-| Error     | #F44336 | Error states               |
-| Success   | #4CAF50 | Success states             |
-| Warning   | #FF9800 | Warning states             |
+Five elevation-equivalent tiers, all first-class palette roles:
 
-### Global CSS Variables
+`surfaceContainerLowest` → `surfaceContainerLow` → `surfaceContainer` → `surfaceContainerHigh` → `surfaceContainerHighest`
 
-**Location:** `apps/admin/app/globals.css`
+(App shell: TopAppBar on `surfaceContainer`, NavigationDrawer on `surfaceContainerLow` — see `src/components/layout/app-shell.tsx`.)
 
-```css
---color-cheese: #673AB7;
---color-gin: #009688;
---color-wine: #8E24AA;
-```
+**Rules:**
 
-Now available as Tailwind utilities: `text-cheese`, `bg-gin`, etc.
+- Use surface roles for backgrounds, not hex values or alpha-tinted boxes (no `${hex}10` backgrounds — that pattern was removed with the old Tailwind stack).
+- Item-type accent colors tint icons/indicators only; never use an accent as a page background.
 
----
+## Typography
 
-## Component Enhancements
-
-### 1. Dashboard
-
-**Status:** Complete ✅  
-**File:** `components/dashboard/dashboard-stats.tsx`
-
-**Features:**
-- Flutter-style item type cards
-- Colored icons with background
-- Hover effects
-- Click-through links
-- Dynamic item counts
-
-**Visual:**
-```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│ 🍕 Cheeses  │  │ 🍸 Gins     │  │ 🍷 Wines    │
-│ 42 items    │  │ 15 items    │  │ 28 items    │
-└─────────────┘  └─────────────┘  └─────────────┘
-```
-
-### 2. Sidebar
-
-**Status:** Complete ✅  
-**File:** `components/layout/sidebar.tsx`
-
-**Features:**
-- Dynamic item type loading from config
-- Colored icon backgrounds
-- Active state indicators (colored left border)
-- Section organization (Dashboard | Item Types | Users)
-- Hover animations
-
-**Visual:**
-```
-Dashboard
-─────────────
-ITEM TYPES
-🍕 Cheeses    [purple]
-🍸 Gins       [teal]
-🍷 Wines      [purple]
-─────────────
-👥 Users
-```
-
-### 3. List Pages
-
-**Status:** Complete ✅  
-**Files:** 
-- `app/(dashboard)/[itemType]/page.tsx`
-- `components/shared/generic-item-table.tsx`
-
-**Features:**
-- Colored header with icon
-- Colored table headers
-- Colored "Seed Data" button
-- Colored "View" buttons
-- Alternating row colors (3% item type color)
-- Dynamic hover (8% item type color)
-- Enhanced empty states
-
-**Visual:**
-```
-🍕 Cheeses                [Seed Data]
-                          ↑ purple
-
-Name    Type    Origin    Actions
-────────────────────────────────
-Oka     Soft    Quebec    [View]  ← transparent
-Brie    Soft    France    [View]  ← 3% purple
-Ched... Hard    UK        [View]  ← transparent
-                                  ↑ hover: 8%
-```
-
-### 4. Detail Pages
-
-**Status:** Complete ✅  
-**File:** `components/shared/generic-item-detail.tsx`
-
-**Features:**
-- Colored header icon
-- Colored "Back" button
-- Colored left border on cards (4px)
-- Colored card titles
-- Better spacing and layout
-
-**Visual:**
-```
-[Back to Cheeses] ← purple
-
-🍕 Oka Cheese
-
-┃ Basic Information    ┃ Description
-┃ [purple border]      ┃ [purple border]
-```
-
-### 5. Forms
-
-**Status:** Complete ✅  
-**File:** `components/shared/generic-seed-form.tsx`
-
-**Features:**
-- Colored "Back" button
-- Colored card border
-- Colored "Validate" button (outline)
-- Colored "Import" button (solid)
-- Colored "View" button (outline)
-
-**Visual:**
-```
-[Back to Cheeses] ← purple
-
-┃ Bulk Import          ← purple title
-┃ [purple border]
-┃
-┃ [Validate Data]      ← purple outline
-┃ [Import Data]        ← purple solid
-```
-
-### 6. Tables
-
-**Status:** Complete ✅  
-**File:** `components/shared/generic-item-table.tsx`
-
-**Features:**
-- Colored table border (20% opacity)
-- Alternating row backgrounds
-- Dynamic hover effects
-- Enhanced empty states with colored icons
-- Colored result counter
-
-**Empty State:**
-```
-      ⊙ ∅         ← purple circle
-  No cheeses found
-Try adjusting search
-```
-
----
-
-## Dark Mode Support
-
-### Status: Complete ✅
-
-**Files:**
-- `components/theme-provider.tsx`
-- `components/theme-toggle.tsx`
-- `components/providers.tsx`
-
-### Features
-
-- **Theme Toggle:** Moon/Sun icon in header
-- **Persistence:** Saves preference to localStorage
-- **System Detection:** Auto-detects system preference
-- **No Flash:** Prevents flash of wrong theme
-- **All Components:** Work perfectly in both modes
-
-### Usage
-
-**For Users:**
-```
-Light Mode: 🌙 (click to go dark)
-Dark Mode:  ☀️  (click to go light)
-```
-
-**For Developers:**
-```typescript
-import { useTheme } from '@/components/theme-provider';
-
-const { theme, toggleTheme, setTheme } = useTheme();
-```
-
-### Color Behavior
-
-Item type colors automatically adjust brightness in dark mode:
-- Light mode: Full saturation
-- Dark mode: Lighter variants
-- Opacity levels work in both modes
-
----
-
-## Usage Guidelines
-
-### Using Colors in Components
-
-```typescript
-import { getItemTypeColor } from '@/lib/config/design-system';
-
-const colors = getItemTypeColor(itemType);
-
-// Solid background
-style={{ backgroundColor: colors.hex, color: 'white' }}
-
-// Outline
-style={{ borderColor: colors.hex, color: colors.hex }}
-
-// Ghost/Text
-style={{ color: colors.hex }}
-
-// Backgrounds with opacity
-style={{ backgroundColor: `${colors.hex}10` }} // 10%
-```
-
-### Opacity Levels
-
-- **03%** - Very subtle (alternating rows)
-- **08%** - Light (hover states)
-- **10%** - Subtle (icon backgrounds, empty states)
-- **20%** - Moderate (borders, table outline)
-- **25%** - Medium (active sidebar icons)
-- **100%** - Full color (text, solid elements)
-
-### Theme-Aware Styling
-
-Always use CSS variables for backgrounds, text, and borders:
+Roboto with the M3 type scale. Both default MUI variants and the extended M3 variants are available:
 
 ```tsx
-// Background
-<div className="bg-background">
-
-// Text
-<h1 className="text-foreground">
-<p className="text-muted-foreground">
-
-// Borders
-<div className="border-border">
-
-// Cards (already theme-aware)
-<Card>
+<Typography variant="headlineSmall">Page title</Typography>
+<Typography variant="titleMedium">Card title</Typography>
+<Typography variant="labelLarge">Button-like label</Typography>
+<Typography variant="body2" color="onSurfaceVariant">Secondary text</Typography>
 ```
 
-### Component Pattern
+Extended variants: `displayLarge/Medium/Small`, `headlineLarge/Medium/Small`, `titleLarge/Medium/Small`, `bodyLarge/Medium/Small`, `labelLarge/Medium/Small`. Buttons and tabs use `textTransform: 'none'` (no ALL CAPS).
+
+## Shape & Component Overrides
+
+Base radius `12`. Component defaults:
+
+| Component | Override |
+|-----------|----------|
+| `MuiButton` | `disableElevation`, radius 20 (small 16, large 24), no text transform |
+| `MuiIconButton` | radius 16 |
+| `MuiCard` | `elevation: 0`, radius 16 |
+| `MuiPaper` | `elevation: 0` |
+| `MuiAppBar` | flat, `surfaceContainer` background, `outlineVariant` bottom border |
+| `MuiChip` | radius 8, medium-weight label |
+| `MuiOutlinedInput` | radius 12 |
+| `MuiTab` | no text transform, medium weight |
+| `MuiDialog` | paper radius 24 |
+| `MuiFab` | medium, radius 16, no shadow |
+
+## Item-Type Accents & Icons
+
+Item types are **config-driven at runtime** — the backend schema registry supplies `schema.color` (hex) and `schema.icon` (name) per type. There is no hardcoded per-type color list in the frontend.
+
+### Accent helpers (`src/theme.ts`)
+
+```ts
+import { getAccentColor, getAccentWithAlpha } from '../../theme';
+
+const accent = getAccentColor(schema?.color);          // falls back to FALLBACK_ACCENT (#79747E)
+const tint   = getAccentWithAlpha(accent, 0.12);       // alpha() blend for scrims/status only
+```
+
+- `getAccentColor(hex?)` — returns the schema color or a grey fallback
+- `getAccentWithAlpha(hex, alpha)` — MUI `alpha()` blend
+- Accent usage: small scrims, status indicators, icon tints — **never** page backgrounds or border-left stripes
+
+### Icon registry (`src/lib/icons/icon-registry.ts`)
+
+Curated registry — no namespace import of `@mui/icons-material`:
+
+- `ICON_OPTIONS` — name/label list for schema editors
+- `ICON_MAP` — name → component lookup
+- `resolveIcon(name?)` — returns the component or `FALLBACK_ICON` (`HelpOutline`)
+
+**Adding an icon:** extend `ICON_OPTIONS` and `ICON_MAP` together.
+
+### Usage pattern (M3 tonal container)
 
 ```tsx
-// Get colors
-const colors = getItemTypeColor(itemType);
-const IconComponent = (Icons as any)[config.icon];
+const accent = getAccentColor(schema?.color);
+const Icon = resolveIcon(schema.icon);
 
-// Header with colored icon
-<div className="flex items-center gap-3">
-  <div 
-    className="w-12 h-12 rounded-xl flex items-center justify-center"
-    style={{ backgroundColor: `${colors.hex}20` }}
-  >
-    <IconComponent className="w-6 h-6" style={{ color: colors.hex }} />
-  </div>
-  <h1>{title}</h1>
-</div>
-
-// Colored button (primary)
-<Button
-  style={{ backgroundColor: colors.hex, color: 'white' }}
-  className="hover:opacity-90"
->
-
-// Colored button (outline)
-<Button
-  variant="outline"
-  style={{ borderColor: colors.hex, color: colors.hex }}
->
-
-// Card with colored border
-<Card 
-  className="border-l-4"
-  style={{ borderLeftColor: colors.hex }}
->
+<Box sx={{ bgcolor: 'surfaceContainerHighest', color: accent, borderRadius: '16px' }}>
+  <Icon />
+</Box>
 ```
 
----
+Accent-on-surface-container tints adapt to light/dark automatically — that is why tinting beats solid hex backgrounds.
 
-## Adding New Item Types
+## Using the Theme in Components
 
-When adding a new item type:
+### `sx` prop with theme tokens
 
-1. **Add config** to `lib/config/item-types.ts`
-2. **Add color** to `lib/config/design-system.ts`
-3. **Done!** All components automatically get the color
+Palette role names work directly as `sx` values — no raw hex:
 
-The sidebar will automatically include the new item type with its color.
-
-**Example:**
-```typescript
-// design-system.ts
-export const itemTypeColors = {
-  // ... existing
-  beer: {
-    hex: '#FFA726',  // Orange
-    rgb: 'rgb(255, 167, 38)',
-    hsl: 'hsl(36, 100%, 57%)',
-    className: 'text-[#FFA726] bg-[#FFA726]/10',
-  },
-} as const;
-
-// item-types.ts
-beer: {
-  name: 'beer',
-  labels: { singular: 'Beer', plural: 'Beers' },
-  icon: 'Beer',
-  color: itemTypeColors.beer.hex,
-  // ... rest of config
-}
+```tsx
+<Box sx={{ bgcolor: 'surfaceContainerLow', border: 1, borderColor: 'outlineVariant' }}>
+  <Typography variant="titleMedium" sx={{ color: 'primary.main' }}>…</Typography>
+</Box>
 ```
 
----
+### Use MUI components, not custom ones
 
-## Testing
+- Cards → `Card` (flat, radius 16), lists → `List`/`ListItemButton`, tables → `Table`/`DataGrid`
+- Feedback → `Alert`, `Skeleton`, `Chip`
+- Layout → `Box`, `Stack`, `Grid` with `sx` spacing tokens (`p: 3`, `gap: 2.5`)
+- Only fall back to `style={{}}` for runtime accent colors (schema-driven values the theme can't know)
 
-### Visual Checks
+### Dark mode
 
-**Light Mode:**
-- [ ] All item type colors visible
-- [ ] Good contrast on white background
-- [ ] No "washed out" colors
+Never hardcode light-only colors. Use palette roles, surface containers, and accent tints — they resolve per mode via CSS variables.
 
-**Dark Mode:**
-- [ ] All item type colors visible
-- [ ] Good contrast on dark background
-- [ ] No "blinding" bright colors
-- [ ] Opacity levels still work
+## Conventions (from `apps/admin/AGENTS.md`)
 
-### Components
-
-- [ ] Dashboard cards
-- [ ] Sidebar navigation
-- [ ] List page headers
-- [ ] Tables (headers, rows, empty states)
-- [ ] Detail pages
-- [ ] Forms (all buttons)
-- [ ] Theme toggle works
-
----
+- Theme tokens live only in `src/theme.ts`; no `lib/config/design-system.ts`, no Tailwind utilities, no hex-opacity tinted boxes
+- M3 surface containers are first-class palette roles — prefer them over `elevation` shadows
+- Icons via the curated registry in `src/lib/icons/icon-registry.ts` (no namespace import)
+- Item types have no frontend color list: read `schema.color` / `schema.icon` at render with `getAccentColor` / `resolveIcon`
+- Verify with `npm run build` (TypeScript + Vite production build)
 
 ## Related Documentation
 
 - [Adding New Item Types](/docs/guides/adding-new-item-types.md)
 - [Backend Requirements](/docs/admin/backend-requirements.md)
-
----
-
-## Benefits
-
-1. **Visual Consistency** - Matches Flutter client
-2. **Automatic Scaling** - New item types get colors automatically
-3. **Professional Polish** - Modern, branded appearance
-4. **Maintainability** - Single source of truth
-5. **Dark Mode** - Full support
-6. **Accessibility** - Good contrast in both themes
-7. **Developer Experience** - Easy to use, well-documented
-
----
-
-**The admin panel now has a complete, professional design system that matches your Flutter app!** 🎨

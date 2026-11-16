@@ -54,7 +54,7 @@ docker-compose up -d
 
 # This will start:
 # - API on port 8080
-# - MySQL on port 3306
+# - Postgres on port 5432 (connection string in DATABASE_URL)
 # - MinIO on ports 9000/9001
 # - Admin panel on port 3000
 ```
@@ -101,7 +101,7 @@ curl -I http://localhost:3000
 - **Admin Panel:** http://localhost:3000
 - **Client Web:** http://localhost:3001 (when running Flutter web)
 - **MinIO Console:** http://localhost:9001 (for file storage management)
-- **MySQL:** localhost:3306 (username: root, password: password)
+- **Postgres:** localhost:5432 (connection string: see `apps/api/.env.example`)
 
 ## Next Steps
 
