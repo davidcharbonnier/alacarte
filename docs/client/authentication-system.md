@@ -4,7 +4,7 @@
 
 **Last Updated:** January 2025  
 **Related Documentation:**
-- [Privacy Model](/docs/client/authentication-system.md#privacy-model)
+- [Privacy Model](/docs/client/privacy-model.md)
 - [Android OAuth Setup](/docs/client/setup/android-oauth-setup.md)
 - [Google OAuth Setup](/docs/client/setup/google-oauth-setup.md)
 
