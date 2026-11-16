@@ -21,12 +21,11 @@
 ### Required Variables
 
 ```bash
-# API Configuration
-API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
-NEXT_PUBLIC_API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
+# API Configuration (baked into bundle at build time)
+VITE_API_URL=https://alacarte-api-xxx.northamerica-northeast1.run.app
 
-# Google OAuth (must match backend)
-GOOGLE_CLIENT_ID=<your-google-client-id>
+# Google OAuth Web Client ID (baked into bundle at build time)
+VITE_GOOGLE_CLIENT_ID=<your-google-client-id>
 ```
 
 ---
@@ -80,8 +79,7 @@ gcloud run deploy alacarte-admin \
   --platform managed \
   --region northamerica-northeast1 \
   --allow-unauthenticated \
-  --set-env-vars "NEXT_PUBLIC_API_URL=https://backend.run.app,GOOGLE_CLIENT_ID=google-client-id:latest" \
-  --set-secrets "GOOGLE_CLIENT_SECRET=google-client-secret:latest"
+  --set-env-vars "VITE_API_URL=https://backend.run.app,VITE_GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com"
 ```
 
 ---
@@ -132,8 +130,7 @@ This user can login immediately and promote other users to admin via the UI.
 
 ### Secrets Management
 
-**Use Google Secret Manager for:**
-- `GOOGLE_CLIENT_SECRET` (used by the backend)
+The admin SPA needs no secrets — both env vars are public build-time values (backend keeps `GOOGLE_CLIENT_SECRET` in Secret Manager; see the API deployment guide).
 
 **Never commit to git:**
 - `.env.local`

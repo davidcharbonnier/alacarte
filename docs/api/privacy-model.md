@@ -75,32 +75,29 @@ func (r *Rating) IsVisibleToUser(userID uint) bool {
 All privacy routes require authentication (`authMiddleware`). Registration in `main.go`:
 
 ```go
-// User privacy settings
-api.GET("/user/privacy-stats", controllers.GetUserPrivacyStats)          // shared ratings count, recipient list
-api.GET("/user/sharing-relationships", controllers.GetSharingRelationships) // per-user share counts
-api.PATCH("/user/me", controllers.UpdateUserProfile)                     // display_name + discoverable updates
+// User account (display_name + discoverable updates)
+user.GET("/me", controllers.GetCurrentUser)
+user.PATCH("/me", controllers.UpdateCurrentUser)
+user.DELETE("/me", controllers.DeleteCurrentUser)
+
+// Rating privacy
+rating.POST("/new", controllers.RatingCreate)
+rating.PUT("/:id/share", controllers.RatingShare)                        // batch share with user list
+rating.PUT("/:id/hide", controllers.RatingHide)                          // hide (make private)
+rating.GET("/viewer/:id", controllers.RatingByViewer)                    // user's own + shared ratings
 
 // Bulk privacy operations
-api.PUT("/ratings/bulk/make-private", controllers.MakeAllRatingsPrivate)       // clear viewers on all ratings
-api.PUT("/ratings/bulk/remove-user/:user_id", controllers.RemoveUserFromAllShares) // remove one user from all shares
-
-// Individual rating privacy
-api.GET("/ratings/shared", controllers.GetSharedRatings)                 // ?type= item-type filter
-api.PUT("/rating/:id/share", controllers.RatingShare)                    // batch share with user list
-api.PUT("/rating/:id/hide", controllers.RatingHide)                      // legacy single-user hide
-api.PUT("/rating/:id/unshare-from/:user_id", controllers.UnshareRatingFromUser)
-api.PUT("/rating/:id/make-private", controllers.MakeRatingPrivate)       // clear all viewers
-api.GET("/rating/viewer/:id", controllers.RatingByViewer)                // user's own + shared ratings
+rating.PUT("/bulk/private", controllers.BulkMakeRatingsPrivate)          // clear viewers on all ratings
+rating.PUT("/bulk/unshare/:userId", controllers.BulkRemoveUserFromShares) // remove one user from all shares
 
 // User discovery for sharing dialogs
-api.GET("/users/shareable", controllers.GetShareableUsers)               // previous_connections + discoverable
+users.GET("/shareable", controllers.GetShareableUsers)                   // previous_connections + discoverable
 ```
 
 ### Implementation Notes
 
 - **`PATCH /user/me`** — partial update; validates display name (trimmed, non-empty, unique → 409) and applies `discoverable`.
-- **Bulk operations** (`make-private`, `remove-user`) run in a transaction; they count affected ratings/viewers and return `ratings_affected` (plus `viewers_removed` / `user_removed`).
-- **`/ratings/shared`** — filters by `item_type` query parameter (default `%`), returns only ratings that have viewers.
+- **Bulk operations** (`/bulk/private`, `/bulk/unshare/:userId`) run per rating and return `ratings_affected` (plus `removed_user` display name for unshare).
 - **`/users/shareable`** — returns `previous_connections` (users who have shared with the current user, via `rating_viewers` join) and `discoverable` users, excluding the requester and previous connections so previous connections appear first.
 - **Ownership check** — all rating-mutation endpoints verify `rating.UserID` matches the token user (403 otherwise).
 

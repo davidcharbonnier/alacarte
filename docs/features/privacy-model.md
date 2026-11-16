@@ -234,26 +234,6 @@ Admins have additional access for platform management:
 
 ## 📊 Privacy Metrics
 
-### User Privacy Stats
-
-Available via `GET /api/user/sharing-stats`:
-
-```json
-{
-  "total_ratings": 15,
-  "total_shares": 8,
-  "unique_users_shared_with": 3,
-  "discoverable": true,
-  "sharing_relationships": [
-    {
-      "user_id": 2,
-      "display_name": "Alice",
-      "total_shares": 5
-    }
-  ]
-}
-```
-
 ### Platform Privacy Metrics (Admin)
 
 - Average ratings per user

@@ -106,18 +106,15 @@ func (u *User) HasCompletedSetup() bool { return u.DisplayName != "" }
 ```bash
 JWT_SECRET_KEY=your-super-secure-jwt-secret-key-here-64-chars-minimum
 GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
 INITIAL_ADMIN_EMAIL=[EMAIL]
 
 GIN_MODE=release
 TRUSTED_PROXIES=[IP_ADDRESS],::1
 
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=password
-DB_NAME=alacarte
+DATABASE_URL=postgres://user:password@localhost:5432/alacarte?sslmode=disable
 ```
+
+No `GOOGLE_CLIENT_SECRET` is needed — the backend verifies the Google `id_token` through Google's token verification, not a secret.
 
 ## Testing & Development
 

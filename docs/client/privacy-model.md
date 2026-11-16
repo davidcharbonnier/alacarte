@@ -12,7 +12,7 @@
 
 ## Privacy Settings Screen
 
-`lib/screens/user/privacy_settings_screen.dart`, built from the reusable `lib/widgets/settings/` component library.
+`lib/screens/settings/privacy_settings_screen.dart`, built from the reusable `lib/widgets/settings/` component library.
 
 ### Privacy Overview
 - Summary card with **Shared Ratings Count** and **Recipients Count** (unique users with access, deduplicated)
@@ -56,14 +56,8 @@ if (confirmed == true && context.mounted) { /* loading + API call on original co
 
 ## Display Name Validation
 
-```dart
-// lib/utils/display_name_generator.dart
-static String? validateDisplayName(String displayName) {
-  // required, trimmed; 2–50 characters; basic inappropriate-content check
-}
-
-// Generation rule (First L.) shared with the backend — see canonical doc
-```
+Inline validation in `lib/screens/auth/display_name_setup_screen.dart`:
+required, trimmed, 2–50 characters. Generation rule (First L.) shared with the backend — see canonical doc.
 
 ## Sharing Dialog
 
@@ -82,7 +76,7 @@ context.l10n.discoverableForSharing      // "Découvrable pour le Partage" / "Di
 
 ## Privacy Logic Testing
 
-`test/utils/rating_visibility_test.dart` covers the visibility rules: user sees own ratings, sees ratings shared with them, and cannot see private ratings from others (`RatingVisibilityUtils.isRatingVisibleToUser`).
+No dedicated privacy tests yet — visibility rules are enforced server-side (`Rating.IsVisibleToUser` in the API).
 
 ---
 

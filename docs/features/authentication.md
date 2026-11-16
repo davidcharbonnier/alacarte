@@ -84,7 +84,6 @@ Admin status is a backend concern, checked once per login via `GET /api/auth/che
 # Backend (apps/api)
 JWT_SECRET_KEY=your-64-char-secret
 GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-client-secret
 INITIAL_ADMIN_EMAIL=[EMAIL]
 
 # Flutter client (apps/client)
