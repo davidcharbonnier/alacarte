@@ -343,7 +343,7 @@ await wineApi.deleteImage(itemId);
 
 **Features:**
 - Works for all item types (cheese, gin, wine, etc.)
-- Automatic authentication (uses NextAuth session token)
+- Automatic authentication (sends the JWT from `sessionStorage`)
 - FormData handling for file uploads
 - Type-safe responses
 

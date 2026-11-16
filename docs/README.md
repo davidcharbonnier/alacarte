@@ -25,9 +25,6 @@ Welcome to the centralized documentation for the À la carte platform.
 ### Guides
 - ⭐ [Adding New Item Types](guides/adding-new-item-types.md) - Complete guide for all 3 apps
 - ⭐ [Contributing Guide](guides/contributing.md) - Development workflow and conventional commits
-- [Backend Checklist](guides/backend-checklist.md) - Quick reference for API
-- [Client Checklist](guides/client-checklist.md) - Quick reference for Flutter
-- [Admin Checklist](guides/admin-checklist.md) - Quick reference for Next.js
 
 ### Component Documentation
 
@@ -51,7 +48,6 @@ Welcome to the centralized documentation for the À la carte platform.
 ##### Architecture
 - [Router Architecture](client/architecture/router-architecture.md) - Navigation and routing
 - [Form Strategy Pattern](client/architecture/form-strategy-pattern.md) - Form handling patterns
-- [Strategy Pattern Refactoring](client/architecture/strategy-pattern-refactoring-summary.md) - Refactoring summary
 
 ##### Features
 - [Notification System](client/features/notification-system.md) - Push notifications
@@ -62,12 +58,11 @@ Welcome to the centralized documentation for the À la carte platform.
 - [Design System](admin/design-system.md) - UI components and styling
 - [Deployment](admin/deployment.md) - Deployment guide
 - [Backend Requirements](admin/backend-requirements.md) - API requirements
-- [Phased Implementation](admin/phased-implementation.md) - Development phases
 
 ### Operations
 - [CI/CD Setup](operations/ci-cd-setup.md) - GitHub Actions and automation
 - [GitHub Secrets](operations/github-secrets.md) - Secrets and variables management
-- [Workflows](operations/workflows.md) - Workflow documentation
+- [CI/CD Refactor Plan](operations/ci-cd-refactor-plan.md) - Planned pipeline rebuild
 
 ## 📚 Documentation Philosophy
 
