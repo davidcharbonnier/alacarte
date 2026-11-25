@@ -14,15 +14,15 @@ Central documentation hub for the À la carte monorepo. Organized by purpose rat
 - Organization by purpose: `features/`, `architecture/`, `api/`, `client/`, `admin/`, `guides/`, `getting-started/`, `operations/`
 - Cross-app feature docs (`features/`) describe behavior spanning all three apps
 - App-specific docs (`api/`, `client/`, `admin/`) contain implementation details
-- Each subdirectory has a README.md hub page
-- Quick-start instructions live in each app's own README (`apps/*/README.md`), not here
+- `api/`, `admin/`, `client/` have hub READMEs; `docs/README.md` indexes the rest
+- Per-app quick-starts live in each app's own README (`apps/api`, `apps/client`; admin has none — see `docs/admin/deployment.md`); `getting-started/` holds the cross-app setup
 - Guides (`guides/`) are task-oriented walkthroughs
 - Operations (`operations/`) cover CI/CD, deployment, secrets
 
 ## Work Guidance
 
 - When adding features or changing behavior, update relevant docs in `docs/`
-- Cross-reference related docs; use relative links
+- Cross-reference related docs; use root-absolute (`/docs/...`) or relative links, and make sure they resolve
 - Keep docs concise and actionable
 - Follow existing structure: purpose-first organization
 - When adding new docs, update the hub README (`docs/README.md`) with a new navigation entry

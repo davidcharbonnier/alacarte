@@ -20,7 +20,7 @@ Previously, adding a new item type required coordinated changes across three cod
 ### The New Way (Current)
 
 With the dynamic schema system, adding a new item type is done entirely through the **admin panel UI**:
-- **Admin Panel:** Create schema, define fields, set validation (~5-10 min)
+- **Admin Panel:** Create the schema and fields in the UI; set validation, select options and display hints through the schema API (~5-10 min)
 - **Backend:** Automatic - no code changes
 - **Frontend:** Automatic - no code changes
 - **Total:** ~5-10 minutes
@@ -43,7 +43,7 @@ Before opening the admin panel, plan:
 
 1. **What fields does this item type need?**
    - Name (always required, stored as first-class column)
-   - Description (optional, stored as first-class column)
+   - Description, if wanted (add it as a normal `textarea` schema field; `Item` only has name, image and field values)
    - Custom fields (e.g., ABV, Style, Origin, Organic)
 
 2. **What field type for each?**
@@ -69,16 +69,18 @@ Before opening the admin panel, plan:
 
 ### Step 2: Create the Schema in Admin Panel
 
-1. Log in to the admin panel at `/admin`
-2. Navigate to **Schema Management** → **New Schema**
-3. Fill in schema settings:
+1. Log in to the admin SPA (served at the host root)
+2. Navigate to **Schemas** and click **Create schema**
+3. Fill in the create dialog (this creates an empty, active schema):
    - **Name:** `craft-beer` (kebab-case, permanent)
    - **Display Name:** `Craft Beer`
    - **Plural Name:** `Craft Beers`
-   - **Icon:** `Beer` (or any Material icon name)
+   - **Icon:** pick from the icon picker (the beer entry is stored as `SportsBar`); the client falls back to a generic icon for names missing from its own icon map
    - **Color:** `#FFA726` (choose a distinct color)
 
-4. Add fields:
+4. Open the new schema, go to the **Fields** tab, add the fields and click **Save fields**:
+   The UI only edits key, label, type, group and required. The Validation and Display columns below (and select `options`) are set in the next step.
+
    | Key | Label | Type | Required | Validation | Display |
    |-----|-------|------|----------|------------|---------|
    | `name` | Name | text | ✅ | min:1, max:100 | - |
@@ -89,8 +91,9 @@ Before opening the admin panel, plan:
    | `organic` | Organic | checkbox | ❌ | - | - |
    | `description` | Description | textarea | ❌ | max:500 | - |
 
-5. Set unique fields: `name` + `brewery`
-6. Click **Create Schema**
+5. In the **Settings** tab, set unique fields `name` + `brewery` and click **Save Settings**
+6. (Nothing more to save in the UI)
+7. Set validation, select options and display hints with `PUT /admin/schemas/:type` (field objects with `minLength`/`maxLength`, `min`/`max`, `options`, `badge`/`primary`/`secondary`; see [schema-management.md](/docs/admin/schema-management.md#step-4-validation-options-and-display-hints-api-level))
 
 ### Step 3: Verify in API
 
@@ -357,9 +360,9 @@ curl http://localhost:8080/api/items/cheese/1 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### Step 4: Clean Up (After Verification)
+### Step 4: Clean Up (historical — already done)
 
-Once verified, remove old code:
+The old per-type code was removed after verification. For reference, it consisted of:
 - Old models (`cheeseModel.go`, `ginModel.go`, etc.)
 - Old controllers (`cheeseController.go`, `ginController.go`, etc.)
 - Old routes from `main.go`

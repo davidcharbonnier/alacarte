@@ -25,7 +25,6 @@ SPA admin panel for the À la carte platform. Provides user management, item CRU
 - Generic components: shared UI for all item types (table, detail, delete impact, seed form)
 - Route pattern: `/items/:itemType`, `/schemas`, `/users`
 - Environment: `VITE_API_URL`, `VITE_GOOGLE_CLIENT_ID` (baked in at build time, not runtime)
-- CHANGELOG in `apps/admin/CHANGELOG.md`
 
 ## Work Guidance
 
@@ -33,13 +32,13 @@ SPA admin panel for the À la carte platform. Provides user management, item CRU
 - Adding a route: create `src/routes/_dashboard.<segment>.tsx` exporting `createFileRoute(...)`; create `src/pages/<name>.tsx` with props-only signature
 - API client: `src/lib/api/client.ts` (base), `src/lib/api/schema-api.ts`, `src/lib/api/users.ts`
 - Schema context: `src/lib/context/schema-context.tsx` provides schema data to components
-- Components: `src/components/shared/` — reusable generic components; `src/components/layout/` — sidebar, header, app shell
-- Theme tokens: `src/theme.ts` (MUI extendTheme) — no `lib/config/design-system.ts`
+- Components: `src/components/shared/` — reusable generic components; `src/components/layout/` — `app-layout.tsx`, `app-shell.tsx` (sidebar and header live in the shell)
+- Theme tokens: `src/theme.ts` (MUI createTheme) — no `lib/config/design-system.ts`
 - Auth: `src/lib/auth/auth-context.tsx` + `src/lib/auth/auth-guard.ts` (TanStack Router `beforeLoad`)
 
 ## Verification
 
-- `npm run build` — production build (verifies TypeScript + Vite)
+- `npm run build` — production build (Vite only; type errors are caught by `npm run typecheck`)
 - `npm run dev` — Vite dev server with HMR
 - `npm run preview` — serve the built `dist/` locally
 

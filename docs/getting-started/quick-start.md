@@ -24,7 +24,11 @@ cp apps/api/.env.example apps/api/.env
 # Edit apps/api/.env with your configuration:
 # - Database credentials
 # - JWT secret
-# - Google OAuth credentials
+# - GOOGLE_CLIENT_ID (Google OAuth)
+# - STORAGE_PUBLIC_ENDPOINT: set it to localhost:9000 (host only, no scheme); the example file's http://localhost:9000 would give image URLs like http://http://localhost:9000/...
+# - INITIAL_ADMIN_EMAIL (your Google account; without it the first admin login lands on /access-denied)
+# - ALLOWED_ORIGINS (the example value is a placeholder and replaces the localhost default;
+#   use e.g. http://localhost:3000 for the admin (plus any other browser origin that calls the API), or the browser blocks requests with a CORS error)
 ```
 
 ### Admin Configuration
@@ -44,6 +48,7 @@ cp apps/admin/.env.example apps/admin/.env
 # The client may not have a .env.example file, so create from scratch:
 # - API_BASE_URL=http://localhost:8080
 # - GOOGLE_CLIENT_ID=your_google_client_id
+# - APP_VERSION=1.0.0-dev   (required: the app throws when the Settings screen opens without it)
 ```
 
 ## 3. Start Backend Services
@@ -69,16 +74,15 @@ cd apps/client
 flutter pub get
 
 # Run the application
-# For web:
-flutter run -d chrome
+# Android (the only target where Google sign-in works today):
+flutter run -d android
 
-# For desktop (Linux):
+# UI work without sign-in:
+# flutter run -d chrome
 # flutter run -d linux
-
-# For mobile:
-# flutter run -d android
-# flutter run -d ios
 ```
+
+Google sign-in currently works only on Android (web and desktop sign-in are a known gap, see [authentication](/docs/client/authentication-system.md)); use an Android emulator or device for anything behind login. On an emulator set `API_BASE_URL=http://10.0.2.2:8080` in `apps/client/.env`. On a physical device use your computer's LAN IP, and see the cleartext note in [android-setup.md](/docs/client/setup/android-setup.md).
 
 ## 5. Verify Services
 

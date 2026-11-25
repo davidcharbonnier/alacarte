@@ -19,7 +19,7 @@
 - Counts computed client-side from current data and refresh immediately after any privacy action
 
 ### Discovery Settings
-- `SwitchListTile` bound to `user.discoverable`; changes PATCH `/user/me` immediately with success/error feedback
+- `SwitchListTile` bound to `user.discoverable`; changes PATCH `/api/user/me` immediately with success/error feedback
 
 ### Bulk Privacy Actions
 - **Make All Ratings Private** — multi-step confirmation dialog with impact preview, loading state, success message with affected count, automatic UI refresh
@@ -34,10 +34,10 @@
 
 ```dart
 // RatingService — batch bulk operations
-Future<Map<String, dynamic>> makeAllRatingsPrivate() =>
+Future<ApiResponse<Map<String, dynamic>>> makeAllRatingsPrivate() =>
     handleResponse<Map<String, dynamic>>(put(ApiConfig.ratingBulkPrivate), (json) => json as Map<String, dynamic>);
 
-Future<Map<String, dynamic>> removeUserFromAllShares(int userId) =>
+Future<ApiResponse<Map<String, dynamic>>> removeUserFromAllShares(int userId) =>
     handleResponse<Map<String, dynamic>>(put(ApiConfig.ratingBulkUnshare(userId)), (json) => json as Map<String, dynamic>);
 
 // RatingNotifier wraps each call with isLoading/error state and UI refresh
@@ -57,7 +57,7 @@ if (confirmed == true && context.mounted) { /* loading + API call on original co
 ## Display Name Validation
 
 Inline validation in `lib/screens/auth/display_name_setup_screen.dart`:
-required, trimmed, 2–50 characters. Generation rule (First L.) shared with the backend — see canonical doc.
+required, trimmed, 2–50 characters. The `First L.` suggestion is client-side only; the backend defaults the initial display name to the Google full name — see canonical doc.
 
 ## Sharing Dialog
 

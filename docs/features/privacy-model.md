@@ -24,7 +24,7 @@ The À la carte platform implements a **privacy-first architecture** where user 
 ### 3. Selective Discovery
 - Users control visibility in **sharing dialogs**
 - Discoverable toggle hides user from sharing lists
-- Real identity protected via display names
+- Users are shown by display name (see the known gap below: the API still returns email and Google id)
 
 ### 4. Anonymous Community Data
 - Aggregate statistics (average ratings, totals)
@@ -45,7 +45,7 @@ Every rating exists in exactly one tier:
 
 Equivalent access-control layers: Personal → Shared → Community → Blocked (no access to private/unshared ratings).
 
-Display names are generated from the full name as `First L.` (first name + upper-cased last initial) and are user-customizable, unique, and validated by each app (client: 2–50 characters).
+The backend sets a new user's initial display name to their Google full name; users can change it (unique, validated by each app; client: 2–50 characters). The client's setup screen suggests a `First L.` form (first name + upper-cased last initial).
 
 ---
 
@@ -73,20 +73,19 @@ ratings (
 
 -- Explicit sharing permissions
 rating_viewers (
-    rating_id, user_id,  -- Many-to-many
-    created_at
+    rating_id, user_id   -- Many-to-many join table
 )
 ```
 
 ### Privacy Cascade Rules
 
 **When a user is deleted:**
-- ✅ All their ratings are deleted
-- ✅ Shared ratings no longer visible to others (cascade through rating deletion)
+- Deletion is a **soft delete** (`gorm.Model` sets `deleted_at`); the database `ON DELETE CASCADE` does not run
+- `DELETE /api/user/me` soft-deletes only the user row; their ratings and shares remain in the database (and still count in community stats)
+- The admin path `DELETE /admin/user/:id` differs: it removes the user's `rating_viewers` rows and soft-deletes their ratings (see the known gap in [endpoints.md](/docs/api/endpoints.md))
 
 **When an item is deleted:**
-- ✅ All ratings for that item are deleted
-- ✅ All sharing relationships for those ratings are removed
+- Soft delete as well; ratings and shares for that item are not physically removed
 
 **When a rating is made private:**
 - ✅ All viewer permissions are removed
@@ -110,7 +109,6 @@ The detailed backend privacy implementation—including rating visibility logic,
 **Item Type Filtering:**
 - Filter ratings by item type (cheese, gin, etc.)
 - Auto-populates filter chips
-- Persists filter selection
 
 **Individual Rating Management:**
 - Manage sharing for each rating
@@ -119,7 +117,7 @@ The detailed backend privacy implementation—including rating visibility logic,
 
 **Bulk Privacy Actions:**
 - "Make All Ratings Private" - Remove all shares
-- "Remove Me From All Shares" - Stop seeing others' ratings
+- "Remove Person from All Shares" - Remove one chosen person from all your shares
 - Confirmation dialogs with impact preview
 
 ### Sharing Dialog
@@ -161,11 +159,7 @@ if (shareWith.isEmpty && unshareFrom.isNotEmpty) {
 
 ### Privacy Analytics
 
-**Sharing Statistics:**
-- Total ratings shared
-- Number of users with access
-- Sharing relationships count
-- Available via user profile
+The only statistics are two client-side counts on the privacy settings screen: shared ratings and unique recipients.
 
 **See:** [Client Privacy Implementation](/docs/client/privacy-model.md) for frontend details
 
@@ -179,14 +173,13 @@ if (shareWith.isEmpty && unshareFrom.isNotEmpty) {
 ✅ **Their display name** - Customizable identity  
 ✅ **Discoverable status** - Visibility in sharing dialogs  
 ✅ **Bulk privacy actions** - Make all ratings private  
-✅ **Account deletion** - Complete data removal  
+⚠️ **Account deletion** - Soft delete of the user row only (see cascade rules)  
 
 ### What Users Cannot See
 
 ❌ **Other users' private ratings** - Unless explicitly shared  
 ❌ **Individual rating authors in community stats** - Only aggregates  
-❌ **Real identities** - Only display names visible  
-❌ **Email addresses** - Not exposed in UI (admin only)  
+⚠️ **Real identities and emails** - The UI shows only display names, but `GET /api/users/shareable` also returns `email`, `google_id` and `full_name` for discoverable users (known gap: the API does not strip them)  
 
 ### What Admins Can See
 
@@ -218,21 +211,11 @@ Admins have additional access for platform management:
 3. Existing shares → Continue to work ✅
 
 ### Scenario 4: Account Deletion
-1. User deletes account ✅
-2. All their ratings → Deleted ✅
-3. Shared ratings → No longer visible to others ✅
-4. Community stats → Recalculated without their data ✅
-
----
-
-## 📊 Privacy Metrics
-
-### Platform Privacy Metrics (Admin)
-
-- Average ratings per user
-- Average shares per user
-- Discoverable vs non-discoverable users
-- Community participation rate
+1. User deletes account (`DELETE /api/user/me`) → user row soft-deleted
+2. Their ratings and shares stay in the database
+3. Shared ratings remain visible to the people they were shared with
+4. Community stats keep counting their ratings
+5. Known risk (read from code, not run): the soft-deleted row keeps its unique `google_id`/`email`, so signing in again with the same Google account may fail at user creation
 
 ---
 

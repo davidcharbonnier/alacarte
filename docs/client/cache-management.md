@@ -15,8 +15,8 @@
 
 The Flutter client has **no dedicated data cache layer**. Freshness is managed by three independent mechanisms:
 
-1. **Riverpod state** — item lists held in memory per type (`DynamicItemProvider`); "cache" means "already loaded, skip refetch"
-2. **Service-level in-memory caches** — schema cache and community stats cache, each with a 5-minute TTL
+1. **Riverpod state** — item lists held in memory per type (`DynamicItemNotifier` behind `dynamicItemProvider`); "cache" means "already loaded, skip refetch"
+2. **Service-level in-memory caches** — schema, community stats and ratings caches, each with a 5-minute TTL
 3. **Image disk cache** — `cached_network_image` (^3.4.1), with explicit eviction on image replacement/deletion
 
 On the API side, schema responses carry an `ETag` and `Cache-Control: public, max-age=300`.
@@ -73,7 +73,7 @@ Behavior:
 
 **Location**: `apps/client/lib/services/api_service.dart` (`_communityStatsCache`)
 
-Per-item community stats (`/api/items/{type}/{id}/stats`) cached for 5 minutes, keyed by item. Cleared wholesale via `clearCommunityStatsCache()` on pull-to-refresh, or per-provider via `ref.invalidate(communityStatsProvider)`.
+Per-item community stats (`/api/stats/community/:id`) cached for 5 minutes, keyed by item. Cleared wholesale via `clearCommunityStatsCache()` on pull-to-refresh, or per-provider via `ref.invalidate(communityStatsProvider)`.
 
 ### 4. Ratings Cache — In-Memory, 5-Minute TTL
 
@@ -177,9 +177,9 @@ Images are only evicted explicitly — `cached_network_image` never invalidates 
 
 ## Offline Behavior
 
-The client has **no offline data cache for items** — offline, previously loaded Riverpod state may still render, but nothing is persisted or revalidated. What does happen offline:
+The client has **no offline data cache for items** — nothing is persisted or revalidated offline. When connectivity state is not `online`, `main.dart` replaces the whole app with `FullscreenOfflineScreen`. What does happen:
 
-- Requests fail gracefully into per-type error state (`errorsByType`); screens show error UI with retry
+- Per-type error state (`errorsByType`) with retry only appears for requests that fail before the connectivity state flips
 - When connectivity is restored, the auth provider revalidates the session via `/api/user/me` and data loads resume normally — no manual refresh needed
 
 Details, including the connectivity provider and revalidation flow: [Offline Handling](/docs/features/offline-handling.md). That doc also sketches a future `OfflineCache` class (persisting ratings/items); it is not implemented — today's only persistent cache is images.

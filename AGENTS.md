@@ -4,22 +4,22 @@
 
 Monorepo: `apps/api` (Go), `apps/client` (Flutter), `apps/admin` (Vite + React SPA), `docs/`.
 
-Infrastructure: Google Cloud Run + Cloud SQL, Docker, GitHub Actions CI/CD.
+Infrastructure: Google Cloud Run + Neon Postgres, Docker, GitHub Actions CI/CD.
 
 ## Global Rules
 
 ### Commit Convention (mandatory)
 
-Format: `<type>(<scope>): <subject>` — enforced by commitlint + husky hooks.
+Format: `<type>(<scope>): <subject>` — rules in `commitlint.config.js`, checked by `.husky/commit-msg` (opt-in: not auto-installed, not run in CI).
 
-- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
 - Scopes (required): `api`, `client`, `admin`, `deps`, `ci`, `docs`, `release`
 - `feat` → minor bump, `fix` → patch bump, `BREAKING CHANGE:` footer → major bump
 - Branch naming: `feat/`, `fix/`, `refactor/`, `docs/`, `chore/`
 
 ### Versioning
 
-Automated via versio + semantic-release. Each app versioned independently: `api-v*`, `client-v*`, `admin-v*`. CHANGELOG.md per app. PR snapshots: `{version}-pr-{number}.{sha}`.
+Driven by semantic-release for api and client (automation has known CI caveats: see `docs/operations/ci-cd-setup.md`) (`api-v*`, `client-v*`); admin tags (`admin-v*`) are pushed manually. CHANGELOG.md for api and client. PR snapshots: `pr-{number}.{increment}`.
 
 ### Documentation
 

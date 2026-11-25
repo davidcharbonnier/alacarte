@@ -12,7 +12,7 @@
 - **Dynamic Content**: Parameterized translations for counts, names, and contextual messages
 
 ### 🇫🇷 French-First Experience
-- **Primary Language**: French (default on first launch)
+- **Primary Language**: French and English; the default setting is `auto` (device locale)
 - **Professional French**: Natural phrasing for food/rating domain
 - **Contextual Grammar**: Proper French pluralization and agreement
 - **Domain-Specific Terms**: Cheese terminology, rating vocabulary
@@ -21,7 +21,7 @@
 
 ### 1. Install Dependencies
 ```bash
-cd /home/david/perso/client
+cd apps/client
 flutter pub get
 ```
 
@@ -53,8 +53,7 @@ lib/
 │   └── locale_provider.dart    # Language selection state
 └── utils/
     ├── localization_utils.dart  # Helper utilities & extensions
-    ├── localized_validators.dart # Context-aware form validation
-    └── appbar_helper.dart       # Language switcher integration
+    └── appbar_helper.dart       # Standard app-bar actions (user menu)
 
 l10n.yaml                       # Localization configuration
 ```
@@ -76,13 +75,6 @@ if (context.isFrench) { /* French-specific logic */ }
 ItemTypeLocalizer.getLocalizedItemType(context, 'cheese') // "Fromage"
 ItemTypeLocalizer.getAllItemsText(context, 'cheese')      // "Tous les Fromages"
 ItemTypeLocalizer.getAddItemText(context, 'cheese')       // "Ajouter Fromage"
-```
-
-#### **3. LocalizedValidators (localized_validators.dart)**
-```dart
-// Context-aware form validation
-validator: LocalizedValidators.createUserNameValidator(context)
-// Returns: "Le nom est requis" (French) or "Name is required" (English)
 ```
 
 ### Language Switching
@@ -122,18 +114,6 @@ context.l10n.profileNotFoundOnServer      // "Votre profil n'a pas été trouvé
 - **Server validation errors**: Natural French phrasing
 - **Progressive loading**: Contextual patience messaging
 - **All errors actionable**: Clear instructions for user resolution
-
-#### **Error Banner Integration**
-```dart
-// ErrorNotificationBanner with automatic localization
-ErrorNotificationBanner(
-  errorKey: userState.initializationError,  // Auto-localizes based on key
-)
-
-// French results:
-// "Données du profil corrompues. Veuillez sélectionner votre profil à nouveau."
-// "Votre profil n'a pas été trouvé. Veuillez sélectionner un profil valide."
-```
 
 ## Translation Implementation Patterns
 
@@ -181,38 +161,6 @@ Text('Profile data is corrupted')
 // After
 Text(context.l10n.profileDataCorrupted)
 
-// In ErrorNotificationBanner
-String getErrorMessage(String? errorKey) {
-  switch (errorKey) {
-    case 'profileDataCorrupted':
-      return context.l10n.profileDataCorrupted;
-    case 'profileNotFoundOnServer':
-      return context.l10n.profileNotFoundOnServer;
-    default:
-      return errorKey ?? 'Unknown error';
-  }
-}
-```
-
-### **Complex Widget Localization**
-```dart
-// For models with context-dependent fields
-class CheeseItem {
-  // Generic version (English fallback)
-  List<DetailField> get detailFields => [/* English labels */];
-  
-  // Localized version
-  List<DetailField> getLocalizedDetailFields(BuildContext context) => [
-    DetailField(label: context.l10n.originLabel, value: origin),
-    DetailField(label: context.l10n.producerLabel, value: producer),
-  ];
-}
-
-// Usage in widgets
-...(item is CheeseItem 
-  ? (item as CheeseItem).getLocalizedDetailFields(context)
-  : item.detailFields
-).map((field) => _buildDetailRow(context, field))
 ```
 
 ## French Translation Quality
@@ -245,10 +193,8 @@ class MyScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.screenTitle),
-        actions: AppBarHelper.buildStandardActions(context, ref),
       ),
       body: Column([
-        OfflineBanner(contextMessage: context.l10n.offlineMessage),
         Text(context.l10n.bodyText),
         ElevatedButton(
           onPressed: () => doAction(),
@@ -267,7 +213,7 @@ TextFormField(
     labelText: context.l10n.name,
     hintText: context.l10n.nameHint,
   ),
-  validator: LocalizedValidators.createUserNameValidator(context),
+  validator: (v) => (v == null || v.trim().isEmpty) ? context.l10n.nameRequired : null, // illustrative
 )
 ```
 
@@ -276,7 +222,6 @@ TextFormField(
 // Item type specific content
 Text(ItemTypeLocalizer.getAddItemText(context, 'cheese'))  // "Ajouter Fromage"
 Text(context.l10n.itemsAvailable(count))                   // "42 articles disponibles"
-Text(context.l10n.currentlyUsing(userName))               // "Actuellement utilisé : David"
 ```
 
 ## Adding New Translations
@@ -350,26 +295,20 @@ Text(context.l10n.deleteConfirmation(item.name))
 #### **Screens**
 - **HomeScreen**: Welcome messages, preference lists, item type cards
 - **AppInitializationScreen**: Loading messages, extended loading indicators
-- **AuthScreen / DisplayNameSetupScreen**: Profile selection, display-name setup, initialization error banners
-- **UserFormScreen**: Form labels, validation, help text
+- **AuthScreen / DisplayNameSetupScreen**: Sign-in and display-name setup
 - **UserSettingsScreen**: Management options, confirmations, warnings
 - **ItemTypeScreen**: Tabs, empty states, item cards, rating indicators
 - **ItemDetailScreen**: Headers, rating sections, action buttons
 - **LoadingScreen**: App title, loading messages, offline banners
 
 #### **Widgets**
-- **ConnectivityIndicators**: Status tooltips, offline banners, initialization error banners
-- **ErrorNotificationBanner**: Localized startup error messages with contextual placement
-- **EmptyUserState**: Empty state titles and instructions
 - **ItemDetailHeader**: Field labels (Origin, Producer, Description)
 - **MyRatingSection**: Rating display, notes, edit buttons
 - **RatingSummaryCard**: Community statistics, pluralized counts
 - **SharedRatingsList**: Shared ratings display, empty states
-- **UserProfileCard**: Profile info, action tooltips
-- **AppBarHelper**: Language switcher, standard actions
 
 #### **Utilities**
-- **Validators**: All form validation messages
+- **Form validation**: messages come from `context.l10n.*` keys
 - **Error States**: Loading, network, app initialization, and data errors
 - **Navigation**: Tooltips and accessibility labels
 
@@ -454,8 +393,7 @@ lib/
 │   └── locale_provider.dart    # Language selection state management
 ├── utils/
 │   ├── localization_utils.dart # Extensions and item type helpers
-│   ├── localized_validators.dart # Context-aware form validation
-│   └── appbar_helper.dart      # Standard actions with language switcher
+│   └── appbar_helper.dart      # Standard app-bar actions (user menu)
 └── models/
 
 l10n.yaml                       # Localization configuration
@@ -470,35 +408,12 @@ class ExampleScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      // 1. Localized app bar with standard actions
-      appBar: AppBar(
-        title: Text(context.l10n.screenTitle),
-        actions: AppBarHelper.buildStandardActions(
-          context, 
-          ref,
-          showSettings: true,
-          onSettingsPressed: () => navigateToSettings(),
-        ),
-      ),
-      body: Column([
-        // 2. Contextual offline message
-        OfflineBanner(
-          contextMessage: context.l10n.offlineContextMessage,
-        ),
-        
-        // 3. NEW: Initialization error banner
-        ErrorNotificationBanner(
-          errorKey: userState.initializationError,
-        ),
-        
-        // 4. Localized content with parameters
+      appBar: AppBar(title: Text(context.l10n.screenTitle)),
+      body: Column(children: [
         Text(context.l10n.itemsAvailable(itemCount)),
-        Text(context.l10n.welcomeUser(userName)),
-        
-        // 5. Localized buttons
         ElevatedButton(
           onPressed: () => createItem(),
-          child: Text(context.l10n.createButton),
+          child: Text(context.l10n.save),
         ),
       ]),
     );
@@ -526,7 +441,7 @@ TextFormField(
     labelText: context.l10n.name,
     hintText: context.l10n.nameHint,  // "Entrez votre nom"
   ),
-  validator: LocalizedValidators.createUserNameValidator(context),
+  validator: (v) => (v == null || v.trim().isEmpty) ? context.l10n.nameRequired : null, // illustrative
   // Validation errors automatically in French:
   // "Le nom est requis"
   // "Le nom doit contenir au moins 2 caractères"
@@ -544,7 +459,7 @@ TextFormField(
 
 ### Overview
 
-To properly support French language with accented characters, the app implements locale-aware string comparison for all alphabetical sorting operations.
+To properly support French language with accented characters, the client sorts filter option lists with accent-insensitive comparison. Item lists themselves are sorted by the server (`ORDER BY name ASC`), not by this helper.
 
 ### Problem with Standard Sorting
 
@@ -603,41 +518,9 @@ static int _compareLocaleAware(String a, String b) {
 
 ### Implementation Locations
 
-Locale-aware sorting is implemented in three key places:
+Locale-aware sorting is implemented in one place:
 
-**1. Item Provider** (`lib/providers/dynamic_item_provider.dart`):
-```dart
-import 'package:diacritic/diacritic.dart';
-
-// Main item list sorting
-List<T> get filteredItems {
-  // ... filtering logic ...
-  
-  filtered.sort((a, b) => ItemState._compareLocaleAware(a.name, b.name));
-  
-  return filtered;
-}
-
-// Helper method
-static int _compareLocaleAware(String a, String b) {
-  return removeDiacritics(a).toLowerCase().compareTo(
-    removeDiacritics(b).toLowerCase()
-  );
-}
-
-// Filter options sorting
-void _refreshFilterOptions() {
-  final filterOptions = allCategories.map(
-    (key, valueSet) {
-      final sortedList = valueSet.toList();
-      sortedList.sort((a, b) => ItemState._compareLocaleAware(a, b));
-      return MapEntry(key, sortedList);
-    },
-  );
-}
-```
-
-**2. Item Filter Helper** (`lib/utils/item_filter_helper.dart`):
+**Item Filter Helper** (`lib/utils/item_filter_helper.dart`, the only place `removeDiacritics` is used):
 ```dart
 import 'package:diacritic/diacritic.dart';
 
@@ -660,11 +543,7 @@ static int _compareLocaleAware(String a, String b) {
 
 ### Scope of Application
 
-Locale-aware sorting applies to:
-- ✅ **All item lists** (cheese, gin, wine, coffee)
-- ✅ **Search results**
-- ✅ **Filter dropdown options**
-- ✅ **All user-facing alphabetically sorted content**
+Locale-aware sorting applies to the **filter option lists** only (via `ItemFilterHelper`). Item lists and search results are ordered by the API.
 
 ### Performance Characteristics
 
@@ -692,7 +571,7 @@ final testItems = [
   CoffeeItem(name: 'Café Latte'),      // Should sort with 'C'
 ];
 
-// After sorting with Collator:
+// After sorting with removeDiacritics:
 // À la carte
 // Americano
 // Brewmance
@@ -703,8 +582,7 @@ final testItems = [
 **What to Verify:**
 1. Items with accented characters appear in correct alphabetical position
 2. Filter dropdowns show options in proper French alphabetical order
-3. Search results maintain correct ordering
-4. Both uppercase and lowercase accented characters sort correctly
+3. Both uppercase and lowercase accented characters sort correctly
 
 ### Adding Locale-Aware Sorting to New Code
 
@@ -745,10 +623,10 @@ list.sort((a, b) => _compareLocaleAware(a.name, b.name));
 
 **Currently Supported:**
 - **French**: Primary language with full accent support
-- **English**: Works correctly (no accents, but still uses Collator for consistency)
+- **English**: Works correctly (no accents, same helper)
 
 **Future Languages:**
-The `Collator` approach automatically supports:
+The `diacritic` package maps common Latin accents (not locale-specific rules such as German ß):
 - **Spanish**: ñ, á, é, í, ó, ú
 - **German**: ä, ö, ü, ß
 - **Portuguese**: ã, õ, ç
@@ -772,7 +650,6 @@ The `Collator` approach automatically supports:
 - **Context availability**: Ensure BuildContext accessible where needed
 - **Const limitations**: Avoid `const` with `context.l10n.*`
 - **Helper methods**: Use ItemTypeLocalizer for consistent item type handling
-- **Validation**: Use LocalizedValidators for context-aware form validation
 
 ## Maintenance
 
@@ -798,10 +675,6 @@ The `Collator` approach automatically supports:
 
 ## Translation Statistics
 
-**Total Translation Keys**: ~450+ keys covering the entire application including initialization
-**Languages Supported**: French (primary), English (fallback)
-**Coverage**: 100% of user-facing text including error states and loading messages
-**New in v1.1**: Async initialization error messages and extended loading indicators
-**Implementation Time**: Fully implemented and tested
+**Languages Supported**: French and English (`lib/l10n/app_fr.arb`, `lib/l10n/app_en.arb`)
 
 **Built with French users in mind** 🇫🇷

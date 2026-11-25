@@ -31,12 +31,12 @@ VITE_GOOGLE_CLIENT_ID=<your-google-client-id>
 
 ## Google OAuth Setup
 
-### Add Authorized Redirect URIs
+### Add Authorized JavaScript Origins
 
 In Google Cloud Console → APIs & Services → Credentials:
 
 **Production:**
-- Authorized JavaScript origins: `https://alacarte-admin-xxx.northamerica-northeast1.run.app`
+- Authorized JavaScript origins: `https://admin.example.com`
 
 **Important:** Must use the exact deployed domain (your static-host URL). No server-side redirect URI is needed — the SPA uses Google Identity Services (`@react-oauth/google`) and sends the `id_token` to the backend, which verifies it and issues its own JWT (stored in `sessionStorage`).
 
@@ -46,18 +46,19 @@ In Google Cloud Console → APIs & Services → Credentials:
 
 ### Method 1: GitHub Actions (Recommended)
 
-The CI/CD pipeline automatically builds and publishes Docker images:
+The CI/CD pipeline builds a static `dist/` artifact (no Docker image):
 
 **For production releases:**
 ```bash
 # Create feature branch
 git checkout -b feat/admin-enhancements
-git commit -m "feat: add user management"
+git commit -m "feat(admin): add user management"
 git push
 
 # Create PR → CI builds the dist/ artifact with VITE_* vars from GitHub vars
 # (ADMIN_VITE_API_URL, ADMIN_VITE_GOOGLE_CLIENT_ID)
-# Merge to master → release workflow produces a dist/ artifact per version tag
+# Push an admin-vX.Y.Z tag → release workflow builds admin-dist-X.Y.Z
+# (admin has no semantic-release job; tags are pushed manually)
 ```
 
 **Artifacts created:**
@@ -76,10 +77,11 @@ npm ci --ignore-scripts
 npm run build
 
 # Upload dist/ to any static host (Netlify, Cloudflare Pages, Firebase Hosting, …)
+# The router uses browser history: rewrite all paths to /index.html on the host,
+# or refreshing /users/3 or /schemas/wine returns 404.
 ```
 
 No runtime env vars exist for the admin SPA — changing `VITE_*` requires a rebuild.
-```
 
 ---
 
@@ -99,8 +101,8 @@ No runtime env vars exist for the admin SPA — changing `VITE_*` requires a reb
 - Clear message explaining admin privileges required
 
 **Test with backend stopped:**
-- Should see "Service Unavailable" error
-- Message explaining connection issue
+- The login page alert shows the raw axios message (e.g. "Network Error")
+- No redirect happens: the SPA redirects to `/login` only on an HTTP 401
 
 ### Set Initial Admin
 
@@ -124,12 +126,10 @@ This user can login immediately and promote other users to admin via the UI.
 - ✅ Admin verification at login
 - ✅ Backend JWT validation on all API calls
 - ✅ JWT held in `sessionStorage` (cleared when the tab closes)
-- ✅ No tech stack info disclosed
-- ✅ X-Powered-By header disabled
 
 ### Secrets Management
 
-The admin SPA needs no secrets — both env vars are public build-time values (backend keeps `GOOGLE_CLIENT_SECRET` in Secret Manager; see the API deployment guide).
+The admin SPA needs no secrets — both env vars are public build-time values (the backend needs no Google secret either; see the API deployment guide).
 
 **Never commit to git:**
 - `.env.local`
@@ -149,18 +149,18 @@ The admin SPA needs no secrets — both env vars are public build-time values (b
 
 ### Backend Connection Failed
 
-**Symptom:** Service Unavailable error  
+**Symptom:** "Network Error" alert on the login page  
 **Solution:**
-1. Verify `API_URL` is correct
+1. Verify `VITE_API_URL` is correct (rebuild after changing)
 2. Check backend is deployed and running
-3. Verify the API service allows traffic from the admin origin
+3. Verify the API's `ALLOWED_ORIGINS` includes the admin's static-host origin (a CORS block shows as "Network Error" on the login page)
 
 ### OAuth Redirect Mismatch
 
 **Symptom:** Google OAuth error after clicking sign in  
 **Solution:**
 1. Add the exact deployed admin URL to Google OAuth authorized JavaScript origins
-2. Verify `GOOGLE_CLIENT_ID` matches the OAuth client used by the client app
+2. Verify `VITE_GOOGLE_CLIENT_ID` matches the OAuth client used by the client app
 
 ---
 
@@ -168,11 +168,11 @@ The admin SPA needs no secrets — both env vars are public build-time values (b
 
 ### Check Logs
 
-The admin SPA is a static bundle — no server logs exist for it. Debug via the browser console (see Key Log Patterns below) and the API's Cloud Run logs for backend-side auth events.
+The admin SPA is a static bundle — no server logs exist for it. Debug via the browser's Network tab (see Key Log Patterns below) and the API's Cloud Run logs for backend-side auth events.
 
 ### Key Log Patterns
 
-The admin SPA is a static bundle — it produces no server logs. Watch browser console output:
+The admin SPA is a static bundle — it produces no server logs and the code writes nothing to the console. Watch requests in the browser's Network tab:
 
 **Successful login:**
 ```
@@ -187,7 +187,7 @@ GET /api/auth/check-admin → 200 {"is_admin": false}
 
 **Backend unreachable:**
 ```
-Axios network error → redirect to /login
+Request fails with no HTTP response → login page alert shows "Network Error" (no redirect; /login redirects happen only on a 401)
 ```
 
 Backend-side auth logs are in the API service's Cloud Run logs.

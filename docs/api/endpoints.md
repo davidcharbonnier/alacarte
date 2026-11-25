@@ -149,7 +149,7 @@ image=@file.jpg
 ```json
 {
   "message": "Image uploaded successfully",
-  "image_url": "http://localhost:9000/alacarte-images/items/wine_1.jpg"
+  "image_url": "http://localhost:9000/alacarte-images/wine_550e8400-e29b-41d4-a716-446655440000.jpg"
 }
 ```
 
@@ -158,11 +158,6 @@ image=@file.jpg
 ```http
 DELETE /api/items/:type/:id/image
 Authorization: Bearer JWT_TOKEN
-```
-
-**Legacy (deprecated):**
-```http
-DELETE /api/:itemType/:id/image
 ```
 
 **Response:**
@@ -441,7 +436,7 @@ GET /api/items/:type?page=1&per_page=20&sort=name&search=query&filter[field_key]
     {
       "id": 1,
       "name": "Cheddar",
-      "image_url": "http://localhost:9000/alacarte-images/cheese_1.jpg",
+      "image_url": "http://localhost:9000/alacarte-images/cheese_550e8400-e29b-41d4-a716-446655440000.jpg",
       "field_values": {
         "origin": "Quebec",
         "milk_type": "Cow",
@@ -536,7 +531,7 @@ Authorization: Bearer JWT_TOKEN
 
 **Notes:**
 - Only the item owner can delete (admins can override)
-- Cascading delete: removes item, ratings, and shares
+- Soft delete: the item row and its field values are soft-deleted; its ratings and shares are not removed
 
 ### Upload Image
 
@@ -559,7 +554,7 @@ Authorization: Bearer JWT_TOKEN
 
 ## 🔧 Admin Schema Endpoints
 
-All admin endpoints require `is_admin = true`.
+All admin endpoints require admin status per `IsUserAdmin`: the `is_admin` flag **or** an email matching `INITIAL_ADMIN_EMAIL`.
 
 ### Create Schema
 
@@ -653,7 +648,7 @@ Content-Type: application/json
 
 **Notes:**
 - Updates create a new schema version automatically
-- Old items keep their creation version for data integrity
+- Items are always validated against the latest active schema; their creation version is stored for reference only
 - Setting `is_active: false` hides the type from clients
 
 ### Delete Schema
@@ -709,7 +704,7 @@ Content-Type: application/json
 }
 ```
 
-Bulk import from JSON URL. Uses `unique_fields` for deduplication.
+Bulk import from a JSON `url`, or inline JSON in `data` (`data` wins if both are sent). Uses `unique_fields` for deduplication.
 
 ### Validate Seed Data
 
@@ -727,7 +722,7 @@ Validates JSON without importing. Checks validation rules and unique field prese
 
 ---
 
-All admin endpoints require `is_admin = true` in the user's profile. There is no admin item delete route — admins delete via `DELETE /api/items/:type/:id` (owner-or-admin bypass).
+All admin endpoints require admin status per `IsUserAdmin` (the `is_admin` flag or `INITIAL_ADMIN_EMAIL`). There is no admin item delete route — admins delete via `DELETE /api/items/:type/:id` (owner-or-admin bypass).
 
 ### User Management
 
@@ -759,7 +754,7 @@ DELETE /admin/user/:id
 Authorization: Bearer ADMIN_JWT
 ```
 
-Cascading delete (removes user, ratings, and shares).
+Intended as a cascading delete (removes the user's viewer rows, ratings and the user). **Known gap:** the handler also runs `DELETE FROM sharing_relationships`, a table that no model creates; on Postgres that statement fails and aborts the transaction, so the delete is expected to return 500 (read from code, not run). Self-delete (`DELETE /api/user/me`) only soft-deletes the user row.
 
 #### Promote User to Admin
 
@@ -852,17 +847,13 @@ All item types are now dynamically defined by schemas. The API automatically sup
 
 **Validation:** Server-side validation enforces schema rules (required, length, range, pattern, enum values). Validation errors return `400` with field-level details.
 
-### Legacy Endpoints (Deprecated)
-
-The old per-type endpoints (`/api/cheese/*`, `/api/gin/*`, etc.) are deprecated and will return `410 Gone` in a future release. Migrate to `/api/items/:type/*` endpoints.
-
 ### Image Endpoints
 
 Image upload/delete endpoints work for all item types via dynamic endpoints:
 - `POST /api/items/:type/:id/image` - Upload
 - `DELETE /api/items/:type/:id/image` - Delete
 
-Any authenticated user can upload/delete images (collaborative platform).
+Only the item owner can upload/delete its image (others get 403).
 
 ### Privacy Model
 
@@ -875,7 +866,7 @@ See [Privacy Model](/docs/features/privacy-model.md) for details.
 
 ### Schema Versioning
 
-Each schema update creates a new immutable version. Items store their creation `schema_version_id` and are validated against that version. This ensures data integrity as schemas evolve.
+Each schema update creates a new immutable version. Items store their creation `schema_version_id` for reference, but create and update validation always uses the latest active schema.
 
 ---
 

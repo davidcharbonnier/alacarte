@@ -10,6 +10,8 @@ This README provides **quick start instructions and common tasks** for the API. 
 
 ```bash
 cd apps/api
+cp .env.example .env   # then set DATABASE_URL and STORAGE_ENDPOINT hosts to localhost
+(cd ../.. && docker-compose up -d postgres minio create-bucket)   # compose file is at the repo root
 go mod download
 go run main.go
 ```
@@ -28,7 +30,7 @@ go run main.go
 ## Common Tasks
 
 ### Adding a New Item Type
-See [Adding New Item Types - Backend Section](/docs/guides/adding-new-item-types.md#phase-1-backend-implementation-65-min)
+See [Adding New Item Types - Backend Section](/docs/guides/adding-new-item-types.md#step-1-plan-your-schema)
 
 
 ### Running Migrations
@@ -42,19 +44,14 @@ go run main.go
 RUN_SEEDING=true go run main.go
 ```
 
-### Resetting Database (Development)
-```bash
-go run scripts/reset_database.go
-```
-
 ### Testing Endpoints
 ```bash
 # Health check
-curl http://localhost:8080/api/health
+curl http://localhost:8080/health
 
 # Get items (requires auth)
 curl -H "Authorization: Bearer YOUR_JWT" \
-  http://localhost:8080/api/cheese/all
+  http://localhost:8080/api/items/<type>
 ```
 
 ## 📚 Documentation Structure
@@ -76,7 +73,7 @@ For features that span multiple applications:
 
 ## Technology Stack
 
-- **Language:** Go 1.21+
+- **Language:** Go 1.25+
 - **Framework:** Gin (HTTP web framework)
 - **Database:** Postgres 16+ with GORM ORM
 - **Authentication:** Google OAuth 2.0 + JWT
@@ -88,8 +85,9 @@ For features that span multiple applications:
 apps/api/
 ├── controllers/     # HTTP request handlers
 ├── models/          # Database entities (GORM)
-├── middleware/      # Authentication, CORS, etc.
-├── utils/           # Database, JWT, helpers
+├── services/        # Business logic (schema registry, validation)
+├── internal/        # Internal packages (cleanup migration)
+├── utils/           # Database, JWT, auth middleware, helpers
 ├── scripts/         # Development utilities
 ├── main.go          # Application entry point
 └── .env             # Environment configuration

@@ -28,7 +28,8 @@ All three apps share this flow. Only the Google-side sign-in UI and token storag
 - **Google OAuth 2.0** - User authentication via Google accounts
 - **JWT Tokens** - Stateless API authentication, signed by the backend
 - **Profile Setup** - Display name and privacy configuration after first sign-in
-- **Cross-Platform** - Web, mobile, desktop support
+- **Cross-Platform** - Android signs in; desktop has no `google_sign_in` implementation, and web sign-in is a known gap
+  - Known gap (read from code, not run): `auth_service.dart` calls `GoogleSignIn.instance.authenticate()`, which `google_sign_in_web` 1.1.0 does not support, and the client has no `renderButton`; so only Android can sign in today and web is expected to fail with an `UnimplementedError`.
 
 ---
 
@@ -44,7 +45,7 @@ All three apps share this flow. Only the Google-side sign-in UI and token storag
 
 | App | Storage | Session behavior |
 |-----|---------|------------------|
-| Flutter client | `flutter_secure_storage` (platform-encrypted) | Session survives app restarts until token expiry; token revalidated with `GET /api/user/me` on connectivity restore |
+| Flutter client | `flutter_secure_storage` (platform-encrypted) | Session survives app restarts until `GET /api/user/me` first fails with a 401 (real JWT expiry is not decoded client-side); token revalidated with `GET /api/user/me` on connectivity restore |
 | Admin SPA | `sessionStorage` (`jwt_token` key) | Session scoped to the browser tab; cleared on sign-out and on 401 |
 | Backend | — | Stateless; no server-side sessions |
 
@@ -74,7 +75,7 @@ Admin status is a backend concern, checked once per login via `GET /api/auth/che
 
 - **Token validation:** Backend validates the Google `id_token` with Google's API servers on every exchange — no trust in client claims.
 - **HTTPS Only:** Production tokens over HTTPS.
-- **Redirect URI / origin validation:** Whitelisted in Google Cloud Console.
+- **Origin validation:** authorized JavaScript origins are whitelisted in Google Cloud Console (no redirect URIs are used).
 - **Minimal error messages:** No technical details exposed to end users.
 - **Stateless validation:** Every API request re-checks the JWT signature and expiry.
 
@@ -84,7 +85,7 @@ Admin status is a backend concern, checked once per login via `GET /api/auth/che
 # Backend (apps/api)
 JWT_SECRET_KEY=your-64-char-secret
 GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
-INITIAL_ADMIN_EMAIL=[EMAIL]
+INITIAL_ADMIN_EMAIL=admin@example.com
 
 # Flutter client (apps/client)
 API_BASE_URL=http://localhost:8080
@@ -129,7 +130,7 @@ Client and admin flows are tested through their apps: sign in with Google, compl
 
 ### Related Features
 - [Privacy Model](/docs/features/privacy-model.md) - Privacy architecture
-- [User Management](/docs/api/README.md#user-management) - User CRUD operations
+- [User Management](/docs/api/endpoints.md) - User CRUD operations
 
 ---
 

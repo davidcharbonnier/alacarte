@@ -181,7 +181,7 @@ on DioException catch (e) {
 - **Zero overhead** on successful API calls - no preemptive connectivity checks
 - **Instant detection** of network changes via platform APIs
 - **Smart server validation** - only when network issues are detected
-- **Minimal resource usage** - no constant polling or background checks
+- **Minimal resource usage** - no polling while online; a 30-second check runs only while the server is unreachable
 
 ## 🚀 Automatic API Retry System
 
@@ -296,7 +296,7 @@ The offline system provides detailed logging to help developers understand conne
 🔍 Checking initial connectivity...
 📱 Platform connectivity results: [ConnectivityResult.wifi]
 🌍 Network available - checking API reachability...
-🎧 Testing API reachability: http://localhost:8080/api/health
+🎧 Testing API reachability: http://localhost:8080/health
 📊 API health check response: 200
 ✅ API server reachable - going online
 🟢 🌐 Connected to À la carte - app fully functional
@@ -314,7 +314,7 @@ The offline system provides detailed logging to help developers understand conne
 ```bash
 ⏰ Starting periodic server checking (30s intervals)
 🔄 Periodic server reachability check...
-🎧 Testing API reachability: http://localhost:8080/api/health
+🎧 Testing API reachability: http://localhost:8080/health
 🟠 API server unreachable: Connection refused - server offline
 📡 Connectivity state changed: online → serverOffline
 🟠 ☁️ Server unreachable - showing server unavailable screen

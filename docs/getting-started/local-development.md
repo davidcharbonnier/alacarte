@@ -5,9 +5,9 @@ This guide explains how to run all À la carte applications locally.
 ## Prerequisites
 
 - Docker & Docker Compose
-- Node.js >= 18.0.0 (for tooling)
+- Node.js >= 20 (for the admin SPA)
 - Go >= 1.25 (optional, if running API outside Docker)
-- Flutter SDK >= 3.27 (for client development)
+- Flutter SDK >= 3.32 (for client development)
 
 ## Quick Start - All Apps
 
@@ -32,16 +32,15 @@ The Flutter client runs outside Docker for development:
 cd apps/client
 flutter pub get
 
-# For web development:
-flutter run -d chrome
+# Android (the only target where Google sign-in works today):
+flutter run -d android
 
-# For desktop (Linux):
+# UI work without sign-in:
+# flutter run -d chrome
 # flutter run -d linux
-
-# For mobile:
-# flutter run -d android
-# flutter run -d ios
 ```
+
+Google sign-in currently works only on Android (web and desktop sign-in are a known gap, see [authentication](/docs/client/authentication-system.md)); use an Android emulator or device for anything behind login. On an emulator set `API_BASE_URL=http://10.0.2.2:8080` in `apps/client/.env`. On a physical device use your computer's LAN IP, and see the cleartext note in [android-setup.md](/docs/client/setup/android-setup.md).
 
 ## Individual App Development
 
@@ -51,10 +50,11 @@ flutter run -d chrome
 # Start API, Postgres, and MinIO
 docker-compose up api postgres minio create-bucket
 
-# Or run without Docker:
+# Or run without Docker (needs postgres + minio running, e.g. `docker-compose up -d postgres minio create-bucket`):
 cd apps/api
+cp .env.example .env   # set DATABASE_URL and STORAGE_ENDPOINT hosts to localhost
 go mod download
-air  # hot-reload development server
+air  # hot-reload development server (requires the `air` tool installed; `go run main.go` also works)
 ```
 
 ### Admin Panel Only
@@ -74,7 +74,7 @@ npm run dev
 ```bash
 cd apps/client
 flutter pub get
-flutter run -d chrome  # or your preferred device
+flutter run -d android  # sign-in works on Android only
 ```
 
 ## Environment Variables
@@ -89,11 +89,7 @@ Make sure these are configured before running.
 
 ## Networking
 
-All services share the `alacarte-network` bridge network, allowing:
-- Admin → API communication
-- Client → API communication
-- Direct Postgres access for debugging
-- MinIO file storage access
+The API, Postgres and MinIO share the `alacarte-network` bridge network (the admin container is only on `default`). The admin SPA and the client call the API from the browser/device through the published port (`http://localhost:8080`), not through container networking. Postgres and MinIO ports are published for direct debugging.
 
 ## Stopping Services
 
@@ -118,8 +114,7 @@ If ports are already in use, modify `docker-compose.yml`:
 ### Admin Can't Connect to API
 
 1. Verify API is running: `curl http://localhost:8080/health`
-2. Check admin `.env` has correct API URL (should be `http://api:8080` for Docker networking)
-3. Ensure both services are on `alacarte-network`
+2. Check admin `.env` has `VITE_API_URL=http://localhost:8080` (the browser calls the API, so it cannot use the Docker name `api`; rebuild/restart after changing)
 
 ### Postgres Connection Issues
 

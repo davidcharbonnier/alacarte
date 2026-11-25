@@ -9,7 +9,7 @@ This guide covers the complete setup process for building and running the À la 
 ### Required Software
 - **Flutter SDK**: Official stable channel installation (not package manager versions)
 - **Android Studio**: Latest version with Android SDK
-- **Android SDK**: API level 36 (Android 15)
+- **Android SDK**: API level 36 (Android 16)
 - **Android NDK**: Version 27.0.12077973
 - **Java JDK**: Version 17 or higher
 
@@ -60,15 +60,17 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // Uses the release keystore from key.properties when it exists, debug signing otherwise
+            signingConfig = if (keystorePropertiesFile.exists()) signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
+        // debug also sets applicationIdSuffix = ".debug"; see apps/client/android/app/build.gradle.kts for the full file
     }
 }
 
 dependencies {
-    implementation("androidx.multidex:multidx:2.0.1")
+    implementation("androidx.multidex:multidex:2.0.1")
 }
 ```
 
@@ -96,7 +98,7 @@ android.nonTransitiveRClass=false
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
     <application
-        android:label="À la carte"
+        android:label="${appLabel}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:networkSecurityConfig="@xml/network_security_config">
@@ -106,7 +108,6 @@ android.nonTransitiveRClass=false
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
-            android:orientation="portrait"
             android:screenOrientation="portrait"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -139,25 +140,27 @@ android.nonTransitiveRClass=false
         <domain includeSubdomains="false">localhost</domain>
         <domain includeSubdomains="false">127.0.0.1</domain>
         <domain includeSubdomains="false">10.0.2.2</domain>  <!-- Android emulator host -->
-        <!-- Local network ranges for device testing -->
+        <!-- Intended as local network ranges for device testing; see the note below -->
         <domain includeSubdomains="false">192.168.0.0/24</domain>
         <domain includeSubdomains="false">192.168.1.0/24</domain>
     </domain-config>
 </network-security-config>
 ```
 
+> **Known gap (from Android's rules, not run):** a `<domain>` entry takes a host name or a literal IP, not a CIDR range, so the two `192.168.x.0/24` lines match nothing and cleartext HTTP to a LAN IP such as `192.168.0.22` is blocked. For a physical device, add your exact IP as its own `<domain>` entry. Only `localhost`, `127.0.0.1` and `10.0.2.2` work as shipped.
+
 ### Flutter App Configuration
 
 #### 1. Widget Binding Initialization
 **File**: `lib/main.dart`
 ```dart
-void main() {
+void main() async {
   // Ensure Flutter binding is initialized first
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize rateable item types before running the app
-  initializeRateableItemTypes();
-  
+
+  // Load environment variables (API_BASE_URL, GOOGLE_CLIENT_ID, APP_VERSION are required)
+  await dotenv.load(fileName: ".env");
+
   // Start connectivity monitoring after binding is initialized
   ApiService.startConnectivityMonitoring();
   
@@ -166,14 +169,11 @@ void main() {
 ```
 
 #### 2. Network API Configuration
-**File**: `lib/config/app_config.dart`
-```dart
-class AppConfig {
-  // API Configuration for local development
-  static const String baseUrl = isDevelopment 
-      ? 'http://192.168.0.22:8080'  // Replace with your computer's IP
-      : 'https://your-production-api.com';
-}
+**File**: `apps/client/.env` (not committed; see [apps/client/README.md](/apps/client/README.md#environment-variables))
+```bash
+API_BASE_URL=http://192.168.0.22:8080   # Replace with your computer's IP
+GOOGLE_CLIENT_ID=your-web-client-id
+APP_VERSION=1.0.0-dev
 ```
 
 ## Development Setup Process
@@ -228,22 +228,22 @@ flutter pub get
    hostname -I
    ```
 
-2. **Update API configuration** in `lib/config/app_config.dart`
+2. **Update `API_BASE_URL`** in `apps/client/.env`
 
 3. **Ensure backend accepts network connections**:
    ```bash
    # Backend should bind to all interfaces
-   cd ../rest-api
+   cd apps/api
    go run main.go  # Should start on :8080, not localhost:8080
    ```
 
 4. **Test network connectivity**:
    ```bash
    # From development machine
-   curl http://192.168.0.22:8080/api/health
+   curl http://192.168.0.22:8080/health
    
    # From Android device browser
-   # Navigate to: http://192.168.0.22:8080/api/health
+   # Navigate to: http://192.168.0.22:8080/health
    ```
 
 ### Step 5: Build and Deploy
@@ -324,7 +324,7 @@ rm -rf ~/.gradle/daemon
 ### Daily Development Process
 1. **Start backend API**:
    ```bash
-   cd ../rest-api && go run main.go
+   cd apps/api && go run main.go
    ```
 
 2. **Start Flutter app**:
@@ -339,7 +339,7 @@ rm -rf ~/.gradle/daemon
    ```
 
 ### Testing Network Changes
-1. **Update API configuration** in `app_config.dart`
+1. **Update `API_BASE_URL`** in `apps/client/.env`
 2. **Hot reload** or restart app
 3. **Verify connectivity** in app (should show online status)
 4. **Test API functionality** (authentication, rating operations)
@@ -363,7 +363,7 @@ flutter build apk --release
 ### Network Optimization
 - **Local network development**: Faster API response times than localhost tunneling
 - **Connectivity monitoring**: Efficient network state detection
-- **Offline-first architecture**: Graceful degradation when network unavailable
+- **Offline handling**: the whole app is replaced by a fullscreen offline screen (no offline data); see [offline handling](/docs/features/offline-handling.md)
 
 ## Security Notes
 
@@ -413,7 +413,7 @@ adb shell ping 192.168.0.22
 flutter logs
 
 # Check API health from device
-# Use device browser: http://192.168.0.22:8080/api/health
+# Use device browser: http://192.168.0.22:8080/health
 ```
 
 ### Gradle Debug
@@ -426,4 +426,4 @@ cd android
 ./gradlew --status
 ```
 
-This guide provides complete coverage for setting up Android development for the À la carte Flutter app, including all the configurations and solutions developed during our build session.
+This guide provides complete coverage for setting up Android development for the À la carte Flutter app, including all the required configuration.
