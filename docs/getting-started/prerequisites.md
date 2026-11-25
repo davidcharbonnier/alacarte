@@ -21,7 +21,7 @@ Before you can run the À la carte project locally, you'll need to install the f
 
 ### Docker & Docker Compose
 - **Docker:** [Install Docker](https://docs.docker.com/get-docker/)
-- **Docker Compose:** [Install Docker Compose](https://docs.docker.com/compose/install/)
+- **Docker Compose:** [Install Docker Compose](https://docs.docker.com/compose/install/) (v2.20 or newer: the root `docker-compose.yml` uses a top-level `include:`)
 - **Verification:** `docker --version` and `docker compose version`
 
 ### Postgres
@@ -34,11 +34,10 @@ The project uses Google OAuth 2.0 for authentication. You'll need to:
 
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select an existing one
-4. Create OAuth 2.0 credentials (Web application type)
-5. Add authorized JavaScript origins (no redirect URIs — the apps use the Google Identity Services token flow):
+3. Create OAuth 2.0 credentials (Web application type)
+4. Add authorized JavaScript origins (no redirect URIs — the apps use the Google Identity Services token flow):
    - `http://localhost:3000` (Admin)
-   - `http://localhost:<flutter-web-port>` (Client web, when developing against Google sign-in)
-6. Save the Client ID for later use (no client secret needed — tokens are verified by the backend, not exchanged)
+5. Save the Client ID for later use (no client secret needed — tokens are verified by the backend, not exchanged)
 
 ## Environment Variables
 

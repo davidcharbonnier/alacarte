@@ -27,10 +27,13 @@ The Flutter client uses the `google_sign_in` package for Google OAuth and Riverp
 
 ```dart
 // lib/services/auth_service.dart
-final GoogleSignIn _googleSignIn = GoogleSignIn(
-  scopes: ['email', 'profile'],
+// google_sign_in v7 API
+await GoogleSignIn.instance.initialize(
   serverClientId: AppConfig.googleWebClientId, // backend-compatible web client ID
 );
+final account = await GoogleSignIn.instance.authenticate();            // -> idToken
+final authorization = await account.authorizationClient
+    .authorizeScopes(['email', 'profile']);                            // -> accessToken
 ```
 
 1. `AuthNotifier.signInWithGoogle()` runs the platform Google sign-in and obtains the `idToken` (plus scoped `accessToken`).
@@ -48,7 +51,7 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
   - Web: Web Crypto / IndexedDB
   - Desktop: OS keyring
 - **Legacy cleanup:** one-time removal of tokens previously stored in plain-text `SharedPreferences` (pre-v1.0.0), guarded by a `secure_storage_cleanup_done` flag.
-- **`isTokenExpired()`** decodes the JWT payload and compares `exp` — expired tokens are treated as absent, so the user re-signs in (there is no refresh token; see the shared doc).
+- **`isTokenExpired()`** does not decode real JWTs: it only time-checks mock tokens and returns `false` for any real token (the `exp` decode is a TODO). Expiry is learned from `GET /api/user/me` failing (see below). There is no refresh token; see the shared doc.
 
 ## Session & Offline Behavior
 
@@ -65,12 +68,12 @@ GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 
 ## Platform Setup
 
-- **Web:** Google Sign-In web client ID (`GOOGLE_CLIENT_ID`); authorized JavaScript origin for the served origin.
+- **Web:** Google Sign-In web client ID (`GOOGLE_CLIENT_ID`); authorized JavaScript origin for the served origin. Known gap (read from code, not run): `auth_service.dart` calls `GoogleSignIn.instance.authenticate()`, which `google_sign_in_web` 1.1.0 does not support, and the client has no `renderButton`; so only Android can sign in today and web is expected to fail with an `UnimplementedError`.
 - **Android:** `serverClientId` must be the **web** client ID; SHA-1 certificates must be registered — see [Android OAuth Setup](/docs/client/setup/android-oauth-setup.md).
-- **Desktop/Linux:** sign-in runs through the platform plugin's browser flow; see [Google OAuth Setup](/docs/client/setup/google-oauth-setup.md).
+- **Desktop/Linux:** `google_sign_in` has no desktop implementation (the lockfile has only Android, iOS and web), so Google sign-in is not available there; use Android to sign in. See [Google OAuth Setup](/docs/client/setup/google-oauth-setup.md) for the web/Android client IDs.
 
 ## Troubleshooting
 
 - **OAuth fails or is cancelled** — verify the client ID configuration, correct redirect URIs / origins in Google Console, and platform setup (Android SHA certificates).
-- **401 after ~24h** — expected: the JWT expired. The user signs in again; there is no refresh flow.
+- **401 after ~24h** — expected: the JWT expired. Known gap: nothing signs the user out globally on a 401 (`AuthNotifier.handleAuthError()` is never called), so a token that expires mid-session only gets cleared by the `/api/user/me` check at startup or on reconnect. The user then signs in again; there is no refresh flow.
 - **Works on one platform, not another** — verify per-platform client IDs and configuration files; test the flow on each target platform.

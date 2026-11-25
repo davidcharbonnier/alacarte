@@ -77,7 +77,7 @@ ScaffoldMessenger.of(context).showSnackBar(
 
 #### Error Notifications  
 - **Background**: `AppConstants.warningColor` (consistent app error color)
-- **Text**: White, standard weight
+- **Text**: White, semi-bold (w600)
 - **Duration**: 3000ms (3 seconds, longer for errors)
 - **Behavior**: Floating with 16px margins
 - **Shape**: Rounded corners (8px radius)
@@ -187,7 +187,7 @@ All notification messages must be available in both English and French:
 ```json
 {
   "shareRatingSuccess": "Évaluation partagée avec succès !",
-  "ratingUnsharedFromUsers": "Évaluation non partagée avec {count} {count, plural, =1{utilisateur} other{utilisateurs}}",
+  "ratingUnsharedFromUsers": "Évaluation non partagée avec {count} {count, plural, =1{personne} other{personnes}}",
   "sharingPreferencesUpdated": "Préférences de partage mises à jour avec succès",
   "discoverabilityEnabled": "Vous êtes maintenant découvrable pour le partage",
   "discoverabilityDisabledWithExplanation": "Vous n'êtes plus découvrable. Les évaluations partagées existantes restent accessibles."
@@ -224,7 +224,7 @@ Use ICU message format for proper pluralization:
 - **Error conditions**: Failed operations, network issues
 
 #### Never Show For:
-- **Automatic background operations**: Connectivity monitoring, token refresh
+- **Automatic background operations**: Connectivity monitoring
 - **Silent updates**: Cache updates, preloading
 - **Navigation actions**: Screen transitions, back navigation
 
@@ -262,10 +262,6 @@ class NotificationHelper {
   
   /// Show loading notification (blue, spinner, 30s)
   static void showLoading(BuildContext context, String message)
-  
-  /// Show error with theme color (alternative)
-  static void showError(BuildContext context, String message)
-}
 ```
 
 ### Implementation Benefits
@@ -291,7 +287,7 @@ class NotificationHelper {
 // In any widget or screen
 NotificationHelper.showSuccess(context, context.l10n.shareRatingSuccess);
 NotificationHelper.showError(context, context.l10n.shareRatingError);
-NotificationHelper.showLoading(context, context.l10n.processingRequest);
+NotificationHelper.showLoading(context, context.l10n.loadingUsers);
 ```
 
 **Example in context**:
@@ -322,12 +318,10 @@ NotificationHelper.showSuccess(context, context.l10n.allRatingsMadePrivate);
 
 ### Desktop Compatibility
 - **Same design works**: Floating notifications work well on desktop
-- **Keyboard accessibility**: Can be dismissed with Escape key
 - **Multi-window support**: Notifications stay within app window
 
 ### Web Compatibility
 - **Responsive design**: Notifications adapt to browser width
-- **PWA integration**: Works in installed web apps
 - **Cross-browser**: Consistent appearance across browsers
 
 ## Quality Assurance
@@ -386,13 +380,13 @@ ScaffoldMessenger.of(context).showSnackBar(
 ### After: NotificationHelper (Current)
 ```dart
 // Current pattern - use everywhere
-NotificationHelper.showSuccess(context, context.l10n.operationSuccess); // 1 line!
-NotificationHelper.showError(context, context.l10n.operationError);
+NotificationHelper.showSuccess(context, context.l10n.shareRatingSuccess); // 1 line!
+NotificationHelper.showError(context, context.l10n.shareRatingError);
 ```
 
 ### Migration Status
 
-✅ **Fully migrated** (January 2025) - All manual notifications replaced with NotificationHelper
+Partly migrated: these files use `NotificationHelper`. `item_detail_screen.dart`, `dynamic_item_form_screen.dart` and some calls in the two settings screens still call `showSnackBar` directly.
 
 **Files updated**:
 - `lib/widgets/items/my_rating_section.dart`
@@ -402,13 +396,11 @@ NotificationHelper.showError(context, context.l10n.operationError);
 - `lib/screens/settings/privacy_settings_screen.dart`
 - `lib/screens/settings/user_settings_screen.dart`
 
-**Code reduction**: ~200 lines of boilerplate eliminated
-
 ## Benefits of Unified System
 
 ### User Experience
 - **Professional appearance**: Consistent, polished design across app
-- **Clear visual hierarchy**: Success (green) vs error (red) distinction
+- **Clear visual hierarchy**: Success (green) vs error (warning color, orange) distinction
 - **Improved readability**: Icons provide immediate context
 - **Better accessibility**: Proper contrast and timing
 

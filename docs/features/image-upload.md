@@ -81,7 +81,8 @@ curl -X POST \
 ```
 
 **Errors:**
-- `400 Bad Request` - Invalid image (format, size, dimensions)
+- `400 Bad Request` - No image provided, or invalid image (format, size, dimensions)
+- `401 Unauthorized` / `403 Forbidden` - Not signed in, or not the item owner
 - `404 Not Found` - Item doesn't exist
 - `500 Internal Server Error` - Upload or database failure
 
@@ -108,7 +109,7 @@ curl -X DELETE \
 **Behavior:**
 - Deletes image from storage bucket
 - Sets `image_url` to `NULL` in database
-- Returns error if item has no image
+- Returns `400` if the item has no image; `403` for non-owners
 
 ---
 
@@ -144,10 +145,11 @@ curl -X DELETE \
 
 All uploaded images are automatically processed:
 
-1. **Resize** - Fit within 1200x1200px (maintains aspect ratio)
-2. **Sharpen** - Apply 0.5 sharpening to compensate for resize blur
-3. **Convert** - Output as JPEG with 85% quality
-4. **Compress** - Reduces file size while maintaining visual quality
+1. **Orientation** - Read and apply EXIF orientation (rotated phone photos come out upright)
+2. **Resize** - Fit within 1200x1200px (maintains aspect ratio)
+3. **Sharpen** - Apply 0.5 sharpening to compensate for resize blur
+4. **Convert** - Output as JPEG with 85% quality
+5. **Compress** - Reduces file size while maintaining visual quality
 
 ### Processing Details
 
@@ -264,18 +266,7 @@ STORAGE_USE_SSL=true
 
 ### Generic Item Interface
 
-The single generic `Item` model implements `ItemWithImage`:
-
-```go
-type ItemWithImage interface {
-    GetImageURL() *string
-    SetImageURL(url *string)
-}
-```
-
-**Benefits:**
-- Upload/delete controllers work for all item types
-- No item-specific code needed
+`Item` has `GetImageURL`/`SetImageURL`, and the upload/delete controllers use them directly for every item type (no item-specific code needed).
 
 ### Upload Flow
 
@@ -319,41 +310,8 @@ The admin API client (`src/lib/api/`) has no image upload/delete methods — ima
 
 ### Display Components
 
-### Table View (List Page)
-
-**Features:**
-- Thumbnail column (48x48px) at the beginning
-- Shows image if available
-- Shows colored placeholder icon if no image
-- Placeholder uses item type color
-
-**Implementation:**
-```tsx
-{item.image_url ? (
-  <div className="w-12 h-12 rounded-md overflow-hidden">
-    <img src={item.image_url} alt={item.name} />
-  </div>
-) : (
-  <div className="w-12 h-12 rounded-md" style={{ backgroundColor: colors.hex }}>
-    <Package className="w-6 h-6" />
-  </div>
-)}
-```
-
-### Detail View (Item Page)
-
-**Features:**
-- Full-size image card (one of three columns)
-- Click to zoom (opens modal with black background)
-- Placeholder if no image
-- Positioned third (after Basic Info and Description)
-
-**Zoom Modal:**
-- Black background for better viewing
-- White close button (visible on any background)
-- Max height: 85vh (prevents overflow)
-- Click outside or ESC to close
-- Accessible (screen reader support)
+- **List page** (`generic-item-table.tsx`): a small thumbnail shown inside the Name column when `image_url` is set, with a placeholder icon when it is not. A "Has image" filter uses `filter[has_image]`.
+- **Detail page** (`generic-item-detail.tsx`): an "Image" card with the full-width image (or "No image"). Clicking the image opens a dialog with a black background and a close button; click outside or press ESC to close.
 
 ---
 
@@ -368,8 +326,7 @@ The admin API client (`src/lib/api/`) has no image upload/delete methods — ima
 - ✅ Size and dimension limits
 
 **Access Control:**
-- Any authenticated user can upload/delete images
-- Users can update images for any item (collaborative platform)
+- Only the item owner can upload/delete its image (others get 403)
 - JWT authentication required
 
 **What's prevented:**
@@ -467,8 +424,6 @@ curl -X DELETE \
 ### Planned Features
 
 - [ ] **Admin panel upload UI** - Drag-and-drop interface
-- [ ] **Client app image display** - Show images in Flutter app
-- [ ] **Client app image upload** - Users can photograph items
 - [ ] **Multiple images per item** - Gallery view (front, back, label)
 - [ ] **Image moderation** - Admin approval for user-uploaded images
 - [ ] **Advanced compression** - WebP with fallback to JPEG
@@ -497,7 +452,7 @@ curl -X DELETE \
 
 ### Configuration
 - [Environment Variables](/docs/getting-started/local-development.md) - Storage configuration
-- [Docker Setup](/docs/operations/ci-cd-setup.md) - MinIO in docker-compose
+- Docker Setup: MinIO service in `apps/api/docker-compose.yaml`
 
 ---
 

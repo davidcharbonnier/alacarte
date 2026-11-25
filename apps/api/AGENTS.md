@@ -15,12 +15,11 @@ Go backend for the À la carte rating platform. Serves all API endpoints for cli
 ## Local Contracts
 
 - Framework: Gin (HTTP), GORM (ORM), Postgres 16+
-- Auth: Google OAuth 2.0 → JWT (access + refresh tokens)
+- Auth: Google OAuth 2.0 → JWT (single access token, no refresh tokens)
 - Storage: MinIO/S3 for images
-- Schema system: Dynamic item schemas with validation engine, schema registry, hybrid JSON+EAV storage (JSON column for fast reads, EAV rows for filtering, written in the same transaction; in-memory registry cache is fine — writes are infrequent and it's a single Cloud Run instance — and invalidated on schema writes; planned future direction: drop EAV for jsonb + GIN indexes)
+- Schema system: Dynamic item schemas with validation engine, schema registry, hybrid JSON+EAV storage (JSON column for fast reads, EAV rows for filtering, written in the same transaction; in-memory registry cache is fine — writes are infrequent and it's a single Cloud Run instance (`max-instances: 1`, see `docs/api/deployment.md`; raising it needs a shared cache) — and invalidated on schema writes; planned future direction: drop EAV for jsonb + GIN indexes)
 - Dynamic item endpoints: `/api/items/:type` adapts to any active schema
-- Legacy item endpoints: `/api/cheese`, `/api/wine`, `/api/gin`, `/api/coffee`, `/api/chili-sauce` coexist with dynamic items
-- DB migrations run automatically on startup; self-healing migration mode via `RUN_SELF_HEALING_MIGRATION=true`
+- DB migrations (GORM AutoMigrate) run automatically on startup; `RUN_CLEANUP_MIGRATION=true` runs the one-off post-migration cleanup job instead of the server
 - Environment: `.env` file in `apps/api/`, single `DATABASE_URL` for database connection
 - Tests: Go native testing (`go test`), files named `*_test.go`
 - Code style: `gofmt`, Effective Go conventions
@@ -30,12 +29,11 @@ Go backend for the À la carte rating platform. Serves all API endpoints for cli
 
 - Route registration: `main.go` groups routes by domain (auth, public, protected, admin)
 - Controllers handle HTTP; models define GORM entities; utils provide DB, JWT, auth middleware
-- New legacy item types patterned after existing: controller + model + routes in main.go (being superseded by dynamic schema system)
 - Dynamic item operations route through `DynamicItemController`; schema validation via `ValidationEngine` + `SchemaRegistry`
 - Schema `field_type` is `varchar(20)` + a `Valid()` check (unknown type → 400): GORM's Postgres driver doesn't understand MySQL's `enum(...)` tag syntax, and controllers blindly cast request input — dropping the check without another guard would let invalid field types in silently. Do not remove it.
 - Middleware chain: `RequirePartialAuth()` for profile completion, `RequireAuth()` for protected routes, `RequireAdmin()` for admin endpoints
-- Seed data via `RUN_SEEDING=true` env + source file path vars
-- Scripts in `scripts/`: `reset_database.go`, `seed.go`, `migrate_to_dynamic.go`, `migration_verify.go`
+- `RUN_SEEDING=true` seeds the default schemas on startup; item data comes from `POST /admin/items/:type/seed` (`url` or `data`)
+- Scripts in `scripts/`: `reset_database.go`, `seed.go`, `migrate_to_dynamic.go`, `migration_verify.go` (the first three currently do not compile: they call the missing `utils.MySQLConnect`; use `RUN_SEEDING=true` instead)
 
 ## Verification
 

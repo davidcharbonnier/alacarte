@@ -22,7 +22,7 @@ The À la carte sharing system lets users share their ratings with specific othe
 
 - "Hiding" a rating is the backend term for **unsharing** it from users. There is no separate hidden state: hiding removes viewer rows, so hidden users simply lose access.
 - **Making a rating private** = unsharing it from everyone (empty viewer list). There is no "private" flag on the rating — private means zero viewers.
-- Deleting a rating removes all its shares automatically (cascade through rating deletion).
+- Deleting a rating is a soft delete (`deleted_at`); its `rating_viewers` rows are not physically removed, but soft-deleted ratings are no longer returned.
 
 ### Discoverability
 
@@ -42,8 +42,8 @@ The À la carte sharing system lets users share their ratings with specific othe
 | `PUT` | `/api/rating/bulk/unshare/:userId` | Remove one user from all the current user's shares | — |
 | `GET` | `/api/users/shareable` | Users available for sharing | — |
 | `GET` | `/api/rating/author/:id` | Current user's own ratings (with viewers) | — |
-| `GET` | `/api/rating/viewer/:id` | Ratings shared with the current user | — |
-| `GET` | `/api/rating/:id` | Ratings visible to the current user for one item | — |
+| `GET` | `/api/rating/viewer/:id` | The current user's own ratings plus ratings shared with them (`:id` must be their own user id) | — |
+| `GET` | `/api/rating/:id` | Ratings **shared with** the current user for one item (`:id` is the item id; their own are not included) | — |
 
 **Behavior details:**
 
@@ -51,6 +51,7 @@ The À la carte sharing system lets users share their ratings with specific othe
 - `PUT /api/rating/:id/hide` accepts `user_ids` (batch) or the legacy singular `user_id`; at least one is required. Only the author can unshare. Returns the updated rating.
 - `PUT /api/rating/bulk/private` clears the viewer list of every rating owned by the current user and returns `{"message", "ratings_affected"}`.
 - `PUT /api/rating/bulk/unshare/:userId` removes the target user from every rating the current user has shared with them and returns `{"message", "ratings_affected", "removed_user"}` (display name).
+- Known gap: `previous_connections` comes from raw SQL that ignores `deleted_at`, so soft-deleted users (after `DELETE /api/user/me`) can still appear.
 - `GET /api/users/shareable` returns `{"previous_connections": [...], "discoverable": [...]}` — previous connections are users who already share with the current user; discoverable users exclude the current user and previous connections. Both lists include only completed profiles.
 
 ---
@@ -163,8 +164,8 @@ All sharing strings are localized in `lib/l10n/app_en.arb` and `lib/l10n/app_fr.
 4. **Bulk private**: A uses "Make All Ratings Private" in privacy settings → every rating's viewer list is cleared.
 5. **Bulk unshare user**: A removes User B from all shares → B loses access to all of A's shared ratings at once.
 6. **Discoverability off**: User B sets discoverable = false → B disappears from new sharing dialogs; existing shares keep working.
-7. **Delete rating**: A deletes a shared rating → all viewer rows go with it; recipients lose access.
-8. **Delete user**: A deletes their account → all their ratings and shares are removed.
+7. **Delete rating**: A deletes a shared rating → it is soft-deleted, so recipients no longer receive it (viewer rows are not physically removed).
+8. **Delete user**: A deletes their account (`DELETE /api/user/me`) → only the user row is soft-deleted; their ratings and shares remain.
 
 ---
 

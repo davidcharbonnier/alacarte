@@ -1,5 +1,7 @@
 # Migration Process for Existing Deployments
 
+> **Historical, MySQL era.** This migration was run once in production, which is now Postgres. The commands below use `mysqldump`/`mysql` and `apps/api/scripts/migrate_to_dynamic.go` (which no longer compiles: it calls an undefined `utils.MySQLConnect`). Do not run them against the current Postgres setup.
+
 **Last Updated:** May 2026
 **Applies To:** Deployments with existing hardcoded item types (cheese, gin, wine, coffee, chili-sauce)
 

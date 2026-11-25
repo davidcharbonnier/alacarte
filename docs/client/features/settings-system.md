@@ -118,17 +118,14 @@ Container(
     borderRadius: BorderRadius.circular(2),
   ),
   child: Text(
-    itemType.toUpperCase(), // [FROMAGE], [VIN], [BIÈRE]
+    getItemTypeDisplayName(itemType).toUpperCase(), // [FROMAGE], [VIN], [BIÈRE]
     style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600),
   ),
 )
 ```
 
 #### **Extensible Design**
-Adding new item types requires updates in just 3 locations:
-1. **`_loadItemsByType()`** - Add new case for loading provider
-2. **`_isItemDataMissing()`** - Add new case for data detection
-3. **`_getLocalizedRatingDisplayTitle()`** - Add new cache lookup
+Adding a new item type requires zero screen changes: loading, missing-data detection and title lookup all go through the type-agnostic `ItemProviderHelper` and `ItemTypeLocalizer`.
 
 ## 🧩 Settings Widget Library
 
@@ -198,6 +195,7 @@ BulkActionButton(
 RatingItemCard(
   rating: rating,
   getDisplayTitle: (rating) => getLocalizedTitle(rating),
+  getItemType: (rating) => itemTypeForRating(rating),
   getItemTypeDisplayName: (type) => getTypeDisplayName(type),
   onManageSharing: () => openSharingDialog(rating),
 )
@@ -217,7 +215,6 @@ RatingItemCard(
 
 #### **Accessibility**
 - Proper semantic markup for screen readers
-- Keyboard navigation support
 - Sufficient color contrast ratios
 
 ## 🎨 Visual Design
@@ -228,7 +225,7 @@ RatingItemCard(
 ```
 📱 App Preferences
   ├── 🌙 Dark Mode [Toggle]
-  └── 🌍 Display Language [EN/FR Toggle]
+  └── 🌍 Display Language [Auto/FR/EN selector]
 
 👤 Profile & Account  
   ├── 📝 Profile Info [Inline Editing]
@@ -328,27 +325,13 @@ class NotificationSettingsScreen extends ConsumerWidget {
 ```
 
 ### **Adding Item Type Support**
-```dart
-// Extending privacy settings for wine support
-String _getItemTypeDisplayName(String itemType) {
-  switch (itemType) {
-    case 'cheese':
-      return context.l10n.cheese;
-    default:
-      return itemType;
-  }
-}
-
-// Progressive loading automatically handles new types — adding an item type
-// requires zero screen changes: ItemProviderHelper is type-agnostic.
-```
+Nothing to change in the settings screens: progressive loading uses `ItemProviderHelper`, which is type-agnostic.
 
 ## 📱 Mobile Considerations
 
 ### **Responsive Design**
 - **Adaptive layouts** work on mobile, tablet, and desktop
 - **Touch-friendly** buttons and interactive elements
-- **Collapsible sections** for mobile space efficiency
 - **Proper spacing** for thumb navigation
 
 ### **Performance**

@@ -101,7 +101,7 @@ This documentation is organized by **purpose** rather than by app:
 
 Covers:
 - Development workflow with conventional commits
-- Commit message format (enforced by git hooks)
+- Commit message format (commitlint rules; local hook is opt-in)
 - PR review checklist
 - Code style guidelines
 - Bug fix process
@@ -109,7 +109,7 @@ Covers:
 **Key points:**
 - All commits must follow conventional format
 - Scope is required: `feat(api):`, `fix(client):`, etc.
-- Commit messages drive automated versioning
+- Commit messages drive versioning (release automation has known caveats)
 - See [Monorepo Strategy](architecture/monorepo-strategy.md) for complete details
 
 ### Contributing to Documentation

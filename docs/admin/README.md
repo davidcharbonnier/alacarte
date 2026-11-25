@@ -19,4 +19,4 @@ For a view of how the admin panel integrates with the rest of the platform, see 
 
 ---
 
-> **Note:** The quick‑start instructions are kept in the app’s README to keep the repository‑level onboarding simple. This document serves as the hub for deeper admin documentation.
+> **Note:** Admin has no app-level README. Setup and deployment are in [deployment.md](deployment.md) and `apps/admin/.env.example`. This document is the hub for deeper admin documentation.

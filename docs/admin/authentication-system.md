@@ -27,7 +27,7 @@ User clicks "Sign in with Google" (GoogleLogin)
   ↓
 Google returns a credential (JWT id_token)
   ↓
-signInWithGoogle() → POST /auth/google { id_token, access_token }
+signInWithGoogle() → POST /auth/google { id_token }
   ← { token: backend-jwt, user: {...} }
   ↓
 JWT stored in sessionStorage under `jwt_token`; user set in AuthContext
@@ -39,7 +39,7 @@ is_admin → navigate to /
 not admin → navigate to /access-denied
 ```
 
-The `GoogleLogin` `credential` is the Google `id_token` — exactly what the backend `/auth/google` endpoint verifies. `access_token` is omitted (optional for the backend); the payload mirrors the Flutter client's `{id_token, access_token}` shape.
+The `GoogleLogin` `credential` is the Google `id_token` — exactly what the backend `/auth/google` endpoint verifies. `access_token` is omitted (optional for the backend); the Flutter client also sends `access_token`.
 
 `AuthProvider` rebuilds the `User` object from JWT claims on page load (`jwtDecode`, `sub` = user id), so a page refresh inside the same tab restores the session without a backend round-trip.
 
@@ -50,13 +50,13 @@ The `GoogleLogin` `credential` is the Google `id_token` — exactly what the bac
 - **Storage:** `sessionStorage` key `jwt_token` (`JWT_STORAGE_KEY` in `lib/api/client.ts`) — session is scoped to the browser tab and ends when the tab closes.
 - **Why `sessionStorage`:** survives page refreshes but clears on tab close and is not shared across tabs. Alternatives were rejected: `localStorage` widens the XSS surface (token outlives the tab), in-memory forces re-auth on refresh, and an httpOnly-cookie BFF needs a server component the static-host deploy doesn't have. XSS risk from third-party scripts is deemed minimal — a pragmatic middle ground.
 - **Request attachment:** Axios request interceptor adds `Authorization: Bearer <jwt>` to every call.
-- **Expiry:** The JWT is checked client-side on context init (`exp` claim); a 24h-expired token is treated as signed out.
+- **Expiry:** The JWT is checked client-side on context init (`exp` claim); a 24h-expired token decodes to no user, but the route guard only checks that a token exists, so the redirect to `/login` happens on the first 401.
 - **401 handling:** The Axios response interceptor navigates to `/login` on any 401 (SPA navigation via a held router reference; a 401 during boot is a cold-start race with the same target).
 - **Sign-out:** Removes `jwt_token` from `sessionStorage`, clears context state, navigates to `/login`.
 
 ### Route Protection
 
-`requireAuth()` (`src/lib/auth/auth-guard.ts`) is used as `beforeLoad` on protected TanStack Router routes: no token in `sessionStorage` → redirect to `/login`. The login page itself is public; `/access-denied` requires a signed-in non-admin.
+`requireAuth()` (`src/lib/auth/auth-guard.ts`) is used as `beforeLoad` on protected TanStack Router routes: no token in `sessionStorage` → redirect to `/login`. The login page and `/access-denied` are public (no `beforeLoad`).
 
 ---
 
@@ -94,7 +94,7 @@ func IsUserAdmin(user *models.User) bool {
 - **Sign-in errors:** surfaced inline in the login page (`response.credential` missing, backend error messages).
 - **Non-admin:** redirected to `/access-denied` rather than shown a generic error.
 - **Backend unreachable:** the sign-in promise rejects and the message is shown in the login page alert.
-- **Minimal error messages** — no technical details exposed to users.
+- **Error messages** — the login page alert shows the raw error message (e.g. "Network Error" when the sign-in request cannot reach the API). If the follow-up admin check fails (`checkAdmin()` swallows errors and returns `false`), the user lands on `/access-denied` instead.
 
 ---
 
@@ -112,7 +112,7 @@ VITE_GOOGLE_CLIENT_ID=<production-web-client-id>
 
 ### Google OAuth Configuration
 
-Add the admin origin (`https://alacarte-admin-xxx.run.app`, `http://localhost:3000` for dev) to **Authorized JavaScript origins** in Google Cloud Console → Credentials → OAuth Client. As a SPA there is no redirect-URI callback.
+Add the admin origin (`https://admin.example.com`, `http://localhost:3000` for dev) to **Authorized JavaScript origins** in Google Cloud Console → Credentials → OAuth Client. As a SPA there is no redirect-URI callback.
 
 ---
 
@@ -131,4 +131,4 @@ Add the admin origin (`https://alacarte-admin-xxx.run.app`, `http://localhost:30
 
 ### Profile Pictures Not Loading
 
-Google avatar images use `referrerPolicy="no-referrer"` with an automatic fallback icon.
+Google avatar images use a plain MUI `Avatar` (no special referrer handling); if avatars fail to load, the initials fallback shows.

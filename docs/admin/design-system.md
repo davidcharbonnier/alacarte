@@ -84,7 +84,7 @@ Roboto with the M3 type scale. Both default MUI variants and the extended M3 var
 <Typography variant="headlineSmall">Page title</Typography>
 <Typography variant="titleMedium">Card title</Typography>
 <Typography variant="labelLarge">Button-like label</Typography>
-<Typography variant="body2" color="onSurfaceVariant">Secondary text</Typography>
+<Typography variant="body2" color="text.secondary">Secondary text</Typography>
 ```
 
 Extended variants: `displayLarge/Medium/Small`, `headlineLarge/Medium/Small`, `titleLarge/Medium/Small`, `bodyLarge/Medium/Small`, `labelLarge/Medium/Small`. Buttons and tabs use `textTransform: 'none'` (no ALL CAPS).
@@ -175,7 +175,7 @@ Never hardcode light-only colors. Use palette roles, surface containers, and acc
 - M3 surface containers are first-class palette roles — prefer them over `elevation` shadows
 - Icons via the curated registry in `src/lib/icons/icon-registry.ts` (no namespace import)
 - Item types have no frontend color list: read `schema.color` / `schema.icon` at render with `getAccentColor` / `resolveIcon`
-- Verify with `npm run build` (TypeScript + Vite production build)
+- Verify with `npm run build` (Vite production build only; it does not type-check) and `npm run typecheck`
 
 ## Related Documentation
 

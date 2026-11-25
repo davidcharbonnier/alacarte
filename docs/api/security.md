@@ -62,7 +62,7 @@ There are intentionally **no refresh or logout endpoints** — see token lifecyc
 
 ## Authorization Middleware
 
-`utils/auth.go` provides three middlewares. All read the `Authorization: Bearer <jwt>` header, validate the JWT, and load the user from the database (a valid token for a deleted user is rejected).
+`utils/auth.go` provides three middlewares. `RequireAuth` and `RequirePartialAuth` read the `Authorization: Bearer <jwt>` header, validate the JWT, and load the user from the database (a valid token for a deleted user is rejected). `RequireAdmin` runs after one of them and only reads the user from the request context.
 
 | Middleware | Behavior | Failure response |
 |------------|----------|------------------|
@@ -86,7 +86,8 @@ Single source of truth: `utils.IsUserAdmin(user)` — admin if either:
 | `/auth/google` | Public (token exchange itself) |
 | `/health` | Public |
 | `/profile/*` | `RequirePartialAuth` (profile completion, display name check) |
-| Most item/rating/schema read & write routes | `RequireAuth` or `RequirePartialAuth` per route |
+| `GET /api/schemas`, `GET /api/schemas/:type` | Public (read-only) |
+| Other item/rating routes | `RequireAuth` (`RequirePartialAuth` is used only on `/profile/*`) |
 | `/admin/*` (users, schemas, item admin) | `RequireAuth` + `RequireAdmin` |
 
 For per-endpoint details see [endpoints.md](endpoints.md).
@@ -107,7 +108,7 @@ For per-endpoint details see [endpoints.md](endpoints.md).
 
 ### Client responses
 
-All client-facing error messages are generic and stable. Internal causes (parsing errors, Google API responses, validation internals) are never returned — handlers return fixed strings such as:
+The auth controller returns generic, stable messages and never exposes internal causes (parsing errors, Google API responses). Some other controllers (e.g. rating handlers, list endpoint) still return `err.Error()` text. Auth handlers return fixed strings such as:
 
 - `Invalid Google ID token or missing profile data`
 - `Authentication required` / `Profile setup required` / `Admin access required`
@@ -130,7 +131,7 @@ At startup the OAuth config is printed, but `GOOGLE_CLIENT_ID` is shown in full 
 - **Trusted proxies:** `TRUSTED_PROXIES` env var controls which proxies Gin trusts for client IP resolution; unset → no proxies trusted (`router.SetTrustedProxies(nil)`), preventing IP spoofing via `X-Forwarded-For`.
 - **Release mode by default:** gin runs in `release` mode unless `GIN_MODE` is set, disabling debug output.
 - **Request logging:** all requests are logged (`gin.Logger`), except `/health`.
-- **Upload limits:** image uploads capped at 5 MB (`MaxMultipartMemory`).
+- **Upload limits:** image uploads capped at 5 MB (checked in `utils/image_validation.go`; `MaxMultipartMemory` only sets how much stays in memory).
 - **Panic recovery:** `gin.Recovery()` converts panics into 500s without stack traces leaking to clients.
 - **Password-less auth:** no passwords are stored anywhere; credential theft surface is limited to stolen JWTs (24h window) and Google tokens.
 

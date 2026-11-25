@@ -19,13 +19,13 @@ type User struct {
 	gorm.Model
 
 	// Authentication fields
-	GoogleID string `gorm:"uniqueIndex;not null" json:"google_id"`
-	Email    string `gorm:"uniqueIndex;not null" json:"email"`
-	FullName string `gorm:"not null" json:"full_name"`
-	Avatar   string `json:"avatar"`
+	GoogleID string `gorm:"uniqueIndex;size:255" json:"google_id"`
+	Email    string `gorm:"uniqueIndex;size:255" json:"email"`
+	FullName string `gorm:"size:255" json:"full_name"`
+	Avatar   string `gorm:"size:500" json:"avatar"`
 
 	// Privacy fields
-	DisplayName      string `gorm:"uniqueIndex" json:"display_name"`
+	DisplayName      string `gorm:"uniqueIndex;size:100" json:"display_name"`
 	Discoverable     bool   `gorm:"default:true" json:"discoverable"`
 	ProfileCompleted bool   `gorm:"default:false" json:"profile_completed"`
 	IsAdmin          bool   `gorm:"default:false" json:"is_admin"`
@@ -45,12 +45,12 @@ type Rating struct {
 	Grade float32 `json:"grade"`
 	Note  string  `json:"note"`
 
-	// Item association (plain FK; cascade delete with the item)
+	// Item association (plain FK; cascade delete with the item and the user)
 	ItemID int  `json:"item_id"`
 	Item   Item `gorm:"foreignKey:ItemID;constraint:OnDelete:CASCADE" json:"item,omitempty"`
 
 	UserID int  `json:"user_id"`
-	User   User `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	User   User `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"user,omitempty"`
 
 	// Privacy - users who can see this rating
 	Viewers []User `gorm:"many2many:rating_viewers;" json:"viewers,omitempty"`
@@ -72,7 +72,7 @@ func (r *Rating) IsVisibleToUser(userID uint) bool {
 
 ## API Endpoints
 
-All privacy routes require authentication (`authMiddleware`). Registration in `main.go`:
+All privacy routes require authentication (`utils.RequireAuth()`). Registration in `main.go`:
 
 ```go
 // User account (display_name + discoverable updates)
@@ -96,23 +96,16 @@ users.GET("/shareable", controllers.GetShareableUsers)                   // prev
 
 ### Implementation Notes
 
-- **`PATCH /user/me`** — partial update; writes only whitelisted fields (`display_name`, `discoverable`). Display-name validation (2–50 chars, uniqueness → 409) happens at profile completion (`/profile/complete`), not here.
+- **`PATCH /api/user/me`** — partial update; writes only whitelisted fields (`display_name`, `discoverable`). Display-name validation (2–50 chars, uniqueness → 409) happens at profile completion (`/profile/complete`), not here.
 - **Bulk operations** (`/bulk/private`, `/bulk/unshare/:userId`) run per rating and return `ratings_affected` (plus `removed_user` display name for unshare).
 - **`/users/shareable`** — returns `previous_connections` (users who have shared with the current user, via `rating_viewers` join) and `discoverable` users, excluding the requester and previous connections so previous connections appear first.
 - **Ownership check** — all rating-mutation endpoints verify `rating.UserID` matches the token user (403 otherwise).
 
 ## Security & Performance
 
-### Database Indexes for Privacy Queries
+### Database Indexes
 
-```sql
-CREATE INDEX idx_rating_viewers_user_id ON rating_viewers(user_id);
-CREATE INDEX idx_rating_viewers_rating_id ON rating_viewers(rating_id);
-CREATE INDEX idx_ratings_user_item ON ratings(user_id, item_id);
-CREATE INDEX idx_ratings_item ON ratings(item_id);
-CREATE INDEX idx_users_discoverable ON users(discoverable);
-CREATE INDEX idx_users_display_name ON users(display_name);
-```
+One rating per user per item: unique index `idx_ratings_user_item` on `(user_id, item_id)`, plus `idx_ratings_item` on `item_id`.
 
 ---
 

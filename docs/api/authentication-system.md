@@ -26,7 +26,7 @@ Exchanges a Google `id_token` for a backend JWT.
 
 - Request: `{ "id_token": "<google-id-token>", "access_token": "<optional>" }`
 - Handler `GoogleOAuthExchange` (`controllers/authController.go`) validates the `id_token` with Google's API servers (`parseGoogleIDToken` / `parseJWTPayload`), finds or creates the user, updates `LastLoginAt`, and returns:
-- Response: `{ "token": "<jwt>", "user": {...} }` (user includes `is_admin` per `utils.IsUserAdmin`)
+- Response: `{ "token": "<jwt>", "user": {...} }` (`user.is_admin` is the raw database flag only, so the bootstrap admin from `INITIAL_ADMIN_EMAIL` shows `false` here; call `GET /api/auth/check-admin` for the real answer)
 
 There are intentionally no `/auth/refresh` or `/auth/logout` endpoints — see token lifecycle in the shared doc.
 
@@ -88,17 +88,18 @@ type Claims struct {
 ```go
 type User struct {
     gorm.Model
-    GoogleID     string `gorm:"uniqueIndex;not null"`
-    Email        string `gorm:"uniqueIndex;not null"`
-    FullName     string `gorm:"not null"`
-    Avatar       string
-    DisplayName  string `gorm:"uniqueIndex"`
-    Discoverable bool   `gorm:"default:true"`
-    IsAdmin      bool   `gorm:"default:false"`
-    LastLoginAt  time.Time
+    GoogleID         string `gorm:"uniqueIndex;size:255"`
+    Email            string `gorm:"uniqueIndex;size:255"`
+    FullName         string `gorm:"size:255"`
+    Avatar           string `gorm:"size:500"`
+    DisplayName      string `gorm:"uniqueIndex;size:100"`
+    Discoverable     bool   `gorm:"default:true"`
+    ProfileCompleted bool   `gorm:"default:false"`
+    IsAdmin          bool   `gorm:"default:false"`
+    LastLoginAt      time.Time
 }
 
-func (u *User) HasCompletedSetup() bool { return u.DisplayName != "" }
+func (u *User) HasCompletedSetup() bool { return u.DisplayName != "" && u.ProfileCompleted }
 ```
 
 ## Environment Configuration
@@ -106,10 +107,10 @@ func (u *User) HasCompletedSetup() bool { return u.DisplayName != "" }
 ```bash
 JWT_SECRET_KEY=your-super-secure-jwt-secret-key-here-64-chars-minimum
 GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
-INITIAL_ADMIN_EMAIL=[EMAIL]
+INITIAL_ADMIN_EMAIL=admin@example.com
 
 GIN_MODE=release
-TRUSTED_PROXIES=[IP_ADDRESS],::1
+TRUSTED_PROXIES=127.0.0.1,::1
 
 DATABASE_URL=postgres://user:password@localhost:5432/alacarte?sslmode=disable
 ```

@@ -40,33 +40,33 @@ Once a schema is created, the API and client apps automatically support the new 
 
 ## Accessing Schema Management
 
-1. Log in to the admin panel at `/admin`
-2. Navigate to **Schema Management** in the sidebar
+1. Log in to the admin SPA (served at the host root)
+2. Navigate to **Schemas** in the sidebar (`/schemas`)
 3. The schema list page shows all schemas with item counts
 
 ---
 
 ## Creating a New Schema
 
-### Step 1: Open the Schema Editor
+### Step 1: Create the Schema
 
-Click **"New Schema"** on the schema list page.
+Click **"Create schema"** on the schema list page. A small dialog asks for the settings below; submitting it creates an **empty schema** (no fields) that is already active and visible in the API. Fields are added in the next steps.
 
-### Step 2: Fill Schema Settings
+### Step 2: Schema Settings (in the create dialog)
 
 | Field | Description | Example |
 |-------|-------------|---------|
 | **Name** | Unique kebab-case identifier (cannot change later) | `craft-beer` |
 | **Display Name** | Human-readable singular name | `Craft Beer` |
 | **Plural Name** | Human-readable plural name | `Craft Beers` |
-| **Icon** | Icon name for the client app | `Beer` |
-| **Color** | Hex color for branding | `#FFA726` |
+| **Icon** | Icon from the admin icon picker (stored as the MUI icon name) | `SportsBar` (shown as "Beer") |
+| **Color** | Pick a color from the dialog's swatch palette (stored as hex) | a swatch such as orange |
 
 **Important:** The `name` field must be unique and use kebab-case (lowercase with hyphens). This becomes part of the API URL: `/api/items/craft-beer`.
 
 ### Step 3: Add Fields
 
-Click **"Add Field"** to define each field:
+Open the schema (click its row on the list page), go to the **Fields** tab and click **"Add Field"** for each field, then **"Save fields"**:
 
 | Property | Description |
 |----------|-------------|
@@ -79,7 +79,7 @@ Click **"Add Field"** to define each field:
 
 ### Step 4: Validation, Options and Display Hints (API-level)
 
-The schema editor UI does not expose editing for validation rules, select/enum options, or display hints — new fields get empty defaults. To set them, include them in the field objects of the schema API payload (PUT/PATCH via the schema endpoints — see the field structure in [API endpoints](/docs/api/endpoints.md)):
+The schema editor UI does not expose editing for validation rules, select/enum options, or display hints — new fields get empty defaults. To set them, include them in the field objects of the schema API payload (`PUT /admin/schemas/:type` — see the field structure in [API endpoints](/docs/api/endpoints.md)):
 
 - **Validation** — `minLength`/`maxLength` (text/textarea), `min`/`max` (number), `pattern` (regex, text)
 - **Options** — predefined values for select/enum fields
@@ -87,17 +87,15 @@ The schema editor UI does not expose editing for validation rules, select/enum o
 
 **Note:** Only one field should have `badge: true`. The badge field is excluded from detail rows.
 
-**Note:** Only one field should have `badge: true`. The badge field is excluded from detail rows.
+### Step 5: Set Unique Fields (Optional)
 
-### Step 6: Set Unique Fields (Optional)
-
-In the **Schema Settings** panel, select which fields together must be unique. This prevents duplicate items.
+In the **Settings** tab, select which fields together must be unique. This prevents duplicate items.
 
 **Example:** For beer, you might set `name` + `brewery` as unique fields. This allows two beers with the same name from different breweries, but prevents the exact same beer from being added twice.
 
-### Step 7: Save
+### Step 6: Save
 
-Click **"Create Schema"**. The schema is immediately available in the API and client apps.
+Click **"Save Settings"** (and **"Save fields"** for field changes). Saved changes are immediately available in the API and client apps.
 
 ---
 
@@ -153,7 +151,7 @@ Numeric input (integers or decimals).
 Dropdown with predefined options.
 
 **Best for:** Categories with a small fixed set of options
-**Configuration:** Add options in the field editor (one per line)
+**Configuration:** Options are not editable in the admin UI; set them in the schema API payload (see Step 4)
 **Example:** Style = ["IPA", "Stout", "Pilsner", "Wheat"]
 
 ### Checkbox
@@ -281,23 +279,23 @@ When bulk-importing items via the seed endpoint, unique fields are used to skip 
 
 1. Go to the schema list page
 2. Click on a schema name to open the editor
-3. Make changes to fields, validation, or settings
-4. Click **"Update Schema"**
+3. Make changes to fields or settings (validation, options and display hints are API-only, see Step 4 above)
+4. Click **"Save fields"** (Fields tab) or **"Save Settings"** (Settings tab)
 
-**Important:** Editing a schema creates a new version automatically. Existing items keep their original schema version for data integrity. New items use the latest version.
+**Important:** Editing a schema creates a new version automatically. The creation version is stored on items for reference, but items are always validated against the latest active schema.
 
 ### What Can Be Changed
 
 - Display name, plural name, icon, color
 - Add/remove/reorder fields
-- Change field types, validation, display hints
+- Change field types
 - Activate/deactivate the schema
 - Change unique fields
 
 ### What Cannot Be Changed
 
 - Schema `name` (kebab-case identifier) - this is permanent
-- Existing field keys (add new fields instead)
+- Existing field keys: the UI does not block editing a key, but existing items store values under the old key, so add a new field instead
 
 ---
 
@@ -305,7 +303,7 @@ When bulk-importing items via the seed endpoint, unique fields are used to skip 
 
 ### Deactivate
 
-Set **"Is Active"** to `false` in the schema editor. This:
+Click **Deactivate** at the top right of the schema editor. This:
 - Hides the item type from the client app
 - Prevents creating new items of this type
 - Keeps existing items and ratings intact
@@ -314,7 +312,7 @@ Set **"Is Active"** to `false` in the schema editor. This:
 
 ### Activate
 
-Set **"Is Active"** back to `true`. The item type immediately reappears in the client app.
+Click **Activate** in the same place. The item type immediately reappears in the client app.
 
 ---
 
@@ -351,9 +349,8 @@ This means removing or tightening a field's rules applies to validation of all f
 
 ### Steps
 
-1. Open the schema editor
-2. Click **"Delete Schema"**
-3. Confirm the deletion
+1. On the schema list page, click the trash icon on the schema's row
+2. Confirm the deletion (the confirmation text mentions "and all its items", but the API refuses to delete a schema that still has items)
 
 ### Alternative: Deactivate
 
@@ -430,7 +427,7 @@ Check that:
 
 ### Schema changes not reflecting in existing items
 
-This is by design. Existing items keep their creation schema version. Only new items use the latest version. If you need to migrate existing items, contact a developer.
+Items are validated against the latest active schema, not their creation version. Existing item data is not rewritten; if you need to migrate it, contact a developer.
 
 ---
 
@@ -438,4 +435,3 @@ This is by design. Existing items keep their creation schema version. Only new i
 
 - [API Endpoints Reference](/docs/api/endpoints.md) - Schema and item API details
 - [Adding New Item Types](/docs/guides/adding-new-item-types.md) - Developer guide
-- [Dynamic Schema Management](schema-management.md) - Schema system reference

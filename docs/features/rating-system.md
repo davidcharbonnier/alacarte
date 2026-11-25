@@ -19,7 +19,7 @@ The À la carte rating system enables users to create, edit, share, and manage r
 **User Flow**:
 - User navigates to item detail → Clicks "Rate [ItemName]" FAB
 - Form loads with item context card showing item details
-- User selects star rating (1-5, 0 allowed for disliked items)
+- User selects a star rating in half-star steps (0.5 to 5); 0 cannot be submitted (the create/edit screens require `> 0` and the API rejects a zero grade)
 - User adds optional notes
 - Form validates and submits via RatingProvider
 - Success feedback and navigation back to item detail
@@ -66,23 +66,22 @@ The À la carte rating system enables users to create, edit, share, and manage r
 - Success notification indicates unsharing completion
 
 **Technical Implementation**:
-- **ShareRatingDialog** loads all users and filters appropriately
+- **ShareRatingDialog** loads `GET /api/users/shareable` (previous connections and discoverable users)
 - **Pre-selection state**: Dialog tracks `currentlySharedWith` users
 - **Change detection**: Compares initial vs current selection to determine actions
 - **Batch operations**: Single API call for sharing, single call for unsharing
 - **Make Private**: Quick action button to clear all viewers at once
-- **Backend integration**: Uses `PUT /rating/:id/share` and `PUT /rating/:id/hide`
-- Cross-references user list for actual usernames vs "User #X" fallbacks
-- Localized user fallback text when usernames unavailable
+- **Backend integration**: Uses `PUT /api/rating/:id/share` and `PUT /api/rating/:id/hide`
+- Author names come from the rating (`rating.authorName`), with a localized "Anonymous User" fallback
 - Comprehensive error handling and visual feedback
 
 **Backend Endpoints**:
-- `PUT /rating/:id/share` - Add users to viewers (batch support)
-- `PUT /rating/:id/hide` - Remove users from viewers (batch support)
+- `PUT /api/rating/:id/share` - Add users to viewers (batch support)
+- `PUT /api/rating/:id/hide` - Remove users from viewers (batch support)
   - Accepts `user_ids` array for batch unsharing
   - Also supports legacy `user_id` for single user
-- `PUT /rating/bulk/private` - Remove all viewers from all ratings
-- `PUT /rating/bulk/unshare/:userId` - Remove specific user from all shares
+- `PUT /api/rating/bulk/private` - Remove all viewers from all ratings
+- `PUT /api/rating/bulk/unshare/:userId` - Remove specific user from all shares
 
 ### 4. Rating Deletion
 **Location**: `lib/widgets/rating/delete_rating_dialog.dart`
@@ -97,7 +96,7 @@ The À la carte rating system enables users to create, edit, share, and manage r
 - Generic sharing impact warning for all ratings
 - Destructive action styling with proper confirmation
 - Safe navigation back to item detail after deletion
-- Backend handles cleanup of shared rating relationships
+- Deletion is a soft delete on the backend; the viewer rows stay but the rating is no longer returned
 
 ### 5. Rating Display System
 
@@ -135,19 +134,24 @@ The À la carte rating system enables users to create, edit, share, and manage r
 **Provider Architecture**:
 ```dart
 // Community stats provider with automatic caching
-final communityStatsProvider = FutureProvider.family<Map<String, dynamic>, CommunityStatsParams>(
+final communityStatsProvider = FutureProvider.family<Map<int, Map<String, dynamic>>, CommunityStatsParams>(
   (ref, params) async {
+    if (params.itemIds.isEmpty) return {};
     final apiService = ref.watch(apiServiceProvider);
-    final response = await apiService.getCommunityStats(itemId); // one call per item id, batched by the family key
 
-    // Use direct type checking as documented in README
-    if (response is ApiSuccess<Map<String, dynamic>>) {
-      return response.data;
-    } else if (response is ApiError<Map<String, dynamic>>) {
-      throw Exception('Failed to load community stats: ${response.message}');
+    // One request per item id, in parallel
+    final responses = await Future.wait(
+      params.itemIds.map((itemId) => apiService.getCommunityStats(itemId)),
+    );
+
+    final statsMap = <int, Map<String, dynamic>>{};
+    for (var i = 0; i < params.itemIds.length; i++) {
+      final response = responses[i];
+      if (response is ApiSuccess<Map<String, dynamic>>) {
+        statsMap[params.itemIds[i]] = response.data; // failed items are skipped
+      }
     }
-    
-    throw Exception('Unexpected loading state');
+    return statsMap;
   },
 );
 ```
@@ -166,6 +170,7 @@ final communityStatsProvider = FutureProvider.family<Map<String, dynamic>, Commu
 ```dart
 RatingSummaryCard(
   item: cheeseItem, // Provider fetches stats automatically by item id
+  itemType: 'cheese',
 )
 ```
 
@@ -180,7 +185,7 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 
 **Features**:
 - Shows ratings shared by other users with green color identity
-- Resolves actual usernames from available user cache
+- Shows the author display name from the rating (`rating.authorName`)
 - Displays notes or localized placeholder for all ratings
 - Empty state messaging for items without recommendations
 
@@ -196,7 +201,7 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 **Badge System**:
 - Personal: `👤 5.0` (purple - your own ratings)
 - Recommendations: `👍 2` (green - friend suggestions)
-- Community: `👥 4.5 (3)` (orange - public ratings)
+- Community: `👥 4.5 (3)` (orange - anonymous community aggregate)
 - No ratings: Clean item appearance without clutter
 
 #### Color Identity System
@@ -205,7 +210,7 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 **Visual Distinction Strategy**:
 - **Personal Ratings** (Deep Purple): Your own experiences and opinions
 - **Recommendations** (Green): Ratings shared by friends specifically with you
-- **Community Ratings** (Orange): General public ratings and averages
+- **Community Ratings** (Orange): Anonymous community averages and counts
 
 **Applied Consistently Across**:
 - List view badges and indicators
@@ -213,7 +218,7 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 - Action button colors (share button uses green)
 - Background colors and borders for rating containers
 
-### 5. Integration Points
+### 6. Integration Points
 
 #### Item Detail Screen
 **Location**: `lib/screens/items/item_detail_screen.dart`
@@ -259,14 +264,14 @@ ref.invalidate(communityStatsProvider); // Clears all cached stats
 **Service**: `lib/services/rating_service.dart`
 
 **Endpoints Used**:
-- `POST /rating/new` - Create rating
-- `PUT /rating/:id` - Update rating
-- `PUT /rating/:id/share` - Share rating with users (batch: `user_ids` array)
-- `PUT /rating/:id/hide` - Unshare rating from users (batch: `user_ids` array)
-- `GET /rating/viewer/:id` - Get user's complete rating list (personal + shared)
-- `GET /stats/community/:id` - Get community stats for one item
-- `PUT /rating/bulk/private` - Make all user's ratings private
-- `PUT /rating/bulk/unshare/:userId` - Remove user from all shares
+- `POST /api/rating/new` - Create rating
+- `PUT /api/rating/:id` - Update rating
+- `PUT /api/rating/:id/share` - Share rating with users (batch: `user_ids` array)
+- `PUT /api/rating/:id/hide` - Unshare rating from users (batch: `user_ids` array)
+- `GET /api/rating/viewer/:id` - Get user's complete rating list (personal + shared)
+- `GET /api/stats/community/:id` - Get community stats for one item
+- `PUT /api/rating/bulk/private` - Make all user's ratings private
+- `PUT /api/rating/bulk/unshare/:userId` - Remove user from all shares
 
 ### Data Models
 **Rating Model**: `lib/models/rating.dart`
@@ -316,7 +321,7 @@ All rating features fully localized with natural French phrasing:
 ## Error Handling & Edge Cases
 
 ### Validation
-- Rating range validation (0.0-5.0)
+- Rating range validation (0.5-5.0 in practice; see above)
 - Ownership checks for editing/sharing
 - User selection validation for sharing
 - Network connectivity awareness
@@ -324,38 +329,20 @@ All rating features fully localized with natural French phrasing:
 ### Offline Behavior
 - Clear messaging about offline limitations
 - Cached data display where possible
-- Smart user switching with connectivity awareness
 - Graceful degradation of sharing features
 
 ### Data Consistency
 - Automatic refresh after rating operations
 - Cross-screen state synchronization
-- Proper handling of user switches
 - Duplicate prevention in merged rating lists
 
 ## Performance Optimizations
 
-### HTTP/2 Multiplexing (January 2025)
+### Parallel Loading
 
-The client leverages **HTTP/2 multiplexing** for optimal performance when loading data:
-
-**Community Statistics Loading**:
-- Uses batch provider with `Future.wait()` for parallel requests
-- All stat requests multiplexed over single TCP connection via HTTP/2
-- **Performance**: 50 items load in ~100ms (was ~2.5s sequential)
-- **Implementation**: `lib/providers/community_stats_provider.dart`
-
-**Privacy Settings Item Loading**:
-- Parallel loading of multiple item types using `Future.wait()`
-- HTTP/2 automatically multiplexes all requests
-- **Performance**: 3 item types load in ~150ms (was ~300ms sequential)
-- **Implementation**: `lib/screens/settings/privacy_settings_screen.dart`
-
-**Benefits**:
-- ✅ Single TCP connection for all requests (HTTP/2)
-- ✅ Automatic multiplexing via Cloud Run
-- ✅ No backend changes required
-- ✅ 50-96% performance improvement
+- Community stats: the batch provider issues one request per item id with `Future.wait()` (`lib/providers/community_stats_provider.dart`)
+- Privacy settings: item types load in parallel with `Future.wait()` (`lib/screens/settings/privacy_settings_screen.dart`)
+- Requests are multiplexed over one connection only where the platform provides HTTP/2 (e.g. browsers); the default Dio adapter on mobile/desktop is HTTP/1.1. The speed-up figures in code comments were not measured.
 
 ### Current Implementation
 - Provider-based caching with 5-minute TTL
@@ -400,7 +387,7 @@ Ratings work with any item type implementing the RateableItem interface:
 **Completed Features**:
 - ✅ Rating creation with star picker and notes
 - ✅ Rating editing with change detection and pre-populated forms
-- ✅ Rating sharing with user selection dialog and username resolution
+- ✅ Rating sharing with user selection dialog
 - ✅ **Rating unsharing with checkbox deselection and "Make Private" button**
 - ✅ **Batch unsharing operations (multiple users at once)**
 - ✅ **Bulk privacy actions (make all private, remove user from all shares)**
@@ -408,7 +395,7 @@ Ratings work with any item type implementing the RateableItem interface:
 - ✅ Personal vs shared rating visual distinction with color coding
 - ✅ Comprehensive localization (French/English)
 - ✅ Cross-screen data consistency and automatic refresh
-- ✅ Offline-aware behavior with smart user switching
+- ✅ Fullscreen offline screen when the server is unreachable
 - ✅ Safe navigation patterns with context-aware fallbacks
 - ✅ Compact UI design optimized for mobile browsing
 - ✅ Color-coded rating identity system

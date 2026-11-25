@@ -16,7 +16,7 @@ Complete guide for configuring Google OAuth specifically for Android development
 #### **Debug Certificate (Development)**
 ```bash
 # Navigate to your Flutter project
-cd /home/david/perso/client
+cd apps/client
 
 # Get debug SHA-1 fingerprint
 keytool -list -v -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android -keypass android
@@ -54,18 +54,19 @@ keytool -list -v -alias your-release-alias -keystore path/to/your-release.keysto
 
 ### **Step 3: Flutter Configuration**
 
-Your Flutter app is already configured correctly in `lib/config/app_config.dart`:
+Your Flutter app reads the client ID from `apps/client/.env` (exposed as `AppConfig.googleWebClientId`):
 
 ```dart
-// lib/config/app_config.dart
-static const String googleWebClientId = 'your-web-client-id.apps.googleusercontent.com';
+// apps/client/.env (read via dotenv; AppConfig.googleWebClientId returns it)
+GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
 
-// lib/services/auth_service.dart  
-static final GoogleSignIn _googleSignIn = GoogleSignIn(
-  scopes: ['email', 'profile'],
+// lib/services/auth_service.dart (google_sign_in ^7.2.0)
+await GoogleSignIn.instance.initialize(
   serverClientId: AppConfig.googleWebClientId, // Uses web client ID for backend
 );
 ```
+
+See [Client Authentication System](/docs/client/authentication-system.md) for the full v7 flow.
 
 **How this works:**
 - Android app authenticates using the **Android client** (native UI)
@@ -88,13 +89,8 @@ android {
 }
 ```
 
-### **Permissions (Auto-configured)**
-The `google_sign_in` package automatically adds required permissions:
-```xml
-<!-- These are added automatically -->
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-```
+### **Permissions**
+The app manifest declares `INTERNET` and `ACCESS_NETWORK_STATE` itself (see [android-setup.md](/docs/client/setup/android-setup.md)).
 
 ## 🚀 Testing Android OAuth
 
@@ -115,15 +111,7 @@ flutter run -d android
 ### **Debug OAuth Issues**
 
 #### **Check Google Sign-In Status**
-```dart
-// Add to your auth_service.dart for debugging
-Future<void> debugGoogleSignIn() async {
-  print('Google Sign-In Debug Info:');
-  print('- Is signed in: ${await _googleSignIn.isSignedIn()}');
-  print('- Current user: ${_googleSignIn.currentUser?.email}');
-  print('- Server client ID: ${AppConfig.googleWebClientId}');
-}
-```
+In debug builds `auth_service.dart` prints each step (`🔐 Starting Google authentication...`, `✅ Got both tokens...`); check the `flutter run` console for the step that fails.
 
 #### **Common Android Issues**
 
@@ -205,7 +193,7 @@ iOS App (future) → Uses serverClientId → Backend validates ✅
 ### **Android App**
 - [ ] `google_sign_in` dependency added
 - [ ] Package name matches Google Console (`com.alacarte.alc_client`)
-- [ ] AppConfig contains correct web client ID
+- [ ] `apps/client/.env` contains the correct web client ID
 - [ ] AuthService uses serverClientId configuration
 
 ### **Backend**

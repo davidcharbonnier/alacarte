@@ -13,13 +13,13 @@ Flutter application for the À la carte rating platform. Cross-platform client t
 
 ## Local Contracts
 
-- Framework: Flutter 3.27+, Riverpod (state management), GoRouter (routing)
-- Auth: Google Sign-In → JWT stored in SharedPreferences
-- HTTP: Dio with HTTP/2 multiplexing via Cloud Run
+- Framework: Flutter 3.32+, Riverpod (state management), GoRouter (routing)
+- Auth: Google Sign-In → JWT stored in `flutter_secure_storage`; sign-in works on Android only (web and desktop are a known gap)
+- HTTP: Dio (default adapter); parallel requests via `Future.wait()`
 - i18n: Flutter built-in l10n with `.arb` files (English, French)
 - Caching: Service-level singleton caching, 5-minute expiry
-- Offline: Connectivity-aware providers with graceful degradation
-- Platform targets: Android, Web, Linux (primary dev); iOS/macOS/Windows (future)
+- Offline: connectivity-aware providers; fullscreen offline screen blocks the app (no offline data)
+- Platform targets: Android, Web, Linux (UI work only, no sign-in); iOS/macOS/Windows (future)
 - Code style: `dart format`, Effective Dart conventions
 - Environment: `.env` file in `apps/client/`
 - CHANGELOG in `apps/client/CHANGELOG.md`
@@ -29,9 +29,9 @@ Flutter application for the À la carte rating platform. Cross-platform client t
 - Architecture layers: models → services → providers → screens/widgets
 - Models follow `RateableItem` interface; `DynamicItem` for schema-driven items
 - Providers use Riverpod; service classes call `DioClient` → go via `ApiService` base
-- Screen structure: `screens/auth/`, `screens/home/`, `screens/items/`, `screens/rating/`, `screens/settings/`, `screens/common/`
+- Screen structure: `screens/auth/`, `screens/home/`, `screens/items/`, `screens/rating/`, `screens/settings/`, `screens/common/`, `screens/initialization/`
 - Widgets split by domain: `widgets/items/`, `widgets/forms/`, `widgets/rating/`, `widgets/settings/`, `widgets/common/`
-- Form rendering: `DynamicForm` widget reads `ItemSchema` fields and renders via `ItemFormFields` strategy
+- Form rendering: `DynamicForm` widget reads `ItemSchema` fields and builds the inputs itself
 - Route config: `routes/app_router.dart` uses GoRouter with async initialization guards
 - Localization: `l10n/app_*.arb` → `flutter gen-l10n` generates to `flutter_gen/gen_l10n/`
 - Token storage: `TokenStorage` in `services/token_storage.dart`

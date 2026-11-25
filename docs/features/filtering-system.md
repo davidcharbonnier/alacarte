@@ -30,7 +30,7 @@ Schema (admin-defined)          Client                          Server (Go API)
 │ select/enum fields  │──▶│ ItemFilterHelper          │   │ DynamicItemList        │
 │ searchable flags    │   │  → filter options         │──▶│  → parseFilterParams   │
 └─────────────────────┘   │ ItemSearchAndFilter (UI)  │   │  → EAVQueryBuilder     │
-                          │ DynamicItemProvider       │   │  → SQL over EAV tables │
+                          │ dynamicItemProvider       │   │  → SQL over EAV tables │
                           │  → search + filter state  │   └────────────────────────┘
                           │ DynamicItemService        │
                           │  → query string building  │
@@ -75,7 +75,7 @@ Full reference: [docs/api/endpoints.md — Query Parameters](/docs/api/endpoints
 `EAVQueryBuilder.BuildListQuery` (`apps/api/services/query_builder.go`) composes the SQL:
 
 1. **Base scope** — items of the schema resolved by `:type` (schema resolved from the in-memory registry, refreshed on demand).
-2. **Search** — if `search` is non-empty (lowercased), it matches items where the serialized `field_values` JSON contains the term, **or** where the item has an EAV value in a field flagged `"searchable": true` in the schema definition. This makes search cover both inline and relational EAV storage.
+2. **Search** — if `search` is non-empty (lowercased), it matches items where the serialized `field_values` JSON contains the term, **or** where the item has any EAV value in a field flagged `"searchable": true`. Known gap: that EAV subquery does not compare the search term, so such items match every search.
 3. **Field filters** — for each `filter[key]=value`, the field is resolved via the schema registry; unknown keys are silently skipped. String values match exactly (`value = ?`), arrays match with `IN (?)`.
 4. **Has image** — `filter[has_image]=true` filters `image_url IS NOT NULL AND image_url != ''` (inverted for `false`).
 5. **Sort** — `name`, `created_at`, `updated_at` sort directly on the items table; any other sortable field joins `item_field_values` on the matching schema field and sorts on the EAV value. `sort=-field` reverses direction.
@@ -123,7 +123,7 @@ The helper also provides `getSearchHint(itemType)` with per-type search hints (c
 - The filter map is translated one-to-one into `filter[key]=value` query parameters, **except** the special key `has_picture`, which is sent as `filter[has_image]`. This keeps the UI-facing concept ("has picture") decoupled from the API parameter name.
 - `rated=true` is added for the "My List" tab.
 
-### State Management — `DynamicItemProvider`
+### State Management — `dynamicItemProvider`
 
 `apps/client/lib/providers/dynamic_item_provider.dart`
 
@@ -163,7 +163,7 @@ A single reusable widget rendered above the item list in `ItemTypeScreen` (`apps
 
 - `ItemFilterHelper.getAvailableFilters(schema)` feeds the chip list; `schemaProvider` supplies the schema for the current type.
 - **Debounced search:** keystrokes cancel the previous `Timer` and start a new 300 ms one; only after 300 ms of inactivity does `updateSearchQuery` (→ `updateSearchAndLoad`) fire a request. The timer is cancelled in `dispose`.
-- Filter changes from the widget go through `ItemProviderHelper` (`apps/client/lib/utils/item_provider_helper.dart`) into `DynamicItemProvider`.
+- Filter changes from the widget go through `ItemProviderHelper` (`apps/client/lib/utils/item_provider_helper.dart`) into `dynamicItemProvider`.
 
 ### Two-Sided Filtering on the My List Tab
 
@@ -238,7 +238,7 @@ A **With Picture** chip is available on both tabs:
 ## Extending the System
 
 - **New filterable field:** add a `select`/`enum` field with options to the schema in the admin ([schema-management.md](/docs/admin/schema-management.md)). The client picks it up automatically; the server filters on any known field key.
-- **New searchable field:** set `"searchable": true` in the field definition; the server-side search subquery picks it up.
+- **Searchable field:** the search matches the serialized `field_values` JSON; see the known gap above before relying on `"searchable": true`.
 - **New client-only filter:** add a chip in `ItemSearchAndFilter._buildRatingFilters`, a case in `ItemFilterHelper.filterItemsWithRatingContext`, and tab-clear behavior in `clearTabSpecificFilters` if it is tab-specific.
 - **New server-side filter:** extend `parseFilterParams` / `QueryParams` in the API and the matching branch in `EAVQueryBuilder.BuildListQuery`; document it in [endpoints.md](/docs/api/endpoints.md).
 

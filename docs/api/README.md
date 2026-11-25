@@ -13,10 +13,11 @@ This documentation serves as the **primary reference for API developers** workin
 - **[API Endpoints Reference](endpoints.md)** - Complete endpoint documentation
 
 ### Deployment & Operations
+- **[Deployment](deployment.md)** - Docker, Cloud Run, env vars
 - **[Security](security.md)** - Security reference: Google auth, JWT, middleware, CORS, error handling
 
 ### Implementation Guides
-- **[Adding New Item Types](/docs/guides/adding-new-item-types.md#phase-1-backend-implementation-65-min)** - Backend implementation guide
+- **[Adding New Item Types](/docs/guides/adding-new-item-types.md#step-3-verify-in-api)** - Backend implementation guide
 
 ## 🔗 Related Documentation
 
